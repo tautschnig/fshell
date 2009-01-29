@@ -1,0 +1,92 @@
+#!/bin/sh
+
+error() {
+  echo "E: $@" 1>&2
+  if [ x$keep_running = x1 ] ; then
+    retval=1
+  else
+    exit 1
+  fi
+}
+  
+warning() {
+  echo "W: $@" 1>&2
+}
+  
+information() {
+  echo "I: $@" 1>&2
+}
+  
+if [ "$1" = "-k" ] ; then
+  keep_running=1
+  shift
+fi
+
+if [ "$1" = "" ] ; then
+  dir=`pwd`
+else
+  dir=$1
+fi
+
+retval=0
+
+base=`find $dir -name "configure.ac" | grep -v external/ | grep -v test/`
+base="`dirname $base`"
+
+for f in `find $dir -name ".svn" -prune -type f -o -type f` ; do
+  case $f in
+    ${base}/external/*)
+      continue
+      ;;
+    ${base}/test/*)
+      continue;
+      ;;
+    *.hpp)
+      if [ ! -e `dirname $f`/.svn ] ; then
+        warning "Directory `dirname $f` not versioned"
+        continue
+      fi
+      
+      echo $f | egrep -q "[A-Z]" && warning "filename $f contains uppercase characters"
+      
+      test `egrep '(Copyright \\(C\\)|This file is distributed under the University of Illinois Open Source)' $f | wc -l` -eq 1 || error "Missing or duplicate copyright notice in $f" 
+
+      svn pg svn:keywords $f | grep -q Id || warning "run svn ps svn:keywords Id $f"
+      
+      pattern="`echo $f | sed "s#$base/##" | awk '{ print toupper( $1 ) }'`"
+      pattern="`echo $pattern | sed -e 's#/#__#g' -e 's#\.#_#g' -e 's#-#_#g'`"
+      grep -q "#ifndef $pattern" $f || error "#ifndef $pattern missing in $f"
+      grep -q "#define $pattern" $f || error "#define $pattern missing in $f"
+      grep -q "#endif /\\* $pattern \\*/" $f || error "#endif /* $pattern */ missing in $f"
+
+      grep -q "#include \"" $f && error "#include \"some_header\" found in $f, use #include <some_header>"
+
+      short_f="`echo $f | sed "s#$base/##"`"
+      egrep -q "(@|\\\\)file[[:space:]]*$short_f" $f || error "doxygen info \\\\file or @file $short_f missing in $f"
+      
+      grep -q TODO $f && information "TODO found in $f, better use /// \\\\todo or @todo"
+      ;;
+    *.cpp|*.yy|*.ll)
+      if [ ! -e `dirname $f`/.svn ] ; then
+        warning "Directory `dirname $f` not versioned"
+        continue
+      fi
+      
+      echo $f | egrep -q "[A-Z]" && warning "filename $f contains uppercase characters"
+      
+      test `egrep '(Copyright \\(C\\)|This file is distributed under the University of Illinois Open Source)' $f | wc -l` -eq 1 || error "Missing or duplicate copyright notice in $f" 
+      
+      svn pg svn:keywords $f | grep -q Id || warning "run svn ps svn:keywords Id $f"
+      
+      grep -q "#include \"" $f && error "#include \"some_header\" found in $f, use #include <some_header>"
+
+      short_f="`echo $f | sed "s#$base/##"`"
+      egrep -q "(@|\\\\)file[[:space:]]*$short_f" $f || error "doxygen info \\\\file or @file $short_f missing in $f"
+      
+      grep -q TODO $f && information "TODO found in $f, better use /// \\\\todo or @todo"
+      ;;
+  esac
+done
+
+exit $retval 
+

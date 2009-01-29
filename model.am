@@ -1,0 +1,72 @@
+# vi: set ft=automake
+
+VPATH =
+vpath %.cpp $(srcdir)
+vpath %.cc $(srcdir)
+vpath %.c $(srcdir)
+vpath %.hpp $(srcdir)
+vpath %.hh $(srcdir)
+vpath %.h $(srcdir)
+vpath %.yy $(srcdir)
+vpath %.ll $(srcdir)
+
+DIAGNOSTICSLEVEL ?= @DIAGNOSTICSLEVEL@
+
+AM_CPPFLAGS = -I$(top_builddir) -I$(top_srcdir) -DPACKAGE_DEBUG__LEVEL__=$(DIAGNOSTICSLEVEL)
+
+MAINTAINERCLEANFILES = Makefile.in
+MOSTLYCLEANFILES = diag_stamp_*
+
+if DIAGNOSTICS
+level_suffix = $(DIAGNOSTICSLEVEL)
+BUILT_SOURCES = diag_stamp_$(level_suffix)
+
+diag_stamp_$(level_suffix):
+	-rm -f *.$(OBJEXT) *.lo *.la
+	-rm -f diag_stamp_*
+	touch diag_stamp_$(level_suffix)
+
+AM_LDFLAGS = -ldiagnostics
+if DIAGNOSTICSDIR_DEFINED
+AM_CPPFLAGS += -I@DIAGNOSTICSDIR@/include
+AM_LDFLAGS += -L@DIAGNOSTICSDIR@/lib
+
+check-local::
+	mkdir -p $(top_srcdir)/test
+	for t in $(check_PROGRAMS) ; do \
+		( check_path=`pwd` ; cd $(top_srcdir) ; \
+			LD_LIBRARY_PATH=@DIAGNOSTICSDIR@/lib $$check_path/$$t run "/*" $(DIAGNOSTICSLEVEL) ) || exit $$? ; \
+  done
+else
+check-local::
+	mkdir -p $(top_srcdir)/test
+	for t in $(check_PROGRAMS) ; do \
+		( check_path=`pwd` ; cd $(top_srcdir) ; \
+			$$check_path/$$t run "/*" $(DIAGNOSTICSLEVEL) ) || exit $$? ; \
+  done
+endif
+
+debug audit debug-check audit-check: CXXFLAGS := $(filter-out -O1 -O2 -O3 -Os,$(CXXFLAGS)) -O0 -g
+debug audit debug-check audit-check:
+	test -f $(top_srcdir)/build/`echo $@ | @AWK@ -F- '{print $$1}'`/Makefile || \
+    ( level=`echo $@ | @AWK@ -F- '{print $$1}'` ; \
+			mkdir -p $(top_srcdir)/build ; \
+			mkdir -p $(top_srcdir)/build/$$level ; \
+      cd $(top_srcdir) ; test -f config.status && mv config.status config.status.top || : ; \
+      cd build/$$level ; \
+			../../configure --disable-update-makefiles --with-diagnostics=@DIAGNOSTICSDIR@,$$level \
+        @additional_args@ LEX=$(LEX) CXXFLAGS="$(CXXFLAGS)" LDFLAGS="$(LDFLAGS)" ; \
+			cd ../../ ; test -f config.status.top && mv config.status.top config.status || : )
+	cd $(top_srcdir)/build/`echo $@ | @AWK@ -F- '{print $$1}'``pwd | sed "s|^\`cd $(top_builddir) > /dev/null; pwd\`||"` && \
+    $(MAKE) $(AM_MAKEFLAGS) `echo $@ | @AWK@ -F- '{print $$2}'`
+
+prod prod-check:
+	test -f $(top_srcdir)/Makefile || \
+    ( cd $(top_srcdir) ; ./configure --disable-update-makefiles --with-diagnostics=@DIAGNOSTICSDIR@,prod @additional_args@ LEX=$(LEX) )
+	cd $(top_srcdir)/`pwd | sed "s|^\`cd $(top_builddir) > /dev/null; pwd\`||"` && \
+    $(MAKE) $(AM_MAKEFLAGS) `echo $@ | @AWK@ -F- '{print $$2}'`
+
+
+endif
+
+
