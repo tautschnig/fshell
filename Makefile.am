@@ -20,7 +20,7 @@ MAINTAINERCLEANFILES += aclocal.m4 configure config.h.in $(AUX_DIST)
 DISTCLEANFILES = config.h.in~ _configs.sed 
 
 maintainer-clean-local:
-	-[ -d external/diagnostics ] && (cd external/diagnostics && make maintainer-clean)
+	if [ -d external/diagnostics ] ; then cd external/diagnostics ; make maintainer-clean ; fi
 	rm -rf external/lib external/bin external/include
 	$(RM) -rf $(DX_DOCDIR)
 	$(RM) -rf build/
