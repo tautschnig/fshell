@@ -8,4 +8,17 @@ include $(top_srcdir)/model.am
 # SUBDIRS = dir1 dir2 dirX
 SUBDIRS =
 
+if DIAGNOSTICS
+BUILT_SOURCES += parser.h
+else
+BUILT_SOURCES = parser.h
+endif
+
+#debug bison-parser
+#AM_YFLAGS = -d -t -v
+AM_YFLAGS = -d
+AM_LFLAGS = -o$(LEX_OUTPUT_ROOT).c
+
 include_fshell2_fql_parserdir = $(includedir)/fshell2/fql/parser
+noinst_LTLIBRARIES = libparser.la
+libparser_la_SOURCES = lexer.ll parser.yy
