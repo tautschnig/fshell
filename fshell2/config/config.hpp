@@ -65,6 +65,40 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 /**
+ * @brief Use this macro to start the @ref fshell2_fql_namespace "fql" 
+ * namespace.
+ *
+ * @namespace fshell2::fql @anchor fshell2_fql_namespace
+ *
+*/
+#define FSHELL2_FQL_NAMESPACE_BEGIN namespace fql { DUMMY_FUNC
+
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * @brief Macro to end the @ref fshell2_fql_namespace "fql" namespace.
+ *
+*/
+#define FSHELL2_FQL_NAMESPACE_END } DUMMY_FUNC
+
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * @brief Use this macro to start the @ref fshell2_fql_parser_namespace "parser" 
+ * namespace.
+ *
+ * @namespace fshell2::fql::parser @anchor fshell2_fql_parser_namespace
+ *
+*/
+#define FSHELL2_FQL_PARSER_NAMESPACE_BEGIN namespace parser { DUMMY_FUNC
+
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * @brief Macro to end the @ref fshell2_fql_parser_namespace "parser" namespace.
+ *
+*/
+#define FSHELL2_FQL_PARSER_NAMESPACE_END } DUMMY_FUNC
+
+////////////////////////////////////////////////////////////////////////////////
+/**
  * @brief Macro for no throws
  *
  * Depending on the standard library, it is necessary to declare some methods
