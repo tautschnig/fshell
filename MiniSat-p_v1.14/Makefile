@@ -16,11 +16,15 @@ RCOBJS    = $(addsuffix r,  $(COBJS))
 EXEC      = minisat
 
 CXX       = g++
-CFLAGS    = -Wall -ffloat-store
+CFLAGS    = $(CXXFLAGS) -ffloat-store
 COPTIMIZE = -O3
 
 
-.PHONY : s p d r build clean depend
+.PHONY : s p d r build clean depend all maintainer-clean distclean
+
+all: s
+
+maintainer-clean distclean: clean
 
 s:	WAY=standard
 p:	WAY=profile

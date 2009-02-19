@@ -1,5 +1,7 @@
 include $(top_srcdir)/model.am
 
+AM_MAKEFLAGS = CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS)"
+
 # add further subdirectories here
 SUBDIRS = . test doc MiniSat-p_v1.14 src fshell2
 
@@ -10,18 +12,14 @@ ACLOCAL_AMFLAGS = -I m4
 
 include $(top_srcdir)/doxygen.am
 
-AUX_DIST = $(ac_aux_dir)/config.guess $(ac_aux_dir)/config.sub $(ac_aux_dir)/install-sh $(ac_aux_dir)/ltmain.sh $(ac_aux_dir)/missing $(ac_aux_dir)/depcomp $(ac_aux_dir)/ylwrap 
+AUX_DIST = $(ac_aux_dir)/config.guess $(ac_aux_dir)/config.sub $(ac_aux_dir)/install-sh $(ac_aux_dir)/ltmain.sh $(ac_aux_dir)/missing $(ac_aux_dir)/depcomp $(ac_aux_dir)/ylwrap $(ac_aux_dir)/libtool.m4 $(ac_aux_dir)/ltoptions.m4 $(ac_aux_dir)/ltsugar.m4 $(ac_aux_dir)/ltversion.m4 $(ac_aux_dir)/lt~obsolete.m4
 
 EXTRA_DIST = $(DX_CONFIG) TODO
 
 MAINTAINERCLEANFILES += aclocal.m4 configure config.h.in $(AUX_DIST)
-# add features.h here, like 
-# DISTCLEANFILES = config.h.in~ _configs.sed shared/config/features.h
-DISTCLEANFILES = config.h.in~ _configs.sed 
+DISTCLEANFILES = config.h.in~ _configs.sed fshell2/config/features.hpp
 
 maintainer-clean-local:
-	if [ -d external/diagnostics ] ; then cd external/diagnostics ; make maintainer-clean ; fi
-	rm -rf external/lib external/bin external/include
 	$(RM) -rf $(DX_DOCDIR)
 	$(RM) -rf build/
 				
@@ -29,8 +27,6 @@ dist-hook:
 	(cd $(distdir) && mkdir -p $(ac_aux_dir))
 	for file in $(AUX_DIST) $(AUX_DIST_EXTRA) ; do cp $$file $(distdir)/$$file ; done
 
-# add the source directories here, like
-# $(top_srcdir)/config/update-makefiles.pl @enable_install_headers@ @disable_update_makefiles@ @with_diagnostics@ main/ shared/
 all-local:
 	if [ "$(top_srcdir)" = "." ] ; then \
 		$(top_srcdir)/config/update-makefiles.pl @enable_install_headers@ @disable_update_makefiles@ @with_diagnostics@ fshell2/ ; \
