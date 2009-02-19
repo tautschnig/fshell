@@ -92,13 +92,13 @@ void set_initial_loggers(::std::vector<Logger *> & loggers) {}
 # macros to control update-makefiles.pl, disabled by default
 AC_SUBST(disable_update_makefiles,[--not-really])
 AC_DEFUN([model_UPDATE_MAKEFILES],[
-  AC_ARG_ENABLE([install-headers],[  --enable-install-headers           Install header files during make install],
+  AC_ARG_ENABLE([install-headers],[  --disable-install-headers           Don't install header files during make install],
                 [if test "x$enableval" != "xno" ; then
                   AC_SUBST(enable_install_headers,[--install-headers])
                 else
                   AC_SUBST(enable_install_headers,[""])
                 fi],
-                AC_SUBST(enable_install_headers,[""])
+                AC_SUBST(enable_install_headers,[--install-headers])
                 )
 
   AC_ARG_ENABLE([update-makefiles],[  --disable-update-makefiles        Do not update any Makefile.am],
