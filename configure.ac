@@ -6,7 +6,7 @@
 # useful
 
 AC_PREREQ(2.59)
-AC_INIT([PACKAGENAME],[0.1],[EMAIL])
+AC_INIT([fshell2],[0.1],[tautschnig@forsyte.de])
 AC_CONFIG_SRCDIR([config/update-makefiles.pl])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_HEADER(config.h)
@@ -18,7 +18,7 @@ AM_INIT_AUTOMAKE([1.9 nostdinc])
 AC_SUBST(ac_aux_dir)
 # something like AX_PREFIX_CONFIG_H(shared/config/features.h), whichever path
 # you prefer
-AX_PREFIX_CONFIG_H(PATH_TO_FEATURES_H)
+AX_PREFIX_CONFIG_H(fshell2/config/features.hpp)
 
 AC_CHECK_PROG([PKGCONFIG],[pkg-config],[yes],[no])
 

@@ -1,7 +1,7 @@
 include $(top_srcdir)/model.am
 
 # add further subdirectories here
-SUBDIRS = . test doc
+SUBDIRS = . test doc MiniSat-p_v1.14 src fshell2
 
 # just a hint for autoproject
 # _SOURCES = model.am ChangeLog NEWS README TODO
@@ -33,6 +33,6 @@ dist-hook:
 # $(top_srcdir)/config/update-makefiles.pl @enable_install_headers@ @disable_update_makefiles@ @with_diagnostics@ main/ shared/
 all-local:
 	if [ "$(top_srcdir)" = "." ] ; then \
-		$(top_srcdir)/config/update-makefiles.pl @enable_install_headers@ @disable_update_makefiles@ @with_diagnostics@ ; \
+		$(top_srcdir)/config/update-makefiles.pl @enable_install_headers@ @disable_update_makefiles@ @with_diagnostics@ fshell2/ ; \
 	fi
 
