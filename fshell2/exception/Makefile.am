@@ -6,6 +6,9 @@ include $(top_srcdir)/model.am
 
 # Add all desired subdirectories here, like
 # SUBDIRS = dir1 dir2 dirX
-SUBDIRS = config exception fql
+SUBDIRS =
 
-include_fshell2dir = $(includedir)/fshell2
+noinst_LTLIBRARIES = libexception.la
+libexception_la_SOURCES = command_processing_error.cpp query_processing_error.cpp
+include_fshell2_exceptiondir = $(includedir)/fshell2/exception
+include_fshell2_exception_HEADERS = command_processing_error.hpp query_processing_error.hpp
