@@ -79,6 +79,7 @@ Macro_Processing::Macro_Processing() :
 	}
 	cpp_cmdline.push_back("-dP");
 	cpp_cmdline.push_back("-undef");
+	cpp_cmdline.push_back("-Werror");
 
 	m_cpp_argv = new char * [cpp_cmdline.size() + 2];
 	// abusing m_file_index
@@ -112,15 +113,46 @@ Macro_Processing & Macro_Processing::get_instance() {
 	
 ::std::ostream & Macro_Processing::help(::std::ostream & os) {
 	os << "Macro definitions:" << ::std::endl;
-	os << "<Macro> ::= `#define' bla bla bla TODO" << ::std::endl;
+	os << "<Macro> ::= `#define' <Macro Decl> <Some Def or Empty>" << ::std::endl;
+	os << "<Macro Decl> ::= <Identifier>" << ::std::endl;
+	os << "               | <Identifier> `(' <Macro Args> `)'" << ::std::endl;
+	os << "<Macro Args> ::= <Identifier>"  << ::std::endl;
+	os << "               | <Macro Args> `,' <Identifier>" << ::std::endl;
 	return os;
 }
 
-int Macro_Processing::preprocess(char * filename, ::std::ostream & out) const {
-	int channel[2];
+class Reopen_Fds {
+	public:
+	Reopen_Fds();
+	~Reopen_Fds();
+	private:
+	int m_stdin;
+	int m_stdout;
+	int m_stderr;
+};
+
+Reopen_Fds::Reopen_Fds() :
+	m_stdin(::dup(0)), m_stdout(::dup(1)), m_stderr(::dup(2)) {
+}
+
+Reopen_Fds::~Reopen_Fds() {
+	::dup2(m_stdin, 0);
+	::close(m_stdin);
+	::dup2(m_stdout, 1);
+	::close(m_stdout);
+	::dup2(m_stderr, 2);
+	::close(m_stderr);
+}
+
+int Macro_Processing::preprocess(char * filename, ::std::ostream & os) const {
+	Reopen_Fds backup_fds;
+	int channel[2], err_channel[2];
 	int ret(::pipe(channel));
 	FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, 0 == ret,
 			"Failed to open pipe");
+	ret = ::pipe(err_channel);
+	FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, 0 == ret,
+			"Failed to open error pipe");
 	pid_t child(::fork());
 	FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, child != -1,
 			"Failed to fork"); 
@@ -128,18 +160,26 @@ int Macro_Processing::preprocess(char * filename, ::std::ostream & out) const {
 	if(0 == child)
 	{
 		/* child */
-		ret = ::close(1);
-		FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, 0 == ret,
-				"Failed to close stdout");
-		ret = ::dup(channel[1]);
-		FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, 0 == ret,
-				"Failed to duplicate new stdout");
+		// stdout
 		ret = ::close(channel[0]);
 		FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, 0 == ret,
-				"Failed to close parent side stdin");
+				"Child: failed to close reading side of pipe");
+		ret = ::dup2(channel[1], 1);
+		FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, -1 != ret,
+				"Child: failed to set up stdout as writing side of pipe");
 		ret = ::close(channel[1]);
 		FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, 0 == ret,
-				"Failed to close parent side stdout");
+				"Child: failed to close useless writing side");
+		// stderr
+		ret = ::close(err_channel[0]);
+		FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, 0 == ret,
+				"Child: failed to close reading side of error pipe");
+		ret = ::dup2(err_channel[1], 2);
+		FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, -1 != ret,
+				"Child: failed to set up stderr as writing side of pipe");
+		ret = ::close(err_channel[1]);
+		FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, 0 == ret,
+				"Child: failed to close useless writing side of err");
 
 		FSHELL2_AUDIT_TRACE("starting " CPP_CMD);
 		m_cpp_argv[m_file_index] = filename;
@@ -152,31 +192,56 @@ int Macro_Processing::preprocess(char * filename, ::std::ostream & out) const {
 	else
 	{
 		/* parent */
-		ret = ::close(0);
-		FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, 0 == ret,
-				"Failed to close stdin");
-		ret = ::dup(channel[0]);
-		FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, 0 == ret,
-				"Failed to duplicate new stdin");
-		ret = ::close(channel[0]);
-		FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, 0 == ret,
-				"Failed to close child side stdin");
+		// stdout
 		ret = ::close(channel[1]);
 		FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, 0 == ret,
-				"Failed to close child side stdout");
+				"Parent: failed to close writing side of pipe");
+		ret = ::dup2(channel[0], 0);
+		FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, -1 != ret,
+				"Parent: filed to set up stdin as reading side of pipe");
+		ret = ::close(channel[0]);
+		FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, 0 == ret,
+				"Parent: failed to close useless reading side");
+		// stderr
+		ret = ::close(err_channel[1]);
+		FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, 0 == ret,
+				"Parent: failed to close writing side of error pipe");
 
-		::std::string line;
-		::std::cin.clear();
+		char line[1024];
+		FILE * out(::fdopen(0, "r"));
+		FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, 0 != out,
+				"Failed to open stdout reader");
+		FILE * err(::fdopen(err_channel[0], "r"));
+		FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, 0 != err,
+				"Failed to open stderr reader");
+
+		::std::ostringstream err_stream;
+		while (0 != ::fgets(line, 1024, err)) err_stream << line;
+		if (!err_stream.str().empty()) {
+			::std::string::size_type err_start(err_stream.str().find("error:"));
+			os << (err_start == ::std::string::npos?err_stream.str():err_stream.str().substr(err_start));
+			int status(-1);
+			child = ::waitpid(child, &status, 0);
+			FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, -1 != child,
+					"Failed to wait for child");
+
+			return 1;
+		}
+		
+		::std::ostringstream out_stream;
+		while (0 != ::fgets(line, 1024, out)) out_stream << line;
+		::std::istringstream is(out_stream.str());
+		::std::string line_str;
 		FSHELL2_AUDIT_TRACE("reading input");
-		while(!::std::getline(::std::cin, line).eof())
+		while(!::std::getline(is, line_str).eof())
 		{
-			FSHELL2_AUDIT_TRACE("read " + line);
-			if (line.empty() || *(line.begin()) == '#') continue;
-			out << line << ::std::endl;
+			FSHELL2_AUDIT_TRACE("read " + line_str);
+			if (line_str.empty() || *(line_str.begin()) == '#') continue;
+			os << line_str << ::std::endl;
 		}
 		
 		int status(-1);
-		child = ::waitpid(child, &status, WNOHANG);
+		child = ::waitpid(child, &status, 0);
 		FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, -1 != child,
 				"Failed to wait for child");
 
@@ -198,8 +263,9 @@ int Macro_Processing::preprocess(char * filename, ::std::ostream & out) const {
 		fcheck.close();
 		::std::ostringstream os;
 		int cpp_ret(preprocess(m_checkfilename, os));
-		FSHELL2_PROD_CHECK1(::fshell2::Macro_Processing_Error, 0 == cpp_ret && os.str().empty(),
-				"Failed to process macro definition");
+		FSHELL2_PROD_CHECK1(::fshell2::Macro_Processing_Error, 0 == cpp_ret,
+				"Failed to process macro definition, " + os.str());
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, os.str().empty());
 
 		::std::ofstream fdef(m_deffilename, ::std::ios_base::out|::std::ios_base::app);
 		fdef << cmd << ::std::endl;

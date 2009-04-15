@@ -57,7 +57,12 @@ void test( Test_Data & data )
 
 	TEST_ASSERT(Macro_Processing::get_instance().expand("bla") == "bla");
 	TEST_ASSERT(Macro_Processing::get_instance().expand("#define alpha beta") == "");
-	TEST_ASSERT(Macro_Processing::get_instance().expand("alpha") == "beta");
+	TEST_ASSERT_RELATION(Macro_Processing::get_instance().expand("alpha"), ==, "beta\n");
+
+	::std::ostringstream os;
+	Macro_Processing::help(os);
+	TEST_ASSERT(data.compare("macro_help", os.str()));
+	os.str("");
 
 	TEST_THROWING_BLOCK_ENTER;
 	Macro_Processing::get_instance().expand("#define 123");
