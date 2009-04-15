@@ -1,4 +1,4 @@
-# vi: set ft=automake
+# vi: set ft=automake:
 
 VPATH =
 vpath %.cpp $(srcdir)
