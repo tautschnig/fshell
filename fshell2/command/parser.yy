@@ -94,6 +94,8 @@ extern "C"
 %token <STRING> TOK_QUOTED_STRING
 /* a natural number */
 %token <NUMBER> TOK_NAT_NUMBER
+/* invalid characters */
+%token TOK_INVALID
 
 %%
 

@@ -146,6 +146,9 @@ TOK_NAT_NUMBER          [0-9]+
                                         return TOK_NAT_NUMBER; 
                                       }
 
+.                                     {
+										return TOK_INVALID;
+									  }
 
 %%
 
