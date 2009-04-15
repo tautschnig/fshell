@@ -61,6 +61,7 @@ AC_CHECK_HEADERS([diagnostics/basic_exceptions/low_level_exception.hpp \
                   glob.h \
                   signal.h \
                   sys/wait.h \
+                  sys/stat.h \
                   ],
                   [],
                   AC_MSG_ERROR([Essential header $ac_header missing]))
