@@ -3,7 +3,7 @@ include $(top_srcdir)/model.am
 AM_MAKEFLAGS = CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS)"
 
 # add further subdirectories here
-SUBDIRS = . test doc MiniSat-p_v1.14 src fshell2
+SUBDIRS = . test doc MiniSat-p_v1.14 fshell2 cbmc/src
 
 # just a hint for autoproject
 # _SOURCES = model.am ChangeLog NEWS README TODO
@@ -31,4 +31,14 @@ all-local:
 	if [ "$(top_srcdir)" = "." ] ; then \
 		$(top_srcdir)/config/update-makefiles.pl @enable_install_headers@ @disable_update_makefiles@ @with_diagnostics@ fshell2/ ; \
 	fi
+	if [ ! -d cbmc/.git ] ; then \
+		if [ ! -d cbmc ] || [ -z "`find cbmc -cnewer cbmc-src.tar.gz`" ] ; then \
+			tar xzf cbmc-src.tar.gz ; \
+		fi ; \
+	fi
+
+cbmc-src.tar.gz: $(shell find cbmc -name "*.cpp" -o -name "*.h")
+	rm -f $@
+	make -C cbmc/src/ clean
+	tar czf $@ cbmc/src/
 
