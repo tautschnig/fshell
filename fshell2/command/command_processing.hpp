@@ -64,7 +64,7 @@ class Command_Processing
 
 	static Command_Processing & get_instance();
 
-	status_t process(::language_uit manager, ::std::ostream & os, char const * cmd);
+	status_t process(::language_uit & manager, ::std::ostream & os, char const * cmd);
 
 	static ::std::ostream & help(::std::ostream & os);
 

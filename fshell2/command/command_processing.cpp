@@ -98,7 +98,7 @@ Command_Processing::Command_Processing & Command_Processing::get_instance() {
 }
 	
 ::std::ostream & Command_Processing::help(::std::ostream & os) {
-	os << HELP << ::std::endl;
+	os << "Control commands:" << ::std::endl << HELP << ::std::endl;
 	return os;
 }
 	
@@ -131,7 +131,7 @@ Command_Processing::Command_Processing & Command_Processing::get_instance() {
 	return os;
 }
 
-Command_Processing::status_t Command_Processing::process(::language_uit manager,
+Command_Processing::status_t Command_Processing::process(::language_uit & manager,
 		::std::ostream & os, char const * cmd) {
 	while (0 != *cmd && ::std::isspace(*cmd)) ++cmd;
 	if (0 == *cmd || ('/' == *cmd && '/' == *(cmd + 1))) return BLANK;
@@ -176,8 +176,19 @@ Command_Processing::status_t Command_Processing::process(::language_uit manager,
 				// is to be printed
 				m_parse_time[arg] = ::std::time(0);
 				// attempt to parse the file
-				FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,!manager.parse(arg),
-						::diagnostics::internal::to_string("Failed to parse ", arg));
+				try {
+					bool err(manager.parse(arg));
+					FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,!err,
+							::diagnostics::internal::to_string("Failed to parse ", arg));
+				} catch (::std::string & e) {
+					FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,false,
+							::diagnostics::internal::to_string("Failed to parse ", arg,
+								": ", e));
+				} catch (char const * e) {
+					FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,false,
+							::diagnostics::internal::to_string("Failed to parse ", arg,
+								": ", e));
+				}
 				// reset defines
 				if (::config.ansi_c.defines.end() != last_global) {
 					++last_global;
@@ -187,8 +198,8 @@ Command_Processing::status_t Command_Processing::process(::language_uit manager,
 			status = CMD_PROCESSED;
 			break;
 		case CMD_SHOW_FILENAMES:
-			for(::language_filest::modulemapt::const_iterator iter(manager.language_files.modulemap.begin());
-					iter != manager.language_files.modulemap.end(); ++iter)
+			for(::language_filest::filemapt::const_iterator iter(manager.language_files.filemap.begin());
+					iter != manager.language_files.filemap.end(); ++iter)
 				os << iter->first << ::std::endl;
 			status = CMD_PROCESSED;
 			break;
@@ -198,8 +209,8 @@ Command_Processing::status_t Command_Processing::process(::language_uit manager,
 			status = CMD_PROCESSED;
 			break;
 		case CMD_SHOW_SOURCECODE_ALL:
-			for(::language_filest::modulemapt::const_iterator iter(manager.language_files.modulemap.begin());
-					iter != manager.language_files.modulemap.end(); ++iter)
+			for(::language_filest::filemapt::const_iterator iter(manager.language_files.filemap.begin());
+					iter != manager.language_files.filemap.end(); ++iter)
 				print_file_contents(os, iter->first.c_str());
 			status = CMD_PROCESSED;
 			break;

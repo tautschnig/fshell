@@ -32,6 +32,7 @@
 #include <fshell2/config/annotations.hpp>
 
 #include <fstream>
+#include <cbmc/src/util/config.h>
 
 #include <fshell2/command/command_processing.hpp>
 #include <fshell2/exception/command_processing_error.hpp>
@@ -56,6 +57,7 @@ using namespace ::diagnostics::unittest;
 void test( Test_Data & data )
 {
 	::cmdlinet cmdline;
+	::config.set(cmdline);
 	::language_uit l(cmdline);
 	::std::ostringstream os;
 
@@ -89,7 +91,12 @@ void test( Test_Data & data )
 	::strcat(cmd, "\"");
 
 	TEST_ASSERT(Command_Processing::CMD_PROCESSED == Command_Processing::get_instance().process(l, os, cmd));
+	
+	TEST_ASSERT(!l.typecheck());
+	TEST_ASSERT(!l.final());
+	
 	TEST_ASSERT(Command_Processing::CMD_PROCESSED == Command_Processing::get_instance().process(l, os, "show filenames"));
+	TEST_ASSERT(!os.str().empty());
 	
 	os.str("");
 	TEST_ASSERT(Command_Processing::CMD_PROCESSED == Command_Processing::get_instance().process(l, os, "show sourcecode all"));
