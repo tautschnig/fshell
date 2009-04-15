@@ -38,6 +38,12 @@ for f in `find $dir -name ".svn" -prune -type f -o -type f` ; do
     ${base}/external/*)
       continue
       ;;
+    ${base}/cbmc/*)
+      continue
+      ;;
+    ${base}/MiniSat-p_v1.14/*)
+      continue
+      ;;
     ${base}/test/*)
       continue;
       ;;
