@@ -63,7 +63,8 @@ void test( Test_Data & data )
 	::fshell2::fql::Query_Processing::get_instance().parse(os, "bla bla bla");
 	TEST_THROWING_BLOCK_EXIT(::fshell2::Query_Processing_Error);
 	
-	TEST_ASSERT(0 != ::fshell2::fql::Query_Processing::get_instance().parse(os, "proper query ..."));
+	TEST_ASSERT(0 == ::fshell2::fql::Query_Processing::get_instance().parse(os,
+				"cover edgecov(cfg,@file(\"bla.c\"))"));
 }
 
 /** @cond */

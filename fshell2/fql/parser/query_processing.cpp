@@ -31,6 +31,7 @@
 #include <fshell2/exception/query_processing_error.hpp>
 
 #include <diagnostics/basic_exceptions/parse_error.hpp>
+#include <diagnostics/basic_exceptions/violated_invariance.hpp>
 
 #include <cerrno>
 
@@ -56,7 +57,7 @@ Query_Processing::Query_Processing & Query_Processing::get_instance() {
 }
 	
 ::std::ostream & Query_Processing::help(::std::ostream & os) {
-	os << HELP << ::std::endl;
+	os << "FQL:" << ::std::endl << HELP << ::std::endl;
 	return os;
 }
 	
@@ -69,8 +70,15 @@ int Query_Processing::parse(::std::ostream & os, char const * query) {
 	lexer.switch_streams(&is, &os);
 	// reset errno, readline for some reason sets this to EINVAL
 	errno = 0;
-	// yyparse returns 0 iff there was no error
-	if (0 != FQLparse(&lexer, &os)) return 1;
+	// try to parse
+	try {
+		int parse(0);
+		parse = FQLparse(&lexer, &os);
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 0 == parse);
+	} catch (::diagnostics::Parse_Error & e) {
+		FSHELL2_PROD_CHECK1(Query_Processing_Error, false,
+				::diagnostics::internal::to_string("Query parsing failed: ", e.what()));
+	}
 
 	return 0;
 }
