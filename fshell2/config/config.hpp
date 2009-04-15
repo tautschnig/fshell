@@ -51,7 +51,7 @@
  * compiler from warning about useless &ldquo;;&rdquo; (copied from diagnostics,
  * credits go to Christian Schallhart).
  *
- * @namespace fortas @anchor fshell2_namespace
+ * @namespace fshell2 @anchor fshell2_namespace
  *
 */
 #define FSHELL2_NAMESPACE_BEGIN namespace fshell2 { DUMMY_FUNC
@@ -62,6 +62,40 @@
  *
 */
 #define FSHELL2_NAMESPACE_END } DUMMY_FUNC
+
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * @brief Use this macro to start the @ref fshell2_command_namespace "command" 
+ * namespace.
+ *
+ * @namespace fshell2::command @anchor fshell2_command_namespace
+ *
+*/
+#define FSHELL2_COMMAND_NAMESPACE_BEGIN namespace command { DUMMY_FUNC
+
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * @brief Macro to end the @ref fshell2_command_namespace "command" namespace.
+ *
+*/
+#define FSHELL2_COMMAND_NAMESPACE_END } DUMMY_FUNC
+
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * @brief Use this macro to start the @ref fshell2_macro_namespace "macro" 
+ * namespace.
+ *
+ * @namespace fshell2::macro @anchor fshell2_macro_namespace
+ *
+*/
+#define FSHELL2_MACRO_NAMESPACE_BEGIN namespace macro { DUMMY_FUNC
+
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * @brief Macro to end the @ref fshell2_macro_namespace "macro" namespace.
+ *
+*/
+#define FSHELL2_MACRO_NAMESPACE_END } DUMMY_FUNC
 
 ////////////////////////////////////////////////////////////////////////////////
 /**
