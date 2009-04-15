@@ -14,7 +14,7 @@ include $(top_srcdir)/doxygen.am
 
 AUX_DIST = $(ac_aux_dir)/config.guess $(ac_aux_dir)/config.sub $(ac_aux_dir)/install-sh $(ac_aux_dir)/ltmain.sh $(ac_aux_dir)/missing $(ac_aux_dir)/depcomp $(ac_aux_dir)/ylwrap m4/libtool.m4 m4/ltoptions.m4 m4/ltsugar.m4 m4/ltversion.m4 m4/lt~obsolete.m4
 
-EXTRA_DIST = $(DX_CONFIG) LICENSE NOTICE
+EXTRA_DIST = $(DX_CONFIG) LICENSE NOTICE Artistic
 
 MAINTAINERCLEANFILES += aclocal.m4 configure config.h.in $(AUX_DIST)
 DISTCLEANFILES = config.h.in~ _configs.sed fshell2/config/features.hpp
