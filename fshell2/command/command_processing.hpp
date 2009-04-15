@@ -59,7 +59,8 @@ class Command_Processing
 		CMD_SHOW_FILENAMES,
 		CMD_SHOW_SOURCECODE,
 		CMD_SHOW_SOURCECODE_ALL,
-		CMD_START
+		CMD_SET_ENTRY,
+		CMD_SET_LIMIT_COUNT
 	} status_t;
 
 	static Command_Processing & get_instance();

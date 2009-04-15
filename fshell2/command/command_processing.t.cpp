@@ -109,7 +109,12 @@ void test( Test_Data & data )
 	TEST_ASSERT(Command_Processing::CMD_PROCESSED == Command_Processing::get_instance().process(l, os, cmd));
 	TEST_ASSERT(data.compare("tmp_source_show", os.str()));
 	
-	TEST_ASSERT(Command_Processing::CMD_PROCESSED == Command_Processing::get_instance().process(l, os, "start main"));
+	TEST_ASSERT(Command_Processing::CMD_PROCESSED == Command_Processing::get_instance().process(l, os, "set entry main"));
+	TEST_ASSERT(::config.main == "main");
+
+	TEST_ASSERT(0 == ::config.fshell.max_test_cases);
+	TEST_ASSERT(Command_Processing::CMD_PROCESSED == Command_Processing::get_instance().process(l, os, "set limit count 27"));
+	TEST_ASSERT(27 == ::config.fshell.max_test_cases);
 
 	::unlink(tempname);
 	free(tempname);

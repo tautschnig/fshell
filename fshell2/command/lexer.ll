@@ -33,6 +33,8 @@
 
 /* in a command */
 %start command
+/* setting options */
+%start options
 
 %{
 
@@ -81,15 +83,21 @@ TOK_ADD                 ADD
 TOK_SOURCECODE          SOURCECODE
 TOK_DEFINE              -D
 TOK_EQ                  =
-TOK_START               START
 /* display the loaded sources */
 TOK_SHOW                SHOW
 TOK_ALL                 ALL
 TOK_FILENAMES           FILENAMES
+/* setting options */
+TOK_SET                 SET
+TOK_ENTRY               ENTRY
+TOK_LIMIT               LIMIT
+TOK_COUNT               COUNT
 /* C identifier */
 TOK_C_IDENT             [_a-zA-Z][_a-zA-Z0-9]*
 /* a quoted string (no newline) */
 TOK_QUOTED_STRING       \"[^\"]*\"
+/* a natural number */
+TOK_NAT_NUMBER          [0-9]+
 
 %%
 
@@ -103,13 +111,17 @@ TOK_QUOTED_STRING       \"[^\"]*\"
 <command>{TOK_SOURCECODE}   { return TOK_SOURCECODE; }
 <command>{TOK_DEFINE}   { return TOK_DEFINE; }
 <command>{TOK_EQ}   { return TOK_EQ; }
-<INITIAL>{TOK_START}   { BEGIN command; return TOK_START; }
 
 <INITIAL>{TOK_SHOW}   { BEGIN command; return TOK_SHOW; }
 <command>{TOK_ALL}   { return TOK_ALL; }
 <command>{TOK_FILENAMES}   { return TOK_FILENAMES; }
 
-<command>{TOK_C_IDENT}  { 
+<INITIAL>{TOK_SET}   { BEGIN options; return TOK_SET; }
+<options>{TOK_ENTRY}   { return TOK_ENTRY; }
+<options>{TOK_LIMIT}   { return TOK_LIMIT; }
+<options>{TOK_COUNT}   { return TOK_COUNT; }
+
+<command,options>{TOK_C_IDENT}  { 
                                         yylval.STRING = strdup( yytext );
                                         FSHELL2_PROD_ASSERT1(::diagnostics::Parse_Error,
                                           yylval.STRING != 0, "Out of memory" );
@@ -124,6 +136,14 @@ TOK_QUOTED_STRING       \"[^\"]*\"
                                         strncpy( yylval.STRING, yytext + sizeof(char), (len - 2)*sizeof(char) ); 
                                         yylval.STRING[ len - 2 ] = '\0';
                                         return TOK_QUOTED_STRING; 
+                                      }
+<options>{TOK_NAT_NUMBER}				  { 
+                                        yylval.NUMBER = strtol( yytext, 0, 10 );
+                                        FSHELL2_PROD_CHECK1(::diagnostics::Parse_Error, 
+                                          EINVAL != errno, "Invalid number" );
+                                        FSHELL2_PROD_CHECK1(::diagnostics::Parse_Error, 
+                                          ERANGE != errno, "Number out of range" );
+                                        return TOK_NAT_NUMBER; 
                                       }
 
 

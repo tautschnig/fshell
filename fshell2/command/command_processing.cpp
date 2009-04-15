@@ -44,20 +44,23 @@
 
 extern int CMDparse(CMDFlexLexer *,
 		::fshell2::command::Command_Processing::status_t &, char **,
-		::std::list< ::std::pair< char*, char* > > &);
+		int *, ::std::list< ::std::pair< char*, char* > > &);
 // extern int yydebug;
 /* end parser */
 
 #define HELP \
 "<Statement> ::= `QUIT' | `HELP'" << ::std::endl << \
-"                | `ADD' `SOURCECODE' <Defines> <File name>" << ::std::endl << \
-"                | `SHOW' `FILENAMES'" << ::std::endl << \
-"                | `SHOW' `SOURCECODE' <File name>" << ::std::endl << \
-"                | `SHOW' `SOURCECODE' `ALL'" << ::std::endl << \
-"                | `START' <Identifier>" << ::std::endl << \
+"              | `ADD' `SOURCECODE' <Defines> <File name>" << ::std::endl << \
+"              | `SHOW' `FILENAMES'" << ::std::endl << \
+"              | `SHOW' `SOURCECODE' <File name>" << ::std::endl << \
+"              | `SHOW' `SOURCECODE' `ALL'" << ::std::endl << \
+"              | `SET' <Options>" << ::std::endl << \
+"<Options> ::= `ENTRY' <Identifier>" << ::std::endl << \
+"            | `LIMIT' `COUNT' <Number>" << ::std::endl << \
 "<File name> ::= <Quoted String>" << ::std::endl << \
-"<Defines> ::= | `-D' <Identifier> <Defines>" << ::std::endl << \
-"              | `-D' <Identifier> `=' <Quoted String> <Defines>" << ::std::endl << \
+"<Defines> ::=" << ::std::endl << \
+"            | `-D' <Identifier> <Defines>" << ::std::endl << \
+"            | `-D' <Identifier> `=' <Quoted String> <Defines>" << ::std::endl << \
 "Comments start with `//' and end at the end of the line"
 
 FSHELL2_NAMESPACE_BEGIN;
@@ -147,10 +150,11 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 	// information returned by parser
 	status_t status(NO_CONTROL_COMMAND);
 	char * arg(0);
+	int numeric_arg(-1);
 	::std::list< ::std::pair< char*, char* > > defines;
 	Cleanup cleanup(&arg, defines);
 	// yyparse returns 0 iff there was no error
-	if (0 != CMDparse(&lexer, status, &arg, defines)) return NO_CONTROL_COMMAND;
+	if (0 != CMDparse(&lexer, status, &arg, &numeric_arg, defines)) return NO_CONTROL_COMMAND;
 
 	// parsing succeeded, what has to be done?
 	switch (status) {
@@ -214,12 +218,19 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 				print_file_contents(os, iter->first.c_str());
 			status = CMD_PROCESSED;
 			break;
-		case CMD_START:
+		case CMD_SET_ENTRY:
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, arg != 0);
 			FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,
 					manager.context.has_symbol(arg),
 					::diagnostics::internal::to_string("Could not find entry function ", arg));
 			::config.main = arg;
+			status = CMD_PROCESSED;
+			break;
+		case CMD_SET_LIMIT_COUNT:
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, numeric_arg >= 0);
+			FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error, numeric_arg > 0,
+					"Limit must be greater than 0");
+			::config.fshell.max_test_cases = numeric_arg;
 			status = CMD_PROCESSED;
 			break;
 		case CMD_PROCESSED:

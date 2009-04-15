@@ -48,7 +48,7 @@
 extern "C"
 {
   void yyerror(CMDFlexLexer *, ::fshell2::command::Command_Processing::status_t &,
-  	char **, ::std::list< ::std::pair< char*, char* > > &, char const*);
+  	char **, int*, ::std::list< ::std::pair< char*, char* > > &, char const*);
 }
 
 #define yylex() lexer->yylex()
@@ -60,9 +60,10 @@ extern "C"
 %parse-param { CMDFlexLexer * lexer }
 %parse-param { ::fshell2::command::Command_Processing::status_t & cmd }
 %parse-param { char ** arg }
+%parse-param { int * numeric_arg }
 %parse-param { ::std::list< ::std::pair< char*, char* > > & defines }
 
-%initial-action { *arg = 0; }
+%initial-action { *arg = 0; *numeric_arg = -1; }
 
 %union
 {
@@ -78,15 +79,21 @@ extern "C"
 %token TOK_SOURCECODE
 %token TOK_DEFINE
 %token TOK_EQ
-%token TOK_START
 /* display the loaded sources */
 %token TOK_SHOW
 %token TOK_ALL
 %token TOK_FILENAMES
+/* setting options */
+%token TOK_SET
+%token TOK_ENTRY
+%token TOK_LIMIT
+%token TOK_COUNT
 /* C identifier */
 %token <STRING> TOK_C_IDENT
 /* a quoted string (no newline) */
 %token <STRING> TOK_QUOTED_STRING
+/* a natural number */
+%token <NUMBER> TOK_NAT_NUMBER
 
 %%
 
@@ -116,12 +123,8 @@ Command: TOK_QUIT
        {
 	     cmd = ::fshell2::command::Command_Processing::CMD_SHOW_SOURCECODE_ALL;
        }
-       | TOK_START TOK_C_IDENT
-       {
-	     cmd = ::fshell2::command::Command_Processing::CMD_START;
-		 *arg = $2;
-       }
-       ;
+       | TOK_SET Options
+	   ;
 
 Defines: /* empty */
        | Defines TOK_DEFINE TOK_C_IDENT
@@ -133,10 +136,23 @@ Defines: /* empty */
          defines.push_back( ::std::make_pair( $3, $5 ) );
        }
 
+Options: TOK_ENTRY TOK_C_IDENT
+       {
+	     cmd = ::fshell2::command::Command_Processing::CMD_SET_ENTRY;
+		 *arg = $2;
+       }
+	   | TOK_LIMIT TOK_COUNT TOK_NAT_NUMBER
+	   {
+	     cmd = ::fshell2::command::Command_Processing::CMD_SET_LIMIT_COUNT;
+		 *numeric_arg = $3;
+	   }
+       ;
+
+
 %%
 
 void yyerror(CMDFlexLexer *, ::fshell2::command::Command_Processing::status_t &,
-	char **, ::std::list< ::std::pair< char*, char* > > &, char const*)
+	char **, int *, ::std::list< ::std::pair< char*, char* > > &, char const*)
 {
 	// no-op
 }
