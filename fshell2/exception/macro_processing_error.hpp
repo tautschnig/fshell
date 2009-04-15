@@ -24,7 +24,7 @@
 /*! \file fshell2/exception/macro_processing_error.hpp
  * \brief Interface of Macro_Processing_Error
  *
- * $Id: command_processing_error.hpp 1160 2008-09-03 20:51:21Z tautschn $
+ * $Id$
  * \author Michael Tautschnig  <tautschn@model.in.tum.de>
  * \date   Sat Nov 24 13:43:04 CET 2007
 */

@@ -19,13 +19,13 @@
  *******************************************************************************/
 
 /**
- * @file fshell2/command/parser/lexer.ll
+ * @file fshell2/command/lexer.ll
  *
  * @brief Lex/flex based lexer
  * 
  * The implementation is set to be case-insensitive
  *
- * $Id: lexer.ll 1134 2008-09-02 06:46:37Z tautschn $
+ * $Id$
  *
  * @author Michael Tautschnig <tautschnig@forsyte.de>
  * @date   Thu Feb 19 23:41:27 CET 2009

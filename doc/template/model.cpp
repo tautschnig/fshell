@@ -25,7 +25,7 @@
  * @brief A .cpp coding style example
  *
  *
- * $Id: model.cpp 5 2006-11-22 21:26:43Z tautschn $
+ * $Id$
  *
  * @author Michael Tautschnig  <tautschn@model.in.tum.de>
  * @date   Thu Nov 09 06:44:41 CET 2006

@@ -21,7 +21,7 @@
 /*! \file fshell2/exception/query_processing_error.cpp
  * \brief Implementation of Query_Processing_Error
  *
- * $Id: query_processing_error.cpp 297 2007-11-27 00:58:23Z tautschn $
+ * $Id$
  * \author Michael Tautschnig  <tautschn@model.in.tum.de>
  * \date   Sat Nov 24 13:43:04 CET 2007
 */

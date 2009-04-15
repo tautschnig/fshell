@@ -47,6 +47,9 @@ for f in `find $dir -name ".svn" -prune -type f -o -type f` ; do
     ${base}/test/*)
       continue;
       ;;
+    ${base}/fshell2/config/features.hpp|${base}/fshell2/fql/parser/grammar.hpp)
+      continue;
+      ;;
     *.hpp)
       if [ ! -e `dirname $f`/.svn ] ; then
         warning "Directory `dirname $f` not versioned"
@@ -55,7 +58,7 @@ for f in `find $dir -name ".svn" -prune -type f -o -type f` ; do
       
       echo $f | egrep -q "[A-Z]" && warning "filename $f contains uppercase characters"
       
-      test `egrep '(Copyright \\(C\\)|This file is distributed under the University of Illinois Open Source)' $f | wc -l` -eq 1 || error "Missing or duplicate copyright notice in $f" 
+      test `egrep '(Copyright 20|This file is distributed under the University of Illinois Open Source)' $f | wc -l` -eq 1 || error "Missing or duplicate copyright notice in $f" 
 
       svn pg svn:keywords $f | grep -q Id || warning "run svn ps svn:keywords Id $f"
       
@@ -80,7 +83,7 @@ for f in `find $dir -name ".svn" -prune -type f -o -type f` ; do
       
       echo $f | egrep -q "[A-Z]" && warning "filename $f contains uppercase characters"
       
-      test `egrep '(Copyright \\(C\\)|This file is distributed under the University of Illinois Open Source)' $f | wc -l` -eq 1 || error "Missing or duplicate copyright notice in $f" 
+      test `egrep '(Copyright 20|This file is distributed under the University of Illinois Open Source)' $f | wc -l` -eq 1 || error "Missing or duplicate copyright notice in $f" 
       
       svn pg svn:keywords $f | grep -q Id || warning "run svn ps svn:keywords Id $f"
       

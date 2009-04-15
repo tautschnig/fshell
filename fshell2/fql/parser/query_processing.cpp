@@ -43,7 +43,7 @@ extern int FQLparse(FQLFlexLexer *, ::std::ostream *);
 // extern int yydebug;
 /* end parser */
 
-#include "grammar.hpp"
+#include <fshell2/fql/parser/grammar.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;

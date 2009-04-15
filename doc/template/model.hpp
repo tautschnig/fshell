@@ -32,7 +32,7 @@
  * project
  *
  *
- * $Id: model.hpp 6 2006-11-23 08:52:51Z tautschn $
+ * $Id$
  *
  * @author Michael Tautschnig  <tautschn@model.in.tum.de>
  * @date   Thu Nov 09 07:13:48 CET 2006

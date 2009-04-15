@@ -20,12 +20,12 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 /**
- * @file fshell2/command/parser/parser.yy
+ * @file fshell2/command/parser.yy
  *
  * @brief YACC/bison based parser
  *
  *
- * $Id: parser.yy 1384 2009-02-18 12:33:41Z michaelz $
+ * $Id$
  *
  * @author Michael Tautschnig <tautschn@model.in.tum.de>
  * @date   Thu Feb 19 23:41:39 CET 2009

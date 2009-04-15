@@ -24,7 +24,7 @@
 /**
  * @file fshell2/config/annotations.hpp
  *
- * $Id: annotations.hpp 331 2007-12-04 18:53:18Z tautschn $
+ * $Id$
  *
  * @author Christian Schallhart
  *

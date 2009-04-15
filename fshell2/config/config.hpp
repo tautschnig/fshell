@@ -30,7 +30,7 @@
  * This file must be included by all components.
  *
  *
- * $Id: config.hpp 1384 2009-02-18 12:33:41Z michaelz $
+ * $Id$
  *
  * @author Michael Tautschnig <tautschn@model.in.tum.de>
  * @date   Wed Sep 07 23:27:30 CEST 2005
