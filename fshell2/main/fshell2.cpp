@@ -72,7 +72,7 @@ FShell2::~FShell2() {
 	// ::history_truncate_lines(".fshell2_history", 200);
 }
 
-bool FShell2::process_line(::language_uit & manager, ::std::ostream & os, char * line) {
+bool FShell2::process_line(::language_uit & manager, ::std::ostream & os, char const * line) {
 	using ::fshell2::command::Command_Processing;
 	using ::fshell2::macro::Macro_Processing;
 	using ::fshell2::fql::Query_Processing;

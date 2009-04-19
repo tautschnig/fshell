@@ -38,13 +38,12 @@ $(CBMC_OBJS):
 include_fshell2_maindir = $(includedir)/fshell2/main
 noinst_LTLIBRARIES = libmain.la
 libmain_la_SOURCES = fshell2.cpp
-libmain_la_LIBADD = ../exception/libexception.la ../command/libcommand.la ../macro/libmacro.la ../fql/parser/libparser.la
 include_fshell2_main_HEADERS = fshell2.hpp
 check_PROGRAMS = fshell2
 fshell2_SOURCES = fshell2.t.cpp
 # add additional objects required to build fshell2 here, like
 # fshell2_LDADD = ../base/libbase.la libbla.la
-fshell2_LDADD = libmain.la $(CBMC_OBJS)
+fshell2_LDADD = ../exception/libexception.la ../command/libcommand.la ../macro/libmacro.la ../fql/parser/libparser.la libmain.la $(CBMC_OBJS)
 # note that this entry (fshell2_SOURCES, fshell2_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually

@@ -48,7 +48,7 @@ class FShell2
 	public:
 	static FShell2 & get_instance();
 
-	bool process_line(::language_uit & manager, ::std::ostream & os, char * line);
+	bool process_line(::language_uit & manager, ::std::ostream & os, char const * line);
 
 	void interactive(::language_uit & manager, ::std::ostream & os);
 
