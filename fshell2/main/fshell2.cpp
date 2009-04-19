@@ -113,11 +113,11 @@ void FShell2::interactive(::language_uit & manager, ::std::ostream & os) {
 				return;
 			}
 		} catch (::fshell2::Command_Processing_Error & e) {
-			throw;
+			os << e.what() << ::std::endl;
 		} catch (::fshell2::Macro_Processing_Error & e) {
-			throw;
+			os << e.what() << ::std::endl;
 		} catch (::fshell2::Query_Processing_Error & e) {
-			throw;
+			os << e.what() << ::std::endl;
 		}
 	}
 }

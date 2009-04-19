@@ -51,17 +51,17 @@ Macro_Processing::Macro_Processing() :
 {
 	int ret(0);
 	ret = ::mkstemps(m_deffilename, 2);
-	FSHELL2_PROD_ASSERT1(::fshell2::Macro_Processing_Error, ret != -1,
+	FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, ret != -1,
 			"Failed to create macro expansion file");
 	FSHELL2_AUDIT_TRACE("Defines are written to " + *m_deffilename);
 	::std::ofstream fs(m_deffilename);
-	FSHELL2_PROD_ASSERT1(::fshell2::Macro_Processing_Error, fs.is_open(),
+	FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, fs.is_open(),
 			"Failed to open macro expansion file");
 	fs << "// FShell macro list" << ::std::endl;
 	fs.close();
 	
 	ret = ::mkstemps(m_checkfilename, 2);
-	FSHELL2_PROD_ASSERT1(::fshell2::Macro_Processing_Error, ret != -1,
+	FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, ret != -1,
 			"Failed to create macro syntax check file");
 
 	::std::vector< ::std::string > cpp_cmdline;
