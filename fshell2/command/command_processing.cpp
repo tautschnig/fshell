@@ -48,7 +48,7 @@ extern int CMDparse(CMDFlexLexer *,
 // extern int yydebug;
 /* end parser */
 
-#define HELP \
+#define COMMAND_HELP \
 "<Statement> ::= `QUIT' | `HELP'" << ::std::endl << \
 "              | `ADD' `SOURCECODE' <Defines> <File name>" << ::std::endl << \
 "              | `SHOW' `FILENAMES'" << ::std::endl << \
@@ -101,7 +101,7 @@ Command_Processing::Command_Processing & Command_Processing::get_instance() {
 }
 	
 ::std::ostream & Command_Processing::help(::std::ostream & os) {
-	os << "Control commands:" << ::std::endl << HELP << ::std::endl;
+	os << "Control commands:" << ::std::endl << COMMAND_HELP << ::std::endl;
 	return os;
 }
 	

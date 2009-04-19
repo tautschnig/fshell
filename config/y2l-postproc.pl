@@ -4,8 +4,6 @@ use strict;
 
 my $last_tok = "";
 
-print "#define HELP \\\n";
-
 while (<>) {
   my $line = $_;
   $line =~ s/(\s+|^)([a-zA-Z_]+)(\s+|$)/$1<$2>$3/g;

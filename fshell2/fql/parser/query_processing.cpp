@@ -57,7 +57,7 @@ Query_Processing::Query_Processing & Query_Processing::get_instance() {
 }
 	
 ::std::ostream & Query_Processing::help(::std::ostream & os) {
-	os << "FQL:" << ::std::endl << HELP << ::std::endl;
+	os << "FQL:" << ::std::endl << FQL_HELP << ::std::endl;
 	return os;
 }
 	

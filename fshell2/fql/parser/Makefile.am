@@ -24,7 +24,8 @@ EXTRA_DIST = grammar.hpp
 MAINTAINERCLEANFILES += grammar.hpp
 
 grammar.hpp: parser.yy lexer.txt
-	@AWK@ -f $(top_srcdir)/config/y2l -- -p -tlexer.txt parser.yy | $(top_srcdir)/config/y2l-postproc.pl > $@
+	echo "#define FQL_HELP \\" > $@
+	@AWK@ -f $(top_srcdir)/config/y2l -- -p -tlexer.txt parser.yy | $(top_srcdir)/config/y2l-postproc.pl >> $@
 
 query_processing.cpp: grammar.hpp
 

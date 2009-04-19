@@ -82,7 +82,9 @@ bool FShell2::process_line(::language_uit & manager, ::std::ostream & os, char c
 			return true;
 		case Command_Processing::CMD_HELP:
 			Command_Processing::help(os);
+			os << ::std::endl;
 			Macro_Processing::help(os);
+			os << ::std::endl;
 			Query_Processing::help(os);
 			return false;
 		case Command_Processing::CMD_PROCESSED:
