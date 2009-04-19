@@ -51,20 +51,59 @@ using namespace ::diagnostics::unittest;
  * @test A test of Query_Processing
  *
  */
-void test( Test_Data & data )
+void test_basic( Test_Data & data )
+{
+	::std::ostringstream os;
+
+	TEST_ASSERT(0 == ::fshell2::fql::Query_Processing::get_instance().parse(os,
+				"cover edgecov(cfg,@file(\"bla.c\"))"));
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * @test A test of Query_Processing
+ *
+ */
+void test_help( Test_Data & data )
 {
 	::std::ostringstream os;
 
 	::fshell2::fql::Query_Processing::help(os);
 	TEST_ASSERT(data.compare("query_help", os.str()));
 	os.str("");
-	
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * @test A test of Query_Processing
+ *
+ */
+void test_invalid( Test_Data & data )
+{
+	::std::ostringstream os;
+
 	TEST_THROWING_BLOCK_ENTER;
 	::fshell2::fql::Query_Processing::get_instance().parse(os, "bla bla bla");
 	TEST_THROWING_BLOCK_EXIT(::fshell2::Query_Processing_Error);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * @test A test of Query_Processing
+ *
+ */
+void test_use_case( Test_Data & data )
+{
+	::std::ostringstream os;
 	
 	TEST_ASSERT(0 == ::fshell2::fql::Query_Processing::get_instance().parse(os,
 				"cover edgecov(cfg,@file(\"bla.c\"))"));
+	
+	TEST_ASSERT(0 == ::fshell2::fql::Query_Processing::get_instance().parse(os,
+				"in @file(\"bla.c\") cover edgecov(cfg,identity) passing @func(main)"));
+	
+	TEST_ASSERT(0 == ::fshell2::fql::Query_Processing::get_instance().parse(os,
+				"in @file(\"bla.c\") cover edgecov(cfg,@BASICBLOCKENTRY) passing setminus(@file(\"bla.c\"),@func(unimplemented))"));
 }
 
 /** @cond */
@@ -76,7 +115,10 @@ FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
 
 TEST_SUITE_BEGIN;
-TEST_NORMAL_CASE( &test, LEVEL_PROD );
+TEST_NORMAL_CASE( &test_basic, LEVEL_PROD );
+TEST_NORMAL_CASE( &test_help, LEVEL_PROD );
+TEST_NORMAL_CASE( &test_invalid, LEVEL_PROD );
+TEST_NORMAL_CASE( &test_use_case, LEVEL_PROD );
 TEST_SUITE_END;
 
 STREAM_TEST_SYSTEM_MAIN;
