@@ -54,7 +54,7 @@ using namespace ::diagnostics::unittest;
  * @test A test of Command_Processing
  *
  */
-void test( Test_Data & data )
+void test_basic( Test_Data & data )
 {
 	::cmdlinet cmdline;
 	::config.set(cmdline);
@@ -66,17 +66,61 @@ void test( Test_Data & data )
 	TEST_ASSERT(Command_Processing::NO_CONTROL_COMMAND == Command_Processing::get_instance().process(l, os, "quit HELP"));
 	TEST_ASSERT(Command_Processing::BLANK == Command_Processing::get_instance().process(l, os, "   // comment"));
 	
+	TEST_ASSERT(Command_Processing::CMD_QUIT == Command_Processing::get_instance().process(l, os, "quit"));
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * @test A test of Command_Processing
+ *
+ */
+void test_help( Test_Data & data )
+{
+	::cmdlinet cmdline;
+	::config.set(cmdline);
+	::language_uit l(cmdline);
+	::std::ostringstream os;
+
+	using ::fshell2::command::Command_Processing;
+	
 	TEST_ASSERT(Command_Processing::CMD_HELP == Command_Processing::get_instance().process(l, os, "help"));
 	TEST_ASSERT(Command_Processing::CMD_HELP == Command_Processing::get_instance().process(l, os, "  HELP  "));
 	Command_Processing::help(os);
 	TEST_ASSERT(data.compare("command_help", os.str()));
-	os.str("");
-	
-	TEST_ASSERT(Command_Processing::CMD_QUIT == Command_Processing::get_instance().process(l, os, "quit"));
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * @test A test of Command_Processing
+ *
+ */
+void test_invalid( Test_Data & data )
+{
+	::cmdlinet cmdline;
+	::config.set(cmdline);
+	::language_uit l(cmdline);
+	::std::ostringstream os;
+
+	using ::fshell2::command::Command_Processing;
 
 	TEST_THROWING_BLOCK_ENTER;
 	Command_Processing::get_instance().process(l, os, "add sourcecode \"no_such_file.c\"");
 	TEST_THROWING_BLOCK_EXIT(::fshell2::Command_Processing_Error);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * @test A test of Command_Processing
+ *
+ */
+void test_use_case( Test_Data & data )
+{
+	::cmdlinet cmdline;
+	::config.set(cmdline);
+	::language_uit l(cmdline);
+	::std::ostringstream os;
+
+	using ::fshell2::command::Command_Processing;
 
 	char * tempname(::strdup("/tmp/srcXXXXXX.c"));
 	TEST_ASSERT(-1 != ::mkstemps(tempname, 2));
@@ -85,12 +129,12 @@ void test( Test_Data & data )
 		<< "{" << ::std::endl
 		<< "return 0;" << ::std::endl
 		<< "}" << ::std::endl;
-	char * cmd = static_cast<char*>(::malloc(::strlen("add sourcecode \"") + ::strlen(tempname) + 3)); // extra space for show ...
-	::strcpy(cmd, "add sourcecode \"");
-	::strcat(cmd, tempname);
-	::strcat(cmd, "\"");
+	of.close();
 
-	TEST_ASSERT(Command_Processing::CMD_PROCESSED == Command_Processing::get_instance().process(l, os, cmd));
+	::std::ostringstream cmd_str;
+	cmd_str << "add sourcecode \"" << tempname << "\"";
+
+	TEST_ASSERT(Command_Processing::CMD_PROCESSED == Command_Processing::get_instance().process(l, os, cmd_str.str().c_str()));
 	
 	TEST_ASSERT(!l.typecheck());
 	TEST_ASSERT(!l.final());
@@ -102,11 +146,10 @@ void test( Test_Data & data )
 	TEST_ASSERT(Command_Processing::CMD_PROCESSED == Command_Processing::get_instance().process(l, os, "show sourcecode all"));
 	TEST_ASSERT(data.compare("tmp_source_show_all", os.str()));
 	
-	::strcpy(cmd, "show sourcecode \"");
-	::strcat(cmd, tempname);
-	::strcat(cmd, "\"");
+	cmd_str.str("");
+	cmd_str << "show sourcecode \"" << tempname << "\"";
 	os.str("");
-	TEST_ASSERT(Command_Processing::CMD_PROCESSED == Command_Processing::get_instance().process(l, os, cmd));
+	TEST_ASSERT(Command_Processing::CMD_PROCESSED == Command_Processing::get_instance().process(l, os, cmd_str.str().c_str()));
 	TEST_ASSERT(data.compare("tmp_source_show", os.str()));
 	
 	TEST_ASSERT(Command_Processing::CMD_PROCESSED == Command_Processing::get_instance().process(l, os, "set entry main"));
@@ -118,7 +161,6 @@ void test( Test_Data & data )
 
 	::unlink(tempname);
 	free(tempname);
-	free(cmd);
 }
 
 /** @cond */
@@ -130,7 +172,10 @@ FSHELL2_COMMAND_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
 
 TEST_SUITE_BEGIN;
-TEST_NORMAL_CASE( &test, LEVEL_PROD );
+TEST_NORMAL_CASE( &test_basic, LEVEL_PROD );
+TEST_NORMAL_CASE( &test_help, LEVEL_PROD );
+TEST_NORMAL_CASE( &test_invalid, LEVEL_PROD );
+TEST_NORMAL_CASE( &test_use_case, LEVEL_PROD );
 TEST_SUITE_END;
 
 STREAM_TEST_SYSTEM_MAIN;
