@@ -91,7 +91,6 @@ TOK_ENTRY               (@ENTRY|\^)
 TOK_EXIT                (@EXIT|\$)
 TOK_EXPR                @EXPR
 TOK_REGEXP              @REGEXP
-TOK_ENCLOSING_SCOPES    @ENCLOSING_SCOPES
 TOK_BASICBLOCKENTRY     @BASICBLOCKENTRY
 TOK_CONDITIONEDGE       @CONDITIONEDGE
 TOK_DECISIONEDGE        @DECISIONEDGE
@@ -101,6 +100,8 @@ TOK_COMPLEMENT          COMPLEMENT
 TOK_UNION               UNION
 TOK_INTERSECT           INTERSECT
 TOK_SETMINUS            SETMINUS
+TOK_ENCLOSING_SCOPES    ENCLOSING_SCOPES
+TOK_IDENTITY            IDENTITY
 /* abstraction builders */
 TOK_CFG                 CFG
 TOK_PREDICATE           @PRED
@@ -150,16 +151,17 @@ TOK_NAT_NUMBER          [0-9]+
 <query_scope,query_cover,query_passing>{TOK_EXIT}   { return TOK_EXIT; }
 <query_scope,query_cover,query_passing>{TOK_EXPR}   { return TOK_EXPR; }
 <query_scope,query_cover,query_passing>{TOK_REGEXP}   { return TOK_REGEXP; }
-<query_scope,query_cover,query_passing>{TOK_ENCLOSING_SCOPES}   { return TOK_ENCLOSING_SCOPES; }
 <query_cover>{TOK_BASICBLOCKENTRY}   { return TOK_BASICBLOCKENTRY; }
 <query_cover>{TOK_CONDITIONEDGE}   { return TOK_CONDITIONEDGE; }
 <query_cover>{TOK_DECISIONEDGE}   { return TOK_DECISIONEDGE; }
 <query_cover>{TOK_CONDITIONGRAPH}   { return TOK_CONDITIONGRAPH; }
 
+<query_scope,query_cover,query_passing>{TOK_IDENTITY}   { return TOK_IDENTITY; }
 <query_scope,query_cover,query_passing>{TOK_COMPLEMENT}   { return TOK_COMPLEMENT; }
 <query_scope,query_cover,query_passing>{TOK_UNION}   { return TOK_UNION; }
 <query_scope,query_cover,query_passing>{TOK_INTERSECT}   { return TOK_INTERSECT; }
 <query_scope,query_cover,query_passing>{TOK_SETMINUS}   { return TOK_SETMINUS; }
+<query_scope,query_cover,query_passing>{TOK_ENCLOSING_SCOPES}   { return TOK_ENCLOSING_SCOPES; }
 
 <query_cover>{TOK_CFG}   { return TOK_CFG; }
 <query_cover>{TOK_PREDICATE}   { return TOK_PREDICATE; }
