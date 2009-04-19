@@ -2,11 +2,26 @@
 
 use strict;
 
-my $last_tok = "";
+my @inputs = ();
 
 while (<>) {
+  if (/^\s+(\S+.*)$/) {
+    chomp $inputs[-1];
+    $inputs[-1] .= " $1\n";
+    next;
+  }
+  push @inputs, $_;
+}
+
+my $last_tok = "";
+
+foreach (@inputs) {
   my $line = $_;
-  $line =~ s/(\s+|^)([a-zA-Z_]+)(\s+|$)/$1<$2>$3/g;
+  my $line_bak = "";
+  while ($line ne $line_bak) {
+    $line_bak = $line;
+    $line =~ s/(\s+|^)([a-zA-Z_]+)(\s+|$)/$1<$2>$3/g;
+  }
   $line =~ s/"([^"]+)"/`$1'/g;
   ($line =~ /^(<[a-zA-Z_]+>\s+::)(=)/) or die "$line was unexpected\n";
   if ($1 eq $last_tok) {
