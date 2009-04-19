@@ -299,7 +299,12 @@ int Macro_Processing::preprocess(char * filename, ::std::ostream & os) const {
 	int cpp_ret(preprocess(m_checkfilename, os));
 	FSHELL2_PROD_CHECK1(::fshell2::Macro_Processing_Error, 0 == cpp_ret,
 			"Failed to expand command");
-	return os.str();
+	// drop the final newline for consistency
+	::std::istringstream is(os.str());
+	::std::string line("");
+	::std::getline(is, line);
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, is.ignore().eof());
+	return line;
 }
 
 FSHELL2_MACRO_NAMESPACE_END;

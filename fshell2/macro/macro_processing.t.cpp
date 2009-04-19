@@ -57,6 +57,11 @@ void test_basic( Test_Data & data )
 
 	TEST_ASSERT(Macro_Processing::get_instance().expand("bla") == "bla");
 	TEST_ASSERT(Macro_Processing::get_instance().expand("#define alpha beta") == "");
+
+	TEST_ASSERT(Macro_Processing::get_instance().expand("bla") == "bla");
+
+	TEST_ASSERT_RELATION(Macro_Processing::get_instance().expand("bla bla // comment"), ==, "bla bla");
+	TEST_ASSERT_RELATION(Macro_Processing::get_instance().expand(" // comment"), ==, "");
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -99,7 +104,7 @@ void test_use_case_simple( Test_Data & data )
 	using ::fshell2::macro::Macro_Processing;
 
 	TEST_ASSERT(Macro_Processing::get_instance().expand("#define alpha beta") == "");
-	TEST_ASSERT_RELATION(Macro_Processing::get_instance().expand("alpha"), ==, "beta\n");
+	TEST_ASSERT_RELATION(Macro_Processing::get_instance().expand("alpha"), ==, "beta");
 	
 	TEST_ASSERT(Macro_Processing::get_instance().expand("#define alpha beta") == "");
 	TEST_THROWING_BLOCK_ENTER;
@@ -117,15 +122,15 @@ void test_use_case_complex( Test_Data & data )
 	using ::fshell2::macro::Macro_Processing;
 
 	TEST_ASSERT(Macro_Processing::get_instance().expand("#define alpha beta") == "");
-	TEST_ASSERT_RELATION(Macro_Processing::get_instance().expand("alpha"), ==, "beta\n");
+	TEST_ASSERT_RELATION(Macro_Processing::get_instance().expand("alpha"), ==, "beta");
 	
 	TEST_ASSERT(Macro_Processing::get_instance().expand("#define gamma alpha") == "");
-	TEST_ASSERT_RELATION(Macro_Processing::get_instance().expand("gamma"), ==, "beta\n");
+	TEST_ASSERT_RELATION(Macro_Processing::get_instance().expand("gamma"), ==, "beta");
 	
 	TEST_ASSERT(Macro_Processing::get_instance().expand("#define e(c, f) edgecov(c, f)") == "");
 	TEST_ASSERT(Macro_Processing::get_instance().expand("#define s(A, B) setminus(A, B)") == "");
 	TEST_ASSERT_RELATION(Macro_Processing::get_instance().expand("e(cfg, s(@line(1), @line(1)))"), ==,
-			"edgecov(cfg, setminus(@line(1), @line(1)))\n");
+			"edgecov(cfg, setminus(@line(1), @line(1)))");
 }
 
 /** @cond */
