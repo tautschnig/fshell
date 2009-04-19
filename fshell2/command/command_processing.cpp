@@ -43,7 +43,7 @@
 #include <FlexLexer.h>
 
 extern int CMDparse(CMDFlexLexer *,
-		::fshell2::command::Command_Processing::status_t &, char **,
+		::fshell2::command::Command_Processing::parsed_command_t &, char **,
 		int *, ::std::list< ::std::pair< char*, char* > > &);
 // extern int yydebug;
 /* end parser */
@@ -65,6 +65,25 @@ extern int CMDparse(CMDFlexLexer *,
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_COMMAND_NAMESPACE_BEGIN;
+
+::std::ostream & operator<<(::std::ostream & os, Command_Processing::status_t const& s) {
+	switch (s) {
+		case Command_Processing::NO_CONTROL_COMMAND:
+			os << "NO_CONTROL_COMMAND";
+			break;
+		case Command_Processing::HELP:
+			os << "HELP";
+			break;
+		case Command_Processing::QUIT:
+			os << "QUIT";
+			break;
+		case Command_Processing::DONE:
+			os << "DONE";
+			break;
+	}
+
+	return os;
+}
 
 // cleanup char* stuff
 class Cleanup {
@@ -137,7 +156,7 @@ Command_Processing::Command_Processing & Command_Processing::get_instance() {
 Command_Processing::status_t Command_Processing::process(::language_uit & manager,
 		::std::ostream & os, char const * cmd) {
 	while (0 != *cmd && ::std::isspace(*cmd)) ++cmd;
-	if (0 == *cmd || ('/' == *cmd && '/' == *(cmd + 1))) return BLANK;
+	if (0 == *cmd || ('/' == *cmd && '/' == *(cmd + 1))) return DONE;
 		
 	// new lexer
 	CMDFlexLexer lexer;
@@ -148,20 +167,23 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 	// reset errno, readline for some reason sets this to EINVAL
 	errno = 0;
 	// information returned by parser
-	status_t status(NO_CONTROL_COMMAND);
+	parsed_command_t parsed_cmd(FAIL);
 	char * arg(0);
 	int numeric_arg(-1);
 	::std::list< ::std::pair< char*, char* > > defines;
 	Cleanup cleanup(&arg, defines);
 	// yyparse returns 0 iff there was no error
-	if (0 != CMDparse(&lexer, status, &arg, &numeric_arg, defines)) return NO_CONTROL_COMMAND;
+	if (0 != CMDparse(&lexer, parsed_cmd, &arg, &numeric_arg, defines)) return NO_CONTROL_COMMAND;
 
 	// parsing succeeded, what has to be done?
-	switch (status) {
+	switch (parsed_cmd) {
+		case FAIL:
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, false);
+			return NO_CONTROL_COMMAND;
 		case CMD_HELP:
-			break;
+			return HELP;
 		case CMD_QUIT:
-			break;
+			return QUIT;
 		case CMD_ADD_SOURCECODE:
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, arg != 0);
 			{
@@ -199,47 +221,38 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 					::config.ansi_c.defines.erase(last_global, ::config.ansi_c.defines.end());
 				}
 			}
-			status = CMD_PROCESSED;
-			break;
+			return DONE;
 		case CMD_SHOW_FILENAMES:
 			for(::language_filest::filemapt::const_iterator iter(manager.language_files.filemap.begin());
 					iter != manager.language_files.filemap.end(); ++iter)
 				os << iter->first << ::std::endl;
-			status = CMD_PROCESSED;
-			break;
+			return DONE;
 		case CMD_SHOW_SOURCECODE:
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, arg != 0);
 			print_file_contents(os, arg);
-			status = CMD_PROCESSED;
-			break;
+			return DONE;
 		case CMD_SHOW_SOURCECODE_ALL:
 			for(::language_filest::filemapt::const_iterator iter(manager.language_files.filemap.begin());
 					iter != manager.language_files.filemap.end(); ++iter)
 				print_file_contents(os, iter->first.c_str());
-			status = CMD_PROCESSED;
-			break;
+			return DONE;
 		case CMD_SET_ENTRY:
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, arg != 0);
 			FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,
 					manager.context.has_symbol(arg),
 					::diagnostics::internal::to_string("Could not find entry function ", arg));
 			::config.main = arg;
-			status = CMD_PROCESSED;
-			break;
+			return DONE;
 		case CMD_SET_LIMIT_COUNT:
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, numeric_arg >= 0);
 			FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error, numeric_arg > 0,
 					"Limit must be greater than 0");
 			::config.fshell.max_test_cases = numeric_arg;
-			status = CMD_PROCESSED;
-			break;
-		case CMD_PROCESSED:
-		case NO_CONTROL_COMMAND:
-		case BLANK:
-			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, false);
+			return DONE;
 	}
-	
-	return status;
+			
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, false);
+	return NO_CONTROL_COMMAND;
 }
 
 FSHELL2_COMMAND_NAMESPACE_END;

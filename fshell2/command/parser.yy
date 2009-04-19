@@ -47,7 +47,7 @@
 
 extern "C"
 {
-  void yyerror(CMDFlexLexer *, ::fshell2::command::Command_Processing::status_t &,
+  void yyerror(CMDFlexLexer *, ::fshell2::command::Command_Processing::parsed_command_t &,
   	char **, int*, ::std::list< ::std::pair< char*, char* > > &, char const*);
 }
 
@@ -58,7 +58,7 @@ extern "C"
 %}
 
 %parse-param { CMDFlexLexer * lexer }
-%parse-param { ::fshell2::command::Command_Processing::status_t & cmd }
+%parse-param { ::fshell2::command::Command_Processing::parsed_command_t & cmd }
 %parse-param { char ** arg }
 %parse-param { int * numeric_arg }
 %parse-param { ::std::list< ::std::pair< char*, char* > > & defines }
@@ -153,7 +153,7 @@ Options: TOK_ENTRY TOK_C_IDENT
 
 %%
 
-void yyerror(CMDFlexLexer *, ::fshell2::command::Command_Processing::status_t &,
+void yyerror(CMDFlexLexer *, ::fshell2::command::Command_Processing::parsed_command_t &,
 	char **, int *, ::std::list< ::std::pair< char*, char* > > &, char const*)
 {
 	// no-op

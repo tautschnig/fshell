@@ -29,8 +29,6 @@
 #include <fshell2/main/fshell2.hpp>
 #include <fshell2/config/annotations.hpp>
 
-#include <diagnostics/basic_exceptions/violated_invariance.hpp>
-
 #include <memory>
 #include <cstdlib>
 #include <cerrno>
@@ -78,17 +76,16 @@ bool FShell2::process_line(::language_uit & manager, ::std::ostream & os, char c
 	using ::fshell2::fql::Query_Processing;
 
 	switch (Command_Processing::get_instance().process(manager, os, line)) {
-		case Command_Processing::CMD_QUIT:
+		case Command_Processing::QUIT:
 			return true;
-		case Command_Processing::CMD_HELP:
+		case Command_Processing::HELP:
 			Command_Processing::help(os);
 			os << ::std::endl;
 			Macro_Processing::help(os);
 			os << ::std::endl;
 			Query_Processing::help(os);
 			return false;
-		case Command_Processing::CMD_PROCESSED:
-		case Command_Processing::BLANK:
+		case Command_Processing::DONE:
 			return false;
 		case Command_Processing::NO_CONTROL_COMMAND:
 			{
@@ -98,14 +95,6 @@ bool FShell2::process_line(::language_uit & manager, ::std::ostream & os, char c
 				}
 			}
 			//incomplete
-			return false;
-		case Command_Processing::CMD_ADD_SOURCECODE:
-		case Command_Processing::CMD_SHOW_FILENAMES:
-		case Command_Processing::CMD_SHOW_SOURCECODE_ALL:
-		case Command_Processing::CMD_SHOW_SOURCECODE:
-		case Command_Processing::CMD_SET_ENTRY:
-		case Command_Processing::CMD_SET_LIMIT_COUNT:
-			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, false);
 			return false;
 	}
 

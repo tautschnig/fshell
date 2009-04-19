@@ -64,9 +64,9 @@ void test_basic( Test_Data & data )
 	using ::fshell2::command::Command_Processing;
 
 	TEST_ASSERT(Command_Processing::NO_CONTROL_COMMAND == Command_Processing::get_instance().process(l, os, "quit HELP"));
-	TEST_ASSERT(Command_Processing::BLANK == Command_Processing::get_instance().process(l, os, "   // comment"));
+	TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, "   // comment"));
 	
-	TEST_ASSERT(Command_Processing::CMD_QUIT == Command_Processing::get_instance().process(l, os, "quit"));
+	TEST_ASSERT(Command_Processing::QUIT == Command_Processing::get_instance().process(l, os, "quit"));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -83,8 +83,8 @@ void test_help( Test_Data & data )
 
 	using ::fshell2::command::Command_Processing;
 	
-	TEST_ASSERT(Command_Processing::CMD_HELP == Command_Processing::get_instance().process(l, os, "help"));
-	TEST_ASSERT(Command_Processing::CMD_HELP == Command_Processing::get_instance().process(l, os, "  HELP  "));
+	TEST_ASSERT(Command_Processing::HELP == Command_Processing::get_instance().process(l, os, "help"));
+	TEST_ASSERT(Command_Processing::HELP == Command_Processing::get_instance().process(l, os, "  HELP  "));
 	Command_Processing::help(os);
 	TEST_ASSERT(data.compare("command_help", os.str()));
 }
@@ -134,29 +134,29 @@ void test_use_case( Test_Data & data )
 	::std::ostringstream cmd_str;
 	cmd_str << "add sourcecode \"" << tempname << "\"";
 
-	TEST_ASSERT(Command_Processing::CMD_PROCESSED == Command_Processing::get_instance().process(l, os, cmd_str.str().c_str()));
+	TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, cmd_str.str().c_str()));
 	
 	TEST_ASSERT(!l.typecheck());
 	TEST_ASSERT(!l.final());
 	
-	TEST_ASSERT(Command_Processing::CMD_PROCESSED == Command_Processing::get_instance().process(l, os, "show filenames"));
+	TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, "show filenames"));
 	TEST_ASSERT(!os.str().empty());
 	
 	os.str("");
-	TEST_ASSERT(Command_Processing::CMD_PROCESSED == Command_Processing::get_instance().process(l, os, "show sourcecode all"));
+	TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, "show sourcecode all"));
 	TEST_ASSERT(data.compare("tmp_source_show_all", os.str()));
 	
 	cmd_str.str("");
 	cmd_str << "show sourcecode \"" << tempname << "\"";
 	os.str("");
-	TEST_ASSERT(Command_Processing::CMD_PROCESSED == Command_Processing::get_instance().process(l, os, cmd_str.str().c_str()));
+	TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, cmd_str.str().c_str()));
 	TEST_ASSERT(data.compare("tmp_source_show", os.str()));
 	
-	TEST_ASSERT(Command_Processing::CMD_PROCESSED == Command_Processing::get_instance().process(l, os, "set entry main"));
+	TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, "set entry main"));
 	TEST_ASSERT(::config.main == "main");
 
 	TEST_ASSERT(0 == ::config.fshell.max_test_cases);
-	TEST_ASSERT(Command_Processing::CMD_PROCESSED == Command_Processing::get_instance().process(l, os, "set limit count 27"));
+	TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, "set limit count 27"));
 	TEST_ASSERT(27 == ::config.fshell.max_test_cases);
 
 	::unlink(tempname);

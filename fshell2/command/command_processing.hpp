@@ -50,9 +50,7 @@ class Command_Processing
 
 	public:
 	typedef enum {
-		NO_CONTROL_COMMAND,
-		BLANK,
-		CMD_PROCESSED,
+		FAIL,
 		CMD_QUIT,
 		CMD_HELP,
 		CMD_ADD_SOURCECODE,
@@ -61,6 +59,13 @@ class Command_Processing
 		CMD_SHOW_SOURCECODE_ALL,
 		CMD_SET_ENTRY,
 		CMD_SET_LIMIT_COUNT
+	} parsed_command_t;
+	
+	typedef enum {
+		NO_CONTROL_COMMAND = FAIL,
+		QUIT = CMD_QUIT,
+		HELP = CMD_HELP,
+		DONE
 	} status_t;
 
 	static Command_Processing & get_instance();
@@ -84,6 +89,8 @@ class Command_Processing
 	 */
 	Self& operator=( Self const& rhs );
 };
+
+::std::ostream & operator<<(::std::ostream & os, Command_Processing::status_t const& s);
 
 FSHELL2_COMMAND_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
