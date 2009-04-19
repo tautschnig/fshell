@@ -12,8 +12,26 @@ Requirements
   package must be installed.
 * for any tests, the diagnostics library is required
 
+Required hack
+-------------
+
+At the current stage of development, CBMC is supplied as a packed source archive
+only (the source is maintained in a git repository by Michael Tautschnig).
+Therefore the directories for CBMC must be prepared first. Run
+
+  mkdir -p cbmc/src
+
+before doing autoreconf as it would fail otherwise.
+
 Building from a fresh svn checkout
 ----------------------------------
+
+At the current stage of development, CBMC is supplied as a packed archive only.
+Therefore the directories for CBMC must be prepared first. Run
+
+  mkdir -p cbmc/src
+
+before doing autoreconf as it would fail otherwise.
 
 First, get some auto-generated files (including configure) built using
 
@@ -127,7 +145,7 @@ Building a distributable source .tar.gz
 
 Performing
   make dist
-in the top level source directory yields a PACKAGENAME-<version>.tar.gz package that
+in the top level source directory yields an fshell2-<version>.tar.gz package that
 may be redistributed.
 
 
