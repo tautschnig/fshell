@@ -252,27 +252,40 @@ int Macro_Processing::preprocess(char * filename, ::std::ostream & os) const {
 
 ::std::string Macro_Processing::expand(char const * cmd) {
 	while (0 != *cmd && ::std::isspace(*cmd)) ++cmd;
-	if (::strlen(cmd) > 7 && 0 == ::strncmp("#define", cmd, 7) && ::std::isspace(*(cmd + 7))) {
-		// syntax check
-		char ch;
-		::std::ofstream fcheck(m_checkfilename, ::std::ios_base::trunc);
-		::std::ifstream in(m_deffilename);
-		while (!in.eof() && in.get(ch)) fcheck.put(ch);
-		in.close();
-		fcheck << cmd << ::std::endl;
-		fcheck.close();
-		::std::ostringstream os;
-		int cpp_ret(preprocess(m_checkfilename, os));
-		FSHELL2_PROD_CHECK1(::fshell2::Macro_Processing_Error, 0 == cpp_ret,
-				"Failed to process macro definition, " + os.str());
-		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, os.str().empty());
+	if ('#' == *cmd) {
+		if (::strlen(cmd) > 7 &&
+				'd' == ::std::tolower(*(cmd + 1)) &&
+				'e' == ::std::tolower(*(cmd + 2)) &&
+				'f' == ::std::tolower(*(cmd + 3)) &&
+				'i' == ::std::tolower(*(cmd + 4)) &&
+				'n' == ::std::tolower(*(cmd + 5)) &&
+				'e' == ::std::tolower(*(cmd + 6)) &&
+				::std::isspace(*(cmd + 7))) {
+			// syntax check
+			char ch;
+			::std::ofstream fcheck(m_checkfilename, ::std::ios_base::trunc);
+			::std::ifstream in(m_deffilename);
+			while (!in.eof() && in.get(ch)) fcheck.put(ch);
+			in.close();
+			fcheck << "#define" << (cmd + 7) << ::std::endl;
+			fcheck.close();
+			::std::ostringstream os;
+			int cpp_ret(preprocess(m_checkfilename, os));
+			FSHELL2_PROD_CHECK1(::fshell2::Macro_Processing_Error, 0 == cpp_ret,
+					"Failed to process macro definition, " + os.str());
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, os.str().empty());
 
-		::std::ofstream fdef(m_deffilename, ::std::ios_base::out|::std::ios_base::app);
-		fdef << cmd << ::std::endl;
-		fdef.close();
+			::std::ofstream fdef(m_deffilename, ::std::ios_base::out|::std::ios_base::app);
+			fdef << "#define" << (cmd + 7) << ::std::endl;
+			fdef.close();
 
-		m_has_defines = true;
-		return "";
+			m_has_defines = true;
+			return "";
+		} else {
+			// get rid of other preprocessor commands early and have subsequent
+			// parsers deal with that
+			return cmd;
+		}
 	}
 	
 	if (!m_has_defines) return cmd;
