@@ -78,9 +78,9 @@ void test_interactive( Test_Data & data )
 	::std::ostringstream os;
 	
 	char * tempname(::strdup("/tmp/queryXXXXXX"));
-	TEST_ASSERT(-1 != ::mkstemp(tempname));
-
+	TEST_CHECK(-1 != ::mkstemp(tempname));
 	::std::ofstream of(tempname);
+	TEST_CHECK(of.is_open());
 	of << "show sourcecode all" << ::std::endl
 		<< "#define bla blubb" << ::std::endl
 		<< "quit" << ::std::endl;
@@ -88,7 +88,7 @@ void test_interactive( Test_Data & data )
 		
 	// open the input file
 	FILE * in(fopen(tempname, "r"));
-	TEST_ASSERT(0 == errno);
+	TEST_CHECK(0 == errno);
 	// change the readline input to the file
 	rl_instream = in;
 

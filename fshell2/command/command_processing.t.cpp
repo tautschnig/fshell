@@ -123,8 +123,9 @@ void test_use_case( Test_Data & data )
 	using ::fshell2::command::Command_Processing;
 
 	char * tempname(::strdup("/tmp/srcXXXXXX.c"));
-	TEST_ASSERT(-1 != ::mkstemps(tempname, 2));
+	TEST_CHECK(-1 != ::mkstemps(tempname, 2));
 	::std::ofstream of(tempname);
+	TEST_CHECK(of.is_open());
 	of << "int main(int argc, char * argv[])" << ::std::endl
 		<< "{" << ::std::endl
 		<< "return 0;" << ::std::endl
@@ -136,8 +137,8 @@ void test_use_case( Test_Data & data )
 
 	TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, cmd_str.str().c_str()));
 	
-	TEST_ASSERT(!l.typecheck());
-	TEST_ASSERT(!l.final());
+	TEST_CHECK(!l.typecheck());
+	TEST_CHECK(!l.final());
 	
 	TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, "show filenames"));
 	TEST_ASSERT(!os.str().empty());
