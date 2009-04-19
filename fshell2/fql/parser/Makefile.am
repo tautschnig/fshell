@@ -23,6 +23,9 @@ EXTRA_DIST = grammar.hpp
 
 MAINTAINERCLEANFILES += grammar.hpp
 
+lexer.txt: lexer.ll
+	cat lexer.ll | @GREP@ ^TOK | @SED@ 's/\\//g' | @EGREP@ -v '(TOK_C_IDENT|TOK_QUOTED_STRING|TOK_NAT_NUMBER)' > $@
+
 grammar.hpp: parser.yy lexer.txt
 	echo "#define FQL_HELP \\" > $@
 	@AWK@ -f $(top_srcdir)/config/y2l -- -p -tlexer.txt parser.yy | $(top_srcdir)/config/y2l-postproc.pl >> $@
