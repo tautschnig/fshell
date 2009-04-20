@@ -137,9 +137,6 @@ void test_use_case( Test_Data & data )
 
 	TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, cmd_str.str().c_str()));
 	
-	TEST_CHECK(!l.typecheck());
-	TEST_CHECK(!l.final());
-	
 	TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, "show filenames"));
 	TEST_ASSERT(!os.str().empty());
 	
@@ -155,6 +152,8 @@ void test_use_case( Test_Data & data )
 	
 	TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, "set entry main"));
 	TEST_ASSERT(::config.main == "main");
+	// do it once again
+	TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, "set entry main"));
 
 	TEST_ASSERT(0 == ::config.fshell.max_test_cases);
 	TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, "set limit count 27"));

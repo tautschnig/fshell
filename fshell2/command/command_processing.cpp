@@ -112,7 +112,8 @@ Cleanup::~Cleanup() {
 	}
 }
 
-Command_Processing::Command_Processing() {
+Command_Processing::Command_Processing() :
+	m_finalized(false) {
 }
 
 Command_Processing::Command_Processing & Command_Processing::get_instance() {
@@ -199,28 +200,37 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 						// generate define_ident=definition
 						config.ansi_c.defines.push_back(
 								::diagnostics::internal::to_string(iter->first, "=", iter->second));
+				// keep a private copy of previously loaded files
+				::language_filest::filemapt prev_files;
+				prev_files.swap(manager.language_files.filemap);
 				// store the parse time to warn the user in case a modified file
 				// is to be printed
 				m_parse_time[arg] = ::std::time(0);
 				// attempt to parse the file
-				try {
-					bool err(manager.parse(arg));
-					FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,!err,
-							::diagnostics::internal::to_string("Failed to parse ", arg));
-				} catch (::std::string & e) {
-					FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,false,
-							::diagnostics::internal::to_string("Failed to parse ", arg,
-								": ", e));
-				} catch (char const * e) {
-					FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,false,
-							::diagnostics::internal::to_string("Failed to parse ", arg,
-								": ", e));
-				}
+				// we don't even try to catch any exception thrown by CBMC here,
+				// these would be fatal anyway
+				bool err(manager.parse(arg));
 				// reset defines
 				if (::config.ansi_c.defines.end() != last_global) {
 					++last_global;
 					::config.ansi_c.defines.erase(last_global, ::config.ansi_c.defines.end());
 				}
+				if (err) {
+					manager.language_files.filemap.swap(prev_files);
+					FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error, false,
+							::diagnostics::internal::to_string("Failed to parse ", arg));
+				}
+				err = manager.typecheck();
+				if (err) {
+					manager.language_files.filemap.swap(prev_files);
+					FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error, false,
+							::diagnostics::internal::to_string("Failed to typecheck ", arg));
+				}
+				// build the full list of loaded files
+				for(::language_filest::filemapt::const_iterator iter(prev_files.begin());
+						iter != prev_files.end(); ++iter)
+					manager.language_files.filemap.insert(::std::make_pair(iter->first, iter->second));
+				m_finalized = false;
 			}
 			return DONE;
 		case CMD_SHOW_FILENAMES:
@@ -239,10 +249,19 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 			return DONE;
 		case CMD_SET_ENTRY:
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, arg != 0);
-			FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,
-					manager.context.has_symbol(arg),
-					::diagnostics::internal::to_string("Could not find entry function ", arg));
-			::config.main = arg;
+			{
+				::std::string main("c::");
+				main += arg;
+				FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,
+						manager.context.has_symbol(main),
+						::diagnostics::internal::to_string("Could not find entry function ", arg));
+				::config.main = arg;
+				manager.context.remove("main");
+				FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,
+						!manager.final(),
+						::diagnostics::internal::to_string("Failed to set up entry function ", arg));
+				m_finalized = true;
+			}
 			return DONE;
 		case CMD_SET_LIMIT_COUNT:
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, numeric_arg >= 0);

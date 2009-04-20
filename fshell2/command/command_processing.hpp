@@ -74,8 +74,11 @@ class Command_Processing
 
 	static ::std::ostream & help(::std::ostream & os);
 
+	inline bool finalize_done() const;
+
 	private:
 	::std::map< ::std::string, time_t > m_parse_time;
+	bool m_finalized;
 
 	Command_Processing();
 	
@@ -89,6 +92,10 @@ class Command_Processing
 	 */
 	Self& operator=( Self const& rhs );
 };
+	
+inline bool Command_Processing::finalize_done() const {
+	return m_finalized;
+}
 
 ::std::ostream & operator<<(::std::ostream & os, Command_Processing::status_t const& s);
 
