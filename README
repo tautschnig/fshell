@@ -10,7 +10,9 @@ Requirements
 * A recent gcc C++ compiler, such as g++-3.3 or later
 * flex and bison; on Mac OS X < 10.5 (Leopard) using fink, the flex-devel
   package must be installed.
-* The readline library (libreadline-dev or the like)
+* The readline library (libreadline5-dev or the like)
+* pkg-config for library dependency tracking (that requirement may be dropped
+  later on)
 * for any tests, the diagnostics library is required
 
 Required hack

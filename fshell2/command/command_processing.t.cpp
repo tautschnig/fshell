@@ -122,18 +122,22 @@ void test_use_case( Test_Data & data )
 
 	using ::fshell2::command::Command_Processing;
 
-	char * tempname(::strdup("/tmp/srcXXXXXX.c"));
-	TEST_CHECK(-1 != ::mkstemps(tempname, 2));
-	::std::ofstream of(tempname);
+	char * tempname(::strdup("/tmp/srcXXXXXX"));
+	TEST_CHECK(-1 != ::mkstemp(tempname));
+	::std::string tempname_str(tempname);
+	tempname_str += ".c";
+	::std::ofstream of(tempname_str.c_str());
 	TEST_CHECK(of.is_open());
 	of << "int main(int argc, char * argv[])" << ::std::endl
 		<< "{" << ::std::endl
 		<< "return 0;" << ::std::endl
 		<< "}" << ::std::endl;
 	of.close();
+	::unlink(tempname);
+	::free(tempname);
 
 	::std::ostringstream cmd_str;
-	cmd_str << "add sourcecode \"" << tempname << "\"";
+	cmd_str << "add sourcecode \"" << tempname_str << "\"";
 
 	TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, cmd_str.str().c_str()));
 	
@@ -145,7 +149,7 @@ void test_use_case( Test_Data & data )
 	TEST_ASSERT(data.compare("tmp_source_show_all", os.str()));
 	
 	cmd_str.str("");
-	cmd_str << "show sourcecode \"" << tempname << "\"";
+	cmd_str << "show sourcecode \"" << tempname_str << "\"";
 	os.str("");
 	TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, cmd_str.str().c_str()));
 	TEST_ASSERT(data.compare("tmp_source_show", os.str()));
@@ -159,8 +163,7 @@ void test_use_case( Test_Data & data )
 	TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, "set limit count 27"));
 	TEST_ASSERT(27 == ::config.fshell.max_test_cases);
 
-	::unlink(tempname);
-	free(tempname);
+	::unlink(tempname_str.c_str());
 }
 
 /** @cond */

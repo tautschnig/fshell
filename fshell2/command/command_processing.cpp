@@ -138,7 +138,7 @@ Command_Processing::Command_Processing & Command_Processing::get_instance() {
 		struct stat info;
 		FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error, 0 == ::stat(name, &info),
 				::diagnostics::internal::to_string("Failed to stat() file ", name));
-		FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error, info.st_mtimespec.tv_sec <= entry->second,
+		FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error, info.st_mtime <= entry->second,
 				::diagnostics::internal::to_string("File ", name, " changed on disk"));
 	}
 	// read the file using an ifstream

@@ -44,25 +44,42 @@ FSHELL2_MACRO_NAMESPACE_BEGIN;
 	
 Macro_Processing::Macro_Processing() :
 	m_has_defines(false),
-	m_deffilename(::strdup("/tmp/defsXXXXXX.c")),
-	m_checkfilename(::strdup("/tmp/defsXXXXXX.c")),
+	m_deffilename(::strdup("/tmp/defsXXXXXX")),
+	m_checkfilename(::strdup("/tmp/checkXXXXXX")),
 	m_file_index(0),
 	m_cpp_argv(0)
 {
 	int ret(0);
-	ret = ::mkstemps(m_deffilename, 2);
+	ret = ::mkstemp(m_deffilename);
 	FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, ret != -1,
 			"Failed to create macro expansion file");
+	::std::string old_name(m_deffilename);
+	FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance,
+			0 != (m_deffilename = static_cast<char*>(::realloc(m_deffilename, ::strlen(m_deffilename) + 2))),
+			"Failed to allocate more mem");
+	::strcat(m_deffilename, ".c");
 	FSHELL2_AUDIT_TRACE("Defines are written to " + *m_deffilename);
 	::std::ofstream fs(m_deffilename);
 	FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, fs.is_open(),
 			"Failed to open macro expansion file");
 	fs << "// FShell macro list" << ::std::endl;
 	fs.close();
+	::unlink(old_name.c_str());
 	
-	ret = ::mkstemps(m_checkfilename, 2);
+	ret = ::mkstemp(m_checkfilename);
 	FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, ret != -1,
 			"Failed to create macro syntax check file");
+	old_name = m_checkfilename;
+	FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance,
+			0 != (m_checkfilename = static_cast<char*>(::realloc(m_checkfilename, ::strlen(m_checkfilename) + 2))),
+			"Failed to allocate more mem");
+	::strcat(m_checkfilename, ".c");
+	::std::ofstream fs2(m_checkfilename);
+	FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, fs2.is_open(),
+			"Failed to open macro expansion file");
+	fs2 << "// FShell macro test list" << ::std::endl;
+	fs2.close();
+	::unlink(old_name.c_str());
 
 	::std::vector< ::std::string > cpp_cmdline;
 	cpp_cmdline.push_back(::std::string());
