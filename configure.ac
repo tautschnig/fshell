@@ -61,20 +61,18 @@ if test "x$ac_cv_cxx_have_stl" != "xyes" ; then
 fi
 AC_CHECK_HEADERS([diagnostics/basic_exceptions/low_level_exception.hpp \
                   FlexLexer.h \
-                  glob.h \
                   signal.h \
                   sys/wait.h \
                   sys/stat.h \
+                  ctime \
+                  cerrno \
+                  unistd.h \
                   ],
                   [],
                   AC_MSG_ERROR([Essential header $ac_header missing]))
 
 # platform specific or non-essential headers
-AC_CHECK_HEADERS([ctime \
-                  sys/time.h \
-                  sys/resource.h \
-                  unistd.h \
-                  tr1/unordered_map \
+AC_CHECK_HEADERS([tr1/unordered_map \
                   ext/hash_map \
                   ])
 
