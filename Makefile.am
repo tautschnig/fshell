@@ -32,9 +32,16 @@ all-local:
 		$(top_srcdir)/config/update-makefiles.pl @enable_install_headers@ @disable_update_makefiles@ @with_diagnostics@ fshell2/ ; \
 	fi
 	if [ ! -d cbmc/.git ] ; then \
-		if [ ! -d cbmc ] || [ -z "`find cbmc -cnewer cbmc-src.tar.gz`" ] ; then \
-			tar xzf cbmc-src.tar.gz ; \
+		if [ ! -d cbmc ] ; then \
+			tar xzf $(top_srcdir)/cbmc-src.tar.gz ; \
+		elif [ -z "`find cbmc -cnewer $(top_srcdir)/cbmc-src.tar.gz`" ] ; then \
+			tar xzf $(top_srcdir)/cbmc-src.tar.gz ; \
 		fi ; \
+	fi
+	if [ "$(top_srcdir)" != "." ] ; then \
+		mkdir -p MiniSat-p_v1.14 ; \
+		cp $(top_srcdir)/MiniSat-p_v1.14/{Makefile,*.C,*.h} MiniSat-p_v1.14 ; \
+		perl -p -i -e 's{-I(\.\./\.\./\.\./)}{-I$(top_srcdir)/$$1}' cbmc/src/cbmc/Makefile ; \
 	fi
 
 cbmc-src.tar.gz: $(shell find cbmc -name "*.cpp" -o -name "*.h")

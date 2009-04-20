@@ -26,7 +26,7 @@ all: s
 
 maintainer-clean distclean: clean
 
-check:
+check: all
 
 s:	WAY=standard
 p:	WAY=profile
