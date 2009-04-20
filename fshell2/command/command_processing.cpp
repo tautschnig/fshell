@@ -31,6 +31,7 @@
 #include <fshell2/exception/command_processing_error.hpp>
 
 #include <diagnostics/basic_exceptions/violated_invariance.hpp>
+#include <diagnostics/basic_exceptions/invalid_argument.hpp>
 
 #include <cbmc/src/util/config.h>
 
