@@ -33,7 +33,9 @@
 
 #include <iostream>
 
-#include <cbmc/src/langapi/language_ui.h>
+class language_uit;
+class optionst;
+typename goto_functionst;
 
 FSHELL2_NAMESPACE_BEGIN;
 
@@ -52,10 +54,21 @@ class FShell2
 
 	void interactive(::language_uit & manager, ::std::ostream & os);
 
+	inline void set_options(::optionst const& opts);
+
+	inline void set_primary_cfg(::goto_functionst & cfg);
+
 	~FShell2();
 
 	private:
 	FShell2();
+
+	// this is really painful, we should get rid of this singleton stuff and do
+	// proper construction
+	::optionst const * m_opts;
+	::goto_functionst * m_primary_cfg;
+
+	void try_query(::language_uit & manager, ::std::ostream & os, char const * line);
 
 	/*! \copydoc copy_constructor
 	*/
@@ -65,6 +78,14 @@ class FShell2
 	 */
 	Self& operator=( Self const& rhs );
 };
+
+inline FShell2::set_options(::optionst const& opts) {
+	m_opts = &opts;
+}
+
+inline FShell2::set_primary_cfg(::goto_functionst & cfg) {
+	m_primary_cfg = &cfg;
+}
 
 FSHELL2_NAMESPACE_END;
 
