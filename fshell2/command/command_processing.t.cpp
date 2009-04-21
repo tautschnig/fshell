@@ -101,9 +101,13 @@ void test_invalid( Test_Data & data )
 	::cmdlinet cmdline;
 	::config.set(cmdline);
 	::language_uit l(cmdline);
+	::optionst options;
+	::goto_functionst cfg;
 	::std::ostringstream os;
 
 	using ::fshell2::command::Command_Processing;
+	Command_Processing::get_instance().set_options(options);
+	Command_Processing::get_instance().set_cfg(cfg);
 
 	TEST_THROWING_BLOCK_ENTER;
 	Command_Processing::get_instance().process(l, os, "add sourcecode \"no_such_file.c\"");
