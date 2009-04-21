@@ -6,6 +6,6 @@ include $(top_srcdir)/model.am
 
 # Add all desired subdirectories here, like
 # SUBDIRS = dir1 dir2 dirX
-SUBDIRS = ast parser normalize
+SUBDIRS =
 
-include_fshell2_fqldir = $(includedir)/fshell2/fql
+include_fshell2_fql_normalizedir = $(includedir)/fshell2/fql/normalize
