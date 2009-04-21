@@ -30,21 +30,40 @@
 */
 
 #include <fshell2/config/config.hpp>
+#include <fshell2/config/annotations.hpp>
+
+#include <diagnostics/basic_exceptions/invalid_argument.hpp>
+
+#include <set>
+#include <vector>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 /*! \brief TODO
 */
+template <typename Element>
 class FQL_Node_Factory
 {
 	/*! \copydoc doc_self
 	*/
-	typedef FQL_Node_Factory Self;
+	typedef FQL_Node_Factory<Element> Self;
 
 	public:
+	static Self & get_instance();
+
+	Element * create();
+	void destroy(Element * e);
+
+	/*! \brief Destructor
+	*/
+	virtual ~FQL_Node_Factory();
 
 	private:
+	typename ::std::set<Element *> m_used;
+	typename ::std::vector<Element *> m_available;
+
+	FQL_Node_Factory();
 	/*! \copydoc copy_constructor
 	*/
 	FQL_Node_Factory( Self const& rhs );
@@ -53,6 +72,35 @@ class FQL_Node_Factory
 	 */
 	Self& operator=( Self const& rhs );
 };
+
+template <typename Element>
+FQL_Node_Factory<Element>& FQL_Node_Factory<Element>::get_instance() {
+	static Self instance;
+	return instance;
+}
+
+template <typename Element>
+FQL_Node_Factory<Element>::FQL_Node_Factory() {
+}
+
+template <typename Element>
+FQL_Node_Factory<Element>::~FQL_Node_Factory() {
+	for (typename ::std::set<Element *>::const_iterator iter(m_used.begin());
+			iter != m_used.end(); ++iter)
+		delete *iter;
+	
+	for (typename ::std::vector<Element *>::const_iterator iter(m_available.begin());
+			iter != m_available.end(); ++iter)
+		delete *iter;
+}
+
+template <typename Element>
+void FQL_Node_Factory<Element>::destroy(Element * e) {
+	typename ::std::set<Element *>::const_iterator entry(m_used.find(e));
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, entry != m_used.end());
+	m_used.erase(entry);
+	m_available.push_back(e);
+}
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
