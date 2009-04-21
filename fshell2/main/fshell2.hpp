@@ -33,9 +33,10 @@
 
 #include <iostream>
 
+#include <cbmc/src/goto-programs/goto_functions.h>
+
 class language_uit;
 class optionst;
-typename goto_functionst;
 
 FSHELL2_NAMESPACE_BEGIN;
 
@@ -79,11 +80,11 @@ class FShell2
 	Self& operator=( Self const& rhs );
 };
 
-inline FShell2::set_options(::optionst const& opts) {
+inline void FShell2::set_options(::optionst const& opts) {
 	m_opts = &opts;
 }
 
-inline FShell2::set_primary_cfg(::goto_functionst & cfg) {
+inline void FShell2::set_primary_cfg(::goto_functionst & cfg) {
 	m_primary_cfg = &cfg;
 }
 

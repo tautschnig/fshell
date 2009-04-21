@@ -38,6 +38,7 @@
 #include <readline/readline.h>
 
 #include <cbmc/src/util/config.h>
+#include <cbmc/src/langapi/language_ui.h>
 
 #define TEST_COMPONENT_NAME FShell2
 #define TEST_COMPONENT_NAMESPACE fshell2
