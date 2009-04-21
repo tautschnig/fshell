@@ -10,8 +10,8 @@ SUBDIRS =
 
 include_fshell2_fql_astdir = $(includedir)/fshell2/fql/ast
 noinst_LTLIBRARIES = libast.la
-libast_la_SOURCES = ast_visitor.cpp fql_ast_printer.cpp
-include_fshell2_fql_ast_HEADERS = ast_visitor.hpp fql_ast_printer.hpp fql_node_factory.hpp
+libast_la_SOURCES = ast_visitor.cpp fql_ast_printer.cpp fql_node.cpp pathcov.cpp predicate.cpp primitive_filter.cpp query.cpp restriction_automaton.cpp test_goal_sequence.cpp test_goal_set.cpp tgs_intersection.cpp tgs_setminus.cpp tgs_union.cpp abstraction.cpp edgecov.cpp filter.cpp filter_complement.cpp filter_enclosing_scopes.cpp filter_intersection.cpp filter_setminus.cpp filter_union.cpp
+include_fshell2_fql_ast_HEADERS = ast_visitor.hpp fql_ast_printer.hpp fql_node_factory.hpp pathcov.hpp predicate.hpp primitive_filter.hpp query.hpp restriction_automaton.hpp test_goal_sequence.hpp test_goal_set.hpp tgs_intersection.hpp tgs_setminus.hpp tgs_union.hpp abstraction.hpp edgecov.hpp filter.hpp filter_complement.hpp filter_enclosing_scopes.hpp filter_intersection.hpp filter_setminus.hpp filter_union.hpp fql_node.hpp standard_ast_visitor_aspect.hpp
 check_PROGRAMS = fql_ast_printer
 fql_ast_printer_SOURCES = fql_ast_printer.t.cpp
 # add additional objects required to build fql_ast_printer here, like
