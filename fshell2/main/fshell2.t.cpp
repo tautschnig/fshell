@@ -61,7 +61,12 @@ void test_single( Test_Data & data )
 	::cmdlinet cmdline;
 	::config.set(cmdline);
 	::language_uit l(cmdline);
+	::optionst options;
+	::goto_functionst cfg;
 	::std::ostringstream os;
+
+	::fshell2::FShell2::get_instance().set_options(options);
+	::fshell2::FShell2::get_instance().set_primary_cfg(cfg);
 	
 	TEST_ASSERT(::fshell2::FShell2::get_instance().process_line(l, os, "QUIT"));
 }
@@ -76,7 +81,12 @@ void test_interactive( Test_Data & data )
 	::cmdlinet cmdline;
 	::config.set(cmdline);
 	::language_uit l(cmdline);
+	::optionst options;
+	::goto_functionst cfg;
 	::std::ostringstream os;
+
+	::fshell2::FShell2::get_instance().set_options(options);
+	::fshell2::FShell2::get_instance().set_primary_cfg(cfg);
 	
 	char * tempname(::strdup("/tmp/queryXXXXXX"));
 	TEST_CHECK(-1 != ::mkstemp(tempname));
