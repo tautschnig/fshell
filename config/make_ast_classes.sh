@@ -36,9 +36,9 @@ do
     for comp in `echo $namespace | sed 's/::/\n/g'` ; do
       ns="`echo $comp | awk '{ print toupper( $1 ) }'`_"
       begin_ns="$begin_ns$pre_ns${ns}NAMESPACE_BEGIN;
-      "
+"
       end_ns="$pre_ns${ns}NAMESPACE_END;
-      $end_ns"
+$end_ns"
       pre_ns="$pre_ns$ns"
     done
 
@@ -138,9 +138,9 @@ inline $classname * FQL_Node_Factory<$classname>::create() {
 $end_ns
 #endif /* $pattern */
 EOF
-    ;;
-  *.cpp)
-    cat > $fname <<EOF
+        ;;
+      *.cpp)
+        cat > $fname <<EOF
 /* -*- Mode: C++; tab-width: 4 -*- */
 /* vi: set ts=4 sw=4 noexpandtab: */
 
@@ -187,8 +187,8 @@ void $classname::accept(AST_Visitor const * v) const {
 }
 
 bool $classname::destroy() {
-    fi (this->m_ref_count) return false;
-    Factory::instance().destroy(this);
+    if (this->m_ref_count) return false;
+    Factory::get_instance().destroy(this);
     return true;
 }
 
@@ -197,12 +197,12 @@ $classname::~$classname() {
 
 $end_ns
 EOF
-    ;;
-  *)
-    echo "Filename must end in either .hpp, .cpp, or .t.cpp" 1>&2
-    exit 1
-    ;;
-esac
-
-
+        ;;
+      *)
+        echo "Filename must end in either .hpp, .cpp, or .t.cpp" 1>&2
+        exit 1
+        ;;
+    esac
+  done
+done
 
