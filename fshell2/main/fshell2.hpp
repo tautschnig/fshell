@@ -55,9 +55,9 @@ class FShell2
 
 	void interactive(::language_uit & manager, ::std::ostream & os);
 
-	inline void set_options(::optionst const& opts);
+	void set_options(::optionst const& opts);
 
-	inline void set_primary_cfg(::goto_functionst & cfg);
+	void set_primary_cfg(::goto_functionst & cfg);
 
 	~FShell2();
 
@@ -67,7 +67,7 @@ class FShell2
 	// this is really painful, we should get rid of this singleton stuff and do
 	// proper construction
 	::optionst const * m_opts;
-	::goto_functionst * m_primary_cfg;
+	::goto_functionst * m_cfg;
 
 	void try_query(::language_uit & manager, ::std::ostream & os, char const * line);
 
@@ -79,14 +79,6 @@ class FShell2
 	 */
 	Self& operator=( Self const& rhs );
 };
-
-inline void FShell2::set_options(::optionst const& opts) {
-	m_opts = &opts;
-}
-
-inline void FShell2::set_primary_cfg(::goto_functionst & cfg) {
-	m_primary_cfg = &cfg;
-}
 
 FSHELL2_NAMESPACE_END;
 

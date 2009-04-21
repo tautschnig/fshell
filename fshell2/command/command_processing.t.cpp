@@ -32,7 +32,9 @@
 #include <fshell2/config/annotations.hpp>
 
 #include <fstream>
+
 #include <cbmc/src/util/config.h>
+#include <cbmc/src/langapi/language_ui.h>
 
 #include <fshell2/command/command_processing.hpp>
 #include <fshell2/exception/command_processing_error.hpp>
@@ -105,7 +107,11 @@ void test_invalid( Test_Data & data )
 
 	TEST_THROWING_BLOCK_ENTER;
 	Command_Processing::get_instance().process(l, os, "add sourcecode \"no_such_file.c\"");
-	TEST_THROWING_BLOCK_EXIT(::fshell2::Command_Processing_Error);
+	TEST_THROWING_BLOCK_EXIT1(::fshell2::Command_Processing_Error, "Failed to parse no_such_file.c");
+	
+	TEST_THROWING_BLOCK_ENTER;
+	Command_Processing::get_instance().finalize(l, os);
+	TEST_THROWING_BLOCK_EXIT1(::fshell2::Command_Processing_Error, "No source files loaded!");
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -118,9 +124,13 @@ void test_use_case( Test_Data & data )
 	::cmdlinet cmdline;
 	::config.set(cmdline);
 	::language_uit l(cmdline);
+	::optionst options;
+	::goto_functionst cfg;
 	::std::ostringstream os;
 
 	using ::fshell2::command::Command_Processing;
+	Command_Processing::get_instance().set_options(options);
+	Command_Processing::get_instance().set_cfg(cfg);
 
 	char * tempname(::strdup("/tmp/srcXXXXXX"));
 	TEST_CHECK(-1 != ::mkstemp(tempname));
@@ -156,6 +166,55 @@ void test_use_case( Test_Data & data )
 	
 	TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, "set entry main"));
 	TEST_ASSERT(::config.main == "main");
+
+	TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, "set limit count 27"));
+	TEST_ASSERT(27 == ::config.fshell.max_test_cases);
+
+	::unlink(tempname_str.c_str());
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * @test A test of Command_Processing
+ *
+ */
+void test_use_case_extended_invariants( Test_Data & data )
+{
+	::cmdlinet cmdline;
+	::config.set(cmdline);
+	::language_uit l(cmdline);
+	::optionst options;
+	::goto_functionst cfg;
+	::std::ostringstream os;
+
+	using ::fshell2::command::Command_Processing;
+	Command_Processing::get_instance().set_options(options);
+	Command_Processing::get_instance().set_cfg(cfg);
+
+	{
+		char * tempname(::strdup("/tmp/srcXXXXXX"));
+		TEST_CHECK(-1 != ::mkstemp(tempname));
+		::std::string tempname_str(tempname);
+		tempname_str += ".c";
+		::std::ofstream of(tempname_str.c_str());
+		TEST_CHECK(of.is_open());
+		of << "int foo();" << ::std::endl
+			<< "int main(int argc, char * argv[])" << ::std::endl
+			<< "{" << ::std::endl
+			<< "return foo();" << ::std::endl
+			<< "}" << ::std::endl;
+		of.close();
+		::unlink(tempname);
+		::free(tempname);
+
+		::std::ostringstream cmd_str;
+		cmd_str << "add sourcecode \"" << tempname_str << "\"";
+		TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, cmd_str.str().c_str()));
+		::unlink(tempname_str.c_str());
+	}
+	
+	TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, "set entry main"));
+	TEST_ASSERT(::config.main == "main");
 	// do it once again
 	TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, "set entry main"));
 
@@ -163,7 +222,35 @@ void test_use_case( Test_Data & data )
 	TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, "set limit count 27"));
 	TEST_ASSERT(27 == ::config.fshell.max_test_cases);
 
-	::unlink(tempname_str.c_str());
+	TEST_CHECK(cfg.function_map.end() != cfg.function_map.find("c::foo"));
+	TEST_CHECK(!cfg.function_map.find("c::foo")->second.body_available);
+	
+	{
+		char * tempname(::strdup("/tmp/srcXXXXXX"));
+		TEST_CHECK(-1 != ::mkstemp(tempname));
+		::std::string tempname_str(tempname);
+		tempname_str += "2.c"; // just to make sure we never ever get the same filename
+		::std::ofstream of(tempname_str.c_str());
+		TEST_CHECK(of.is_open());
+		of << "int foo()" << ::std::endl
+			<< "{" << ::std::endl
+			<< "return 42;" << ::std::endl
+			<< "}" << ::std::endl;
+		of.close();
+		::unlink(tempname);
+		::free(tempname);
+
+		::std::ostringstream cmd_str;
+		cmd_str << "add sourcecode \"" << tempname_str << "\"";
+		TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, cmd_str.str().c_str()));
+		::unlink(tempname_str.c_str());
+	}
+
+	Command_Processing::get_instance().finalize(l, os);
+	TEST_CHECK(cfg.function_map.end() != cfg.function_map.find("c::foo"));
+	TEST_CHECK(cfg.function_map.find("c::foo")->second.body_available);
+	// should be a no-op
+	Command_Processing::get_instance().finalize(l, os);
 }
 
 /** @cond */
@@ -179,6 +266,7 @@ TEST_NORMAL_CASE( &test_basic, LEVEL_PROD );
 TEST_NORMAL_CASE( &test_help, LEVEL_PROD );
 TEST_NORMAL_CASE( &test_invalid, LEVEL_PROD );
 TEST_NORMAL_CASE( &test_use_case, LEVEL_PROD );
+TEST_NORMAL_CASE( &test_use_case_extended_invariants, LEVEL_PROD );
 TEST_SUITE_END;
 
 STREAM_TEST_SYSTEM_MAIN;

@@ -32,8 +32,11 @@
 
 #include <diagnostics/basic_exceptions/violated_invariance.hpp>
 #include <diagnostics/basic_exceptions/invalid_argument.hpp>
+#include <diagnostics/basic_exceptions/invalid_protocol.hpp>
 
 #include <cbmc/src/util/config.h>
+#include <cbmc/src/langapi/language_ui.h>
+#include <cbmc/src/goto-programs/goto_convert_functions.h>
 
 #include <cerrno>
 #include <fstream>
@@ -113,7 +116,7 @@ Cleanup::~Cleanup() {
 }
 
 Command_Processing::Command_Processing() :
-	m_finalized(false) {
+	m_finalized(true), m_opts(0), m_cfg(0) {
 }
 
 Command_Processing::Command_Processing & Command_Processing::get_instance() {
@@ -154,6 +157,54 @@ Command_Processing::Command_Processing & Command_Processing::get_instance() {
 	}
 	return os;
 }
+	
+void Command_Processing::add_sourcecode(::language_uit & manager, char const * file,
+		::std::list< ::std::pair< char*, char* > > const& defines) {
+	// defines -- keep a marker of global defines
+	::std::list< ::std::string >::iterator last_global(::config.ansi_c.defines.end());
+	if (!::config.ansi_c.defines.empty()) --last_global;
+	// add the specific defines given with the ADD_SOURCE command
+	if (!defines.empty())
+		for (::std::list< ::std::pair<char*,char*> >::const_iterator iter(defines.begin());
+				iter != defines.end(); ++iter)
+			// CBMC internally does -D' and the closing ', thus we
+			// generate define_ident=definition
+			config.ansi_c.defines.push_back(
+					::diagnostics::internal::to_string(iter->first, "=", iter->second));
+	// keep a private copy of previously loaded files
+	::language_filest::filemapt prev_files;
+	prev_files.swap(manager.language_files.filemap);
+	// store the parse time to warn the user in case a modified file
+	// is to be printed
+	m_parse_time[file] = ::std::time(0);
+	// attempt to parse the file
+	// we don't even try to catch any exception thrown by CBMC here,
+	// these would be fatal anyway
+	bool err(manager.parse(file));
+	// reset defines
+	if (::config.ansi_c.defines.end() != last_global) {
+		++last_global;
+		::config.ansi_c.defines.erase(last_global, ::config.ansi_c.defines.end());
+	}
+	if (err) {
+		manager.language_files.filemap.swap(prev_files);
+		FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error, false,
+				::diagnostics::internal::to_string("Failed to parse ", file));
+	}
+	err = manager.typecheck();
+	if (err) {
+		manager.language_files.filemap.swap(prev_files);
+		FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error, false,
+				::diagnostics::internal::to_string("Failed to typecheck ", file));
+	}
+	// build the full list of loaded files
+	for(::language_filest::filemapt::const_iterator iter(prev_files.begin());
+			iter != prev_files.end(); ++iter)
+		manager.language_files.filemap.insert(::std::make_pair(iter->first, iter->second));
+	// reset entry routine
+	if (m_finalized) manager.context.remove("main");
+	m_finalized = false;
+}
 
 Command_Processing::status_t Command_Processing::process(::language_uit & manager,
 		::std::ostream & os, char const * cmd) {
@@ -188,50 +239,7 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 			return QUIT;
 		case CMD_ADD_SOURCECODE:
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, arg != 0);
-			{
-				// defines -- keep a marker of global defines
-				::std::list< ::std::string >::iterator last_global(::config.ansi_c.defines.end());
-				if (!::config.ansi_c.defines.empty()) --last_global;
-				// add the specific defines given with the ADD_SOURCE command
-				if (!defines.empty())
-					for (::std::list< ::std::pair<char*,char*> >::const_iterator iter(defines.begin());
-							iter != defines.end(); ++iter)
-						// CBMC internally does -D' and the closing ', thus we
-						// generate define_ident=definition
-						config.ansi_c.defines.push_back(
-								::diagnostics::internal::to_string(iter->first, "=", iter->second));
-				// keep a private copy of previously loaded files
-				::language_filest::filemapt prev_files;
-				prev_files.swap(manager.language_files.filemap);
-				// store the parse time to warn the user in case a modified file
-				// is to be printed
-				m_parse_time[arg] = ::std::time(0);
-				// attempt to parse the file
-				// we don't even try to catch any exception thrown by CBMC here,
-				// these would be fatal anyway
-				bool err(manager.parse(arg));
-				// reset defines
-				if (::config.ansi_c.defines.end() != last_global) {
-					++last_global;
-					::config.ansi_c.defines.erase(last_global, ::config.ansi_c.defines.end());
-				}
-				if (err) {
-					manager.language_files.filemap.swap(prev_files);
-					FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error, false,
-							::diagnostics::internal::to_string("Failed to parse ", arg));
-				}
-				err = manager.typecheck();
-				if (err) {
-					manager.language_files.filemap.swap(prev_files);
-					FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error, false,
-							::diagnostics::internal::to_string("Failed to typecheck ", arg));
-				}
-				// build the full list of loaded files
-				for(::language_filest::filemapt::const_iterator iter(prev_files.begin());
-						iter != prev_files.end(); ++iter)
-					manager.language_files.filemap.insert(::std::make_pair(iter->first, iter->second));
-				m_finalized = false;
-			}
+			add_sourcecode(manager, arg, defines);
 			return DONE;
 		case CMD_SHOW_FILENAMES:
 			for(::language_filest::filemapt::const_iterator iter(manager.language_files.filemap.begin());
@@ -250,17 +258,15 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 		case CMD_SET_ENTRY:
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, arg != 0);
 			{
-				::std::string main("c::");
-				main += arg;
+				::std::string entry("c::");
+				entry += arg;
 				FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,
-						manager.context.has_symbol(main),
+						manager.context.has_symbol(entry),
 						::diagnostics::internal::to_string("Could not find entry function ", arg));
 				::config.main = arg;
-				manager.context.remove("main");
-				FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,
-						!manager.final(),
-						::diagnostics::internal::to_string("Failed to set up entry function ", arg));
-				m_finalized = true;
+				if (m_finalized) manager.context.remove("main");
+				m_finalized = false;
+				finalize(manager, os);
 			}
 			return DONE;
 		case CMD_SET_LIMIT_COUNT:
@@ -273,6 +279,22 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 			
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, false);
 	return NO_CONTROL_COMMAND;
+}
+
+void Command_Processing::finalize(::language_uit & manager, ::std::ostream & os) {
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Protocol, m_opts != 0 && m_cfg != 0);
+
+	FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,
+			!manager.language_files.modulemap.empty(),
+			"No source files loaded!");
+
+	if (m_finalized) return;
+	m_finalized = ! manager.final();
+	// this must never fail, given all the previous sanity checks
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_finalized);
+
+	m_cfg->clear();
+	::goto_convert(manager.context, *m_opts, *m_cfg, manager.ui_message_handler);
 }
 
 FSHELL2_COMMAND_NAMESPACE_END;

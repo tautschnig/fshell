@@ -34,8 +34,12 @@
 #include <iostream>
 #include <map>
 #include <ctime>
+#include <list>
 
-#include <cbmc/src/langapi/language_ui.h>
+#include <cbmc/src/goto-programs/goto_functions.h>
+
+class language_uit;
+class optionst;
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_COMMAND_NAMESPACE_BEGIN;
@@ -74,15 +78,26 @@ class Command_Processing
 
 	static ::std::ostream & help(::std::ostream & os);
 
-	inline bool finalize_done() const;
+	void finalize(::language_uit & manager, ::std::ostream & os);
+	
+	inline void set_options(::optionst const& opts);
+
+	inline void set_cfg(::goto_functionst & cfg);
 
 	private:
 	::std::map< ::std::string, time_t > m_parse_time;
 	bool m_finalized;
+	// this is really painful, we should get rid of this singleton stuff and do
+	// proper construction
+	::optionst const * m_opts;
+	::goto_functionst * m_cfg;
 
 	Command_Processing();
 	
 	::std::ostream & print_file_contents(::std::ostream & os, char const * name) const;
+
+	void add_sourcecode(::language_uit & manager, char const * file,
+			::std::list< ::std::pair< char*, char* > > const& defines);
 
 	/*! \copydoc copy_constructor
 	*/
@@ -93,10 +108,14 @@ class Command_Processing
 	Self& operator=( Self const& rhs );
 };
 	
-inline bool Command_Processing::finalize_done() const {
-	return m_finalized;
+inline void Command_Processing::set_options(::optionst const& opts) {
+	m_opts = &opts;
 }
 
+inline void Command_Processing::set_cfg(::goto_functionst & cfg) {
+	m_cfg = &cfg;
+}
+	
 ::std::ostream & operator<<(::std::ostream & os, Command_Processing::status_t const& s);
 
 FSHELL2_COMMAND_NAMESPACE_END;

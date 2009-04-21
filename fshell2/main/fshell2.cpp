@@ -29,6 +29,8 @@
 #include <fshell2/main/fshell2.hpp>
 #include <fshell2/config/annotations.hpp>
 
+#include <diagnostics/basic_exceptions/invalid_protocol.hpp>
+
 #include <fshell2/command/command_processing.hpp>
 #include <fshell2/exception/command_processing_error.hpp>
 #include <fshell2/macro/macro_processing.hpp>
@@ -59,7 +61,7 @@ FShell2 & FShell2::get_instance() {
 }
 
 FShell2::FShell2() :
-	m_opts(0), m_primary_cfg(0) {
+	m_opts(0), m_cfg(0) {
 	// try to read history from file, ignore errors
 	::read_history(".fshell2_history"); errno = 0;
 }
@@ -71,25 +73,37 @@ FShell2::~FShell2() {
 	// ::history_truncate_lines(".fshell2_history", 200);
 }
 
+void FShell2::set_options(::optionst const& opts) {
+	m_opts = &opts;
+	::fshell2::command::Command_Processing::get_instance().set_options(opts);
+}
+
+void FShell2::set_primary_cfg(::goto_functionst & cfg) {
+	m_cfg = &cfg;
+	::fshell2::command::Command_Processing::get_instance().set_cfg(cfg);
+}
+
+
 void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char const * line) {
 	::std::string query(::fshell2::macro::Macro_Processing::get_instance().expand(line));
 	if (query.empty()) return;
 
-	/*
 	// there is some query string left, try to parse it
-	::fshell2::fql::Query * ast(0);
-	::fshell2::fql::Query_Processing::get_instance().parse(os, query.c_str(), &ast);
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, ast != 0);
+	// ::fshell2::fql::Query * query_ast(0);
+	::fshell2::fql::Query_Processing::get_instance().parse(os, query.c_str()/*, &query_ast*/);
+	// FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, query_ast != 0);
 	
-	// parse succeeded, get the most abstract CFG
-	::goto_functionst const& primary_cfg(::fshell2::command::Command_Processing::get_instance().get_primary_cfg());
-	
+	// parse succeeded, make sure the CFG is prepared
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Protocol, 0 != m_cfg);
+	::fshell2::command::Command_Processing::get_instance().finalize(manager, os);
+
+	/*
 	// normalize the input query
 	::fshell2::fql::Normalization_Visitor norm;
-	norm.normalize(&ast);
+	norm.normalize(&query_ast);
 
 	// do automaton instrumentation
-	::fshell2::instrumentation::Automaton_Inserter aut(primary_cfg, *ast);
+	::fshell2::instrumentation::Automaton_Inserter aut(prg_cfg, *query_ast);
 	::goto_functionst instrumented_cfg;
 	aut.instrument(instrumented_cfg);
 
@@ -116,7 +130,7 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 
 	// do the enumeration
 	::fshell2::Test_Case_Generator tg(goal_set);
-	tg.generate();
+	tg.generate(s);
 	*/
 }
 

@@ -19,7 +19,9 @@ endif
 AM_YFLAGS = -d
 AM_LFLAGS = -o$(LEX_OUTPUT_ROOT).c
 
-CBMC_OBJS = ../../cbmc/src/util/util.o ../../cbmc/src/big-int/bigint.o \
+CBMC_OBJS = ../../cbmc/src/goto-programs/goto-programs.o \
+						../../cbmc/src/pointer-analysis/pointer-analysis.o \
+						../../cbmc/src/util/util.o ../../cbmc/src/big-int/bigint.o \
 						../../cbmc/src/langapi/langapi.o \
 						../../cbmc/src/ansi-c/ansi-c.o \
 						../../cbmc/src/langapi/csp_dummy.o \
