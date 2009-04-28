@@ -290,9 +290,17 @@ void Command_Processing::finalize(::language_uit & manager, ::std::ostream & os)
 	m_finalized = ! manager.final();
 	// this must never fail, given all the previous sanity checks
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_finalized);
+    ::symbolst::iterator main_iter(manager.context.symbols.find("main"));
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, main_iter != manager.context.symbols.end());
 
-	m_cfg->clear();
-	::goto_convert(manager.context, *m_opts, *m_cfg, manager.ui_message_handler);
+    ::goto_convert_functionst converter(manager.context, *m_opts, *m_cfg, manager.ui_message_handler);
+    converter.convert_function(main_iter->first);
+
+    // more functions may have been added
+    for(::symbolst::iterator iter(manager.context.symbols.begin());
+			iter != manager.context.symbols.end(); ++iter)
+	  if(iter->second.type.id() == "code" && iter->second.value.id() != "compiled")
+		  converter.convert_function(iter->first);
 }
 
 FSHELL2_COMMAND_NAMESPACE_END;
