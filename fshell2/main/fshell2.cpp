@@ -30,6 +30,7 @@
 #include <fshell2/config/annotations.hpp>
 
 #include <diagnostics/basic_exceptions/invalid_protocol.hpp>
+#include <diagnostics/basic_exceptions/violated_invariance.hpp>
 
 #include <fshell2/command/command_processing.hpp>
 #include <fshell2/exception/command_processing_error.hpp>

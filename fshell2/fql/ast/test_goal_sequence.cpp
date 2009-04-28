@@ -53,6 +53,19 @@ void Test_Goal_Sequence::accept(AST_Visitor const * v) const {
 bool Test_Goal_Sequence::destroy() {
 	if (this->m_ref_count) return false;
 	Factory::get_instance().destroy(this);
+	for (seq_t::iterator iter(m_seq.begin()); iter != m_seq.end(); ++iter) {
+		if (iter->first) {
+			iter->first->decr_ref_count();
+			iter->first->destroy();
+		}
+		iter->second->decr_ref_count();
+		iter->second->destroy();
+	}
+	m_seq.clear();
+	if (m_suffix_aut) {
+		m_suffix_aut->decr_ref_count();
+		m_suffix_aut->destroy();
+	}
 	return true;
 }
 
