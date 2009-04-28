@@ -35,7 +35,7 @@ BUILT_SOURCES += grammar.hpp
 include_fshell2_fql_parserdir = $(includedir)/fshell2/fql/parser
 noinst_LTLIBRARIES = libparser.la
 libparser_la_SOURCES = lexer.ll parser.yy query_processing.cpp
-include_fshell2_fql_parser_HEADERS =   query_processing.hpp parser.h grammar.hpp
+include_fshell2_fql_parser_HEADERS =   query_processing.hpp
 check_PROGRAMS = query_processing
 query_processing_SOURCES = query_processing.t.cpp
 # add additional objects required to build query_processing here, like

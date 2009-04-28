@@ -130,6 +130,7 @@ if( $? >> 8 )
 
 my @array_makefile_am = ();
 
+# read entry lines for variable $entry and return them as seen
 sub get_makefile_entry()
 {
   my ( $entry ) = @_;
@@ -151,6 +152,31 @@ sub get_makefile_entry()
 
   return @val;
 }
+
+# just collect all the values of $entry
+sub get_variable_values()
+{
+  my ( $entry ) = @_;
+  my $start = -1;
+  my $k = 0;
+  my @val = ();
+
+  foreach( @array_makefile_am )
+  {
+    my $line = $_;
+    $start = $k if( ( $line =~ /^$entry\s*=/ ) || ( $line =~ /^$entry \s*\+=/ ));
+    $k++;
+    next if( -1 == $start );
+
+    ( /^($entry\s*(\+)?=)?\s*(.*?)\s*(\\)?$/ ) or die "Internal error - $entry line does not match\n";
+    push @val, $_  foreach (split(/\s+/, $3));
+
+    $start = -1 unless( $line =~ /\\$/ );
+  }
+
+  return @val;
+}
+
 
 sub set_makefile_entry()
 {
@@ -364,7 +390,11 @@ if( 1 == $install_headers )
 opendir( CWD, cwd() );
 @wanted_files = grep( !/\.t\.hpp$/, grep( /(\.hpp|\.h)$/, readdir( CWD ) ) );
 closedir( CWD );
-&update_makefile_entry( $e, @wanted_files );
+my %wanted_files_hash = ();
+@wanted_files_hash{ @wanted_files } = ();
+# remove BUILT_SOURCES from the list
+delete $wanted_files_hash{$_} foreach (&get_variable_values("BUILT_SOURCES"));
+&update_makefile_entry( $e, keys %wanted_files_hash );
 
 # add tests, i.e., shell scripts and .t.cpp programs
 opendir( CWD, cwd() );

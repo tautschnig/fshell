@@ -51,7 +51,7 @@ $(CBMC_OBJS):
 noinst_LTLIBRARIES = libcommand.la
 libcommand_la_SOURCES = command_processing.cpp lexer.ll parser.yy
 include_fshell2_commanddir = $(includedir)/fshell2/command
-include_fshell2_command_HEADERS = command_processing.hpp parser.h
+include_fshell2_command_HEADERS = command_processing.hpp
 check_PROGRAMS = command_processing
 command_processing_SOURCES = command_processing.t.cpp
 # add additional objects required to build command_processing here, like
