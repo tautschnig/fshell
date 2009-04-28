@@ -49,7 +49,7 @@ class Query_Processing
 	public:
 	static Query_Processing & get_instance();
 
-	int parse(::std::ostream & os, char const * query, Query ** query_ast);
+	void parse(::std::ostream & os, char const * query, Query ** query_ast);
 
 	static ::std::ostream & help(::std::ostream & os);
 

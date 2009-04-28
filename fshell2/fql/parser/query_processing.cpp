@@ -61,7 +61,7 @@ Query_Processing::Query_Processing & Query_Processing::get_instance() {
 	return os;
 }
 	
-int Query_Processing::parse(::std::ostream & os, char const * query, Query ** query_ast) {
+void Query_Processing::parse(::std::ostream & os, char const * query, Query ** query_ast) {
 	// new lexer
 	FQLFlexLexer lexer;
 	// put the input into a stream
@@ -79,8 +79,6 @@ int Query_Processing::parse(::std::ostream & os, char const * query, Query ** qu
 		FSHELL2_PROD_CHECK1(Query_Processing_Error, false,
 				::diagnostics::internal::to_string("Query parsing failed: ", e.what()));
 	}
-
-	return 0;
 }
 
 FSHELL2_FQL_NAMESPACE_END;
