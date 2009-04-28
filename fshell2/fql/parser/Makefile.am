@@ -12,7 +12,7 @@ CBMC_OBJS = ../../../cbmc/src/util/util.o ../../../cbmc/src/big-int/bigint.o \
 						../../../cbmc/src/ansi-c/ansi-c.o
 
 $(CBMC_OBJS):
-	$(MAKE) -C ../../../cbmc/src
+	$(MAKE) -C ../../../cbmc/src util.dir big-int.dir ansi-c.dir
 
 if DIAGNOSTICS
 BUILT_SOURCES += parser.h

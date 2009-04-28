@@ -35,7 +35,8 @@ CBMC_OBJS = ../../cbmc/src/goto-programs/goto-programs.o \
 						../../cbmc/src/langapi/mdllang_dummy.o
 
 $(CBMC_OBJS):
-	$(MAKE) -C ../../cbmc/src
+	$(MAKE) -C ../../cbmc/src util.dir big-int.dir goto-programs.dir \
+		pointer-analysis.dir langapi.dir ansi-c.dir
 
 include_fshell2_maindir = $(includedir)/fshell2/main
 noinst_LTLIBRARIES = libmain.la

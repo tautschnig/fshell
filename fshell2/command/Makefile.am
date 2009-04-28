@@ -46,7 +46,8 @@ CBMC_OBJS = ../../cbmc/src/goto-programs/goto-programs.o \
 						../../cbmc/src/langapi/mdllang_dummy.o
 
 $(CBMC_OBJS):
-	$(MAKE) -C ../../cbmc/src
+	$(MAKE) -C ../../cbmc/src util.dir big-int.dir goto-programs.dir \
+		pointer-analysis.dir langapi.dir ansi-c.dir
 
 noinst_LTLIBRARIES = libcommand.la
 libcommand_la_SOURCES = command_processing.cpp lexer.ll parser.yy
