@@ -63,10 +63,30 @@ does; this breaks compilation with -pedantic */
 #define yylval FQLlval
 #define yychar FQLchar
 
+#include <fshell2/fql/ast/fql_node.hpp>
+
+namespace fshell2 {
+  namespace fql {
+    class Abstraction;
+	class Filter;
+	class Predicate;
+	class Restriction_Automaton;
+	class Test_Goal_Sequence;
+	class Test_Goal_Set;
+  }
+}
+
+#include <set>
+#include <list>
+
+class exprt;
+
 #include <fshell2/fql/parser/parser.h>
 
 #include <fshell2/config/annotations.hpp>
 #include <diagnostics/basic_exceptions/parse_error.hpp>
+
+extern ::std::set< ::fshell2::fql::FQL_Node * > intermediates;
 
 %}
 
@@ -212,6 +232,10 @@ TOK_NAT_NUMBER          [0-9]+
                                       }
 
 .                                     {
+										for (::std::set< ::fshell2::fql::FQL_Node * >::iterator
+											iter(intermediates.begin()); iter != intermediates.end(); ++iter)
+										  if (*iter) (*iter)->destroy();
+										intermediates.clear();
                                         FSHELL2_PROD_CHECK1(::diagnostics::Parse_Error, false,
                                           ::diagnostics::internal::to_string( "Unexpected character ", yytext, 
                                           " in line ", yylineno, "; type \"help\" to get usage information" ));

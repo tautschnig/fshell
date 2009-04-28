@@ -39,7 +39,7 @@
 #define yyFlexLexer FQLFlexLexer
 #include <FlexLexer.h>
 
-extern int FQLparse(FQLFlexLexer *, ::std::ostream *);
+extern int FQLparse(FQLFlexLexer *, ::std::ostream *, ::fshell2::fql::Query **);
 // extern int yydebug;
 /* end parser */
 
@@ -61,7 +61,7 @@ Query_Processing::Query_Processing & Query_Processing::get_instance() {
 	return os;
 }
 	
-int Query_Processing::parse(::std::ostream & os, char const * query) {
+int Query_Processing::parse(::std::ostream & os, char const * query, Query ** query_ast) {
 	// new lexer
 	FQLFlexLexer lexer;
 	// put the input into a stream
@@ -73,7 +73,7 @@ int Query_Processing::parse(::std::ostream & os, char const * query) {
 	// try to parse
 	try {
 		int parse(0);
-		parse = FQLparse(&lexer, &os);
+		parse = FQLparse(&lexer, &os, query_ast);
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 0 == parse);
 	} catch (::diagnostics::Parse_Error & e) {
 		FSHELL2_PROD_CHECK1(Query_Processing_Error, false,

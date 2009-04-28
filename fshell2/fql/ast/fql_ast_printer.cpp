@@ -159,7 +159,7 @@ void FQL_AST_Printer::visit(Pathcov const* n) {
 }
 
 void FQL_AST_Printer::visit(Filter_Identity const* n) {
-	m_os << "IDENITY";
+	m_os << "IDENTITY";
 }
 
 void FQL_AST_Printer::visit(Filter_Complement const* n) {

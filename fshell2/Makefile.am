@@ -17,6 +17,7 @@ libfshell2_la_SOURCES =
 libfshell2_la_LIBADD = exception/libexception.la \
 											 command/libcommand.la \
 											 macro/libmacro.la \
+											 fql/ast/libast.la \
 											 fql/parser/libparser.la \
 											 main/libmain.la
 libfshell2_la_LDFLAGS = -version-info 0:0:0

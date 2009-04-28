@@ -8,6 +8,12 @@ include $(top_srcdir)/model.am
 # SUBDIRS = dir1 dir2 dirX
 SUBDIRS =
 
+CBMC_OBJS = ../../../cbmc/src/util/util.o ../../../cbmc/src/big-int/bigint.o \
+						../../../cbmc/src/ansi-c/ansi-c.o
+
+$(CBMC_OBJS):
+	$(MAKE) -C ../../../cbmc/src
+
 if DIAGNOSTICS
 BUILT_SOURCES += parser.h
 else
@@ -40,7 +46,7 @@ check_PROGRAMS = query_processing
 query_processing_SOURCES = query_processing.t.cpp
 # add additional objects required to build query_processing here, like
 # query_processing_LDADD = ../base/libbase.la libbla.la
-query_processing_LDADD = ../../exception/libexception.la libparser.la
+query_processing_LDADD = ../../exception/libexception.la ../ast/libast.la libparser.la $(CBMC_OBJS)
 # note that this entry (query_processing_SOURCES, query_processing_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually

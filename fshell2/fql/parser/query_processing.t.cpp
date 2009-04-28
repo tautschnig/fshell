@@ -34,11 +34,15 @@
 #include <fshell2/fql/parser/query_processing.hpp>
 #include <fshell2/exception/query_processing_error.hpp>
 
+#include <fshell2/fql/ast/query.hpp>
+
 #define TEST_COMPONENT_NAME Query_Processing
 #define TEST_COMPONENT_NAMESPACE fshell2::fql
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
+
+class Query;
 
 /** @cond */
 TEST_NAMESPACE_BEGIN;
@@ -54,9 +58,16 @@ using namespace ::diagnostics::unittest;
 void test_basic( Test_Data & data )
 {
 	::std::ostringstream os;
+	::fshell2::fql::Query * q(0);
 
-	TEST_ASSERT(0 == ::fshell2::fql::Query_Processing::get_instance().parse(os,
-				"cover edgecov(cfg,@file(\"bla.c\"))"));
+	::fshell2::fql::Query_Processing::get_instance().parse(os,
+				"cover edgecov(cfg,@file(\"bla.c\"))", &q);
+	TEST_ASSERT(q != 0);
+	os.str("");
+
+	os << *q;
+	TEST_ASSERT(data.compare("parsed_basic_query_1", os.str()));
+	q->destroy();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -81,10 +92,12 @@ void test_help( Test_Data & data )
 void test_invalid( Test_Data & data )
 {
 	::std::ostringstream os;
+	::fshell2::fql::Query * q(0);
 
 	TEST_THROWING_BLOCK_ENTER;
-	::fshell2::fql::Query_Processing::get_instance().parse(os, "bla bla bla");
+	::fshell2::fql::Query_Processing::get_instance().parse(os, "bla bla bla", &q);
 	TEST_THROWING_BLOCK_EXIT(::fshell2::Query_Processing_Error);
+	TEST_ASSERT(0 == q);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -95,15 +108,31 @@ void test_invalid( Test_Data & data )
 void test_use_case( Test_Data & data )
 {
 	::std::ostringstream os;
+	::fshell2::fql::Query * q(0);
 	
 	TEST_ASSERT(0 == ::fshell2::fql::Query_Processing::get_instance().parse(os,
-				"cover edgecov(cfg,@file(\"bla.c\"))"));
+				"cover edgecov(cfg,@file(\"bla.c\"))", &q));
+	TEST_ASSERT(q != 0);
+	os.str("");
+	os << *q;
+	TEST_ASSERT(data.compare("parsed_use_case_query_1", os.str()));
+	q->destroy();
 	
 	TEST_ASSERT(0 == ::fshell2::fql::Query_Processing::get_instance().parse(os,
-				"in @file(\"bla.c\") cover edgecov(cfg,identity) passing @func(main)"));
+				"in @file(\"bla.c\") cover edgecov(cfg,identity) passing @func(main)", &q));
+	TEST_ASSERT(q != 0);
+	os.str("");
+	os << *q;
+	TEST_ASSERT(data.compare("parsed_use_case_query_2", os.str()));
+	q->destroy();
 	
 	TEST_ASSERT(0 == ::fshell2::fql::Query_Processing::get_instance().parse(os,
-				"in @file(\"bla.c\") cover edgecov(cfg,@BASICBLOCKENTRY) passing setminus(@file(\"bla.c\"),@func(unimplemented))"));
+				"in @file(\"bla.c\") cover edgecov(cfg,@BASICBLOCKENTRY) passing setminus(@file(\"bla.c\"),@func(unimplemented))", &q));
+	TEST_ASSERT(q != 0);
+	os.str("");
+	os << *q;
+	TEST_ASSERT(data.compare("parsed_use_case_query_3", os.str()));
+	q->destroy();
 }
 
 /** @cond */

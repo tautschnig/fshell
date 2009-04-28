@@ -55,6 +55,13 @@ auto_ptr<char>::~auto_ptr()
 
 FSHELL2_NAMESPACE_BEGIN;
 
+FSHELL2_FQL_NAMESPACE_BEGIN;
+
+class Query;
+class Abstraction;
+
+FSHELL2_FQL_NAMESPACE_END;
+
 FShell2 & FShell2::get_instance() {
 	static FShell2 instance;
 	return instance;
@@ -89,9 +96,9 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 	if (query.empty()) return;
 
 	// there is some query string left, try to parse it
-	// ::fshell2::fql::Query * query_ast(0);
-	::fshell2::fql::Query_Processing::get_instance().parse(os, query.c_str()/*, &query_ast*/);
-	// FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, query_ast != 0);
+	::fshell2::fql::Query * query_ast(0);
+	::fshell2::fql::Query_Processing::get_instance().parse(os, query.c_str(), &query_ast);
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, query_ast != 0);
 	
 	// parse succeeded, make sure the CFG is prepared
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Protocol, 0 != m_cfg);

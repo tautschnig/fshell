@@ -36,6 +36,8 @@
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
+class Query;
+
 /*! \brief TODO
 */
 class Query_Processing
@@ -47,7 +49,7 @@ class Query_Processing
 	public:
 	static Query_Processing & get_instance();
 
-	int parse(::std::ostream & os, char const * query);
+	int parse(::std::ostream & os, char const * query, Query ** query_ast);
 
 	static ::std::ostream & help(::std::ostream & os);
 
