@@ -55,6 +55,8 @@ class Abstraction : public FQL_Node
 	public:
 	typedef FQL_Node_Factory<Self> Factory;
 
+	typedef ::std::set< Predicate *, FQL_Node_Lt_Compare > preds_t;
+
 	/*! \{
 	 * \brief Accept a visitor 
 	 * \param  v Visitor
@@ -65,17 +67,17 @@ class Abstraction : public FQL_Node
 
 	virtual bool destroy();
 
-	inline ::std::set<Predicate *, FQL_Node_Lt_Compare> const & get_predicates() const;
+	inline preds_t const & get_predicates() const;
 
 	private:
-	friend Self * FQL_Node_Factory<Self>::create(::std::set<Predicate *, FQL_Node_Lt_Compare> & predicates);
+	friend Self * FQL_Node_Factory<Self>::create(preds_t & predicates);
 	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
 
-	::std::set<Predicate *, FQL_Node_Lt_Compare> m_predicates;
+	preds_t m_predicates;
 
 	/*! Constructor
 	*/
-	Abstraction(::std::set<Predicate *, FQL_Node_Lt_Compare> const& predicates);
+	Abstraction(preds_t const& predicates);
 
 	/*! \copydoc copy_constructor
 	*/
@@ -90,12 +92,12 @@ class Abstraction : public FQL_Node
 	virtual ~Abstraction();
 };
 	
-inline ::std::set<Predicate *, FQL_Node_Lt_Compare> const & Abstraction::get_predicates() const {
+inline Abstraction::preds_t const & Abstraction::get_predicates() const {
 	return m_predicates;
 }
 
 template <>
-inline Abstraction * FQL_Node_Factory<Abstraction>::create(::std::set<Predicate *, FQL_Node_Lt_Compare> & predicates) {
+inline Abstraction * FQL_Node_Factory<Abstraction>::create(Abstraction::preds_t & predicates) {
 	if (m_available.empty()) {
 		m_available.push_back(new Abstraction(predicates));
 	} else {
@@ -108,12 +110,12 @@ inline Abstraction * FQL_Node_Factory<Abstraction>::create(::std::set<Predicate 
 			m_used.insert(m_available.back()));
 	if (inserted.second) {
 		m_available.pop_back();
-		for (::std::set< Predicate *, FQL_Node_Lt_Compare>::iterator iter((*inserted.first)->m_predicates.begin());
+		for (Abstraction::preds_t::iterator iter((*inserted.first)->m_predicates.begin());
 				iter != (*inserted.first)->m_predicates.end(); ++iter) {
 			(*iter)->incr_ref_count();
 		}
 	} else {
-		for (::std::set< Predicate *, FQL_Node_Lt_Compare>::iterator iter(m_available.back()->m_predicates.begin());
+		for (Abstraction::preds_t::iterator iter(m_available.back()->m_predicates.begin());
 				iter != m_available.back()->m_predicates.end(); ++iter) {
 			(*iter)->destroy();
 		}

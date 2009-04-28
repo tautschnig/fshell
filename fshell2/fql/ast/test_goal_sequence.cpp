@@ -36,7 +36,7 @@
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Test_Goal_Sequence::Test_Goal_Sequence(Test_Goal_Sequence::seq_t & seq,
+Test_Goal_Sequence::Test_Goal_Sequence(Test_Goal_Sequence::seq_t const& seq,
 		Restriction_Automaton * suffix_aut) :
 	m_seq(seq), m_suffix_aut(suffix_aut) {
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, !m_seq.empty());

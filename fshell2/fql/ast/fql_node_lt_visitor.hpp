@@ -1284,7 +1284,7 @@ inline bool FQL_Node_Lt_Visitor::cmp_lt(Abstraction const* a, Abstraction const*
 {
 	if (a->get_predicates().size() != b->get_predicates().size())
 		return a->get_predicates().size() < b->get_predicates().size();
-	for (::std::set<Predicate *, FQL_Node_Lt_Visitor>::const_iterator itera(a->get_predicates().begin()),
+	for (Abstraction::preds_t::const_iterator itera(a->get_predicates().begin()),
 			iterb(b->get_predicates().begin()); itera != a->get_predicates().end();
 			++itera, ++iterb) {
 		if (*itera == *iterb) continue;

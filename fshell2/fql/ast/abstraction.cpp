@@ -33,7 +33,7 @@
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Abstraction::Abstraction(::std::set<Predicate *, FQL_Node_Lt_Compare> const& predicates) :
+Abstraction::Abstraction(Abstraction::preds_t const& predicates) :
 	m_predicates(predicates) {
 }
 
@@ -48,7 +48,7 @@ void Abstraction::accept(AST_Visitor const * v) const {
 bool Abstraction::destroy() {
 	if (this->m_ref_count) return false;
 	Factory::get_instance().destroy(this);
-	for (::std::set<Predicate *, FQL_Node_Lt_Compare>::iterator iter(m_predicates.begin());
+	for (preds_t::iterator iter(m_predicates.begin());
 			iter != m_predicates.end(); ++iter) {
 		(*iter)->decr_ref_count();
 		(*iter)->destroy();

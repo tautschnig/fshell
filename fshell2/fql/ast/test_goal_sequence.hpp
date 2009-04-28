@@ -79,7 +79,7 @@ class Test_Goal_Sequence : public FQL_Node
 
 	/*! Constructor
 	*/
-	Test_Goal_Sequence(seq_t & seq, Restriction_Automaton * suffix_aut);
+	Test_Goal_Sequence(seq_t const& seq, Restriction_Automaton * suffix_aut);
 
 	/*! \copydoc copy_constructor
 	*/

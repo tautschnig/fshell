@@ -106,7 +106,7 @@ void FQL_AST_Printer::visit(Abstraction const* n) {
 	if (n->get_predicates().empty()) return;
 	m_os << "[";
 	(*n->get_predicates().begin())->accept(this);
-	for (::std::set<Predicate *, FQL_Node_Lt_Compare>::const_iterator iter(++(n->get_predicates().begin()));
+	for (Abstraction::preds_t::const_iterator iter(++(n->get_predicates().begin()));
 			iter != n->get_predicates().end(); ++iter) {
 		m_os << ",";
 		(*iter)->accept(this);
