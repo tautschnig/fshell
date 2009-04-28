@@ -27,13 +27,19 @@
 */
 
 #include <fshell2/fql/ast/edgecov.hpp>
+#include <fshell2/config/annotations.hpp>
+
+#include <diagnostics/basic_exceptions/invalid_argument.hpp>
 
 #include <fshell2/fql/ast/ast_visitor.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Edgecov::Edgecov() {
+Edgecov::Edgecov(Abstraction * abst, Filter * filter) :
+	m_abst(abst), m_filter(filter) {
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_abst);
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_filter);
 }
 
 void Edgecov::accept(AST_Visitor * v) const {
@@ -47,6 +53,10 @@ void Edgecov::accept(AST_Visitor const * v) const {
 bool Edgecov::destroy() {
 	if (this->m_ref_count) return false;
 	Factory::get_instance().destroy(this);
+	m_abst->decr_ref_count();
+	m_abst->destroy();
+	m_filter->decr_ref_count();
+	m_filter->destroy();
 	return true;
 }
 

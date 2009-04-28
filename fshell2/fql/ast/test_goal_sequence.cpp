@@ -27,13 +27,19 @@
 */
 
 #include <fshell2/fql/ast/test_goal_sequence.hpp>
+#include <fshell2/config/annotations.hpp>
+
+#include <diagnostics/basic_exceptions/invalid_argument.hpp>
 
 #include <fshell2/fql/ast/ast_visitor.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Test_Goal_Sequence::Test_Goal_Sequence() {
+Test_Goal_Sequence::Test_Goal_Sequence(Test_Goal_Sequence::seq_t & seq,
+		Restriction_Automaton * suffix_aut) :
+	m_seq(seq), m_suffix_aut(suffix_aut) {
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, !m_seq.empty());
 }
 
 void Test_Goal_Sequence::accept(AST_Visitor * v) const {

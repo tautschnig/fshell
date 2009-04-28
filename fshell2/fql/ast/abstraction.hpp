@@ -30,12 +30,20 @@
 */
 
 #include <fshell2/config/config.hpp>
+#include <fshell2/config/annotations.hpp>
 #include <fshell2/fql/ast/fql_node.hpp>
 #include <fshell2/fql/ast/fql_node_factory.hpp>
 
+#include <fshell2/fql/ast/predicate.hpp>
+
+#include <diagnostics/basic_exceptions/violated_invariance.hpp>
+#include <set>
+
 FSHELL2_NAMESPACE_BEGIN;
-      FSHELL2_FQL_NAMESPACE_BEGIN;
-      
+FSHELL2_FQL_NAMESPACE_BEGIN;
+
+class Predicate;
+
 /*! \brief TODO
 */
 class Abstraction : public FQL_Node
@@ -45,44 +53,77 @@ class Abstraction : public FQL_Node
 	typedef Abstraction Self;
 
 	public:
-  typedef FQL_Node_Factory<Self> Factory;
+	typedef FQL_Node_Factory<Self> Factory;
 
-  /*! \{
-   * \brief Accept a visitor 
-   * \param  v Visitor
-   */
-  virtual void accept(AST_Visitor * v) const;
-  virtual void accept(AST_Visitor const * v) const;
-  /*! \} */
-		
-  virtual bool destroy();	
+	/*! \{
+	 * \brief Accept a visitor 
+	 * \param  v Visitor
+	 */
+	virtual void accept(AST_Visitor * v) const;
+	virtual void accept(AST_Visitor const * v) const;
+	/*! \} */
+
+	virtual bool destroy();
+
+	inline ::std::set<Predicate *, FQL_Node_Lt_Compare> const & get_predicates() const;
 
 	private:
-	friend Self * FQL_Node_Factory<Self>::create();
+	friend Self * FQL_Node_Factory<Self>::create(::std::set<Predicate *, FQL_Node_Lt_Compare> & predicates);
 	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
 
-  /*! Constructor
-  */
-  Abstraction();
+	::std::set<Predicate *, FQL_Node_Lt_Compare> m_predicates;
+
+	/*! Constructor
+	*/
+	Abstraction(::std::set<Predicate *, FQL_Node_Lt_Compare> const& predicates);
 
 	/*! \copydoc copy_constructor
 	*/
 	Abstraction( Self const& rhs );
 
 	/*! \copydoc assignment_op
-	 */
+	*/
 	Self& operator=( Self const& rhs );
-		
-  /*! \brief Destructor
-  */
-  virtual ~Abstraction();
+
+	/*! \brief Destructor
+	*/
+	virtual ~Abstraction();
 };
+	
+inline ::std::set<Predicate *, FQL_Node_Lt_Compare> const & Abstraction::get_predicates() const {
+	return m_predicates;
+}
 
 template <>
-inline Abstraction * FQL_Node_Factory<Abstraction>::create() {
+inline Abstraction * FQL_Node_Factory<Abstraction>::create(::std::set<Predicate *, FQL_Node_Lt_Compare> & predicates) {
+	if (m_available.empty()) {
+		m_available.push_back(new Abstraction(predicates));
+	} else {
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+				m_available.back()->m_predicates.empty());
+		m_available.back()->m_predicates.swap(predicates);
+	}
+
+	::std::pair< ::std::set< Abstraction *, FQL_Node_Lt_Compare>::const_iterator, bool > inserted(
+			m_used.insert(m_available.back()));
+	if (inserted.second) {
+		m_available.pop_back();
+		for (::std::set< Predicate *, FQL_Node_Lt_Compare>::iterator iter((*inserted.first)->m_predicates.begin());
+				iter != (*inserted.first)->m_predicates.end(); ++iter) {
+			(*iter)->incr_ref_count();
+		}
+	} else {
+		for (::std::set< Predicate *, FQL_Node_Lt_Compare>::iterator iter(m_available.back()->m_predicates.begin());
+				iter != m_available.back()->m_predicates.end(); ++iter) {
+			(*iter)->destroy();
+		}
+		m_available.back()->m_predicates.clear();
+	}
+
+	return *(inserted.first);
 }
 
 FSHELL2_FQL_NAMESPACE_END;
-      FSHELL2_NAMESPACE_END;
+FSHELL2_NAMESPACE_END;
       
 #endif /* FSHELL2__FQL__AST__ABSTRACTION_HPP */

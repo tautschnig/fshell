@@ -27,13 +27,20 @@
 */
 
 #include <fshell2/fql/ast/pathcov.hpp>
+#include <fshell2/config/annotations.hpp>
+
+#include <diagnostics/basic_exceptions/invalid_argument.hpp>
 
 #include <fshell2/fql/ast/ast_visitor.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Pathcov::Pathcov() {
+Pathcov::Pathcov(Abstraction * abst, Filter * filter, int bound) :
+	m_abst(abst), m_filter(filter), m_bound(bound) {
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_abst);
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_filter);
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_bound > 0);
 }
 
 void Pathcov::accept(AST_Visitor * v) const {
@@ -47,6 +54,10 @@ void Pathcov::accept(AST_Visitor const * v) const {
 bool Pathcov::destroy() {
 	if (this->m_ref_count) return false;
 	Factory::get_instance().destroy(this);
+	m_abst->decr_ref_count();
+	m_abst->destroy();
+	m_filter->decr_ref_count();
+	m_filter->destroy();
 	return true;
 }
 

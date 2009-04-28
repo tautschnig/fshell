@@ -30,59 +30,91 @@
 */
 
 #include <fshell2/config/config.hpp>
-#include <fshell2/fql/ast/fql_node.hpp>
+#include <fshell2/fql/ast/test_goal_set.hpp>
 #include <fshell2/fql/ast/fql_node_factory.hpp>
 
+#include <fshell2/fql/ast/abstraction.hpp>
+#include <fshell2/fql/ast/filter.hpp>
+
 FSHELL2_NAMESPACE_BEGIN;
-      FSHELL2_FQL_NAMESPACE_BEGIN;
-      
+FSHELL2_FQL_NAMESPACE_BEGIN;
+
 /*! \brief TODO
 */
-class Edgecov : public FQL_Node
+class Edgecov : public Test_Goal_Set
 {
 	/*! \copydoc doc_self
 	*/
 	typedef Edgecov Self;
 
 	public:
-  typedef FQL_Node_Factory<Self> Factory;
+	typedef FQL_Node_Factory<Self> Factory;
 
-  /*! \{
-   * \brief Accept a visitor 
-   * \param  v Visitor
-   */
-  virtual void accept(AST_Visitor * v) const;
-  virtual void accept(AST_Visitor const * v) const;
-  /*! \} */
-		
-  virtual bool destroy();	
+	/*! \{
+	 * \brief Accept a visitor 
+	 * \param  v Visitor
+	 */
+	virtual void accept(AST_Visitor * v) const;
+	virtual void accept(AST_Visitor const * v) const;
+	/*! \} */
+
+	virtual bool destroy();	
+
+	inline Abstraction const * get_abstraction() const;
+	inline Filter const * get_filter() const;
 
 	private:
-	friend Self * FQL_Node_Factory<Self>::create();
+	friend Self * FQL_Node_Factory<Self>::create(Abstraction * abst, Filter * filter);
 	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
 
-  /*! Constructor
-  */
-  Edgecov();
+	Abstraction * m_abst;
+	Filter * m_filter;
+
+	/*! Constructor
+	*/
+	Edgecov(Abstraction * abst, Filter * filter);
 
 	/*! \copydoc copy_constructor
 	*/
 	Edgecov( Self const& rhs );
 
 	/*! \copydoc assignment_op
-	 */
+	*/
 	Self& operator=( Self const& rhs );
-		
-  /*! \brief Destructor
-  */
-  virtual ~Edgecov();
+
+	/*! \brief Destructor
+	*/
+	virtual ~Edgecov();
 };
 
+inline Abstraction const * Edgecov::get_abstraction() const {
+	return m_abst;
+}
+
+inline Filter const * Edgecov::get_filter() const {
+	return m_filter;
+}
+
 template <>
-inline Edgecov * FQL_Node_Factory<Edgecov>::create() {
+inline Edgecov * FQL_Node_Factory<Edgecov>::create(Abstraction * abst, Filter * filter) {
+	if (m_available.empty()) {
+		m_available.push_back(new Edgecov(abst, filter));
+	}
+
+	m_available.back()->m_abst = abst;
+	m_available.back()->m_filter = filter;
+	::std::pair< ::std::set<Edgecov *, FQL_Node_Lt_Compare>::const_iterator, bool > inserted(
+			m_used.insert(m_available.back()));
+	if (inserted.second) {
+		m_available.pop_back();
+		abst->incr_ref_count();
+		filter->incr_ref_count();
+	}
+
+	return *(inserted.first);
 }
 
 FSHELL2_FQL_NAMESPACE_END;
-      FSHELL2_NAMESPACE_END;
-      
+FSHELL2_NAMESPACE_END;
+
 #endif /* FSHELL2__FQL__AST__EDGECOV_HPP */

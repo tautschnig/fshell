@@ -31,6 +31,8 @@
 
 #include <fshell2/config/config.hpp>
 
+#include <iostream>
+
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
@@ -86,6 +88,12 @@ inline void FQL_Node::incr_ref_count() {
 inline void FQL_Node::decr_ref_count() {
 	--m_ref_count;
 }
+
+struct FQL_Node_Lt_Compare {
+	bool operator()(FQL_Node const *, FQL_Node const*) const;
+};
+
+::std::ostream & operator<<(::std::ostream & os, FQL_Node const& n);
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;

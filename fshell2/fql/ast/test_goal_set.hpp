@@ -27,15 +27,15 @@
  * $Id$
  * \author Michael Tautschnig <tautschnig@forsyte.de>
  * \date   Tue Apr 21 23:48:55 CEST 2009 
-*/
+ */
 
 #include <fshell2/config/config.hpp>
 #include <fshell2/fql/ast/fql_node.hpp>
 #include <fshell2/fql/ast/fql_node_factory.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
-      FSHELL2_FQL_NAMESPACE_BEGIN;
-      
+FSHELL2_FQL_NAMESPACE_BEGIN;
+
 /*! \brief TODO
 */
 class Test_Goal_Set : public FQL_Node
@@ -45,44 +45,37 @@ class Test_Goal_Set : public FQL_Node
 	typedef Test_Goal_Set Self;
 
 	public:
-  typedef FQL_Node_Factory<Self> Factory;
+	typedef FQL_Node_Factory<Self> Factory;
 
-  /*! \{
-   * \brief Accept a visitor 
-   * \param  v Visitor
-   */
-  virtual void accept(AST_Visitor * v) const;
-  virtual void accept(AST_Visitor const * v) const;
-  /*! \} */
-		
-  virtual bool destroy();	
+	/*! Constructor
+	*/
+	Test_Goal_Set();
+
+	/*! \brief Destructor
+	*/
+	virtual ~Test_Goal_Set();
+
+	/*! \{
+	 * \brief Accept a visitor 
+	 * \param  v Visitor
+	 */
+	virtual void accept(AST_Visitor * v) const = 0;
+	virtual void accept(AST_Visitor const * v) const = 0;
+	/*! \} */
+
+	virtual bool destroy() = 0;
 
 	private:
-	friend Self * FQL_Node_Factory<Self>::create();
-	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
-
-  /*! Constructor
-  */
-  Test_Goal_Set();
-
 	/*! \copydoc copy_constructor
 	*/
 	Test_Goal_Set( Self const& rhs );
 
 	/*! \copydoc assignment_op
-	 */
+	*/
 	Self& operator=( Self const& rhs );
-		
-  /*! \brief Destructor
-  */
-  virtual ~Test_Goal_Set();
 };
 
-template <>
-inline Test_Goal_Set * FQL_Node_Factory<Test_Goal_Set>::create() {
-}
-
 FSHELL2_FQL_NAMESPACE_END;
-      FSHELL2_NAMESPACE_END;
-      
+FSHELL2_NAMESPACE_END;
+
 #endif /* FSHELL2__FQL__AST__TEST_GOAL_SET_HPP */

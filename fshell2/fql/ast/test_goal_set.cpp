@@ -28,26 +28,10 @@
 
 #include <fshell2/fql/ast/test_goal_set.hpp>
 
-#include <fshell2/fql/ast/ast_visitor.hpp>
-
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 Test_Goal_Set::Test_Goal_Set() {
-}
-
-void Test_Goal_Set::accept(AST_Visitor * v) const {
-	v->visit(this);
-}
-
-void Test_Goal_Set::accept(AST_Visitor const * v) const {
-	v->visit(this);
-}
-
-bool Test_Goal_Set::destroy() {
-	if (this->m_ref_count) return false;
-	Factory::get_instance().destroy(this);
-	return true;
 }
 
 Test_Goal_Set::~Test_Goal_Set() {

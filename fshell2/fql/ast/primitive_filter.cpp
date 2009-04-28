@@ -33,7 +33,8 @@
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Primitive_Filter::Primitive_Filter() {
+Primitive_Filter::Primitive_Filter(filter_sub_t type, int val, ::std::string const& str_val) :
+	m_type(type), m_int_value(val), m_string_value(str_val) {
 }
 
 void Primitive_Filter::accept(AST_Visitor * v) const {

@@ -27,13 +27,18 @@
 */
 
 #include <fshell2/fql/ast/filter_complement.hpp>
+#include <fshell2/config/annotations.hpp>
+
+#include <diagnostics/basic_exceptions/invalid_argument.hpp>
 
 #include <fshell2/fql/ast/ast_visitor.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Filter_Complement::Filter_Complement() {
+Filter_Complement::Filter_Complement(Filter * filter) :
+	m_filter(filter) {
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_filter);
 }
 
 void Filter_Complement::accept(AST_Visitor * v) const {
@@ -47,6 +52,8 @@ void Filter_Complement::accept(AST_Visitor const * v) const {
 bool Filter_Complement::destroy() {
 	if (this->m_ref_count) return false;
 	Factory::get_instance().destroy(this);
+	m_filter->decr_ref_count();
+	m_filter->destroy();
 	return true;
 }
 

@@ -27,62 +27,92 @@
  * $Id$
  * \author Michael Tautschnig <tautschnig@forsyte.de>
  * \date   Tue Apr 21 23:48:55 CEST 2009 
-*/
+ */
 
 #include <fshell2/config/config.hpp>
-#include <fshell2/fql/ast/fql_node.hpp>
+#include <fshell2/fql/ast/test_goal_set.hpp>
 #include <fshell2/fql/ast/fql_node_factory.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
-      FSHELL2_FQL_NAMESPACE_BEGIN;
-      
+FSHELL2_FQL_NAMESPACE_BEGIN;
+
 /*! \brief TODO
 */
-class TGS_Setminus : public FQL_Node
+class TGS_Setminus : public Test_Goal_Set
 {
 	/*! \copydoc doc_self
 	*/
 	typedef TGS_Setminus Self;
 
 	public:
-  typedef FQL_Node_Factory<Self> Factory;
+	typedef FQL_Node_Factory<Self> Factory;
 
-  /*! \{
-   * \brief Accept a visitor 
-   * \param  v Visitor
-   */
-  virtual void accept(AST_Visitor * v) const;
-  virtual void accept(AST_Visitor const * v) const;
-  /*! \} */
-		
-  virtual bool destroy();	
+	/*! \{
+	 * \brief Accept a visitor 
+	 * \param  v Visitor
+	 */
+	virtual void accept(AST_Visitor * v) const;
+	virtual void accept(AST_Visitor const * v) const;
+	/*! \} */
+
+	virtual bool destroy();	
+
+	inline Test_Goal_Set const * get_tgs_a() const;
+	inline Test_Goal_Set const * get_tgs_b() const;
 
 	private:
-	friend Self * FQL_Node_Factory<Self>::create();
+	friend Self * FQL_Node_Factory<Self>::create(Test_Goal_Set * a, Test_Goal_Set * b);
 	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
 
-  /*! Constructor
-  */
-  TGS_Setminus();
+	Test_Goal_Set * m_tgs_a;
+	Test_Goal_Set * m_tgs_b;
+
+	/*! Constructor
+	*/
+	TGS_Setminus(Test_Goal_Set * a, Test_Goal_Set * b);
 
 	/*! \copydoc copy_constructor
 	*/
 	TGS_Setminus( Self const& rhs );
 
 	/*! \copydoc assignment_op
-	 */
+	*/
 	Self& operator=( Self const& rhs );
-		
-  /*! \brief Destructor
-  */
-  virtual ~TGS_Setminus();
+
+	/*! \brief Destructor
+	*/
+	virtual ~TGS_Setminus();
 };
 
-template <>
-inline TGS_Setminus * FQL_Node_Factory<TGS_Setminus>::create() {
+inline Test_Goal_Set const * TGS_Setminus::get_tgs_a() const {
+	return m_tgs_a;
 }
 
+inline Test_Goal_Set const * TGS_Setminus::get_tgs_b() const {
+	return m_tgs_b;
+}
+
+template <>
+inline TGS_Setminus * FQL_Node_Factory<TGS_Setminus>::create(Test_Goal_Set * a, Test_Goal_Set * b) {
+	if (m_available.empty()) {
+		m_available.push_back(new TGS_Setminus(a, b));
+	}
+
+	m_available.back()->m_tgs_a = a;
+	m_available.back()->m_tgs_b = b;
+	::std::pair< ::std::set<TGS_Setminus *, FQL_Node_Lt_Compare>::const_iterator, bool > inserted(
+			m_used.insert(m_available.back()));
+	if (inserted.second) {
+		m_available.pop_back();
+		a->incr_ref_count();
+		b->incr_ref_count();
+	}
+
+	return *(inserted.first);
+}
+
+
 FSHELL2_FQL_NAMESPACE_END;
-      FSHELL2_NAMESPACE_END;
-      
+FSHELL2_NAMESPACE_END;
+
 #endif /* FSHELL2__FQL__AST__TGS_SETMINUS_HPP */

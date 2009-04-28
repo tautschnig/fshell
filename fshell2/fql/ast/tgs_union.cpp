@@ -27,13 +27,19 @@
 */
 
 #include <fshell2/fql/ast/tgs_union.hpp>
+#include <fshell2/config/annotations.hpp>
+
+#include <diagnostics/basic_exceptions/invalid_argument.hpp>
 
 #include <fshell2/fql/ast/ast_visitor.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-TGS_Union::TGS_Union() {
+TGS_Union::TGS_Union(Test_Goal_Set * a, Test_Goal_Set * b) :
+	m_tgs_a(a), m_tgs_b(b) {
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_tgs_a);
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_tgs_b);
 }
 
 void TGS_Union::accept(AST_Visitor * v) const {
@@ -47,6 +53,10 @@ void TGS_Union::accept(AST_Visitor const * v) const {
 bool TGS_Union::destroy() {
 	if (this->m_ref_count) return false;
 	Factory::get_instance().destroy(this);
+	m_tgs_a->decr_ref_count();
+	m_tgs_a->destroy();
+	m_tgs_b->decr_ref_count();
+	m_tgs_b->destroy();
 	return true;
 }
 

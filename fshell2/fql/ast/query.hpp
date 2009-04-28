@@ -27,15 +27,19 @@
  * $Id$
  * \author Michael Tautschnig <tautschnig@forsyte.de>
  * \date   Tue Apr 21 23:48:54 CEST 2009 
-*/
+ */
 
 #include <fshell2/config/config.hpp>
 #include <fshell2/fql/ast/fql_node.hpp>
 #include <fshell2/fql/ast/fql_node_factory.hpp>
 
+#include <fshell2/fql/ast/filter.hpp>
+#include <fshell2/fql/ast/test_goal_sequence.hpp>
+#include <fshell2/fql/ast/restriction_automaton.hpp>
+
 FSHELL2_NAMESPACE_BEGIN;
-      FSHELL2_FQL_NAMESPACE_BEGIN;
-      
+FSHELL2_FQL_NAMESPACE_BEGIN;
+
 /*! \brief TODO
 */
 class Query : public FQL_Node
@@ -45,44 +49,83 @@ class Query : public FQL_Node
 	typedef Query Self;
 
 	public:
-  typedef FQL_Node_Factory<Self> Factory;
+	typedef FQL_Node_Factory<Self> Factory;
 
-  /*! \{
-   * \brief Accept a visitor 
-   * \param  v Visitor
-   */
-  virtual void accept(AST_Visitor * v) const;
-  virtual void accept(AST_Visitor const * v) const;
-  /*! \} */
-		
-  virtual bool destroy();	
+	/*! \{
+	 * \brief Accept a visitor 
+	 * \param  v Visitor
+	 */
+	virtual void accept(AST_Visitor * v) const;
+	virtual void accept(AST_Visitor const * v) const;
+	/*! \} */
+
+	virtual bool destroy();
+
+	inline Filter const * get_prefix() const;
+	inline Test_Goal_Sequence const * get_cover() const;
+	inline Restriction_Automaton const * get_passing() const;
 
 	private:
-	friend Self * FQL_Node_Factory<Self>::create();
+	friend Self * FQL_Node_Factory<Self>::create(Filter * prefix, Test_Goal_Sequence * cover,
+			Restriction_Automaton * passing);
 	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
 
-  /*! Constructor
-  */
-  Query();
+	Filter * m_prefix;
+	Test_Goal_Sequence * m_cover;
+	Restriction_Automaton * m_passing;
+
+	/*! Constructor
+	*/
+	Query(Filter * prefix, Test_Goal_Sequence * cover, Restriction_Automaton * passing);
 
 	/*! \copydoc copy_constructor
 	*/
 	Query( Self const& rhs );
 
 	/*! \copydoc assignment_op
-	 */
+	*/
 	Self& operator=( Self const& rhs );
-		
-  /*! \brief Destructor
-  */
-  virtual ~Query();
+
+	/*! \brief Destructor
+	*/
+	virtual ~Query();
 };
 
+inline Filter const * Query::get_prefix() const {
+	return m_prefix;
+}
+
+inline Test_Goal_Sequence const * Query::get_cover() const {
+	return m_cover;
+}
+
+inline Restriction_Automaton const * Query::get_passing() const {
+	return m_passing;
+}
+
 template <>
-inline Query * FQL_Node_Factory<Query>::create() {
+inline Query * FQL_Node_Factory<Query>::create(Filter * prefix, Test_Goal_Sequence * cover,
+		Restriction_Automaton * passing) {
+	if (m_available.empty()) {
+		m_available.push_back(new Query(prefix, cover, passing));
+	}
+
+	m_available.back()->m_prefix = prefix;
+	m_available.back()->m_cover = cover;
+	m_available.back()->m_passing = passing;
+	::std::pair< ::std::set<Query *, FQL_Node_Lt_Compare>::const_iterator, bool > inserted(
+			m_used.insert(m_available.back()));
+	if (inserted.second) {
+		m_available.pop_back();
+		if (prefix) prefix->incr_ref_count();
+		cover->incr_ref_count();
+		if (passing) passing->incr_ref_count();
+	}
+
+	return *(inserted.first);
 }
 
 FSHELL2_FQL_NAMESPACE_END;
-      FSHELL2_NAMESPACE_END;
-      
+FSHELL2_NAMESPACE_END;
+
 #endif /* FSHELL2__FQL__AST__QUERY_HPP */

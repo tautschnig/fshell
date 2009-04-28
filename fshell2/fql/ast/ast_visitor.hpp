@@ -47,6 +47,7 @@ class TGS_Intersection;
 class TGS_Setminus;
 class Edgecov;
 class Pathcov;
+class Filter_Identity;
 class Filter_Complement;
 class Filter_Union;
 class Filter_Intersection;
@@ -166,6 +167,14 @@ class AST_Visitor
 		 */
 		virtual void visit(Pathcov const* n) = 0;
 		virtual void visit(Pathcov const* n) const = 0;
+		/*! \} */
+
+		/*! \{
+		 * \brief Visit a @ref fshell2::fql::Filter_Identity
+		 * \param  n Filter_Identity
+		 */
+		virtual void visit(Filter_Identity const* n) = 0;
+		virtual void visit(Filter_Identity const* n) const = 0;
 		/*! \} */
 
 		/*! \{

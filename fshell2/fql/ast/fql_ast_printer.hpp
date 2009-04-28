@@ -31,20 +31,149 @@
 
 #include <fshell2/config/config.hpp>
 
+#include <fshell2/fql/ast/ast_visitor.hpp>
+#include <fshell2/fql/ast/standard_ast_visitor_aspect.hpp>
+
+#include <iostream>
+
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 /*! \brief TODO
 */
-class FQL_AST_Printer
+class FQL_AST_Printer : public Standard_AST_Visitor_Aspect<AST_Visitor>
 {
 	/*! \copydoc doc_self
 	*/
 	typedef FQL_AST_Printer Self;
 
 	public:
+	FQL_AST_Printer(::std::ostream & os);
+
+	virtual ~FQL_AST_Printer();
+		
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Query
+	 * \param  n Query
+	 */
+	virtual void visit(Query const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Test_Goal_Sequence
+	 * \param  n Test_Goal_Sequence
+	 */
+	virtual void visit(Test_Goal_Sequence const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Restriction_Automaton
+	 * \param  n Restriction_Automaton
+	 */
+	virtual void visit(Restriction_Automaton const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Abstraction
+	 * \param  n Abstraction
+	 */
+	virtual void visit(Abstraction const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Filter_Identity
+	 * \param  n Filter_Identity
+	 */
+	virtual void visit(Filter_Identity const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Predicate
+	 * \param  n Predicate
+	 */
+	virtual void visit(Predicate const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::TGS_Union
+	 * \param  n TGS_Union
+	 */
+	virtual void visit(TGS_Union const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::TGS_Intersection
+	 * \param  n TGS_Intersection
+	 */
+	virtual void visit(TGS_Intersection const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::TGS_Setminus
+	 * \param  n TGS_Setminus
+	 */
+	virtual void visit(TGS_Setminus const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Edgecov
+	 * \param  n Edgecov
+	 */
+	virtual void visit(Edgecov const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Pathcov
+	 * \param  n Pathcov
+	 */
+	virtual void visit(Pathcov const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Filter_Complement
+	 * \param  n Filter_Complement
+	 */
+	virtual void visit(Filter_Complement const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Filter_Union
+	 * \param  n Filter_Union
+	 */
+	virtual void visit(Filter_Union const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Filter_Intersection
+	 * \param  n Filter_Intersection
+	 */
+	virtual void visit(Filter_Intersection const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Filter_Setminus
+	 * \param  n Filter_Setminus
+	 */
+	virtual void visit(Filter_Setminus const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Filter_Enclosing_Scopes
+	 * \param  n Filter_Enclosing_Scopes
+	 */
+	virtual void visit(Filter_Enclosing_Scopes const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Primitive_Filter
+	 * \param  n Primitive_Filter
+	 */
+	virtual void visit(Primitive_Filter const* n);
+	/*! \} */
 
 	private:
+	::std::ostream & m_os;
+
 	/*! \copydoc copy_constructor
 	*/
 	FQL_AST_Printer( Self const& rhs );

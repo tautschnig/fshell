@@ -27,62 +27,83 @@
  * $Id$
  * \author Michael Tautschnig <tautschnig@forsyte.de>
  * \date   Tue Apr 21 23:48:55 CEST 2009 
-*/
+ */
 
 #include <fshell2/config/config.hpp>
-#include <fshell2/fql/ast/fql_node.hpp>
+#include <fshell2/fql/ast/filter.hpp>
 #include <fshell2/fql/ast/fql_node_factory.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
-      FSHELL2_FQL_NAMESPACE_BEGIN;
-      
+FSHELL2_FQL_NAMESPACE_BEGIN;
+
 /*! \brief TODO
 */
-class Filter_Complement : public FQL_Node
+class Filter_Complement : public Filter
 {
 	/*! \copydoc doc_self
 	*/
 	typedef Filter_Complement Self;
 
 	public:
-  typedef FQL_Node_Factory<Self> Factory;
+	typedef FQL_Node_Factory<Self> Factory;
 
-  /*! \{
-   * \brief Accept a visitor 
-   * \param  v Visitor
-   */
-  virtual void accept(AST_Visitor * v) const;
-  virtual void accept(AST_Visitor const * v) const;
-  /*! \} */
-		
-  virtual bool destroy();	
+	/*! \{
+	 * \brief Accept a visitor 
+	 * \param  v Visitor
+	 */
+	virtual void accept(AST_Visitor * v) const;
+	virtual void accept(AST_Visitor const * v) const;
+	/*! \} */
+
+	virtual bool destroy();	
+
+	inline Filter const * get_filter() const;
 
 	private:
-	friend Self * FQL_Node_Factory<Self>::create();
+	friend Self * FQL_Node_Factory<Self>::create(Filter * c);
 	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
 
-  /*! Constructor
-  */
-  Filter_Complement();
+	Filter * m_filter;
+
+	/*! Constructor
+	*/
+	Filter_Complement(Filter * filter);
 
 	/*! \copydoc copy_constructor
 	*/
 	Filter_Complement( Self const& rhs );
 
 	/*! \copydoc assignment_op
-	 */
+	*/
 	Self& operator=( Self const& rhs );
-		
-  /*! \brief Destructor
-  */
-  virtual ~Filter_Complement();
+
+	/*! \brief Destructor
+	*/
+	virtual ~Filter_Complement();
 };
 
+inline Filter const * Filter_Complement::get_filter() const {
+	return m_filter;
+}
+
 template <>
-inline Filter_Complement * FQL_Node_Factory<Filter_Complement>::create() {
+inline Filter_Complement * FQL_Node_Factory<Filter_Complement>::create(Filter * filter) {
+	if (m_available.empty()) {
+		m_available.push_back(new Filter_Complement(filter));
+	}
+
+	m_available.back()->m_filter = filter;
+	::std::pair< ::std::set<Filter_Complement *, FQL_Node_Lt_Compare>::const_iterator, bool > inserted(
+			m_used.insert(m_available.back()));
+	if (inserted.second) {
+		m_available.pop_back();
+		filter->incr_ref_count();
+	}
+
+	return *(inserted.first);
 }
 
 FSHELL2_FQL_NAMESPACE_END;
-      FSHELL2_NAMESPACE_END;
-      
+FSHELL2_NAMESPACE_END;
+
 #endif /* FSHELL2__FQL__AST__FILTER_COMPLEMENT_HPP */

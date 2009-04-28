@@ -27,62 +27,91 @@
  * $Id$
  * \author Michael Tautschnig <tautschnig@forsyte.de>
  * \date   Tue Apr 21 23:48:55 CEST 2009 
-*/
+ */
 
 #include <fshell2/config/config.hpp>
-#include <fshell2/fql/ast/fql_node.hpp>
+#include <fshell2/fql/ast/filter.hpp>
 #include <fshell2/fql/ast/fql_node_factory.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
-      FSHELL2_FQL_NAMESPACE_BEGIN;
-      
+FSHELL2_FQL_NAMESPACE_BEGIN;
+
 /*! \brief TODO
 */
-class Filter_Union : public FQL_Node
+class Filter_Union : public Filter
 {
 	/*! \copydoc doc_self
 	*/
 	typedef Filter_Union Self;
 
 	public:
-  typedef FQL_Node_Factory<Self> Factory;
+	typedef FQL_Node_Factory<Self> Factory;
 
-  /*! \{
-   * \brief Accept a visitor 
-   * \param  v Visitor
-   */
-  virtual void accept(AST_Visitor * v) const;
-  virtual void accept(AST_Visitor const * v) const;
-  /*! \} */
-		
-  virtual bool destroy();	
+	/*! \{
+	 * \brief Accept a visitor 
+	 * \param  v Visitor
+	 */
+	virtual void accept(AST_Visitor * v) const;
+	virtual void accept(AST_Visitor const * v) const;
+	/*! \} */
+
+	virtual bool destroy();	
+
+	inline Filter const * get_filter_a() const;
+	inline Filter const * get_filter_b() const;
 
 	private:
-	friend Self * FQL_Node_Factory<Self>::create();
+	friend Self * FQL_Node_Factory<Self>::create(Filter *, Filter *);
 	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
 
-  /*! Constructor
-  */
-  Filter_Union();
+	Filter * m_filter_a;
+	Filter * m_filter_b;
+
+	/*! Constructor
+	*/
+	Filter_Union(Filter * a, Filter * b);
 
 	/*! \copydoc copy_constructor
 	*/
 	Filter_Union( Self const& rhs );
 
 	/*! \copydoc assignment_op
-	 */
+	*/
 	Self& operator=( Self const& rhs );
-		
-  /*! \brief Destructor
-  */
-  virtual ~Filter_Union();
+
+	/*! \brief Destructor
+	*/
+	virtual ~Filter_Union();
 };
 
+inline Filter const * Filter_Union::get_filter_a() const {
+	return m_filter_a;
+}
+
+inline Filter const * Filter_Union::get_filter_b() const {
+	return m_filter_b;
+}
+
 template <>
-inline Filter_Union * FQL_Node_Factory<Filter_Union>::create() {
+inline Filter_Union * FQL_Node_Factory<Filter_Union>::create(Filter * filter_a, Filter * filter_b) {
+	if (m_available.empty()) {
+		m_available.push_back(new Filter_Union(filter_a, filter_b));
+	}
+
+	m_available.back()->m_filter_a = filter_a;
+	m_available.back()->m_filter_b = filter_b;
+	::std::pair< ::std::set<Filter_Union *, FQL_Node_Lt_Compare>::const_iterator, bool > inserted(
+			m_used.insert(m_available.back()));
+	if (inserted.second) {
+		m_available.pop_back();
+		filter_a->incr_ref_count();
+		filter_b->incr_ref_count();
+	}
+
+	return *(inserted.first);
 }
 
 FSHELL2_FQL_NAMESPACE_END;
-      FSHELL2_NAMESPACE_END;
-      
+FSHELL2_NAMESPACE_END;
+
 #endif /* FSHELL2__FQL__AST__FILTER_UNION_HPP */

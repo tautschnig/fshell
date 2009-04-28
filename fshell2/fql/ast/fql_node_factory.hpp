@@ -35,10 +35,36 @@
 #include <diagnostics/basic_exceptions/invalid_argument.hpp>
 
 #include <set>
+#include <list>
 #include <vector>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
+
+class Abstraction;
+class Filter;
+class Predicate;
+class Test_Goal_Set;
+class Test_Goal_Sequence;
+class Restriction_Automaton;
+
+typedef enum {
+	F_FILE = 1,
+	F_LINE = 2,
+	F_COLUMN = 3,
+	F_FUNC = 4,
+	F_LABEL = 5,
+	F_CALL = 6,
+	F_CALLS = 7,
+	F_ENTRY = 8,
+	F_EXIT = 9,
+	F_EXPR = 10,
+	F_REGEXP = 11,
+	F_BASICBLOCKENTRY = 12,
+	F_CONDITIONEDGE = 13,
+	F_DECISIONEDGE = 14,
+	F_CONDITIONGRAPH = 15
+} filter_sub_t;
 
 /*! \brief TODO
 */
@@ -53,6 +79,23 @@ class FQL_Node_Factory
 	static Self & get_instance();
 
 	Element * create();
+	Element * create(::std::set<Predicate *, FQL_Node_Lt_Compare> &);
+	Element * create(Abstraction * abst, Filter * filter);
+	Element * create(Filter * filter);
+	Element * create(Filter * a, Filter * b);
+	Element * create(Abstraction * abst, Filter * filter, int bound);
+	template <filter_sub_t Filter_Sub_Type>
+	Element * create();
+	template <filter_sub_t Filter_Sub_Type>
+	Element * create(int val);
+	template <filter_sub_t Filter_Sub_Type>
+	Element * create(::std::string const& val);
+	Element * create(Filter * prefix, Test_Goal_Sequence * cover,
+			Restriction_Automaton * passing);
+	Element * create(Test_Goal_Set * a, Test_Goal_Set * b);
+	Element * create(::std::list< ::std::pair< Restriction_Automaton *, Test_Goal_Set * > > & seq,
+			Restriction_Automaton * suffix_aut);
+	
 	void destroy(Element * e);
 
 	/*! \brief Destructor
@@ -60,7 +103,7 @@ class FQL_Node_Factory
 	virtual ~FQL_Node_Factory();
 
 	private:
-	typename ::std::set<Element *> m_used;
+	typename ::std::set<Element *, FQL_Node_Lt_Compare> m_used;
 	typename ::std::vector<Element *> m_available;
 
 	FQL_Node_Factory();
@@ -85,7 +128,7 @@ FQL_Node_Factory<Element>::FQL_Node_Factory() {
 
 template <typename Element>
 FQL_Node_Factory<Element>::~FQL_Node_Factory() {
-	for (typename ::std::set<Element *>::const_iterator iter(m_used.begin());
+	for (typename ::std::set<Element *, FQL_Node_Lt_Compare>::const_iterator iter(m_used.begin());
 			iter != m_used.end(); ++iter)
 		delete *iter;
 	

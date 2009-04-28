@@ -27,13 +27,19 @@
 */
 
 #include <fshell2/fql/ast/query.hpp>
+#include <fshell2/config/annotations.hpp>
+
+#include <diagnostics/basic_exceptions/invalid_argument.hpp>
 
 #include <fshell2/fql/ast/ast_visitor.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Query::Query() {
+Query::Query(Filter * prefix, Test_Goal_Sequence * cover,
+		Restriction_Automaton * passing) :
+	m_prefix(prefix), m_cover(cover), m_passing(passing) {
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_cover);
 }
 
 void Query::accept(AST_Visitor * v) const {
@@ -47,6 +53,16 @@ void Query::accept(AST_Visitor const * v) const {
 bool Query::destroy() {
 	if (this->m_ref_count) return false;
 	Factory::get_instance().destroy(this);
+	if (m_prefix) {
+		m_prefix->decr_ref_count();
+		m_prefix->destroy();
+	}
+	m_cover->decr_ref_count();
+	m_cover->destroy();
+	if (m_passing) {
+		m_passing->decr_ref_count();
+		m_passing->destroy();
+	}
 	return true;
 }
 

@@ -28,8 +28,21 @@
 
 #include <fshell2/fql/ast/fql_node.hpp>
 
+#include <fshell2/fql/ast/fql_node_lt_visitor.hpp>
+#include <fshell2/fql/ast/fql_ast_printer.hpp>
+
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
+
+bool FQL_Node_Lt_Compare::operator()(FQL_Node const * a, FQL_Node const* b) const {
+	return FQL_Node_Lt_Visitor()(a, b);
+}
+
+::std::ostream & operator<<(::std::ostream & os, FQL_Node const& n) {
+	FQL_AST_Printer p(os);
+	n.accept(&p);
+	return os;
+}
 
 FQL_Node::FQL_Node() :
 	m_ref_count(0) {

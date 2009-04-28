@@ -27,13 +27,19 @@
 */
 
 #include <fshell2/fql/ast/filter_intersection.hpp>
+#include <fshell2/config/annotations.hpp>
+
+#include <diagnostics/basic_exceptions/invalid_argument.hpp>
 
 #include <fshell2/fql/ast/ast_visitor.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Filter_Intersection::Filter_Intersection() {
+Filter_Intersection::Filter_Intersection(Filter * a, Filter * b) :
+	m_filter_a(a), m_filter_b(b) {
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_filter_a);
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_filter_b);
 }
 
 void Filter_Intersection::accept(AST_Visitor * v) const {
@@ -47,6 +53,10 @@ void Filter_Intersection::accept(AST_Visitor const * v) const {
 bool Filter_Intersection::destroy() {
 	if (this->m_ref_count) return false;
 	Factory::get_instance().destroy(this);
+	m_filter_a->decr_ref_count();
+	m_filter_a->destroy();
+	m_filter_b->decr_ref_count();
+	m_filter_b->destroy();
 	return true;
 }
 
