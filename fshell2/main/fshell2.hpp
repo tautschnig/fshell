@@ -57,7 +57,7 @@ class FShell2
 
 	void set_options(::optionst const& opts);
 
-	void set_primary_cfg(::goto_functionst & cfg);
+	void set_cfg(::goto_functionst & cfg);
 
 	~FShell2();
 

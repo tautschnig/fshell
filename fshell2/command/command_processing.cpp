@@ -198,9 +198,7 @@ void Command_Processing::add_sourcecode(::language_uit & manager, char const * f
 				::diagnostics::internal::to_string("Failed to typecheck ", file));
 	}
 	// build the full list of loaded files
-	for(::language_filest::filemapt::const_iterator iter(prev_files.begin());
-			iter != prev_files.end(); ++iter)
-		manager.language_files.filemap.insert(::std::make_pair(iter->first, iter->second));
+	manager.language_files.filemap.insert(prev_files.begin(), prev_files.end());
 	// reset entry routine
 	if (m_finalized) manager.context.remove("main");
 	m_finalized = false;

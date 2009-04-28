@@ -116,10 +116,8 @@ Macro_Processing::~Macro_Processing() {
 	::unlink(m_checkfilename);
 	::free(m_checkfilename);
 
-	while (m_file_index > 0) {
-		--m_file_index;
+	for (--m_file_index; m_file_index >= 0; --m_file_index)
 		::free(m_cpp_argv[m_file_index]);
-	}
 	delete[] m_cpp_argv;
 }
 

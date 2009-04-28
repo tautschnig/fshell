@@ -66,7 +66,7 @@ void test_single( Test_Data & data )
 	::std::ostringstream os;
 
 	::fshell2::FShell2::get_instance().set_options(options);
-	::fshell2::FShell2::get_instance().set_primary_cfg(cfg);
+	::fshell2::FShell2::get_instance().set_cfg(cfg);
 	
 	TEST_ASSERT(::fshell2::FShell2::get_instance().process_line(l, os, "QUIT"));
 }
@@ -86,7 +86,7 @@ void test_interactive( Test_Data & data )
 	::std::ostringstream os;
 
 	::fshell2::FShell2::get_instance().set_options(options);
-	::fshell2::FShell2::get_instance().set_primary_cfg(cfg);
+	::fshell2::FShell2::get_instance().set_cfg(cfg);
 	
 	char * tempname(::strdup("/tmp/queryXXXXXX"));
 	TEST_CHECK(-1 != ::mkstemp(tempname));

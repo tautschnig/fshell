@@ -78,7 +78,7 @@ void FShell2::set_options(::optionst const& opts) {
 	::fshell2::command::Command_Processing::get_instance().set_options(opts);
 }
 
-void FShell2::set_primary_cfg(::goto_functionst & cfg) {
+void FShell2::set_cfg(::goto_functionst & cfg) {
 	m_cfg = &cfg;
 	::fshell2::command::Command_Processing::get_instance().set_cfg(cfg);
 }
