@@ -99,6 +99,23 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 /**
+ * @brief Use this macro to start the @ref fshell2_instrumentation_namespace "instrumentation" 
+ * namespace.
+ *
+ * @namespace fshell2::instrumentation @anchor fshell2_instrumentation_namespace
+ *
+*/
+#define FSHELL2_INSTRUMENTATION_NAMESPACE_BEGIN namespace instrumentation { DUMMY_FUNC
+
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * @brief instrumentation to end the @ref fshell2_instrumentation_namespace "instrumentation" namespace.
+ *
+*/
+#define FSHELL2_INSTRUMENTATION_NAMESPACE_END } DUMMY_FUNC
+
+////////////////////////////////////////////////////////////////////////////////
+/**
  * @brief Use this macro to start the @ref fshell2_fql_namespace "fql" 
  * namespace.
  *

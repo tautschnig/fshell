@@ -6,7 +6,7 @@ include $(top_srcdir)/model.am
 
 # Add all desired subdirectories here, like
 # SUBDIRS = dir1 dir2 dirX
-SUBDIRS = config exception command macro fql main
+SUBDIRS = config exception command macro fql instrumentation main
 
 include_fshell2dir = $(includedir)/fshell2
 
