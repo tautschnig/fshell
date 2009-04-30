@@ -191,8 +191,7 @@ void Command_Processing::add_sourcecode(::language_uit & manager, char const * f
 		FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error, false,
 				::diagnostics::internal::to_string("Failed to parse ", file));
 	}
-	err = manager.typecheck();
-	if (err) {
+	if (manager.typecheck()) {
 		manager.language_files.filemap.swap(prev_files);
 		FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error, false,
 				::diagnostics::internal::to_string("Failed to typecheck ", file));
