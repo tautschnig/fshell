@@ -1,0 +1,127 @@
+/* -*- Mode: C++; tab-width: 4 -*- */
+/* vi: set ts=4 sw=4 noexpandtab: */
+
+/*******************************************************************************
+ * FShell 2
+ * Copyright 2009 Michael Tautschnig, tautschnig@forsyte.de
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *******************************************************************************/
+
+/*! \file fshell2/fql/evaluation/evaluate_filter.t.cpp
+ * \brief TODO
+ *
+ * $Id$
+ * \author Michael Tautschnig <tautschnig@forsyte.de>
+ * \date   Thu Apr 30 13:31:31 CEST 2009 
+*/
+
+
+#include <diagnostics/unittest.hpp>
+#include <fshell2/config/config.hpp>
+#include <fshell2/config/annotations.hpp>
+
+#include <fshell2/fql/evaluation/evaluate_filter.hpp>
+
+// #include <fshell2/fql/ast/abstraction.hpp>
+// #include <fshell2/fql/ast/edgecov.hpp>
+// #include <fshell2/fql/ast/filter.hpp>
+// #include <fshell2/fql/ast/filter_complement.hpp>
+// #include <fshell2/fql/ast/filter_enclosing_scopes.hpp>
+// #include <fshell2/fql/ast/filter_intersection.hpp>
+// #include <fshell2/fql/ast/filter_setminus.hpp>
+// #include <fshell2/fql/ast/filter_union.hpp>
+// #include <fshell2/fql/ast/pathcov.hpp>
+// #include <fshell2/fql/ast/predicate.hpp>
+#include <fshell2/fql/ast/primitive_filter.hpp>
+// #include <fshell2/fql/ast/query.hpp>
+// #include <fshell2/fql/ast/restriction_automaton.hpp>
+// #include <fshell2/fql/ast/test_goal_sequence.hpp>
+// #include <fshell2/fql/ast/test_goal_set.hpp>
+// #include <fshell2/fql/ast/tgs_intersection.hpp>
+// #include <fshell2/fql/ast/tgs_setminus.hpp>
+// #include <fshell2/fql/ast/tgs_union.hpp>
+
+#include <fstream>
+
+#include <cbmc/src/util/config.h>
+#include <cbmc/src/langapi/language_ui.h>
+#include <cbmc/src/goto-programs/goto_convert_functions.h>
+
+#define TEST_COMPONENT_NAME Evaluate_Filter
+#define TEST_COMPONENT_NAMESPACE fshell2::fql
+
+FSHELL2_NAMESPACE_BEGIN;
+FSHELL2_FQL_NAMESPACE_BEGIN;
+
+/** @cond */
+TEST_NAMESPACE_BEGIN;
+TEST_COMPONENT_TEST_NAMESPACE_BEGIN;
+/** @endcond */
+using namespace ::diagnostics::unittest;
+
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * @test A test of Evaluate_Filter
+ *
+ */
+void test( Test_Data & data )
+{
+	char * tempname(::strdup("/tmp/srcXXXXXX"));
+	TEST_CHECK(-1 != ::mkstemp(tempname));
+	::std::string tempname_str(tempname);
+	tempname_str += ".c";
+	::std::ofstream of(tempname_str.c_str());
+	TEST_CHECK(of.is_open());
+	of << "int main(int argc, char * argv[])" << ::std::endl
+		<< "{" << ::std::endl
+		<< "if (argc > 2) return 2;" << ::std::endl
+		<< "return 0;" << ::std::endl
+		<< "}" << ::std::endl;
+	of.close();
+	::unlink(tempname);
+	::free(tempname);
+
+	::cmdlinet cmdline;
+	::config.set(cmdline);
+	::language_uit l(cmdline);
+	::optionst options;
+	::goto_functionst cfg;
+
+	TEST_CHECK(!l.parse(tempname_str));
+	::unlink(tempname_str.c_str());
+	TEST_CHECK(!l.typecheck());
+	TEST_CHECK(!l.final());
+    
+	::goto_convert(l.context, options, cfg, l.ui_message_handler);
+	
+	Filter * bb(Primitive_Filter::Factory::get_instance().create<F_BASICBLOCKENTRY>());
+
+	Evaluate_Filter eval(cfg);
+	Evaluate_Filter::value_t const& bb_entries(eval.evaluate(*bb));
+	TEST_ASSERT_RELATION(4, ==, bb_entries.size()); // main, edge after c::main and edges in c::main
+}
+
+/** @cond */
+TEST_COMPONENT_TEST_NAMESPACE_END;
+TEST_NAMESPACE_END;
+/** @endcond */
+
+FSHELL2_FQL_NAMESPACE_END;
+FSHELL2_NAMESPACE_END;
+
+TEST_SUITE_BEGIN;
+TEST_NORMAL_CASE( &test, LEVEL_PROD );
+TEST_SUITE_END;
+
+STREAM_TEST_SYSTEM_MAIN;

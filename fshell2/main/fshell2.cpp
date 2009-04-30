@@ -39,6 +39,7 @@
 #include <fshell2/fql/parser/query_processing.hpp>
 #include <fshell2/exception/query_processing_error.hpp>
 #include <fshell2/fql/normalize/normalization_visitor.hpp>
+#include <fshell2/fql/evaluation/evaluate_filter.hpp>
 
 #include <memory>
 #include <cstdlib>
@@ -110,6 +111,9 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 	::fshell2::fql::Normalization_Visitor norm;
 	norm.normalize(&query_ast);
 
+	// prepare filter evaluation
+	::fshell2::fql::Evaluate_Filter eval(*m_cfg);
+
 	/*
 	// do automaton instrumentation
 	::fshell2::instrumentation::Automaton_Inserter aut(prg_cfg, *query_ast);
@@ -120,12 +124,6 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 	::fshell2::instrumentation::Abstract_CFG_Builder abst(instrumented_cfg, *ast);
 	::std::map< ::fshell2::fql::Abstraction const*, ::goto_functionst const > abst_map;
 	abst.build(abst_map);
-
-	// evaluate filter
-	::fshell2::fql::Evalute_Filters eval(abst_map, *ast);
-	::std::map< ::fshell2::fql::Abstraction const*, ::std::pair< ::fshell2::fql::Filter const*,
-		::std::set< ::goto_targett const > > > filter_map;
-	eval.evaluate(filter_map);
 
 	// find proper strategy
 	::fshell2::fql::Strategy_Selection_Visitor strat;

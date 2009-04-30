@@ -18,6 +18,8 @@ libfshell2_la_LIBADD = main/libmain.la \
 											 exception/libexception.la \
 											 command/libcommand.la \
 											 macro/libmacro.la \
+											 instrumentation/libinstrumentation.la \
+											 fql/evaluation/libevaluation.la \
 											 fql/normalize/libnormalize.la \
 											 fql/parser/libparser.la \
 											 fql/ast/libast.la
