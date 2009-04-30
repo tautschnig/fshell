@@ -48,6 +48,7 @@ fshell2_SOURCES = fshell2.t.cpp
 # fshell2_LDADD = ../base/libbase.la libbla.la
 fshell2_LDADD = libmain.la ../exception/libexception.la \
 								../command/libcommand.la ../macro/libmacro.la \
+								../fql/normalize/libnormalize.la \
 								../fql/ast/libast.la ../fql/parser/libparser.la \
 								$(CBMC_OBJS)
 # note that this entry (fshell2_SOURCES, fshell2_LDADD) will not be removed

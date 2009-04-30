@@ -38,6 +38,7 @@
 #include <fshell2/exception/macro_processing_error.hpp>
 #include <fshell2/fql/parser/query_processing.hpp>
 #include <fshell2/exception/query_processing_error.hpp>
+#include <fshell2/fql/normalize/normalization_visitor.hpp>
 
 #include <memory>
 #include <cstdlib>
@@ -105,11 +106,11 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Protocol, 0 != m_cfg);
 	::fshell2::command::Command_Processing::get_instance().finalize(manager, os);
 
-	/*
 	// normalize the input query
 	::fshell2::fql::Normalization_Visitor norm;
 	norm.normalize(&query_ast);
 
+	/*
 	// do automaton instrumentation
 	::fshell2::instrumentation::Automaton_Inserter aut(prg_cfg, *query_ast);
 	::goto_functionst instrumented_cfg;

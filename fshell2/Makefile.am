@@ -14,10 +14,11 @@ include_fshell2dir = $(includedir)/fshell2
 
 lib_LTLIBRARIES = libfshell2.la
 libfshell2_la_SOURCES =
-libfshell2_la_LIBADD = exception/libexception.la \
+libfshell2_la_LIBADD = main/libmain.la \
+											 exception/libexception.la \
 											 command/libcommand.la \
 											 macro/libmacro.la \
-											 fql/ast/libast.la \
+											 fql/normalize/libnormalize.la \
 											 fql/parser/libparser.la \
-											 main/libmain.la
+											 fql/ast/libast.la
 libfshell2_la_LDFLAGS = -version-info 0:0:0
