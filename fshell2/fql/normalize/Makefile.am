@@ -16,7 +16,7 @@ check_PROGRAMS = normalization_visitor
 normalization_visitor_SOURCES = normalization_visitor.t.cpp
 # add additional objects required to build normalization_visitor here, like
 # normalization_visitor_LDADD = ../base/libbase.la libbla.la
-normalization_visitor_LDADD = ../ast/libast.la libnormalize.la
+normalization_visitor_LDADD = libnormalize.la ../ast/libast.la
 # note that this entry (normalization_visitor_SOURCES, normalization_visitor_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually

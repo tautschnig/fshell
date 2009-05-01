@@ -46,7 +46,7 @@ check_PROGRAMS = query_processing
 query_processing_SOURCES = query_processing.t.cpp
 # add additional objects required to build query_processing here, like
 # query_processing_LDADD = ../base/libbase.la libbla.la
-query_processing_LDADD = ../../exception/libexception.la ../ast/libast.la libparser.la $(CBMC_OBJS)
+query_processing_LDADD = libparser.la ../ast/libast.la ../../exception/libexception.la $(CBMC_OBJS)
 # note that this entry (query_processing_SOURCES, query_processing_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually
