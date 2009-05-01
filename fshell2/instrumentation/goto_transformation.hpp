@@ -31,6 +31,8 @@
 
 #include <fshell2/config/config.hpp>
 
+#include <cbmc/src/goto-programs/goto_functions.h>
+
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_INSTRUMENTATION_NAMESPACE_BEGIN;
 
@@ -43,8 +45,21 @@ class GOTO_Transformation
 	typedef GOTO_Transformation Self;
 
 	public:
+	typedef enum {
+		BEFORE,
+		AFTER
+	} position_t;
+
+	GOTO_Transformation(::goto_functionst & gf);
+
+	int insert(::std::string const& f, position_t const pos,
+			::goto_program_instruction_typet const stmt_type, ::goto_programt const& prg);
 
 	private:
+	::goto_functionst & m_goto;
+
+	static void copy_annotations(::goto_programt::const_targett src, ::goto_programt & target);
+
 	/*! \copydoc copy_constructor
 	*/
 	GOTO_Transformation( Self const& rhs );

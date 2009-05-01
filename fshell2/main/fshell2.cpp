@@ -40,6 +40,8 @@
 #include <fshell2/exception/query_processing_error.hpp>
 #include <fshell2/fql/normalize/normalization_visitor.hpp>
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
+#include <fshell2/instrumentation/goto_transformation.hpp>
+#include <fshell2/fql/ast/query.hpp>
 
 #include <memory>
 #include <cstdlib>
@@ -47,6 +49,8 @@
 
 #include <readline/readline.h>
 #include <readline/history.h>
+
+#include <cbmc/src/util/std_code.h>
 
 namespace std {
 template<>
@@ -113,6 +117,17 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 
 	// prepare filter evaluation
 	::fshell2::fql::Evaluate_Filter eval(*m_cfg);
+	query_ast->accept(&eval); // evaluate all filters before modifying the CFG
+
+	::goto_programt tmp;
+	::goto_programt::targett as(tmp.add_instruction(ASSERT));
+	as->code = ::code_assertt();
+	::exprt zero(::exprt("constant", ::typet("bool")));
+	zero.set("value", "false");
+	as->code.move_to_operands(zero);
+
+	::fshell2::instrumentation::GOTO_Transformation inserter(*m_cfg);
+	inserter.insert("main", ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::END_FUNCTION, tmp);
 
 	/*
 	// do automaton instrumentation
@@ -128,7 +143,9 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 	// find proper strategy
 	::fshell2::fql::Strategy_Selection_Visitor strat;
 	::fshell2::fql::Strategy_Selection_Visitor::strategy_t s(strat.select(*ast));
+	*/
 
+	/*
 	// compute test goals
 	do_unwind();
 	::fshell2::fql::Compute_Test_Goals goals(abst_map, filter_map, s, *ast);

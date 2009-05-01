@@ -9,6 +9,6 @@ include $(top_srcdir)/model.am
 SUBDIRS =
 
 noinst_LTLIBRARIES = libexception.la
-libexception_la_SOURCES = command_processing_error.cpp macro_processing_error.cpp query_processing_error.cpp
+libexception_la_SOURCES = command_processing_error.cpp macro_processing_error.cpp query_processing_error.cpp instrumentation_error.cpp
 include_fshell2_exceptiondir = $(includedir)/fshell2/exception
-include_fshell2_exception_HEADERS = command_processing_error.hpp macro_processing_error.hpp query_processing_error.hpp
+include_fshell2_exception_HEADERS = command_processing_error.hpp macro_processing_error.hpp query_processing_error.hpp instrumentation_error.hpp

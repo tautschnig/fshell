@@ -48,6 +48,7 @@ fshell2_SOURCES = fshell2.t.cpp
 # fshell2_LDADD = ../base/libbase.la libbla.la
 fshell2_LDADD = libmain.la ../exception/libexception.la \
 								../command/libcommand.la ../macro/libmacro.la \
+								../instrumentation/libinstrumentation.la \
 								../fql/normalize/libnormalize.la \
 								../fql/evaluation/libevaluation.la \
 								../fql/ast/libast.la ../fql/parser/libparser.la \
