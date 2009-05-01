@@ -42,6 +42,7 @@
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
 #include <fshell2/instrumentation/goto_transformation.hpp>
 #include <fshell2/fql/ast/query.hpp>
+#include <fshell2/exception/fshell2_error.hpp>
 
 #include <memory>
 #include <cstdlib>
@@ -51,6 +52,7 @@
 #include <readline/history.h>
 
 #include <cbmc/src/util/std_code.h>
+#include <cbmc/src/cbmc/bmc.h>
 
 namespace std {
 template<>
@@ -97,6 +99,22 @@ void FShell2::set_cfg(::goto_functionst & cfg) {
 	::fshell2::command::Command_Processing::get_instance().set_cfg(cfg);
 }
 
+class Query_Cleanup {
+	public:
+		Query_Cleanup(::fshell2::fql::Query * q);
+		~Query_Cleanup();
+	private:
+		::fshell2::fql::Query * m_q;
+};
+
+Query_Cleanup::Query_Cleanup(::fshell2::fql::Query * q) :
+	m_q(q) {
+}
+
+Query_Cleanup::~Query_Cleanup() {
+	m_q->destroy();
+	m_q = 0;
+}
 
 void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char const * line) {
 	::std::string query(::fshell2::macro::Macro_Processing::get_instance().expand(line));
@@ -106,10 +124,18 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 	::fshell2::fql::Query * query_ast(0);
 	::fshell2::fql::Query_Processing::get_instance().parse(os, query.c_str(), &query_ast);
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, query_ast != 0);
+	Query_Cleanup cleanup(query_ast);
 	
 	// parse succeeded, make sure the CFG is prepared
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Protocol, 0 != m_cfg);
 	::fshell2::command::Command_Processing::get_instance().finalize(manager, os);
+
+	// check for failing assertions
+	::bmct bmc(manager.context, manager.ui_message_handler);
+	bmc.options = *m_opts;
+	bmc.set_verbosity(manager.get_verbosity());
+	FSHELL2_PROD_CHECK1(::fshell2::FShell2_Error, !bmc.run(*m_cfg),
+			"Program has failing assertions, cannot proceed.");
 
 	// normalize the input query
 	::fshell2::fql::Normalization_Visitor norm;
@@ -119,16 +145,17 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 	::fshell2::fql::Evaluate_Filter eval(*m_cfg);
 	query_ast->accept(&eval); // evaluate all filters before modifying the CFG
 
+	// do automaton instrumentation
+	// for now, only insert a final assert(0)
 	::goto_programt tmp;
 	::goto_programt::targett as(tmp.add_instruction(ASSERT));
 	as->code = ::code_assertt();
 	::exprt zero(::exprt("constant", ::typet("bool")));
 	zero.set("value", "false");
-	as->code.move_to_operands(zero);
+	as->guard = zero;
 
 	::fshell2::instrumentation::GOTO_Transformation inserter(*m_cfg);
 	inserter.insert("main", ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::END_FUNCTION, tmp);
-
 	/*
 	// do automaton instrumentation
 	::fshell2::instrumentation::Automaton_Inserter aut(prg_cfg, *query_ast);
@@ -145,6 +172,10 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 	::fshell2::fql::Strategy_Selection_Visitor::strategy_t s(strat.select(*ast));
 	*/
 
+	if (manager.get_verbosity() > 9) {
+		::namespacet const ns(manager.context);
+		m_cfg->output(ns, os);
+	}
 	/*
 	// compute test goals
 	do_unwind();
@@ -197,6 +228,8 @@ void FShell2::interactive(::language_uit & manager, ::std::ostream & os) {
 		} catch (::fshell2::Macro_Processing_Error & e) {
 			os << e.what() << ::std::endl;
 		} catch (::fshell2::Query_Processing_Error & e) {
+			os << e.what() << ::std::endl;
+		} catch (::fshell2::FShell2_Error & e) {
 			os << e.what() << ::std::endl;
 		}
 	}

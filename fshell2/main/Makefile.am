@@ -11,6 +11,17 @@ SUBDIRS =
 CBMC_OBJS = ../../cbmc/src/goto-programs/goto-programs.o \
 						../../cbmc/src/pointer-analysis/pointer-analysis.o \
 						../../cbmc/src/util/util.o ../../cbmc/src/big-int/bigint.o \
+						../../cbmc/src/propdec/propdec.o ../../cbmc/src/propsolve/propsolve.o \
+						../../cbmc/src/goto-symex/goto-symex.o \
+						../../cbmc/src/cbmc/bmc.o \
+						../../cbmc/src/cbmc/smt.o \
+						../../cbmc/src/cbmc/cvc.o \
+						../../cbmc/src/cbmc/dimacs.o \
+						../../cbmc/src/cbmc/bv_cbmc.o \
+						../../cbmc/src/cbmc/document_subgoals.o \
+						../../cbmc/src/cbmc/counterexample_beautification_greedy.o \
+						../../cbmc/src/cbmc/counterexample_beautification.o \
+						../../cbmc/src/cbmc/symex_bmc.o \
 						../../cbmc/src/langapi/langapi.o \
 						../../cbmc/src/ansi-c/ansi-c.o \
 						../../cbmc/src/langapi/csp_dummy.o \
@@ -35,8 +46,10 @@ CBMC_OBJS = ../../cbmc/src/goto-programs/goto-programs.o \
 						../../cbmc/src/langapi/mdllang_dummy.o
 
 $(CBMC_OBJS):
-	$(MAKE) -C ../../cbmc/src util.dir big-int.dir goto-programs.dir \
-		pointer-analysis.dir langapi.dir ansi-c.dir
+	$(MAKE) -C ../../cbmc/src
+
+../libfshell2.la: libmain.la
+	$(MAKE) -C ../ libfshell2.la
 
 include_fshell2_maindir = $(includedir)/fshell2/main
 noinst_LTLIBRARIES = libmain.la
@@ -46,13 +59,7 @@ check_PROGRAMS = fshell2
 fshell2_SOURCES = fshell2.t.cpp
 # add additional objects required to build fshell2 here, like
 # fshell2_LDADD = ../base/libbase.la libbla.la
-fshell2_LDADD = libmain.la ../exception/libexception.la \
-								../command/libcommand.la ../macro/libmacro.la \
-								../instrumentation/libinstrumentation.la \
-								../fql/normalize/libnormalize.la \
-								../fql/evaluation/libevaluation.la \
-								../fql/ast/libast.la ../fql/parser/libparser.la \
-								$(CBMC_OBJS)
+fshell2_LDADD = ../libfshell2.la $(CBMC_OBJS)
 # note that this entry (fshell2_SOURCES, fshell2_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually
