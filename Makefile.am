@@ -40,8 +40,8 @@ all-local:
 	fi
 	if [ "$(top_srcdir)" != "." ] ; then \
 		mkdir -p MiniSat-p_v1.14 ; \
-		cp $(top_srcdir)/MiniSat-p_v1.14/{Makefile,*.C,*.h} MiniSat-p_v1.14 ; \
-		perl -p -i -e 's{-I(\.\./\.\./\.\./)}{-I$(top_srcdir)/$$1}' cbmc/src/cbmc/Makefile ; \
+		cp -p $(top_srcdir)/MiniSat-p_v1.14/{Makefile,*.C,*.h} MiniSat-p_v1.14 ; \
+		perl -p -i -e 's{-I(\.\./\.\./\.\./)(\s+|$$)}{-I$(top_srcdir)/$$1$$2}' cbmc/src/cbmc/Makefile ; \
 	fi
 
 cbmc-src.tar.gz: $(shell find cbmc -name "*.cpp" -o -name "*.h")

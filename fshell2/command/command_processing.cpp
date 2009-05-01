@@ -282,7 +282,7 @@ void Command_Processing::finalize(::language_uit & manager, ::std::ostream & os)
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Protocol, m_opts != 0 && m_cfg != 0);
 
 	FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,
-			!manager.language_files.modulemap.empty(),
+			!manager.context.symbols.empty(),
 			"No source files loaded!");
 
 	if (m_finalized) return;
