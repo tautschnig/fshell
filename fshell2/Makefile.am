@@ -6,7 +6,7 @@ include $(top_srcdir)/model.am
 
 # Add all desired subdirectories here, like
 # SUBDIRS = dir1 dir2 dirX
-SUBDIRS = config exception command macro fql instrumentation main
+SUBDIRS = config exception command macro fql instrumentation tc_generation main
 
 include_fshell2dir = $(includedir)/fshell2
 
@@ -18,6 +18,7 @@ libfshell2_la_LIBADD = main/libmain.la \
 											 exception/libexception.la \
 											 command/libcommand.la \
 											 macro/libmacro.la \
+											 tc_generation/libtc_generation.la \
 											 instrumentation/libinstrumentation.la \
 											 fql/evaluation/libevaluation.la \
 											 fql/normalize/libnormalize.la \

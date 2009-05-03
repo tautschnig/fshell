@@ -36,7 +36,7 @@
 
 #include <cbmc/src/cbmc/bmc.h>
 #include <cbmc/src/cbmc/bv_cbmc.h>
-#include <cbmc/src/propsolve/sat_minimizer.h>
+#include <cbmc/src/propsolve/cnf_clause_list.h>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
@@ -52,7 +52,7 @@ class Compute_Test_Goals : public ::bmct, public Standard_AST_Visitor_Aspect<AST
 	typedef Compute_Test_Goals Self;
 
 	public:
-	typedef int test_goal_t;
+	typedef ::literalt test_goal_t;
 	typedef ::std::set< test_goal_t > value_t;
 	typedef ::std::map< Test_Goal_Set const*, value_t > tgs_value_t;
 	
@@ -61,6 +61,12 @@ class Compute_Test_Goals : public ::bmct, public Standard_AST_Visitor_Aspect<AST
 	virtual ~Compute_Test_Goals();
 
 	value_t const& compute(Query const& query);
+
+	inline ::cnf_clause_list_assignmentt & get_cnf();
+
+	inline ::boolbvt const& get_bv() const;
+
+	inline ::namespacet const& get_ns() const;
 
 	private:
 	virtual bool decide_default();
@@ -139,11 +145,11 @@ class Compute_Test_Goals : public ::bmct, public Standard_AST_Visitor_Aspect<AST
 
 	bool m_is_initialized;
 	Evaluate_Filter & m_eval_filter;
-	::sat_minimizert m_solver;
+	::cnf_clause_list_assignmentt m_cnf;
 	::bv_cbmct m_bv;
 
 	typedef ::std::multimap< goto_programt::const_targett,
-			::std::pair< int, int > > pc_to_bool_var_t;
+			::std::pair< ::literalt, ::literalt > > pc_to_bool_var_t;
 	pc_to_bool_var_t m_pc_to_bool_var_and_guard;
 
 	tgs_value_t m_tgs_map;
@@ -156,6 +162,18 @@ class Compute_Test_Goals : public ::bmct, public Standard_AST_Visitor_Aspect<AST
 	 */
 	Self& operator=( Self const& rhs );
 };
+	
+inline ::cnf_clause_list_assignmentt & Compute_Test_Goals::get_cnf() {
+	return m_cnf;
+}
+	
+inline ::boolbvt const& Compute_Test_Goals::get_bv() const {
+	return m_bv;
+}
+
+inline ::namespacet const& Compute_Test_Goals::get_ns() const {
+	return this->ns;
+}
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;

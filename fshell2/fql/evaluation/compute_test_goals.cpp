@@ -63,8 +63,8 @@ FSHELL2_FQL_NAMESPACE_BEGIN;
 Compute_Test_Goals::Compute_Test_Goals(::language_uit & manager,
 		::optionst const& opts, Evaluate_Filter & eval) :
 	::bmct(manager.context, manager.ui_message_handler),
-	m_is_initialized(false), m_eval_filter(eval), m_solver(),
-	m_bv(m_solver) {
+	m_is_initialized(false), m_eval_filter(eval), m_cnf(),
+	m_bv(m_cnf) {
 	this->options = opts;
 	this->options.set_option("dimacs", false);
 	this->options.set_option("cvc", false);
@@ -73,8 +73,8 @@ Compute_Test_Goals::Compute_Test_Goals(::language_uit & manager,
 	this->options.set_option("cvc", false);
 	this->set_verbosity(manager.get_verbosity());
 
-	m_solver.set_message_handler(this->message_handler);
-	m_solver.set_verbosity(this->get_verbosity());
+	m_cnf.set_message_handler(this->message_handler);
+	m_cnf.set_verbosity(this->get_verbosity());
 	m_bv.set_message_handler(this->message_handler);
 	m_bv.set_verbosity(this->get_verbosity());
 }
@@ -148,33 +148,34 @@ void Compute_Test_Goals::initialize() {
 			::literalt dest;
 			::prop_convt const& prop(m_bv); // terrible overload of literal with different signature
 			FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, !prop.literal(*real_guard, dest));
-			// ::std::cerr << "(GOTO) Found mapping for " << real_guard->get("identifier") << ": " << dest.dimacs() << ::std::endl;
+			::std::cerr << "(GOTO) Found mapping for " << real_guard->get("identifier") << ": " << dest.dimacs() << ::std::endl;
 			// entry has been found, store it in the map
-			m_pc_to_bool_var_and_guard.insert(::std::make_pair(iter->source.pc, ::std::make_pair(dest.dimacs(),
-							(iter->is_assume() || iter->is_assert())?iter->cond_literal.dimacs():iter->guard_literal.dimacs())));
+			m_pc_to_bool_var_and_guard.insert(::std::make_pair(iter->source.pc, ::std::make_pair(dest,
+							(iter->is_assume() || iter->is_assert())?iter->cond_literal : iter->guard_literal)));
 		} else if (iter->guard.is_true() || iter->guard.is_false()) {
 			// Boolean variable corresponding to the guard will be 0 or 1
-			m_pc_to_bool_var_and_guard.insert(::std::make_pair(iter->source.pc, ::std::make_pair(!iter->source.pc->guard.is_false(),
-							(iter->is_assume() || iter->is_assert())?iter->cond_literal.dimacs():iter->guard_literal.dimacs())));
+			::std::cerr << "t/f guard: " << ::const_literal(iter->source.pc->guard.is_true()).dimacs() << ::std::endl;
+			m_pc_to_bool_var_and_guard.insert(::std::make_pair(iter->source.pc, ::std::make_pair(::const_literal(iter->source.pc->guard.is_true()),
+							(iter->is_assume() || iter->is_assert())?iter->cond_literal : iter->guard_literal)));
 		} else if (iter->guard.id() == "not") {
 			// lookup the name in the symbol map
 			::literalt dest;
 			::prop_convt const& prop(m_bv); // terrible overload of literal with different signature
 			FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, !prop.literal(iter->guard.op0(), dest));
-			// ::std::cerr << "Found mapping for " << iter->guard.op0().get("identifier") << ": " << -dest.dimacs() << ::std::endl;
+			::std::cerr << "Found mapping for " << iter->guard.op0().get("identifier") << ": " << -dest.dimacs() << ::std::endl;
 			// entry has been found, store it in the map
-			m_pc_to_bool_var_and_guard.insert(::std::make_pair(iter->source.pc, ::std::make_pair(-dest.dimacs(),
-							(iter->is_assume() || iter->is_assert())?iter->cond_literal.dimacs():iter->guard_literal.dimacs())));
+			m_pc_to_bool_var_and_guard.insert(::std::make_pair(iter->source.pc, ::std::make_pair(::neg(dest),
+							(iter->is_assume() || iter->is_assert())?iter->cond_literal : iter->guard_literal)));
 		} else {
 			FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, iter->guard.id() == "symbol");
 			// lookup the name in the symbol map
 			::literalt dest;
 			::prop_convt const& prop(m_bv); // terrible overload of literal with different signature
 			FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, !prop.literal(iter->guard, dest));
-			// ::std::cerr << "Found mapping for " << iter->guard.get("identifier") << ": " << dest.dimacs() << ::std::endl;
+			::std::cerr << "Found mapping for " << iter->guard.get("identifier") << ": " << dest.dimacs() << ::std::endl;
 			// entry has been found, store it in the map
-			m_pc_to_bool_var_and_guard.insert(::std::make_pair(iter->source.pc, ::std::make_pair(dest.dimacs(),
-							(iter->is_assume() || iter->is_assert())?iter->cond_literal.dimacs():iter->guard_literal.dimacs())));
+			m_pc_to_bool_var_and_guard.insert(::std::make_pair(iter->source.pc, ::std::make_pair(dest,
+							(iter->is_assume() || iter->is_assert())?iter->cond_literal :iter->guard_literal)));
 		}
 	}
 					
@@ -297,18 +298,33 @@ void Compute_Test_Goals::visit(Edgecov const* n) {
 		// - otherwise, iff it is a goto, the guard_literal of the goto must be
 		// true if the second statement is the jump target (and not the skip
 		// target)
-		::std::pair< pc_to_bool_var_t::const_iterator, pc_to_bool_var_t::const_iterator >
-			guards(m_pc_to_bool_var_and_guard.equal_range(iter->first));
-		// FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, guards.first != guards.second);
-		// this is all very broken!!!!
-		for (; guards.first != guards.second; ++(guards.first)) {
-			if (!iter->first->is_goto()) {
-				// ::std::cerr << "Adding guard " << guards.first->second.first << ::std::endl;
-				entry.first->second.insert(guards.first->second.first);
-			} else {
-				// ::std::cerr << "Adding goto-guard " << guards.first->second.first << ::std::endl;
-				entry.first->second.insert(guards.first->second.first);
+		if (!iter->first->is_goto()) {
+			::std::pair< pc_to_bool_var_t::const_iterator, pc_to_bool_var_t::const_iterator >
+				guards(m_pc_to_bool_var_and_guard.equal_range(iter->first));
+			// this is all very broken!!!!
+			// FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, guards.first != guards.second);
+			::bvt set;
+			for (; guards.first != guards.second; ++(guards.first)) {
+				if (guards.first->second.first.is_constant()) continue;
+				::std::cerr << "Adding guard " << guards.first->second.first.dimacs() << ::std::endl;
+				set.push_back(guards.first->second.first);
 			}
+			::std::cerr << "Forming lor" << ::std::endl;
+			if (!set.empty()) entry.first->second.insert(m_cnf.lor(set));
+		} else {
+			// this is all very broken!!!! - does not really handle the goto
+			// stuff
+			::std::pair< pc_to_bool_var_t::const_iterator, pc_to_bool_var_t::const_iterator >
+				guards(m_pc_to_bool_var_and_guard.equal_range(iter->first));
+			// FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, guards.first != guards.second);
+			::bvt set;
+			for (; guards.first != guards.second; ++(guards.first)) {
+				if (guards.first->second.first.is_constant()) continue;
+				::std::cerr << "Adding goto-guard " << guards.first->second.first.dimacs() << ::std::endl;
+				set.push_back(guards.first->second.first);
+			}
+			::std::cerr << "Forming goto-lor" << ::std::endl;
+			if (!set.empty()) entry.first->second.insert(m_cnf.lor(set));
 		}
 	}
 

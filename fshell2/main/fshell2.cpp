@@ -44,6 +44,7 @@
 #include <fshell2/instrumentation/goto_transformation.hpp>
 #include <fshell2/fql/ast/query.hpp>
 #include <fshell2/exception/fshell2_error.hpp>
+#include <fshell2/tc_generation/constraint_strengthening.hpp>
 
 #include <memory>
 #include <cstdlib>
@@ -180,18 +181,10 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 	
 	// compute test goals
 	::fshell2::fql::Compute_Test_Goals goals(manager, *m_opts, eval);
-	goals.compute(*query_ast);
-
-	/*
-	do_unwind();
-	::fshell2::fql::Compute_Test_Goals goals(abst_map, filter_map, s, *ast);
-	::std::set< int > goal_set;
-	goals.compute(goal_set);
 
 	// do the enumeration
-	::fshell2::Test_Case_Generator tg(goal_set);
-	tg.generate(s);
-	*/
+	::fshell2::Constraint_Strengthening cs(goals, os);
+	cs.generate(*query_ast);
 }
 
 bool FShell2::process_line(::language_uit & manager, ::std::ostream & os, char const * line) {

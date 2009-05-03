@@ -130,7 +130,7 @@ void test( Test_Data & data )
 	Compute_Test_Goals goals(l, options, eval);
 	Compute_Test_Goals::value_t const& bb_goals(goals.compute(*q));
 
-	// 2 is totally wrong ...
+	// 2 is probably wrong ...
 	TEST_ASSERT_RELATION(2, ==, bb_goals.size());
 }
 
