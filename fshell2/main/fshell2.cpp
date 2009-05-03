@@ -40,6 +40,7 @@
 #include <fshell2/exception/query_processing_error.hpp>
 #include <fshell2/fql/normalize/normalization_visitor.hpp>
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
+#include <fshell2/fql/evaluation/compute_test_goals.hpp>
 #include <fshell2/instrumentation/goto_transformation.hpp>
 #include <fshell2/fql/ast/query.hpp>
 #include <fshell2/exception/fshell2_error.hpp>
@@ -176,8 +177,12 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 		::namespacet const ns(manager.context);
 		m_cfg->output(ns, os);
 	}
-	/*
+	
 	// compute test goals
+	::fshell2::fql::Compute_Test_Goals goals(manager, *m_opts, eval);
+	goals.compute(*query_ast);
+
+	/*
 	do_unwind();
 	::fshell2::fql::Compute_Test_Goals goals(abst_map, filter_map, s, *ast);
 	::std::set< int > goal_set;

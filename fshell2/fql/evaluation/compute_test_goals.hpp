@@ -18,15 +18,15 @@
  * limitations under the License.
  *******************************************************************************/
 
-#ifndef FSHELL2__FQL__EVALUATION__EVALUATE_FILTER_HPP
-#define FSHELL2__FQL__EVALUATION__EVALUATE_FILTER_HPP
+#ifndef FSHELL2__FQL__EVALUATION__COMPUTE_TEST_GOALS_HPP
+#define FSHELL2__FQL__EVALUATION__COMPUTE_TEST_GOALS_HPP
 
-/*! \file fshell2/fql/evaluation/evaluate_filter.hpp
+/*! \file fshell2/fql/evaluation/compute_test_goals.hpp
  * \brief TODO
  *
  * $Id$
  * \author Michael Tautschnig <tautschnig@forsyte.de>
- * \date   Thu Apr 30 13:31:24 CEST 2009 
+ * \date   Fri May  1 21:45:36 CEST 2009 
 */
 
 #include <fshell2/config/config.hpp>
@@ -34,35 +34,39 @@
 #include <fshell2/fql/ast/ast_visitor.hpp>
 #include <fshell2/fql/ast/standard_ast_visitor_aspect.hpp>
 
-#include <cbmc/src/goto-programs/goto_functions.h>
-
-#include <set>
-#include <map>
+#include <cbmc/src/cbmc/bmc.h>
+#include <cbmc/src/cbmc/bv_cbmc.h>
+#include <cbmc/src/propsolve/sat_minimizer.h>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
+class Evaluate_Filter;
+
 /*! \brief TODO
 */
-class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
+class Compute_Test_Goals : public ::bmct, public Standard_AST_Visitor_Aspect<AST_Visitor> 
 {
 	/*! \copydoc doc_self
 	*/
-	typedef Evaluate_Filter Self;
+	typedef Compute_Test_Goals Self;
 
 	public:
-	typedef ::std::pair< ::goto_programt::const_targett, ::goto_programt::const_targett > cfg_edge_t;
-	typedef ::std::set< cfg_edge_t > value_t;
-	typedef ::std::map< Filter const*, value_t > filter_value_t;
+	typedef int test_goal_t;
+	typedef ::std::set< test_goal_t > value_t;
+	typedef ::std::map< Test_Goal_Set const*, value_t > tgs_value_t;
+	
+	Compute_Test_Goals(::language_uit & manager, ::optionst const& opts, Evaluate_Filter & eval);
 
-	Evaluate_Filter(::goto_functionst const& ts);
+	virtual ~Compute_Test_Goals();
 
-	virtual ~Evaluate_Filter();
+	value_t const& compute(Query const& query);
 
-	value_t const& evaluate(Filter const& f);
+	private:
+	virtual bool decide_default();
 
-	inline ::goto_functionst const& get_ts() const;
-
+	void initialize();
+	
 	/*! \{
 	 * \brief Visit a @ref fshell2::fql::Query
 	 * \param  n Query
@@ -89,13 +93,6 @@ class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	 * \param  n Abstraction
 	 */
 	virtual void visit(Abstraction const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Filter_Identity
-	 * \param  n Filter_Identity
-	 */
-	virtual void visit(Filter_Identity const* n);
 	/*! \} */
 
 	/*! \{
@@ -140,66 +137,27 @@ class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	virtual void visit(Pathcov const* n);
 	/*! \} */
 
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Filter_Complement
-	 * \param  n Filter_Complement
-	 */
-	virtual void visit(Filter_Complement const* n);
-	/*! \} */
+	bool m_is_initialized;
+	Evaluate_Filter & m_eval_filter;
+	::sat_minimizert m_solver;
+	::bv_cbmct m_bv;
 
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Filter_Union
-	 * \param  n Filter_Union
-	 */
-	virtual void visit(Filter_Union const* n);
-	/*! \} */
+	typedef ::std::multimap< goto_programt::const_targett,
+			::std::pair< int, int > > pc_to_bool_var_t;
+	pc_to_bool_var_t m_pc_to_bool_var_and_guard;
 
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Filter_Intersection
-	 * \param  n Filter_Intersection
-	 */
-	virtual void visit(Filter_Intersection const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Filter_Setminus
-	 * \param  n Filter_Setminus
-	 */
-	virtual void visit(Filter_Setminus const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Filter_Enclosing_Scopes
-	 * \param  n Filter_Enclosing_Scopes
-	 */
-	virtual void visit(Filter_Enclosing_Scopes const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Primitive_Filter
-	 * \param  n Primitive_Filter
-	 */
-	virtual void visit(Primitive_Filter const* n);
-	/*! \} */
-		
-	private:
-	::goto_functionst const& m_ts;
-	filter_value_t m_filter_map;
+	tgs_value_t m_tgs_map;
 
 	/*! \copydoc copy_constructor
 	*/
-	Evaluate_Filter( Self const& rhs );
+	Compute_Test_Goals( Self const& rhs );
 
 	/*! \copydoc assignment_op
 	 */
 	Self& operator=( Self const& rhs );
 };
-	
-inline ::goto_functionst const& Evaluate_Filter::get_ts() const {
-	return m_ts;
-}
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
 
-#endif /* FSHELL2__FQL__EVALUATION__EVALUATE_FILTER_HPP */
+#endif /* FSHELL2__FQL__EVALUATION__COMPUTE_TEST_GOALS_HPP */
