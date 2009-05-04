@@ -59,6 +59,45 @@ typedef enum {
 	UNKNOWN
 } variable_type_t;
 
+::std::ostream & operator<<(::std::ostream & os, variable_type_t const& vt) {
+	switch (vt) {
+		case TEMPORARY:
+			os << "TEMPORARY";
+			break;
+		case FORTAS_INTERNAL:
+			os << "FORTAS_INTERNAL";
+			break;
+		case ARGC_ARGV_CBMC_MAIN:
+			os << "ARGC_ARGV_CBMC_MAIN";
+			break;
+		case GLOBAL_STDIO:
+			os << "GLOBAL_STDIO";
+			break;
+		case LOCAL_INIT:
+			os << "LOCAL_INIT";
+			break;
+		case LOCAL:
+			os << "LOCAL";
+			break;
+		case GLOBAL_INIT:
+			os << "GLOBAL_INIT";
+			break;
+		case GLOBAL:
+			os << "GLOBAL";
+			break;
+		case PARAMETER_INIT:
+			os << "PARAMETER_INIT";
+			break;
+		case PARAMETER:
+			os << "PARAMETER";
+			break;
+		case UNKNOWN:
+			os << "UNKNOWN";
+			break;
+	}
+	return os;
+}
+
 variable_type_t get_variable_type(::std::string const& v)
 {
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Invalid_Argument, v.size() > 2 );
@@ -78,9 +117,9 @@ variable_type_t get_variable_type(::std::string const& v)
 		else if( '#' == v[ v.size() - 2 ] && '0' == v[ v.size() - 1 ] ) return GLOBAL_INIT;
 		else return GLOBAL;
 	}
-	// parameters have one more ::
-	else if( ::std::string::npos == v.find( "::", v.find( "::", 3 ) + 2 ) )
-		if( '#' == v[ v.size() - 2 ] && '0' == v[ v.size() - 1 ] ) return PARAMETER_INIT;
+	// parameters have two more ::
+	else if( ::std::string::npos == v.find( "::", v.find( "::", v.find( "::", 3 ) + 2 ) + 2 ) )
+		if( '#' == v[ v.size() - 2 ] && '1' == v[ v.size() - 1 ] ) return PARAMETER_INIT;
 		else return PARAMETER;
 	// must be a local variable
 	else
@@ -94,7 +133,7 @@ variable_type_t get_variable_type(::std::string const& v)
 
 void Constraint_Strengthening::print_test_case() const {
 	// select the init procedure chosen by the user
-	::std::string start_proc_name( "c::" );
+	::std::string start_proc_name( "::" );
 	start_proc_name += config.main;
 	start_proc_name += "::";
 	// beautify pointers
@@ -104,7 +143,6 @@ void Constraint_Strengthening::print_test_case() const {
 
 	for (::boolbv_mapt::mappingt::const_iterator iter(bv.map.mapping.begin());
 			iter != bv.map.mapping.end(); ++iter) {
-		::std::cerr << "Examining " << iter->first << ::std::endl;
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Invalid_Argument, iter->first.size() > 2);
 		// keep the name for further manipulation
 		::std::string var_name( iter->first.c_str() );
@@ -114,7 +152,8 @@ void Constraint_Strengthening::print_test_case() const {
 				( FORTAS_INTERNAL != vt 
 				  || ::std::string::npos == var_name.find( "__FORTAS__output" ) ) ) continue;
 		// discard input parameters that don't belong to the user-defined init proc
-		if( PARAMETER_INIT == vt && 0 != var_name.find( start_proc_name ) ) continue;
+		if( PARAMETER_INIT == vt && ::std::string::npos == var_name.find( start_proc_name ) ) continue;
+		// ::std::cerr << "Examining " << iter->first << ::std::endl;
 		// cut off any #...
 		var_name = var_name.substr( 0, var_name.rfind( '#' ) );
 		// split at an @..., need not exist
@@ -161,7 +200,7 @@ void Constraint_Strengthening::print_test_case() const {
 		// FSHELL2_DEBUG_ASSERT( ::diagnostics::Violated_Invariance, dest.end() == dest.find( var_name ) );
 		// store the value
 		// dest[ var_name ] = val;
-		m_os << var_name << "=" << val << ::std::endl;
+		m_os << " " << var_name << "=" << val;
 	}
 }
 
@@ -186,6 +225,7 @@ void Constraint_Strengthening::generate(::fshell2::fql::Query const& query) {
 	
 	cnf.copy_to(minisat);
 
+	::std::cerr << "#Test goals: " << aux_var_map.size() << ::std::endl;
 	::bvt goals_done;
 	while (!aux_var_map.empty()) {
 		minisat.set_assumptions(goals_done);
@@ -194,7 +234,9 @@ void Constraint_Strengthening::generate(::fshell2::fql::Query const& query) {
 		// store the Boolean variable values
 		cnf.copy_assignment_from(minisat);
 		// get the assignments
+		m_os << "IN:";
 		print_test_case();
+		m_os << ::std::endl;
 
 		for (::std::map< ::literalt, ::literalt >::iterator iter(aux_var_map.begin());
 				iter != aux_var_map.end();) {
@@ -203,11 +245,12 @@ void Constraint_Strengthening::generate(::fshell2::fql::Query const& query) {
 				++iter;
 				continue;
 			}
-			// test goal is done		
+			// test goal is done
 			goals_done.push_back(::neg(iter->second));
 			aux_var_map.erase(iter++);
 		}
 	}
+	::std::cerr << "#Infeasible test goals: " << aux_var_map.size() << ::std::endl;
 }
 
 FSHELL2_NAMESPACE_END;

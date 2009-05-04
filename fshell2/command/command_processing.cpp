@@ -117,6 +117,7 @@ Cleanup::~Cleanup() {
 
 Command_Processing::Command_Processing() :
 	m_finalized(true), m_opts(0), m_cfg(0) {
+	if (::config.main.empty()) ::config.main = "main";
 }
 
 Command_Processing::Command_Processing & Command_Processing::get_instance() {
@@ -280,12 +281,15 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 
 void Command_Processing::finalize(::language_uit & manager, ::std::ostream & os) {
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Protocol, m_opts != 0 && m_cfg != 0);
-
+	
 	FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,
 			!manager.context.symbols.empty(),
 			"No source files loaded!");
-
 	if (m_finalized) return;
+	
+	FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,
+			!manager.language_files.filemap.empty(),
+			"No files available for manipulation!");
 	m_finalized = ! manager.final();
 	// this must never fail, given all the previous sanity checks
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_finalized);

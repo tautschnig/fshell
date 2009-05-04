@@ -114,7 +114,7 @@ void test( Test_Data & data )
 
 	Evaluate_Filter eval(cfg);
 	Evaluate_Filter::value_t const& bb_entries(eval.evaluate(*bb));
-	TEST_CHECK_RELATION(7, ==, bb_entries.size());
+	TEST_CHECK_RELATION(6, ==, bb_entries.size());
 	
 	::std::set< Predicate *, FQL_Node_Lt_Compare > empty;
 	Abstraction * abst(Abstraction::Factory::get_instance().create(empty));
@@ -130,8 +130,7 @@ void test( Test_Data & data )
 	Compute_Test_Goals goals(l, options, eval);
 	Compute_Test_Goals::value_t const& bb_goals(goals.compute(*q));
 
-	// 2 is probably wrong ...
-	TEST_ASSERT_RELATION(2, ==, bb_goals.size());
+	TEST_ASSERT_RELATION(4, ==, bb_goals.size());
 }
 
 /** @cond */

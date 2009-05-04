@@ -102,7 +102,8 @@ void Compute_Test_Goals::initialize() {
 	// build the Boolean equation
 	FSHELL2_PROD_CHECK1(::fshell2::FShell2_Error, !this->run(m_eval_filter.get_ts()),
 			"Failed to build Boolean program representation");
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, this->_symex.get_remaining_claims());
+	// protected field, can't read here
+	// FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, this->_symex.remaining_claims);
 
 	// ::std::cerr << "Mapping program:" << ::std::endl;
 	// ::std::cerr << this->_equation << ::std::endl;
@@ -114,69 +115,80 @@ void Compute_Test_Goals::initialize() {
 	for (::symex_target_equationt::SSA_stepst::const_iterator iter( 
 				_equation.SSA_steps.begin() ); iter != _equation.SSA_steps.end(); ++iter)
 	{
-		// ::std::cerr << "Checking "; iter->output(this->ns, ::std::cerr); ::std::cerr << ::std::endl;
 		// don't consider hidden assignments
 		if (iter->is_assignment() && iter->assignment_type == ::symex_targett::HIDDEN) continue;
-		if (iter->source.pc->is_goto() && !(iter->source.pc->guard.is_true() || iter->source.pc->guard.is_false())) {
-			// now there are two possibilites - either the next state is a
-			// hidden assignment (that has a TRUE guard itself), then the
-			// next but one state must carry the desired guard; such a guard may
-			// be one of many, but in all cases it is the last one.
-			::symex_target_equationt::SSA_stepst::const_iterator next_state(iter); ++next_state;
-			FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, next_state != this->_equation.SSA_steps.end());
-			::exprt const * real_guard(0);
-			// skip this statement if it seems to be without effect
-			if (next_state->guard.is_true() &&
-					next_state->is_assignment() && next_state->assignment_type == ::symex_targett::HIDDEN )
-			{
-				real_guard = &(next_state->lhs);
+		// goto deserves special care
+		if (!iter->source.pc->is_goto()) {
+			m_pc_to_bool_var_and_guard.insert(::std::make_pair(iter->source.pc, ::std::make_pair(iter->guard_literal,
+							(iter->is_assume() || iter->is_assert())?iter->cond_literal : ::const_literal(true))));
+			/* if (iter->source.pc->is_assert()) {
+				::std::cerr << "Instr: ASSERT " << ::from_expr(this->ns, "", iter->source.pc->guard) << ::std::endl;
+			} else {
+				::std::cerr << "Instr: " << ::from_expr(this->ns, "", iter->source.pc->code) << ::std::endl;
 			}
-			else if(iter->guard == next_state->guard)
-			{
-				FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance,
-						!(next_state->is_assignment() && next_state->assignment_type == ::symex_targett::HIDDEN) );
-				continue;
-			}
-			else
-			{
-				// now we know that *next_state has a non-trivial guard; but this
-				// guard may be a conjunction of several guards, pick the last one
-				real_guard = next_state->guard.has_operands() ? 
-					&(next_state->guard.operands().back()) : &(next_state->guard);
-			}
-			// lookup the name in the symbol map
-			::literalt dest;
-			::prop_convt const& prop(m_bv); // terrible overload of literal with different signature
-			FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, !prop.literal(*real_guard, dest));
-			::std::cerr << "(GOTO) Found mapping for " << real_guard->get("identifier") << ": " << dest.dimacs() << ::std::endl;
-			// entry has been found, store it in the map
-			m_pc_to_bool_var_and_guard.insert(::std::make_pair(iter->source.pc, ::std::make_pair(dest,
-							(iter->is_assume() || iter->is_assert())?iter->cond_literal : iter->guard_literal)));
-		} else if (iter->guard.is_true() || iter->guard.is_false()) {
-			// Boolean variable corresponding to the guard will be 0 or 1
-			::std::cerr << "t/f guard: " << ::const_literal(iter->source.pc->guard.is_true()).dimacs() << ::std::endl;
-			m_pc_to_bool_var_and_guard.insert(::std::make_pair(iter->source.pc, ::std::make_pair(::const_literal(iter->source.pc->guard.is_true()),
-							(iter->is_assume() || iter->is_assert())?iter->cond_literal : iter->guard_literal)));
-		} else if (iter->guard.id() == "not") {
-			// lookup the name in the symbol map
-			::literalt dest;
-			::prop_convt const& prop(m_bv); // terrible overload of literal with different signature
-			FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, !prop.literal(iter->guard.op0(), dest));
-			::std::cerr << "Found mapping for " << iter->guard.op0().get("identifier") << ": " << -dest.dimacs() << ::std::endl;
-			// entry has been found, store it in the map
-			m_pc_to_bool_var_and_guard.insert(::std::make_pair(iter->source.pc, ::std::make_pair(::neg(dest),
-							(iter->is_assume() || iter->is_assert())?iter->cond_literal : iter->guard_literal)));
-		} else {
-			FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, iter->guard.id() == "symbol");
-			// lookup the name in the symbol map
-			::literalt dest;
-			::prop_convt const& prop(m_bv); // terrible overload of literal with different signature
-			FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, !prop.literal(iter->guard, dest));
-			::std::cerr << "Found mapping for " << iter->guard.get("identifier") << ": " << dest.dimacs() << ::std::endl;
-			// entry has been found, store it in the map
-			m_pc_to_bool_var_and_guard.insert(::std::make_pair(iter->source.pc, ::std::make_pair(dest,
-							(iter->is_assume() || iter->is_assert())?iter->cond_literal :iter->guard_literal)));
+			::std::cerr << "Guard: " << iter->guard_literal.dimacs() << ::std::endl;
+			*/
+			continue;
 		}
+
+		if (!iter->is_location()) continue;
+		// first step is location, carries the reachability-guard
+		FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, iter->is_location());
+		// unguarded goto
+		if (iter->source.pc->guard.is_true() || iter->source.pc->guard.is_false()) {
+			// ::std::cerr << "(GOTO) Trivial guard: " << ::const_literal(iter->source.pc->guard.is_true()).dimacs() << ::std::endl;
+			m_pc_to_bool_var_and_guard.insert(::std::make_pair(iter->source.pc, ::std::make_pair(iter->guard_literal,
+							::const_literal(iter->source.pc->guard.is_true()))));
+			continue;
+		}
+		// loop-bound-exceeded handling is missing
+		// we might need to distinguish forward vs. backwards goto here
+		::goto_programt::const_targett succ(iter->source.pc);
+		++succ;
+        
+		// now there are two possibilites - either the next state is a hidden
+		// assignment (with the same program counter), then its lhs is the
+		// desired guard; otherwise the guard is the last one in a long list
+		::symex_target_equationt::SSA_stepst::const_iterator next_state(iter); ++next_state;
+		FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, next_state != this->_equation.SSA_steps.end());
+		::exprt const * real_guard(0);
+		// skip this statement if it seems to be without effect
+		if (next_state->source.pc == succ &&
+				next_state->is_assignment() && next_state->assignment_type == ::symex_targett::HIDDEN )
+		{
+			real_guard = &(next_state->lhs);
+		}
+		else
+		{
+			// now we know that *next_state has a non-trivial guard; but this
+			// guard may be a conjunction of several guards, pick the last one
+			real_guard = next_state->guard.has_operands() ? 
+				&(next_state->guard.operands().back()) : &(next_state->guard);
+		}
+		// the resulting guard may be trivial
+		if (real_guard->is_true() || real_guard->is_false()) {
+			m_pc_to_bool_var_and_guard.insert(::std::make_pair(iter->source.pc, ::std::make_pair(iter->guard_literal,
+							::const_literal(real_guard->is_true()))));
+			continue;
+		}
+		// ... or a negated symbol
+		bool neg(false);
+		/*
+		this would be more beautiful, no new variables
+		if (real_guard->id() == "not") {
+			neg = true;
+			real_guard = &(real_guard->op0());
+		}
+		::std::cerr << "real guard: " << ::from_expr(this->ns, "", *real_guard) << ::std::endl;
+		// lookup the name in the symbol map
+		::literalt dest;
+		::prop_convt const& prop(m_bv); // terrible overload of literal with different signature
+		FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, !prop.literal(*real_guard, dest));
+		*/
+		::literalt dest(m_bv.convert(*real_guard));
+		// ::std::cerr << "(GOTO) Found mapping for " << real_guard->get("identifier") << ": " << dest.dimacs() << ::std::endl;
+		// entry has been found, store it in the map
+		m_pc_to_bool_var_and_guard.insert(::std::make_pair(iter->source.pc, ::std::make_pair(iter->guard_literal, neg?::neg(dest):dest)));
 	}
 					
 	m_is_initialized = true;
@@ -292,6 +304,23 @@ void Compute_Test_Goals::visit(Edgecov const* n) {
 	Evaluate_Filter::value_t const& filter_val(m_eval_filter.evaluate(*(n->get_filter())));
 	for (Evaluate_Filter::value_t::const_iterator iter(filter_val.begin());
 			iter != filter_val.end(); ++iter) {
+		::std::pair< pc_to_bool_var_t::const_iterator, pc_to_bool_var_t::const_iterator >
+			guards(m_pc_to_bool_var_and_guard.equal_range(iter->first));
+		// FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, guards.first != guards.second);
+		
+		if (guards.first == guards.second) {
+			::std::cerr << "WARNING: no guards for expr ";
+			if (iter->first->is_goto()) {
+				::std::cerr << "FILTER Instr: IF " << ::from_expr(this->ns, "", iter->first->guard);
+			} else if (iter->first->is_assert()) {
+				::std::cerr << "FILTER Instr: ASSERT " << ::from_expr(this->ns, "", iter->first->guard);
+			} else {
+				::std::cerr << "FILTER Instr: " << ::from_expr(this->ns, "", iter->first->code);
+			}
+			::std::cerr << " @" << iter->first->location << ::std::endl;
+			continue;
+		}
+
 		// this is an edge in the CFG, therefore it is taken if
 		// - the first statement is not a goto and its guard is true (test goal
 		// is making this guard true)
@@ -299,31 +328,43 @@ void Compute_Test_Goals::visit(Edgecov const* n) {
 		// true if the second statement is the jump target (and not the skip
 		// target)
 		if (!iter->first->is_goto()) {
-			::std::pair< pc_to_bool_var_t::const_iterator, pc_to_bool_var_t::const_iterator >
-				guards(m_pc_to_bool_var_and_guard.equal_range(iter->first));
-			// this is all very broken!!!!
-			// FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, guards.first != guards.second);
 			::bvt set;
 			for (; guards.first != guards.second; ++(guards.first)) {
-				if (guards.first->second.first.is_constant()) continue;
-				::std::cerr << "Adding guard " << guards.first->second.first.dimacs() << ::std::endl;
+				if (guards.first->second.first.is_false()) continue;
+				// we will always take this edge, a trivial goal
+				if (guards.first->second.first.is_true()) {
+					set.clear();
+					// set.push_back(m_cnf.new_variable());
+					break;
+				}
+				// ::std::cerr << "Adding non-trivial guard " << guards.first->second.first.dimacs() << ::std::endl;
 				set.push_back(guards.first->second.first);
 			}
-			::std::cerr << "Forming lor" << ::std::endl;
 			if (!set.empty()) entry.first->second.insert(m_cnf.lor(set));
 		} else {
-			// this is all very broken!!!! - does not really handle the goto
-			// stuff
-			::std::pair< pc_to_bool_var_t::const_iterator, pc_to_bool_var_t::const_iterator >
-				guards(m_pc_to_bool_var_and_guard.equal_range(iter->first));
-			// FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, guards.first != guards.second);
 			::bvt set;
 			for (; guards.first != guards.second; ++(guards.first)) {
-				if (guards.first->second.first.is_constant()) continue;
-				::std::cerr << "Adding goto-guard " << guards.first->second.first.dimacs() << ::std::endl;
-				set.push_back(guards.first->second.first);
+				if (guards.first->second.first.is_false()) continue;
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == iter->first->targets.size());
+				bool is_goto_target(iter->first->targets.front() == iter->second);
+				// ::std::cerr << "Real goto: " << (char const*) (is_goto_target?"yes":"no") << ::std::endl;
+				if (guards.first->second.first.is_true() && (
+							(is_goto_target && guards.first->second.second.is_true()) ||
+							(!is_goto_target && guards.first->second.second.is_false()))) {
+					// we will always take this edge, a trivial goal
+					set.clear();
+					// set.push_back(m_cnf.new_variable());
+					break;
+				}
+				::literalt guard(is_goto_target? ::neg(guards.first->second.second) : guards.first->second.second);
+				if (guards.first->second.first.is_true()) {
+					// ::std::cerr << "Adding goto-guard " << guard.dimacs() << ::std::endl;
+					set.push_back(guard);
+				} else {
+					set.push_back(m_cnf.land(guards.first->second.first, guard));
+					// ::std::cerr << "Adding goto-guard " << set.back().dimacs() << ::std::endl;
+				}
 			}
-			::std::cerr << "Forming goto-lor" << ::std::endl;
 			if (!set.empty()) entry.first->second.insert(m_cnf.lor(set));
 		}
 	}

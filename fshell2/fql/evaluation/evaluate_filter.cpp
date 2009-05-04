@@ -51,12 +51,17 @@
 #include <fshell2/fql/ast/tgs_setminus.hpp>
 #include <fshell2/fql/ast/tgs_union.hpp>
 
+#include <cbmc/src/goto-programs/cfg.h>
+
 #include <algorithm>
 #include <iterator>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
-	
+
+typedef struct {
+} empty_t;
+
 Evaluate_Filter::Evaluate_Filter(::goto_functionst const& ts) :
 	m_ts(ts) {
 }
@@ -275,21 +280,33 @@ void Evaluate_Filter::visit(Primitive_Filter const* n) {
 			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
 			break;
 		case F_BASICBLOCKENTRY:
-			for (::goto_functionst::function_mapt::const_iterator iter(m_ts.function_map.begin());
-					iter != m_ts.function_map.end(); ++iter) {
-				if (iter->second.body.empty()) continue;
-
-				bool take_next(true);
-				for (::goto_programt::instructionst::const_iterator f_iter(iter->second.body.instructions.begin());
-						f_iter != iter->second.body.instructions.end(); ++f_iter) {
-					::goto_programt::const_targetst succ;
-					iter->second.body.get_successors(f_iter, succ);
-					if (!succ.empty() && (take_next || succ.size() > 1)) {
-						for (::goto_programt::const_targetst::const_iterator s_iter(succ.begin());
-								s_iter != succ.end(); ++s_iter)
-							entry.first->second.insert(::std::make_pair(f_iter, *s_iter));
+			{
+				::cfgt< empty_t > cfg;
+				cfg(m_ts);
+				
+				for (::goto_functionst::function_mapt::const_iterator iter(m_ts.function_map.begin());
+						iter != m_ts.function_map.end(); ++iter) {
+					bool take_next(false);
+					for (::goto_programt::instructionst::const_iterator f_iter(iter->second.body.instructions.begin());
+							f_iter != iter->second.body.instructions.end(); ++f_iter) {
+						::cfgt< empty_t >::entriest::const_iterator cfg_node(cfg.entries.find(f_iter));
+						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != cfg.entries.end());
+						if (cfg_node->second.predecessors.empty()) take_next = true;
+						if (f_iter->is_skip() || f_iter->is_location() || f_iter->is_end_function() ||
+								f_iter->is_atomic_begin() || f_iter->is_atomic_end()) continue;
+						if (f_iter->is_other()) {
+							::irep_idt const& stmt(::to_code(f_iter->code).get_statement());
+							// some generate code, according to symex_other.cpp
+							if (stmt != "cpp_delete" && stmt != "cpp_delete[]" && stmt != "printf") continue;
+						}
+						if (!cfg_node->second.successors.empty() && (take_next ||
+									cfg_node->second.successors.size() > 1 || cfg_node->second.predecessors.size() > 1)) {
+							take_next = false;
+							for (::goto_programt::const_targetst::const_iterator s_iter(cfg_node->second.successors.begin());
+									s_iter != cfg_node->second.successors.end(); ++s_iter)
+								entry.first->second.insert(::std::make_pair(f_iter, *s_iter));
+						}
 					}
-					take_next = f_iter->is_function_call();
 				}
 			}
 			break;
