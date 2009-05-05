@@ -174,7 +174,7 @@ extern "C"
 
 %type <FILTER> Scope Filter Primitive_Filter
 %type <TEST_GOAL_SEQUENCE> Cover
-%type <RESTRICTION_AUTOMATON> Passing Automaton
+%type <RESTRICTION_AUTOMATON> Passing Automaton Step_Or_Nested_Aut
 %type <TGS_LIST> Test_Goal_Sequence
 %type <TEST_GOAL_SET> Test_Goal_Set
 %type <ABSTRACTION> Abstraction
@@ -241,23 +241,36 @@ Automaton: TOK_L_PARENTHESIS Automaton TOK_R_PARENTHESIS
 		 {
 		   $$ = 0;
 		 }
-		 | Automaton TOK_NEXT Aut_Step
+		 | Step_Or_Nested_Aut TOK_COMMA Step_Or_Nested_Aut
 		 {
 		   $$ = 0;
 		 }
-		 | Automaton TOK_NEXT_START Aut_Step TOK_NEXT_END Aut_Step
+		 | Automaton TOK_NEXT Step_Or_Nested_Aut
 		 {
 		   $$ = 0;
 		 }
-		 | Automaton TOK_LESS_OR_EQ TOK_NAT_NUMBER
+		 | Automaton TOK_NEXT_START Aut_Step TOK_NEXT_END Step_Or_Nested_Aut
 		 {
 		   $$ = 0;
 		 }
-		 | Automaton TOK_GREATER_OR_EQ TOK_NAT_NUMBER
+		 | Step_Or_Nested_Aut TOK_LESS_OR_EQ TOK_NAT_NUMBER
+		 {
+		   $$ = 0;
+		 }
+		 | Step_Or_Nested_Aut TOK_GREATER_OR_EQ TOK_NAT_NUMBER
 		 {
 		   $$ = 0;
 		 }
 		 ;
+
+Step_Or_Nested_Aut: TOK_L_PARENTHESIS Automaton TOK_R_PARENTHESIS
+				  {
+					$$ = $2;
+				  }
+				  | Aut_Step
+				  {
+					$$ = 0;
+				  }
 
 Aut_Step: Filter
 		{
