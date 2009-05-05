@@ -302,6 +302,7 @@ void Compute_Test_Goals::visit(Edgecov const* n) {
 	
 	// for now, we completely ignore the abstraction!
 	Evaluate_Filter::value_t const& filter_val(m_eval_filter.evaluate(*(n->get_filter())));
+	::std::cerr << filter_val.size() << " edges must be covered" << ::std::endl;
 	for (Evaluate_Filter::value_t::const_iterator iter(filter_val.begin());
 			iter != filter_val.end(); ++iter) {
 		::std::pair< pc_to_bool_var_t::const_iterator, pc_to_bool_var_t::const_iterator >

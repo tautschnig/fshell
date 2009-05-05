@@ -28,6 +28,7 @@
 
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
 #include <fshell2/config/annotations.hpp>
+#include <fshell2/exception/query_processing_error.hpp>
 
 #include <diagnostics/basic_exceptions/not_implemented.hpp>
 #include <diagnostics/basic_exceptions/violated_invariance.hpp>
@@ -51,19 +52,15 @@
 #include <fshell2/fql/ast/tgs_setminus.hpp>
 #include <fshell2/fql/ast/tgs_union.hpp>
 
-#include <cbmc/src/goto-programs/cfg.h>
-
 #include <algorithm>
 #include <iterator>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-typedef struct {
-} empty_t;
-
 Evaluate_Filter::Evaluate_Filter(::goto_functionst const& ts) :
 	m_ts(ts) {
+	m_cfg(m_ts);
 }
 
 Evaluate_Filter::~Evaluate_Filter() {
@@ -237,8 +234,22 @@ void Evaluate_Filter::visit(Primitive_Filter const* n) {
 	
 	switch (n->get_filter_type()) {
 		case F_FILE:
-			n->get_string_arg<F_FILE>();
-			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+			{
+				::std::string const& arg(n->get_string_arg<F_FILE>());
+				for (::goto_functionst::function_mapt::const_iterator iter(m_ts.function_map.begin());
+						iter != m_ts.function_map.end(); ++iter) {
+					if (!iter->second.body_available) continue;
+					for (::goto_programt::instructionst::const_iterator f_iter(iter->second.body.instructions.begin());
+							f_iter != iter->second.body.instructions.end(); ++f_iter) {
+						if (f_iter->location.is_nil() || f_iter->location.get_file() != arg) continue;
+						::cfgt< empty_t >::entriest::const_iterator cfg_node(m_cfg.entries.find(f_iter));
+						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.entries.end());
+						for (::goto_programt::const_targetst::const_iterator s_iter(cfg_node->second.successors.begin());
+								s_iter != cfg_node->second.successors.end(); ++s_iter)
+							entry.first->second.insert(::std::make_pair(f_iter, *s_iter));
+					}
+				}
+			}
 			break;
 		case F_LINE:
 			n->get_int_arg<F_LINE>();
@@ -249,27 +260,105 @@ void Evaluate_Filter::visit(Primitive_Filter const* n) {
 			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
 			break;
 		case F_FUNC:
-			n->get_string_arg<F_FUNC>();
-			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+			{
+				::goto_functionst::function_mapt::const_iterator fct(m_ts.function_map.find(
+							n->get_string_arg<F_FUNC>()));
+				FSHELL2_PROD_CHECK1(::fshell2::Query_Processing_Error, fct != m_ts.function_map.end() &&
+						fct->second.body_available, ::diagnostics::internal::to_string("Cannot evaluate ",
+							*n, " (function not available)"));
+				for (::goto_programt::instructionst::const_iterator f_iter(fct->second.body.instructions.begin());
+						f_iter != fct->second.body.instructions.end(); ++f_iter) {
+					// don't cover edges leaving the function
+					if (f_iter->is_function_call() || f_iter->is_return()) continue;
+					::cfgt< empty_t >::entriest::const_iterator cfg_node(m_cfg.entries.find(f_iter));
+					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.entries.end());
+					for (::goto_programt::const_targetst::const_iterator s_iter(cfg_node->second.successors.begin());
+							s_iter != cfg_node->second.successors.end(); ++s_iter)
+						entry.first->second.insert(::std::make_pair(f_iter, *s_iter));
+				}
+			}
 			break;
 		case F_LABEL:
-			n->get_string_arg<F_LABEL>();
-			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+			break;
+			{
+				::std::string const& arg(n->get_string_arg<F_LABEL>());
+				for (::goto_functionst::function_mapt::const_iterator iter(m_ts.function_map.begin());
+						iter != m_ts.function_map.end(); ++iter) {
+					if (!iter->second.body_available) continue;
+					for (::goto_programt::instructionst::const_iterator f_iter(iter->second.body.instructions.begin());
+							f_iter != iter->second.body.instructions.end(); ++f_iter) {
+						if (::std::find(f_iter->labels.begin(), f_iter->labels.end(), arg) == f_iter->labels.end()) continue;
+						::cfgt< empty_t >::entriest::const_iterator cfg_node(m_cfg.entries.find(f_iter));
+						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.entries.end());
+						for (::goto_programt::const_targetst::const_iterator s_iter(cfg_node->second.successors.begin());
+								s_iter != cfg_node->second.successors.end(); ++s_iter)
+							entry.first->second.insert(::std::make_pair(f_iter, *s_iter));
+					}
+				}
+			}
 			break;
 		case F_CALL:
 			n->get_string_arg<F_CALL>();
 			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
 			break;
 		case F_CALLS:
-			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+			for (::goto_functionst::function_mapt::const_iterator iter(m_ts.function_map.begin());
+					iter != m_ts.function_map.end(); ++iter) {
+				if (!iter->second.body_available) continue;
+				for (::goto_programt::instructionst::const_iterator f_iter(iter->second.body.instructions.begin());
+						f_iter != iter->second.body.instructions.end(); ++f_iter) {
+					if (!f_iter->is_function_call()) continue;
+					::cfgt< empty_t >::entriest::const_iterator cfg_node(m_cfg.entries.find(f_iter));
+					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.entries.end());
+					for (::goto_programt::const_targetst::const_iterator s_iter(cfg_node->second.successors.begin());
+							s_iter != cfg_node->second.successors.end(); ++s_iter)
+						entry.first->second.insert(::std::make_pair(f_iter, *s_iter));
+				}
+			}
 			break;
 		case F_ENTRY:
-			n->get_string_arg<F_ENTRY>();
-			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+			{
+				::goto_functionst::function_mapt::const_iterator fct(m_ts.function_map.find(
+							n->get_string_arg<F_ENTRY>()));
+				FSHELL2_PROD_CHECK1(::fshell2::Query_Processing_Error, fct != m_ts.function_map.end() &&
+						fct->second.body_available, ::diagnostics::internal::to_string("Cannot evaluate ",
+							*n, " (function not available)"));
+				for (::goto_programt::instructionst::const_iterator f_iter(fct->second.body.instructions.begin());
+						f_iter != fct->second.body.instructions.end(); ++f_iter) {
+					::cfgt< empty_t >::entriest::const_iterator cfg_node(m_cfg.entries.find(f_iter));
+					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.entries.end());
+					if (f_iter->is_skip() || f_iter->is_location() || f_iter->is_end_function() ||
+							f_iter->is_atomic_begin() || f_iter->is_atomic_end()) continue;
+					if (f_iter->is_other()) {
+						::irep_idt const& stmt(::to_code(f_iter->code).get_statement());
+						// some generate code, according to symex_other.cpp
+						if (stmt != "cpp_delete" && stmt != "cpp_delete[]" && stmt != "printf") continue;
+					}
+					for (::goto_programt::const_targetst::const_iterator s_iter(cfg_node->second.successors.begin());
+							s_iter != cfg_node->second.successors.end(); ++s_iter)
+						entry.first->second.insert(::std::make_pair(f_iter, *s_iter));
+					// a single match suffices
+					break;
+				}
+			}
 			break;
 		case F_EXIT:
-			n->get_string_arg<F_EXIT>();
-			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+			{
+				::goto_functionst::function_mapt::const_iterator fct(m_ts.function_map.find(
+							n->get_string_arg<F_EXIT>()));
+				FSHELL2_PROD_CHECK1(::fshell2::Query_Processing_Error, fct != m_ts.function_map.end() &&
+						fct->second.body_available, ::diagnostics::internal::to_string("Cannot evaluate ",
+							*n, " (function not available)"));
+				for (::goto_programt::instructionst::const_iterator f_iter(fct->second.body.instructions.begin());
+						f_iter != fct->second.body.instructions.end(); ++f_iter) {
+					if (!f_iter->is_return()) continue;
+					::cfgt< empty_t >::entriest::const_iterator cfg_node(m_cfg.entries.find(f_iter));
+					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.entries.end());
+					for (::goto_programt::const_targetst::const_iterator s_iter(cfg_node->second.successors.begin());
+							s_iter != cfg_node->second.successors.end(); ++s_iter)
+						entry.first->second.insert(::std::make_pair(f_iter, *s_iter));
+				}
+			}
 			break;
 		case F_EXPR:
 			n->get_string_arg<F_EXPR>();
@@ -280,38 +369,46 @@ void Evaluate_Filter::visit(Primitive_Filter const* n) {
 			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
 			break;
 		case F_BASICBLOCKENTRY:
-			{
-				::cfgt< empty_t > cfg;
-				cfg(m_ts);
-				
-				for (::goto_functionst::function_mapt::const_iterator iter(m_ts.function_map.begin());
-						iter != m_ts.function_map.end(); ++iter) {
-					bool take_next(false);
-					for (::goto_programt::instructionst::const_iterator f_iter(iter->second.body.instructions.begin());
-							f_iter != iter->second.body.instructions.end(); ++f_iter) {
-						::cfgt< empty_t >::entriest::const_iterator cfg_node(cfg.entries.find(f_iter));
-						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != cfg.entries.end());
-						if (cfg_node->second.predecessors.empty()) take_next = true;
-						if (f_iter->is_skip() || f_iter->is_location() || f_iter->is_end_function() ||
-								f_iter->is_atomic_begin() || f_iter->is_atomic_end()) continue;
-						if (f_iter->is_other()) {
-							::irep_idt const& stmt(::to_code(f_iter->code).get_statement());
-							// some generate code, according to symex_other.cpp
-							if (stmt != "cpp_delete" && stmt != "cpp_delete[]" && stmt != "printf") continue;
-						}
-						if (!cfg_node->second.successors.empty() && (take_next ||
-									cfg_node->second.successors.size() > 1 || cfg_node->second.predecessors.size() > 1)) {
-							take_next = false;
-							for (::goto_programt::const_targetst::const_iterator s_iter(cfg_node->second.successors.begin());
-									s_iter != cfg_node->second.successors.end(); ++s_iter)
-								entry.first->second.insert(::std::make_pair(f_iter, *s_iter));
-						}
+			for (::goto_functionst::function_mapt::const_iterator iter(m_ts.function_map.begin());
+					iter != m_ts.function_map.end(); ++iter) {
+				if (!iter->second.body_available) continue;
+				bool take_next(false);
+				for (::goto_programt::instructionst::const_iterator f_iter(iter->second.body.instructions.begin());
+						f_iter != iter->second.body.instructions.end(); ++f_iter) {
+					::cfgt< empty_t >::entriest::const_iterator cfg_node(m_cfg.entries.find(f_iter));
+					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.entries.end());
+					if (cfg_node->second.predecessors.empty()) take_next = true;
+					if (f_iter->is_skip() || f_iter->is_location() || f_iter->is_end_function() ||
+							f_iter->is_atomic_begin() || f_iter->is_atomic_end()) continue;
+					if (f_iter->is_other()) {
+						::irep_idt const& stmt(::to_code(f_iter->code).get_statement());
+						// some generate code, according to symex_other.cpp
+						if (stmt != "cpp_delete" && stmt != "cpp_delete[]" && stmt != "printf") continue;
+					}
+					if (!cfg_node->second.successors.empty() && (take_next ||
+								cfg_node->second.successors.size() > 1 || cfg_node->second.predecessors.size() > 1)) {
+						take_next = false;
+						for (::goto_programt::const_targetst::const_iterator s_iter(cfg_node->second.successors.begin());
+								s_iter != cfg_node->second.successors.end(); ++s_iter)
+							entry.first->second.insert(::std::make_pair(f_iter, *s_iter));
 					}
 				}
 			}
 			break;
 		case F_CONDITIONEDGE:
-			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+			for (::goto_functionst::function_mapt::const_iterator iter(m_ts.function_map.begin());
+					iter != m_ts.function_map.end(); ++iter) {
+				if (!iter->second.body_available) continue;
+				for (::goto_programt::instructionst::const_iterator f_iter(iter->second.body.instructions.begin());
+						f_iter != iter->second.body.instructions.end(); ++f_iter) {
+					if (!f_iter->is_goto() || f_iter->guard.is_true() || f_iter->guard.is_false()) continue;
+					::cfgt< empty_t >::entriest::const_iterator cfg_node(m_cfg.entries.find(f_iter));
+					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.entries.end());
+					for (::goto_programt::const_targetst::const_iterator s_iter(cfg_node->second.successors.begin());
+							s_iter != cfg_node->second.successors.end(); ++s_iter)
+						entry.first->second.insert(::std::make_pair(f_iter, *s_iter));
+				}
+			}
 			break;
 		case F_DECISIONEDGE:
 			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);

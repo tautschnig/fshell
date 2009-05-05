@@ -35,6 +35,7 @@
 #include <fshell2/fql/ast/standard_ast_visitor_aspect.hpp>
 
 #include <cbmc/src/goto-programs/goto_functions.h>
+#include <cbmc/src/goto-programs/cfg.h>
 
 #include <set>
 #include <map>
@@ -183,8 +184,12 @@ class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	/*! \} */
 		
 	private:
+	typedef struct {
+	} empty_t;
+
 	::goto_functionst const& m_ts;
 	filter_value_t m_filter_map;
+	::cfgt< empty_t > m_cfg;
 
 	/*! \copydoc copy_constructor
 	*/

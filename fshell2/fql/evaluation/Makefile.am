@@ -56,7 +56,7 @@ check_PROGRAMS = evaluate_filter compute_test_goals
 evaluate_filter_SOURCES = evaluate_filter.t.cpp
 # add additional objects required to build evaluate_filter here, like
 # evaluate_filter_LDADD = ../base/libbase.la libbla.la
-evaluate_filter_LDADD = libevaluation.la ../ast/libast.la $(CBMC_OBJS)
+evaluate_filter_LDADD = libevaluation.la ../ast/libast.la ../../exception/libexception.la $(CBMC_OBJS)
 # note that this entry (evaluate_filter_SOURCES, evaluate_filter_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually
