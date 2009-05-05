@@ -256,11 +256,6 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 		case CMD_SET_ENTRY:
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, arg != 0);
 			{
-				::std::string entry("c::");
-				entry += arg;
-				FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,
-						manager.context.has_symbol(entry),
-						::diagnostics::internal::to_string("Could not find entry function ", arg));
 				::config.main = arg;
 				if (m_finalized) manager.context.remove("main");
 				m_finalized = false;
@@ -285,6 +280,13 @@ void Command_Processing::finalize(::language_uit & manager, ::std::ostream & os)
 	FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,
 			!manager.context.symbols.empty(),
 			"No source files loaded!");
+				
+	::std::string entry("c::");
+	entry += ::config.main;
+	FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,
+			manager.context.has_symbol(entry),
+			::diagnostics::internal::to_string("Could not find entry function ", ::config.main));
+	
 	if (m_finalized) return;
 	
 	FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,
