@@ -34,7 +34,7 @@
 
 #include <fshell2/fql/evaluation/compute_test_goals.hpp>
 
-#include <cbmc/src/propsolve/satcheck_minisat.h>
+#include <cbmc/src/solvers/sat/satcheck_minisat.h>
 #include <cbmc/src/ansi-c/expr2c.h>
 #include <cbmc/src/util/config.h>
 
@@ -47,7 +47,6 @@ Constraint_Strengthening::Constraint_Strengthening(::fshell2::fql::Compute_Test_
 
 typedef enum {
 	TEMPORARY,
-	FORTAS_INTERNAL,
 	ARGC_ARGV_CBMC_MAIN,
 	GLOBAL_STDIO,
 	LOCAL_INIT,
@@ -63,9 +62,6 @@ typedef enum {
 	switch (vt) {
 		case TEMPORARY:
 			os << "TEMPORARY";
-			break;
-		case FORTAS_INTERNAL:
-			os << "FORTAS_INTERNAL";
 			break;
 		case ARGC_ARGV_CBMC_MAIN:
 			os << "ARGC_ARGV_CBMC_MAIN";
@@ -103,18 +99,14 @@ variable_type_t get_variable_type(::std::string const& v)
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Invalid_Argument, v.size() > 2 );
 	// first check for temporaries introduced by CBMC
 	if( ::std::string::npos != v.find( "$tmp" ) ) return TEMPORARY;
-	// our special ones
-	else if( 0 == v.find( "c::__FORTAS__counter" ) 
-			|| 0 == v.find( "c::__FORTAS__main" ) 
-			|| 0 == v.find( "c::__FORTAS__output") ) return FORTAS_INTERNAL;
 	// argc' and argv' used in the CBMC main routine
 	else if( ::std::string::npos != v.find( '\'' ) ) return ARGC_ARGV_CBMC_MAIN;
-	// global variables only have c:: but no other ::
-	else if( ::std::string::npos == v.find( "::", 3 ) )
+	// global variables only have c:: and end in #1
+	if( ::std::string::npos == v.find( "::", 3 ) )
 	{
 		if( 0 == v.find( "c::stderr#" ) || 0 == v.find( "c::stdin#" ) 
 			|| 0 == v.find( "c::stdout#" ) ) return GLOBAL_STDIO;
-		else if( '#' == v[ v.size() - 2 ] && '0' == v[ v.size() - 1 ] ) return GLOBAL_INIT;
+		else if( '#' == v[ v.size() - 2 ] && '1' == v[ v.size() - 1 ] ) return GLOBAL_INIT;
 		else return GLOBAL;
 	}
 	// parameters have two more ::
@@ -148,9 +140,7 @@ void Constraint_Strengthening::print_test_case() const {
 		::std::string var_name( iter->first.c_str() );
 		// only consider the initial values
 		variable_type_t const vt( get_variable_type( var_name ) );
-		if( vt != GLOBAL_INIT && vt != PARAMETER_INIT && vt != LOCAL_INIT && 
-				( FORTAS_INTERNAL != vt 
-				  || ::std::string::npos == var_name.find( "__FORTAS__output" ) ) ) continue;
+		if( vt != GLOBAL_INIT && vt != PARAMETER_INIT && vt != LOCAL_INIT ) continue; 
 		// discard input parameters that don't belong to the user-defined init proc
 		if( PARAMETER_INIT == vt && ::std::string::npos == var_name.find( start_proc_name ) ) continue;
 		// ::std::cerr << "Examining " << iter->first << ::std::endl;
@@ -226,6 +216,7 @@ void Constraint_Strengthening::generate(::fshell2::fql::Query const& query) {
 	cnf.copy_to(minisat);
 
 	::std::cerr << "#Test goals: " << aux_var_map.size() << ::std::endl;
+	int tcs(0);
 	::bvt goals_done;
 	while (!aux_var_map.empty()) {
 		minisat.set_assumptions(goals_done);
@@ -233,11 +224,13 @@ void Constraint_Strengthening::generate(::fshell2::fql::Query const& query) {
 
 		// store the Boolean variable values
 		cnf.copy_assignment_from(minisat);
+		++tcs;
 		// get the assignments
 		m_os << "IN:";
 		print_test_case();
 		m_os << ::std::endl;
 
+		unsigned const size1(aux_var_map.size());
 		for (::std::map< ::literalt, ::literalt >::iterator iter(aux_var_map.begin());
 				iter != aux_var_map.end();) {
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cnf.l_get(iter->first).is_known());
@@ -249,7 +242,9 @@ void Constraint_Strengthening::generate(::fshell2::fql::Query const& query) {
 			goals_done.push_back(::neg(iter->second));
 			aux_var_map.erase(iter++);
 		}
+		::std::cerr << "covers " << (size1 - aux_var_map.size()) << " test goals" << ::std::endl;
 	}
+	::std::cerr << "#Test cases: " << tcs << ::std::endl;
 	::std::cerr << "#Infeasible test goals: " << aux_var_map.size() << ::std::endl;
 }
 

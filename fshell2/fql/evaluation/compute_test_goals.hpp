@@ -36,7 +36,7 @@
 
 #include <cbmc/src/cbmc/bmc.h>
 #include <cbmc/src/cbmc/bv_cbmc.h>
-#include <cbmc/src/propsolve/cnf_clause_list.h>
+#include <cbmc/src/solvers/sat/cnf_clause_list.h>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
