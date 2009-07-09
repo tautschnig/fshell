@@ -117,8 +117,6 @@ extern "C"
 /* general */
 %token TOK_L_PARENTHESIS
 %token TOK_R_PARENTHESIS
-%token TOK_L_BRACKET
-%token TOK_R_BRACKET
 %token TOK_COMMA
 /* predicate generators */
 %token TOK_FILE
@@ -145,7 +143,7 @@ extern "C"
 %token TOK_SETMINUS
 %token TOK_ENCLOSING_SCOPES
 /* abstraction builders */
-%token TOK_PREDICATE
+%token TOK_PREDICATES
 %token TOK_L_BRACE
 %token TOK_R_BRACE
 %token TOK_GREATER_OR_EQ
@@ -157,7 +155,8 @@ extern "C"
 /* coverage specification */
 %token TOK_EDGECOV
 %token TOK_PATHCOV
-%token TOK_SEMICOLON
+%token TOK_L_SEQ
+%token TOK_R_SEQ
 /* automaton construction */
 %token TOK_NEXT
 %token TOK_CONCAT
@@ -227,10 +226,16 @@ Test_Goal_Sequence: Test_Goal_Set
 					$$->push_back(::std::make_pair< ::fshell2::fql::Restriction_Automaton *,
 					  ::fshell2::fql::Test_Goal_Set * >(0, $1));
 				  }
-				  | Test_Goal_Sequence TOK_SEMICOLON Path_Monitor TOK_SEMICOLON Test_Goal_Set
+				  | Test_Goal_Sequence TOK_L_SEQ Path_Monitor TOK_R_SEQ Test_Goal_Set
 				  {
 				    $$ = $1;
 					$$->push_back(::std::make_pair($3, $5));
+				  }
+				  | Test_Goal_Sequence TOK_NEXT Test_Goal_Set
+				  {
+				    $$ = $1;
+					$1->push_back(::std::make_pair< ::fshell2::fql::Restriction_Automaton *,
+					  ::fshell2::fql::Test_Goal_Set * >(0, $3));
 				  }
 				  ;
 
@@ -266,7 +271,7 @@ Path_Monitor_Factor: Preconditions Path_Monitor_Symbol
 				   {
 					 $$ = 0;
 				   }
-				   | Path_Monitor_Factor TOK_L_BRACKET Predicate TOK_R_BRACKET
+				   | Path_Monitor_Factor Predicate
 				   {
 				     $$ = 0;
 				   }
@@ -288,7 +293,7 @@ Preconditions: /* empty */
 			 {
 			   $$ = 0;
 			 }
-			 | Preconditions TOK_L_BRACKET Predicate TOK_R_BRACKET
+			 | Preconditions Predicate
 			 {
 			   $$ = 0;
 			 }
@@ -304,7 +309,7 @@ Test_Goal_Set: Preconditions TOK_L_PARENTHESIS Test_Goal_Set TOK_R_PARENTHESIS
 			 {
 			   $$ = $3;
 			 }
-			 | Test_Goal_Set TOK_L_BRACKET Predicate TOK_R_BRACKET
+			 | Test_Goal_Set Predicate
 			 {
 			   $$ = 0;
 			 }
@@ -363,6 +368,10 @@ Predicates: Predicate
 		    $$ = $1;
 			$$->insert($3);
 		  }
+		  | TOK_PREDICATES
+		  {
+		    $$ = 0;
+	      }
 		  ;
 
 Predicate: TOK_L_BRACE c_LHS Comparison c_LHS TOK_R_BRACE
@@ -375,11 +384,11 @@ Predicate: TOK_L_BRACE c_LHS Comparison c_LHS TOK_R_BRACE
 		   $$ = 0; //::fshell2::fql::Predicate::Factory::get_instance().create($3);
 		   //intermediates.insert($$);
 		 }
-		 | TOK_PREDICATE TOK_L_PARENTHESIS TOK_QUOTED_STRING TOK_R_PARENTHESIS
+		 | TOK_L_BRACE TOK_QUOTED_STRING TOK_R_BRACE
 		 {
 		   ::stream_message_handlert cbmc_msg_handler(*os);
 		   ::std::ostringstream pr;
-		   pr << "void __fn() {" << $3 << ";}" << ::std::endl;
+		   pr << "void __fn() {" << $2 << ";}" << ::std::endl;
 		   // put the string into an istream
 		   ::std::istringstream is(pr.str());
 		   // run the CBMC C parser
@@ -393,7 +402,7 @@ Predicate: TOK_L_BRACE c_LHS Comparison c_LHS TOK_R_BRACE
 		   ansi_c_scanner_init();
 		   bool result(ansi_c_parser.parse());
 		   FSHELL2_PROD_CHECK1(::diagnostics::Parse_Error, !result,
-		     ::diagnostics::internal::to_string("Failed to parse predicate ", $3));
+		     ::diagnostics::internal::to_string("Failed to parse predicate ", $2));
 		   FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 		     1 == ansi_c_parser.parse_tree.declarations.size());
 		   FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,

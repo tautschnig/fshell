@@ -98,8 +98,6 @@ extern ::std::set< ::fshell2::fql::FQL_Node * > intermediates;
 /* general */
 TOK_L_PARENTHESIS       \(
 TOK_R_PARENTHESIS       \)
-TOK_L_BRACKET           \[
-TOK_R_BRACKET           \]
 TOK_COMMA               ,
 /* predicate generators */
 TOK_FILE                @FILE
@@ -126,7 +124,7 @@ TOK_SETMINUS            SETMINUS
 TOK_ENCLOSING_SCOPES    ENCLOSING_SCOPES
 TOK_IDENTITY            ID
 /* abstraction builders */
-TOK_PREDICATE           @PRED
+TOK_PREDICATES          %AP%
 TOK_L_BRACE             \{
 TOK_R_BRACE             \}
 TOK_GREATER_OR_EQ       >=
@@ -138,7 +136,8 @@ TOK_NEQ                 !=
 /* coverage specification */
 TOK_EDGECOV             EDGECOV
 TOK_PATHCOV             PATHCOV
-TOK_SEMICOLON           ;
+TOK_L_SEQ               -\[
+TOK_R_SEQ               \]>
 /* automaton construction */
 TOK_NEXT                ->
 TOK_CONCAT              \.
@@ -161,8 +160,6 @@ TOK_NAT_NUMBER          [0-9]+
 \/\/.*                                /* NOOP */
 {TOK_L_PARENTHESIS}   { return TOK_L_PARENTHESIS; }
 {TOK_R_PARENTHESIS}   { return TOK_R_PARENTHESIS; }
-{TOK_L_BRACKET}   { return TOK_L_BRACKET; }
-{TOK_R_BRACKET}   { return TOK_R_BRACKET; }
 {TOK_COMMA}   { return TOK_COMMA; }
 
 <query_scope,query_cover,query_passing>{TOK_FILE}   { return TOK_FILE; }
@@ -195,7 +192,7 @@ TOK_NAT_NUMBER          [0-9]+
 <query_scope,query_cover,query_passing>{TOK_SETMINUS}   { return TOK_SETMINUS; }
 <query_scope,query_cover,query_passing>{TOK_ENCLOSING_SCOPES}   { return TOK_ENCLOSING_SCOPES; }
 
-<query_cover,query_passing>{TOK_PREDICATE}   { return TOK_PREDICATE; }
+<query_cover,query_passing>{TOK_PREDICATES}   { return TOK_PREDICATES; }
 <query_cover,query_passing>{TOK_L_BRACE}   { return TOK_L_BRACE; }
 <query_cover,query_passing>{TOK_R_BRACE}   { return TOK_R_BRACE; }
 <query_cover,query_passing>{TOK_GREATER_OR_EQ}   { return TOK_GREATER_OR_EQ; }
@@ -207,7 +204,8 @@ TOK_NAT_NUMBER          [0-9]+
 
 <query_cover>{TOK_EDGECOV}   { return TOK_EDGECOV; }
 <query_cover>{TOK_PATHCOV}   { return TOK_PATHCOV; }
-<query_cover>{TOK_SEMICOLON}   { return TOK_SEMICOLON; }
+<query_cover>{TOK_L_SEQ}   { return TOK_L_SEQ; }
+<query_cover>{TOK_R_SEQ}   { return TOK_R_SEQ; }
 
 <query_cover,query_passing>{TOK_NEXT}   { return TOK_NEXT; }
 <query_cover,query_passing>{TOK_CONCAT}   { return TOK_CONCAT; }
