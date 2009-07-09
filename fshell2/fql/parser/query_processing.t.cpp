@@ -61,7 +61,7 @@ void test_basic( Test_Data & data )
 	::fshell2::fql::Query * q(0);
 
 	::fshell2::fql::Query_Processing::get_instance().parse(os,
-				"cover edgecov(cfg,@file(\"bla.c\"))", &q);
+				"cover edgecov(@file(\"bla.c\"))", &q);
 	TEST_ASSERT(q != 0);
 	os.str("");
 
@@ -111,7 +111,7 @@ void test_use_case( Test_Data & data )
 	::fshell2::fql::Query * q(0);
 	
 	::fshell2::fql::Query_Processing::get_instance().parse(os,
-				"cover edgecov(cfg,@file(\"bla.c\"))", &q);
+				"cover edgecov(@file(\"bla.c\"))", &q);
 	TEST_ASSERT(q != 0);
 	os.str("");
 	os << *q;
@@ -119,7 +119,7 @@ void test_use_case( Test_Data & data )
 	q->destroy();
 	
 	::fshell2::fql::Query_Processing::get_instance().parse(os,
-				"in @file(\"bla.c\") cover edgecov(cfg,identity) passing @func(main)", &q);
+				"in @file(\"bla.c\") cover edgecov(id) passing @func(main)", &q);
 	TEST_ASSERT(q != 0);
 	os.str("");
 	os << *q;
@@ -127,7 +127,7 @@ void test_use_case( Test_Data & data )
 	q->destroy();
 	
 	::fshell2::fql::Query_Processing::get_instance().parse(os,
-				"in @file(\"bla.c\") cover edgecov(cfg,@BASICBLOCKENTRY) passing setminus(@file(\"bla.c\"),@func(unimplemented))", &q);
+				"in @file(\"bla.c\") cover edgecov(@BASICBLOCKENTRY) passing setminus(@file(\"bla.c\"),@func(unimplemented))", &q);
 	TEST_ASSERT(q != 0);
 	os.str("");
 	os << *q;

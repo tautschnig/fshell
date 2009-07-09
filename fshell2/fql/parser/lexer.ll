@@ -98,10 +98,13 @@ extern ::std::set< ::fshell2::fql::FQL_Node * > intermediates;
 /* general */
 TOK_L_PARENTHESIS       \(
 TOK_R_PARENTHESIS       \)
+TOK_L_BRACKET           \[
+TOK_R_BRACKET           \]
 TOK_COMMA               ,
 /* predicate generators */
 TOK_FILE                @FILE
 TOK_LINE                @LINE
+TOK_LINE_ABBREV         @[0-9]+
 TOK_COLUMN              @COLUMN
 TOK_FUNC                @FUNC
 TOK_LABEL               @LABEL
@@ -121,9 +124,8 @@ TOK_UNION               UNION
 TOK_INTERSECT           INTERSECT
 TOK_SETMINUS            SETMINUS
 TOK_ENCLOSING_SCOPES    ENCLOSING_SCOPES
-TOK_IDENTITY            IDENTITY
+TOK_IDENTITY            ID
 /* abstraction builders */
-TOK_CFG                 CFG
 TOK_PREDICATE           @PRED
 TOK_L_BRACE             \{
 TOK_R_BRACE             \}
@@ -136,11 +138,12 @@ TOK_NEQ                 !=
 /* coverage specification */
 TOK_EDGECOV             EDGECOV
 TOK_PATHCOV             PATHCOV
+TOK_SEMICOLON           ;
 /* automaton construction */
 TOK_NEXT                ->
-TOK_NEXT_START          -\[
-TOK_NEXT_END            \]>
-TOK_SUCH_THAT           \.
+TOK_CONCAT              \.
+TOK_ALTERNATIVE         \+
+TOK_KLEENE              \*
 /* query */
 TOK_IN                  IN
 TOK_COVER               COVER
@@ -158,10 +161,19 @@ TOK_NAT_NUMBER          [0-9]+
 \/\/.*                                /* NOOP */
 {TOK_L_PARENTHESIS}   { return TOK_L_PARENTHESIS; }
 {TOK_R_PARENTHESIS}   { return TOK_R_PARENTHESIS; }
+{TOK_L_BRACKET}   { return TOK_L_BRACKET; }
+{TOK_R_BRACKET}   { return TOK_R_BRACKET; }
 {TOK_COMMA}   { return TOK_COMMA; }
 
 <query_scope,query_cover,query_passing>{TOK_FILE}   { return TOK_FILE; }
-<query_scope,query_cover,query_passing>{TOK_LINE}   { return TOK_LINE; }
+<query_scope,query_cover,query_passing>{TOK_LINE_ABBREV}   { 
+                                        yylval.NUMBER = strtol( yytext+1, 0, 10 );
+                                        FSHELL2_PROD_CHECK1(::diagnostics::Parse_Error, 
+                                          EINVAL != errno, "Invalid number" );
+                                        FSHELL2_PROD_CHECK1(::diagnostics::Parse_Error, 
+                                          ERANGE != errno, "Number out of range" );
+                                        return TOK_LINE_ABBREV; 
+                                      }
 <query_scope,query_cover,query_passing>{TOK_COLUMN}   { return TOK_COLUMN; }
 <query_scope,query_cover,query_passing>{TOK_FUNC}   { return TOK_FUNC; }
 <query_scope,query_cover,query_passing>{TOK_LABEL}   { return TOK_LABEL; }
@@ -183,24 +195,24 @@ TOK_NAT_NUMBER          [0-9]+
 <query_scope,query_cover,query_passing>{TOK_SETMINUS}   { return TOK_SETMINUS; }
 <query_scope,query_cover,query_passing>{TOK_ENCLOSING_SCOPES}   { return TOK_ENCLOSING_SCOPES; }
 
-<query_cover>{TOK_CFG}   { return TOK_CFG; }
-<query_cover>{TOK_PREDICATE}   { return TOK_PREDICATE; }
-<query_cover>{TOK_L_BRACE}   { return TOK_L_BRACE; }
-<query_cover>{TOK_R_BRACE}   { return TOK_R_BRACE; }
+<query_cover,query_passing>{TOK_PREDICATE}   { return TOK_PREDICATE; }
+<query_cover,query_passing>{TOK_L_BRACE}   { return TOK_L_BRACE; }
+<query_cover,query_passing>{TOK_R_BRACE}   { return TOK_R_BRACE; }
 <query_cover,query_passing>{TOK_GREATER_OR_EQ}   { return TOK_GREATER_OR_EQ; }
-<query_cover>{TOK_GREATER}   { return TOK_GREATER; }
-<query_cover>{TOK_EQ}   { return TOK_EQ; }
+<query_cover,query_passing>{TOK_GREATER}   { return TOK_GREATER; }
+<query_cover,query_passing>{TOK_EQ}   { return TOK_EQ; }
 <query_cover,query_passing>{TOK_LESS_OR_EQ}   { return TOK_LESS_OR_EQ; }
-<query_cover>{TOK_LESS}   { return TOK_LESS; }
-<query_cover>{TOK_NEQ}   { return TOK_NEQ; }
+<query_cover,query_passing>{TOK_LESS}   { return TOK_LESS; }
+<query_cover,query_passing>{TOK_NEQ}   { return TOK_NEQ; }
 
 <query_cover>{TOK_EDGECOV}   { return TOK_EDGECOV; }
 <query_cover>{TOK_PATHCOV}   { return TOK_PATHCOV; }
+<query_cover>{TOK_SEMICOLON}   { return TOK_SEMICOLON; }
 
 <query_cover,query_passing>{TOK_NEXT}   { return TOK_NEXT; }
-<query_cover,query_passing>{TOK_NEXT_START}   { return TOK_NEXT_START; }
-<query_cover,query_passing>{TOK_NEXT_END}   { return TOK_NEXT_END; }
-<query_cover,query_passing>{TOK_SUCH_THAT}   { return TOK_SUCH_THAT; }
+<query_cover,query_passing>{TOK_CONCAT}   { return TOK_CONCAT; }
+<query_cover,query_passing>{TOK_ALTERNATIVE}   { return TOK_ALTERNATIVE; }
+<query_cover,query_passing>{TOK_KLEENE}   { return TOK_KLEENE; }
 
 <INITIAL>{TOK_IN}   { BEGIN query_scope; return TOK_IN; }
 <INITIAL,query_scope>{TOK_COVER}   { BEGIN query_cover; return TOK_COVER; }

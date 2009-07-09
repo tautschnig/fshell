@@ -98,10 +98,9 @@ extern "C"
   int NUMBER;
   char* STRING;
   
-  ::fshell2::fql::Abstraction * ABSTRACTION;
   ::fshell2::fql::Filter * FILTER;
   ::fshell2::fql::Predicate * PREDICATE;
-  ::fshell2::fql::Restriction_Automaton * RESTRICTION_AUTOMATON;
+  ::fshell2::fql::Restriction_Automaton * PATH_MONITOR;
   ::fshell2::fql::Test_Goal_Sequence * TEST_GOAL_SEQUENCE;
   ::fshell2::fql::Test_Goal_Set * TEST_GOAL_SET;
 
@@ -109,8 +108,8 @@ extern "C"
     ::fshell2::fql::FQL_Node_Lt_Compare > * PREDICATE_SET;
   ::std::list< ::std::pair< ::fshell2::fql::Restriction_Automaton *,
     ::fshell2::fql::Test_Goal_Set * > > * TGS_LIST;
-  ::std::pair< ::fshell2::fql::Filter *,
-    ::fshell2::fql::Predicate * > * AUT_STEP_PAIR;
+  /*::std::pair< ::fshell2::fql::Filter *,
+    ::fshell2::fql::Predicate * > * AUT_STEP_PAIR;*/
 
   ::exprt * EXPRT;
 }
@@ -118,10 +117,13 @@ extern "C"
 /* general */
 %token TOK_L_PARENTHESIS
 %token TOK_R_PARENTHESIS
+%token TOK_L_BRACKET
+%token TOK_R_BRACKET
 %token TOK_COMMA
 /* predicate generators */
 %token TOK_FILE
 %token TOK_LINE
+%token <NUMBER> TOK_LINE_ABBREV
 %token TOK_COLUMN
 %token TOK_FUNC
 %token TOK_LABEL
@@ -143,7 +145,6 @@ extern "C"
 %token TOK_SETMINUS
 %token TOK_ENCLOSING_SCOPES
 /* abstraction builders */
-%token TOK_CFG
 %token TOK_PREDICATE
 %token TOK_L_BRACE
 %token TOK_R_BRACE
@@ -156,11 +157,12 @@ extern "C"
 /* coverage specification */
 %token TOK_EDGECOV
 %token TOK_PATHCOV
+%token TOK_SEMICOLON
 /* automaton construction */
 %token TOK_NEXT
-%token TOK_NEXT_START
-%token TOK_NEXT_END
-%token TOK_SUCH_THAT
+%token TOK_CONCAT
+%token TOK_ALTERNATIVE
+%token TOK_KLEENE
 /* query */
 %token TOK_IN
 %token TOK_COVER
@@ -174,13 +176,12 @@ extern "C"
 
 %type <FILTER> Scope Filter Primitive_Filter
 %type <TEST_GOAL_SEQUENCE> Cover
-%type <RESTRICTION_AUTOMATON> Passing Automaton Step_Or_Nested_Aut
+%type <PATH_MONITOR> Passing Path_Monitor Path_Monitor_Term Path_Monitor_Factor
+%type <PATH_MONITOR> Path_Monitor_Symbol
 %type <TGS_LIST> Test_Goal_Sequence
 %type <TEST_GOAL_SET> Test_Goal_Set
-%type <ABSTRACTION> Abstraction
-%type <PREDICATE_SET> Predicates
+%type <PREDICATE_SET> Predicates Preconditions
 %type <PREDICATE> Predicate
-%type <AUT_STEP_PAIR> Aut_Step
 %type <EXPRT> Comparison c_LHS
 
 %%
@@ -214,7 +215,7 @@ Passing: /* empty */
 	   {
 	     $$ = 0;
 	   }
-	   | TOK_PASSING Automaton
+	   | TOK_PASSING Path_Monitor
 	   {
 	   	 $$ = $2;
 	   }
@@ -226,110 +227,131 @@ Test_Goal_Sequence: Test_Goal_Set
 					$$->push_back(::std::make_pair< ::fshell2::fql::Restriction_Automaton *,
 					  ::fshell2::fql::Test_Goal_Set * >(0, $1));
 				  }
-				  | Test_Goal_Sequence Automaton Test_Goal_Set
+				  | Test_Goal_Sequence TOK_SEMICOLON Path_Monitor TOK_SEMICOLON Test_Goal_Set
 				  {
 				    $$ = $1;
-					$$->push_back(::std::make_pair($2, $3));
+					$$->push_back(::std::make_pair($3, $5));
 				  }
 				  ;
 
-Automaton: TOK_L_PARENTHESIS Automaton TOK_R_PARENTHESIS
-		 {
-		   $$ = $2;
-		 }
-		 | Aut_Step
-		 {
-		   $$ = 0;
-		 }
-		 | Step_Or_Nested_Aut TOK_COMMA Step_Or_Nested_Aut
-		 {
-		   $$ = 0;
-		 }
-		 | Automaton TOK_NEXT Step_Or_Nested_Aut
-		 {
-		   $$ = 0;
-		 }
-		 | Automaton TOK_NEXT_START Aut_Step TOK_NEXT_END Step_Or_Nested_Aut
-		 {
-		   $$ = 0;
-		 }
-		 | Step_Or_Nested_Aut TOK_LESS_OR_EQ TOK_NAT_NUMBER
-		 {
-		   $$ = 0;
-		 }
-		 | Step_Or_Nested_Aut TOK_GREATER_OR_EQ TOK_NAT_NUMBER
-		 {
-		   $$ = 0;
-		 }
-		 ;
+Path_Monitor: Path_Monitor_Term
+		    {
+		      $$ = 0;
+		    }
+		    | Path_Monitor TOK_ALTERNATIVE Path_Monitor_Term
+		    {
+		      $$ = 0;
+		    }
+		    ;
 
-Step_Or_Nested_Aut: TOK_L_PARENTHESIS Automaton TOK_R_PARENTHESIS
-				  {
-					$$ = $2;
-				  }
-				  | Aut_Step
-				  {
-					$$ = 0;
-				  }
+Path_Monitor_Term: Path_Monitor_Factor
+			     {
+				   $$ = $1;
+				 }
+				 | Path_Monitor_Term TOK_CONCAT Path_Monitor_Factor
+				 {
+				   $$ = 0;
+				 }
+				 | Path_Monitor_Term TOK_NEXT Path_Monitor_Factor
+				 {
+				   $$ = 0;
+				 }
+				 ;
 
-Aut_Step: Filter
-		{
-		  $$ = new ::std::pair< ::fshell2::fql::Filter *, ::fshell2::fql::Predicate * >($1, 0);
-		}
-		| Predicate
-		{
-		  $$ = new ::std::pair< ::fshell2::fql::Filter *, ::fshell2::fql::Predicate * >(0, $1);
-		}
-		| Filter TOK_SUCH_THAT Predicate
-		{
-		  $$ = new ::std::pair< ::fshell2::fql::Filter *, ::fshell2::fql::Predicate * >($1, $3);
-		}
-		;
+Path_Monitor_Factor: Preconditions Path_Monitor_Symbol
+				   {
+				     $$ = 0;
+				   }
+				   | Preconditions TOK_L_PARENTHESIS Path_Monitor TOK_R_PARENTHESIS
+				   {
+					 $$ = 0;
+				   }
+				   | Path_Monitor_Factor TOK_L_BRACKET Predicate TOK_R_BRACKET
+				   {
+				     $$ = 0;
+				   }
+				   | Path_Monitor_Factor TOK_KLEENE
+				   {
+				     $$ = 0;
+				   }
+				   | Path_Monitor_Factor TOK_LESS_OR_EQ TOK_NAT_NUMBER
+				   {
+				     $$ = 0;
+				   }
+				   | Path_Monitor_Factor TOK_GREATER_OR_EQ TOK_NAT_NUMBER
+				   {
+				     $$ = 0;
+				   }
+				   ;
 
-Test_Goal_Set: TOK_L_PARENTHESIS Test_Goal_Set TOK_R_PARENTHESIS
+Preconditions: /* empty */
 			 {
-			   $$ = $2;
+			   $$ = 0;
 			 }
-			 | TOK_UNION TOK_L_PARENTHESIS Test_Goal_Set TOK_COMMA Test_Goal_Set TOK_R_PARENTHESIS
+			 | Preconditions TOK_L_BRACKET Predicate TOK_R_BRACKET
 			 {
-			   $$ = ::fshell2::fql::TGS_Union::Factory::get_instance().create($3, $5);
-			   intermediates.insert($$);
-			 }
-			 | TOK_INTERSECT TOK_L_PARENTHESIS Test_Goal_Set TOK_COMMA Test_Goal_Set TOK_R_PARENTHESIS
-			 {
-			   $$ = ::fshell2::fql::TGS_Intersection::Factory::get_instance().create($3, $5);
-			   intermediates.insert($$);
-			 }
-			 | TOK_SETMINUS TOK_L_PARENTHESIS Test_Goal_Set TOK_COMMA Test_Goal_Set TOK_R_PARENTHESIS
-			 {
-			   $$ = ::fshell2::fql::TGS_Setminus::Factory::get_instance().create($3, $5);
-			   intermediates.insert($$);
-			 }
-			 | TOK_EDGECOV TOK_L_PARENTHESIS Abstraction TOK_COMMA Filter TOK_R_PARENTHESIS
-			 {
-			   $$ = ::fshell2::fql::Edgecov::Factory::get_instance().create($3, $5);
-			   intermediates.insert($$);
-			 }
-			 | TOK_PATHCOV TOK_L_PARENTHESIS Abstraction TOK_COMMA Filter TOK_COMMA TOK_NAT_NUMBER TOK_R_PARENTHESIS
-			 {
-			   $$ = ::fshell2::fql::Pathcov::Factory::get_instance().create($3, $5, $7);
-			   intermediates.insert($$);
+			   $$ = 0;
 			 }
 			 ;
 
-Abstraction: TOK_CFG
-		   {
-		     ::std::set< ::fshell2::fql::Predicate *, ::fshell2::fql::FQL_Node_Lt_Compare > empty;
-			 $$ = ::fshell2::fql::Abstraction::Factory::get_instance().create(empty);
-			 intermediates.insert($$);
-		   }
-		   | TOK_CFG TOK_L_PARENTHESIS Predicates TOK_R_PARENTHESIS
-		   {
-		     $$ = ::fshell2::fql::Abstraction::Factory::get_instance().create(*$3);
-			 delete $3;
-			 intermediates.insert($$);
-		   }
-		   ;
+Path_Monitor_Symbol: Filter
+				   {
+				     $$ = 0;
+				   }
+				   ;
+
+Test_Goal_Set: Preconditions TOK_L_PARENTHESIS Test_Goal_Set TOK_R_PARENTHESIS
+			 {
+			   $$ = $3;
+			 }
+			 | Test_Goal_Set TOK_L_BRACKET Predicate TOK_R_BRACKET
+			 {
+			   $$ = 0;
+			 }
+			 | Preconditions TOK_UNION TOK_L_PARENTHESIS Test_Goal_Set TOK_COMMA Test_Goal_Set TOK_R_PARENTHESIS
+			 {
+			   $$ = ::fshell2::fql::TGS_Union::Factory::get_instance().create($4, $6);
+			   intermediates.insert($$);
+			 }
+			 | Preconditions TOK_INTERSECT TOK_L_PARENTHESIS Test_Goal_Set TOK_COMMA Test_Goal_Set TOK_R_PARENTHESIS
+			 {
+			   $$ = ::fshell2::fql::TGS_Intersection::Factory::get_instance().create($4, $6);
+			   intermediates.insert($$);
+			 }
+			 | Preconditions TOK_SETMINUS TOK_L_PARENTHESIS Test_Goal_Set TOK_COMMA Test_Goal_Set TOK_R_PARENTHESIS
+			 {
+			   $$ = ::fshell2::fql::TGS_Setminus::Factory::get_instance().create($4, $6);
+			   intermediates.insert($$);
+			 }
+			 | Preconditions TOK_EDGECOV TOK_L_PARENTHESIS Filter TOK_R_PARENTHESIS
+			 {
+			   ::std::set< ::fshell2::fql::Predicate *, ::fshell2::fql::FQL_Node_Lt_Compare > empty;
+			   $$ = ::fshell2::fql::Edgecov::Factory::get_instance().create(
+			     ::fshell2::fql::Abstraction::Factory::get_instance().create(empty), $4);
+			   intermediates.insert($$);
+			 }
+			 | Preconditions TOK_EDGECOV TOK_L_PARENTHESIS Filter TOK_COMMA Predicates TOK_R_PARENTHESIS
+			 {
+			   $$ = ::fshell2::fql::Edgecov::Factory::get_instance().create(
+		         ::fshell2::fql::Abstraction::Factory::get_instance().create(*$6), $4);
+			   delete $6;
+			   intermediates.insert($$);
+			 }
+			 | Preconditions TOK_PATHCOV TOK_L_PARENTHESIS Filter TOK_COMMA TOK_NAT_NUMBER TOK_R_PARENTHESIS
+			 {
+			   ::std::set< ::fshell2::fql::Predicate *, ::fshell2::fql::FQL_Node_Lt_Compare > empty;
+			   $$ = ::fshell2::fql::Pathcov::Factory::get_instance().create(
+			     ::fshell2::fql::Abstraction::Factory::get_instance().create(empty), $4, $6);
+			   intermediates.insert($$);
+			 }
+			 | Preconditions TOK_PATHCOV TOK_L_PARENTHESIS Filter TOK_COMMA TOK_NAT_NUMBER TOK_COMMA Predicates TOK_R_PARENTHESIS
+			 {
+			   $$ = ::fshell2::fql::Pathcov::Factory::get_instance().create(
+			     ::fshell2::fql::Abstraction::Factory::get_instance().create(*$8), $4, $6);
+			   delete $8;
+			   intermediates.insert($$);
+			 }
+			 ;
 
 Predicates: Predicate
 		  {
@@ -342,7 +364,6 @@ Predicates: Predicate
 			$$->insert($3);
 		  }
 		  ;
-
 
 Predicate: TOK_L_BRACE c_LHS Comparison c_LHS TOK_R_BRACE
 		 {
@@ -473,10 +494,18 @@ Primitive_Filter: TOK_FILE TOK_L_PARENTHESIS TOK_QUOTED_STRING TOK_R_PARENTHESIS
                     ::fshell2::fql::F_FILE>($3);
 	    	      intermediates.insert($$);
 				}
-				| TOK_LINE TOK_L_PARENTHESIS TOK_NAT_NUMBER TOK_R_PARENTHESIS
+				| TOK_LINE TOK_L_PARENTHESIS TOK_QUOTED_STRING TOK_COMMA TOK_NAT_NUMBER TOK_R_PARENTHESIS
+				{
+				  $$ = 0;
+				  // TODO missing file name!!!
+				  /*$$ = ::fshell2::fql::Primitive_Filter::Factory::get_instance().create<
+                    ::fshell2::fql::F_LINE>($5);
+	    	      intermediates.insert($$);*/
+				}
+				| TOK_LINE_ABBREV
 				{
 				  $$ = ::fshell2::fql::Primitive_Filter::Factory::get_instance().create<
-                    ::fshell2::fql::F_LINE>($3);
+                    ::fshell2::fql::F_LINE>($1);
 	    	      intermediates.insert($$);
 				}
 				| TOK_COLUMN TOK_L_PARENTHESIS TOK_NAT_NUMBER TOK_R_PARENTHESIS
