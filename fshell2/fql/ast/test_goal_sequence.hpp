@@ -31,10 +31,8 @@
 
 #include <fshell2/config/config.hpp>
 #include <fshell2/config/annotations.hpp>
-#include <fshell2/fql/ast/fql_node.hpp>
-#include <fshell2/fql/ast/fql_node_factory.hpp>
-
 #include <fshell2/fql/ast/test_goal_set.hpp>
+
 #include <fshell2/fql/ast/restriction_automaton.hpp>
 
 #include <diagnostics/basic_exceptions/violated_invariance.hpp>
@@ -45,7 +43,7 @@ FSHELL2_FQL_NAMESPACE_BEGIN;
 
 /*! \brief TODO
 */
-class Test_Goal_Sequence : public FQL_Node
+class Test_Goal_Sequence : public Test_Goal_Set
 {
 	/*! \copydoc doc_self
 	*/

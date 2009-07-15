@@ -69,7 +69,7 @@ Compute_Test_Goals::Compute_Test_Goals(::language_uit & manager,
 	this->options.set_option("dimacs", false);
 	this->options.set_option("cvc", false);
 	this->options.set_option("smt", false);
-	this->options.set_option("bv-refine", false);
+	this->options.set_option("refine", false);
 	this->options.set_option("cvc", false);
 	this->set_verbosity(manager.get_verbosity());
 
@@ -198,28 +198,52 @@ Compute_Test_Goals::value_t const& Compute_Test_Goals::compute(Query const& quer
 	initialize();
 
 	query.accept(this);
-	
-	// this is a hack!!!
-	tgs_value_t::const_iterator entry(m_tgs_map.find(query.get_cover()->get_sequence().front().second));
+
+	// a hack, to be reconsidered TODO
+	tgs_value_t::const_iterator entry(m_tgs_map.find(query.get_cover()));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, entry != m_tgs_map.end());
 	return entry->second;
 }
 
 void Compute_Test_Goals::visit(Query const* n) {
 	if (n->get_prefix()) {
+		FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
 		n->get_prefix()->accept(this);
 	}
 
 	n->get_cover()->accept(this);
+
+	if (n->get_passing()) {
+		n->get_passing()->accept(this);
+	}
 }
 
 void Compute_Test_Goals::visit(Test_Goal_Sequence const* n) {
+	::std::pair< tgs_value_t::iterator, bool > entry(m_tgs_map.insert(
+				::std::make_pair(n, value_t())));
+	if (!entry.second) return;
+	
 	for (Test_Goal_Sequence::seq_t::const_iterator iter(n->get_sequence().begin());
 			iter != n->get_sequence().end(); ++iter) {
 		if (iter->first) {
+			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
 			iter->first->accept(this);
 		}
 		iter->second->accept(this);
+		tgs_value_t::const_iterator subgoals(m_tgs_map.find(iter->second));
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, subgoals != m_tgs_map.end());
+
+		if (iter != n->get_sequence().begin()) {
+			value_t const backup(entry.first->second);
+			entry.first->second.clear();
+			for (value_t::const_iterator tgi(backup.begin()); tgi != backup.end(); ++tgi)
+				for (value_t::const_iterator sgi(subgoals->second.begin());
+						sgi != subgoals->second.end(); ++sgi)
+					entry.first->second.insert(m_cnf.land(*tgi, *sgi));
+		} else {
+			::std::copy(subgoals->second.begin(), subgoals->second.end(),
+				::std::inserter(entry.first->second, entry.first->second.begin()));
+		}
 	}
 
 	if (n->get_suffix_automaton()) {
