@@ -109,7 +109,7 @@ void test( Test_Data & data )
 
 	Evaluate_Filter eval(cfg);
 	Evaluate_Filter::value_t const& bb_entries(eval.evaluate(*bb));
-	TEST_ASSERT_RELATION(4, ==, bb_entries.size()); // main, edge after c::main and edges in c::main
+	TEST_ASSERT_RELATION(4, ==, bb_entries.size()); // main, edge after c::main and edges in c::main 
 }
 
 /** @cond */
