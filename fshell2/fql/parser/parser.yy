@@ -503,13 +503,11 @@ Primitive_Filter: TOK_FILE TOK_L_PARENTHESIS TOK_QUOTED_STRING TOK_R_PARENTHESIS
                     ::fshell2::fql::F_FILE>($3);
 	    	      intermediates.insert($$);
 				}
-				| TOK_LINE TOK_L_PARENTHESIS TOK_QUOTED_STRING TOK_COMMA TOK_NAT_NUMBER TOK_R_PARENTHESIS
+				| TOK_LINE TOK_L_PARENTHESIS TOK_NAT_NUMBER TOK_R_PARENTHESIS
 				{
-				  $$ = 0;
-				  // TODO missing file name!!!
-				  /*$$ = ::fshell2::fql::Primitive_Filter::Factory::get_instance().create<
-                    ::fshell2::fql::F_LINE>($5);
-	    	      intermediates.insert($$);*/
+				  $$ = ::fshell2::fql::Primitive_Filter::Factory::get_instance().create<
+                    ::fshell2::fql::F_LINE>($3);
+	    	      intermediates.insert($$);
 				}
 				| TOK_LINE_ABBREV
 				{

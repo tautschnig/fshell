@@ -134,8 +134,8 @@ TOK_LESS_OR_EQ          <=
 TOK_LESS                <
 TOK_NEQ                 !=
 /* coverage specification */
-TOK_EDGECOV             EDGECOV
-TOK_PATHCOV             PATHCOV
+TOK_EDGECOV             EDGES
+TOK_PATHCOV             PATHS
 TOK_L_SEQ               -\[
 TOK_R_SEQ               \]>
 /* automaton construction */
