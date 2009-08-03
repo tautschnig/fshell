@@ -162,8 +162,8 @@ void Compute_Test_Goals::initialize() {
 		{
 			// now we know that *next_state has a non-trivial guard; but this
 			// guard may be a conjunction of several guards, pick the last one
-			real_guard = next_state->guard.has_operands() ? 
-				&(next_state->guard.operands().back()) : &(next_state->guard);
+			real_guard = next_state->guard_expr.has_operands() ? 
+				&(next_state->guard_expr.operands().back()) : &(next_state->guard_expr);
 		}
 		// the resulting guard may be trivial
 		if (real_guard->is_true() || real_guard->is_false()) {

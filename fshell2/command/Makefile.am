@@ -27,7 +27,6 @@ CBMC_OBJS = ../../cbmc/src/goto-programs/goto-programs.o \
 						../../cbmc/src/langapi/csp_dummy.o \
 						../../cbmc/src/langapi/cpp_dummy.o \
 						../../cbmc/src/langapi/specc_dummy.o \
-						../../cbmc/src/langapi/php_dummy.o \
 						../../cbmc/src/langapi/intrep_dummy.o \
 						../../cbmc/src/langapi/pvs_dummy.o \
 						../../cbmc/src/langapi/smvlang_dummy.o \
@@ -39,10 +38,9 @@ CBMC_OBJS = ../../cbmc/src/goto-programs/goto-programs.o \
 						../../cbmc/src/langapi/netlist_dummy.o \
 						../../cbmc/src/langapi/pascal_dummy.o \
 						../../cbmc/src/langapi/bplang_dummy.o \
-						../../cbmc/src/langapi/simplifylang_dummy.o \
 						../../cbmc/src/langapi/csharp_dummy.o \
-						../../cbmc/src/langapi/cvclang_dummy.o \
 						../../cbmc/src/langapi/nsf_dummy.o \
+						../../cbmc/src/langapi/php_dummy.o \
 						../../cbmc/src/langapi/mdllang_dummy.o
 
 $(CBMC_OBJS):

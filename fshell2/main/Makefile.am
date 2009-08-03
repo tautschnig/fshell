@@ -40,9 +40,7 @@ CBMC_OBJS = $(top_builddir)/cbmc/src/goto-programs/goto-programs.o \
 						$(top_builddir)/cbmc/src/langapi/netlist_dummy.o \
 						$(top_builddir)/cbmc/src/langapi/pascal_dummy.o \
 						$(top_builddir)/cbmc/src/langapi/bplang_dummy.o \
-						$(top_builddir)/cbmc/src/langapi/simplifylang_dummy.o \
 						$(top_builddir)/cbmc/src/langapi/csharp_dummy.o \
-						$(top_builddir)/cbmc/src/langapi/cvclang_dummy.o \
 						$(top_builddir)/cbmc/src/langapi/nsf_dummy.o \
 						$(top_builddir)/cbmc/src/langapi/mdllang_dummy.o
 
