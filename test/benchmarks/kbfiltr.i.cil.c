@@ -2031,7 +2031,7 @@ NTSTATUS KbFilter_PnP(PDEVICE_OBJECT DeviceObject , PIRP Irp )
                                               {
                                               irpSp = Irp->Tail.Overlay.__annonCompField17.__annonCompField16.CurrentStackLocation;
                                               nextIrpSp = Irp->Tail.Overlay.__annonCompField17.__annonCompField16.CurrentStackLocation - 1;
-                                              memcpy(nextIrpSp, irpSp, (long )(& ((IO_STACK_LOCATION *)0)->CompletionRoutine));
+                                              //memcpy(nextIrpSp, irpSp, (long )(& ((IO_STACK_LOCATION *)0)->CompletionRoutine));
                                               nextIrpSp->Control = 0;
 /*                                               KeInitializeEvent(& event, 0, 0); */ /* INLINED */
                                               }
