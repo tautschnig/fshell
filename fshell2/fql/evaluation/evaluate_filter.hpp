@@ -60,7 +60,7 @@ class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 
 	virtual ~Evaluate_Filter();
 
-	value_t const& evaluate(Filter const& f);
+	value_t const& get(Filter const& f) const;
 
 	inline ::goto_functionst const& get_ts() const;
 

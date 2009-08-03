@@ -149,7 +149,8 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 
 	// prepare filter evaluation
 	::fshell2::fql::Evaluate_Filter eval(*m_cfg);
-	query_ast->accept(&eval); // evaluate all filters before modifying the CFG
+	// evaluate all filters before modifying the CFG
+	query_ast->accept(&eval);
 
 	// do automaton instrumentation
 	// for now, only insert a final assert(0)

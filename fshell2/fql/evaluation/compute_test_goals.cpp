@@ -61,7 +61,7 @@ FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 Compute_Test_Goals::Compute_Test_Goals(::language_uit & manager,
-		::optionst const& opts, Evaluate_Filter & eval) :
+		::optionst const& opts, Evaluate_Filter const& eval) :
 	::bmct(manager.context, manager.ui_message_handler),
 	m_is_initialized(false), m_eval_filter(eval), m_cnf(),
 	m_bv(m_cnf) {
@@ -325,7 +325,7 @@ void Compute_Test_Goals::visit(Edgecov const* n) {
 	n->get_abstraction()->accept(this);
 	
 	// for now, we completely ignore the abstraction!
-	Evaluate_Filter::value_t const& filter_val(m_eval_filter.evaluate(*(n->get_filter())));
+	Evaluate_Filter::value_t const& filter_val(m_eval_filter.get(*(n->get_filter())));
 	::std::cerr << filter_val.size() << " edges must be covered" << ::std::endl;
 	for (Evaluate_Filter::value_t::const_iterator iter(filter_val.begin());
 			iter != filter_val.end(); ++iter) {

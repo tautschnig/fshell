@@ -113,7 +113,8 @@ void test( Test_Data & data )
 	Filter * bb(Primitive_Filter::Factory::get_instance().create<F_BASICBLOCKENTRY>());
 
 	Evaluate_Filter eval(cfg);
-	Evaluate_Filter::value_t const& bb_entries(eval.evaluate(*bb));
+	bb->accept(&eval);
+	Evaluate_Filter::value_t const& bb_entries(eval.get(*bb));
 	TEST_CHECK_RELATION(6, ==, bb_entries.size());
 	
 	::std::set< Predicate *, FQL_Node_Lt_Compare > empty;

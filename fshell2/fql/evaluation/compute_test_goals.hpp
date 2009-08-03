@@ -56,7 +56,7 @@ class Compute_Test_Goals : public ::bmct, public Standard_AST_Visitor_Aspect<AST
 	typedef ::std::set< test_goal_t > value_t;
 	typedef ::std::map< Test_Goal_Set const*, value_t > tgs_value_t;
 	
-	Compute_Test_Goals(::language_uit & manager, ::optionst const& opts, Evaluate_Filter & eval);
+	Compute_Test_Goals(::language_uit & manager, ::optionst const& opts, Evaluate_Filter const& eval);
 
 	virtual ~Compute_Test_Goals();
 
@@ -144,7 +144,7 @@ class Compute_Test_Goals : public ::bmct, public Standard_AST_Visitor_Aspect<AST
 	/*! \} */
 
 	bool m_is_initialized;
-	Evaluate_Filter & m_eval_filter;
+	Evaluate_Filter const& m_eval_filter;
 	::cnf_clause_list_assignmentt m_cnf;
 	::bv_cbmct m_bv;
 

@@ -66,8 +66,7 @@ Evaluate_Filter::Evaluate_Filter(::goto_functionst const& ts) :
 Evaluate_Filter::~Evaluate_Filter() {
 }
 
-Evaluate_Filter::value_t const& Evaluate_Filter::evaluate(Filter const& f) {
-	f.accept(this);
+Evaluate_Filter::value_t const& Evaluate_Filter::get(Filter const& f) const {
 	filter_value_t::const_iterator entry(m_filter_map.find(&f));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 			entry != m_filter_map.end());

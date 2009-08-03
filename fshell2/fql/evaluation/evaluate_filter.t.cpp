@@ -107,15 +107,18 @@ void test( Test_Data & data )
 	Evaluate_Filter eval(cfg);
 	
 	Filter * bb(Primitive_Filter::Factory::get_instance().create<F_BASICBLOCKENTRY>());
-	Evaluate_Filter::value_t const& bb_entries(eval.evaluate(*bb));
+	bb->accept(&eval);
+	Evaluate_Filter::value_t const& bb_entries(eval.get(*bb));
 	TEST_ASSERT_RELATION(4, ==, bb_entries.size()); // main, edge after c::main and edges in c::main 
 	
 	Filter * cc(Primitive_Filter::Factory::get_instance().create<F_CONDITIONEDGE>());
-	Evaluate_Filter::value_t const& cc_entries(eval.evaluate(*cc));
+	cc->accept(&eval);
+	Evaluate_Filter::value_t const& cc_entries(eval.get(*cc));
 	TEST_ASSERT_RELATION(2, ==, cc_entries.size());
 	
 	Filter * ff(Primitive_Filter::Factory::get_instance().create<F_FILE>(tempname_str));
-	Evaluate_Filter::value_t const& ff_entries(eval.evaluate(*ff));
+	ff->accept(&eval);
+	Evaluate_Filter::value_t const& ff_entries(eval.get(*ff));
 	TEST_ASSERT_RELATION(6, ==, ff_entries.size());
 }
 
