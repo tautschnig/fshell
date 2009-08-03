@@ -88,6 +88,7 @@ FShell2::~FShell2() {
 class Query_Cleanup {
 	public:
 		Query_Cleanup(::fshell2::fql::Query * q);
+		void set_object(::fshell2::fql::Query * q);
 		~Query_Cleanup();
 	private:
 		::fshell2::fql::Query * m_q;
@@ -95,6 +96,10 @@ class Query_Cleanup {
 
 Query_Cleanup::Query_Cleanup(::fshell2::fql::Query * q) :
 	m_q(q) {
+}
+		
+void Query_Cleanup::set_object(::fshell2::fql::Query * q) {
+	m_q = q;
 }
 
 Query_Cleanup::~Query_Cleanup() {
@@ -129,6 +134,7 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 	// normalize the input query
 	::fshell2::fql::Normalization_Visitor norm;
 	norm.normalize(&query_ast);
+	cleanup.set_object(query_ast);
 
 	// prepare filter evaluation
 	::fshell2::fql::Evaluate_Filter eval(m_gf);
