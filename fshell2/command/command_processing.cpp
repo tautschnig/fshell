@@ -32,7 +32,6 @@
 
 #include <diagnostics/basic_exceptions/violated_invariance.hpp>
 #include <diagnostics/basic_exceptions/invalid_argument.hpp>
-#include <diagnostics/basic_exceptions/invalid_protocol.hpp>
 
 #include <cbmc/src/util/config.h>
 #include <cbmc/src/langapi/language_ui.h>
@@ -115,16 +114,11 @@ Cleanup::~Cleanup() {
 	}
 }
 
-Command_Processing::Command_Processing() :
-	m_finalized(true), m_opts(0), m_cfg(0) {
+Command_Processing::Command_Processing(::optionst const& opts, ::goto_functionst & gf) :
+	m_opts(opts), m_gf(gf), m_finalized(true) {
 	if (::config.main.empty()) ::config.main = "main";
 }
 
-Command_Processing::Command_Processing & Command_Processing::get_instance() {
-	static Command_Processing instance;
-	return instance;
-}
-	
 ::std::ostream & Command_Processing::help(::std::ostream & os) {
 	os << "Control commands:" << ::std::endl << COMMAND_HELP << ::std::endl;
 	return os;
@@ -275,8 +269,6 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 }
 
 bool Command_Processing::finalize(::language_uit & manager, ::std::ostream & os) {
-	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Protocol, m_opts != 0 && m_cfg != 0);
-	
 	FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,
 			!manager.context.symbols.empty(),
 			"No source files loaded!");
@@ -300,7 +292,7 @@ bool Command_Processing::finalize(::language_uit & manager, ::std::ostream & os)
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 			main_iter != manager.context.symbols.end());
 
-    ::goto_convert_functionst converter(manager.context, *m_opts, *m_cfg,
+    ::goto_convert_functionst converter(manager.context, m_opts, m_gf,
 			manager.ui_message_handler);
     converter.convert_function(main_iter->first);
 

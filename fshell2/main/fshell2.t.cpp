@@ -65,10 +65,9 @@ void test_single( Test_Data & data )
 	::goto_functionst cfg;
 	::std::ostringstream os;
 
-	::fshell2::FShell2::get_instance().set_options(options);
-	::fshell2::FShell2::get_instance().set_cfg(cfg);
+	::fshell2::FShell2 fshell(options, cfg);
 	
-	TEST_ASSERT(::fshell2::FShell2::get_instance().process_line(l, os, "QUIT"));
+	TEST_ASSERT(fshell.process_line(l, os, "QUIT"));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -85,8 +84,7 @@ void test_interactive( Test_Data & data )
 	::goto_functionst cfg;
 	::std::ostringstream os;
 
-	::fshell2::FShell2::get_instance().set_options(options);
-	::fshell2::FShell2::get_instance().set_cfg(cfg);
+	::fshell2::FShell2 fshell(options, cfg);
 	
 	char * tempname(::strdup("/tmp/queryXXXXXX"));
 	TEST_CHECK(-1 != ::mkstemp(tempname));
@@ -103,7 +101,7 @@ void test_interactive( Test_Data & data )
 	// change the readline input to the file
 	rl_instream = in;
 
-	::fshell2::FShell2::get_instance().interactive(l, os);
+	fshell.interactive(l, os);
 
 	// print and check the output
 	TEST_TRACE(os.str());

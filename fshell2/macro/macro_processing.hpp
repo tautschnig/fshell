@@ -46,7 +46,8 @@ class Macro_Processing
 	typedef Macro_Processing Self;
 
 	public:
-	static Macro_Processing & get_instance();
+	Macro_Processing();
+	
 	~Macro_Processing();
 
 	::std::string expand(char const * cmd);
@@ -59,8 +60,6 @@ class Macro_Processing
 	char * m_checkfilename;
 	int m_file_index;
 	char ** m_cpp_argv;
-	
-	Macro_Processing();
 
 	int preprocess(char * filename, ::std::ostream & out) const;
 
@@ -71,9 +70,6 @@ class Macro_Processing
 	/*! \copydoc assignment_op
 	 */
 	Self& operator=( Self const& rhs );
-
-	char * m_tmpfilename;
-	::std::string m_defines;
 };
 
 FSHELL2_MACRO_NAMESPACE_END;

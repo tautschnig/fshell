@@ -72,7 +72,7 @@ class Command_Processing
 		DONE
 	} status_t;
 
-	static Command_Processing & get_instance();
+	Command_Processing(::optionst const& opts, ::goto_functionst & gf);
 
 	status_t process(::language_uit & manager, ::std::ostream & os, char const * cmd);
 
@@ -80,19 +80,11 @@ class Command_Processing
 
 	bool finalize(::language_uit & manager, ::std::ostream & os);
 	
-	inline void set_options(::optionst const& opts);
-
-	inline void set_cfg(::goto_functionst & cfg);
-
 	private:
+	::optionst const& m_opts;
+	::goto_functionst & m_gf;
 	::std::map< ::std::string, time_t > m_parse_time;
 	bool m_finalized;
-	// this is really painful, we should get rid of this singleton stuff and do
-	// proper construction
-	::optionst const * m_opts;
-	::goto_functionst * m_cfg;
-
-	Command_Processing();
 	
 	::std::ostream & print_file_contents(::std::ostream & os, char const * name) const;
 
@@ -107,14 +99,6 @@ class Command_Processing
 	 */
 	Self& operator=( Self const& rhs );
 };
-	
-inline void Command_Processing::set_options(::optionst const& opts) {
-	m_opts = &opts;
-}
-
-inline void Command_Processing::set_cfg(::goto_functionst & cfg) {
-	m_cfg = &cfg;
-}
 	
 ::std::ostream & operator<<(::std::ostream & os, Command_Processing::status_t const& s);
 

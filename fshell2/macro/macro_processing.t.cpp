@@ -53,15 +53,15 @@ using namespace ::diagnostics::unittest;
  */
 void test_basic( Test_Data & data )
 {
-	using ::fshell2::macro::Macro_Processing;
+	::fshell2::macro::Macro_Processing macro;
 
-	TEST_ASSERT(Macro_Processing::get_instance().expand("bla") == "bla");
-	TEST_ASSERT(Macro_Processing::get_instance().expand("#define alpha beta") == "");
+	TEST_ASSERT(macro.expand("bla") == "bla");
+	TEST_ASSERT(macro.expand("#define alpha beta") == "");
 
-	TEST_ASSERT(Macro_Processing::get_instance().expand("bla") == "bla");
+	TEST_ASSERT(macro.expand("bla") == "bla");
 
-	TEST_ASSERT_RELATION(Macro_Processing::get_instance().expand("bla bla // comment"), ==, "bla bla");
-	TEST_ASSERT_RELATION(Macro_Processing::get_instance().expand(" // comment"), ==, "");
+	TEST_ASSERT_RELATION(macro.expand("bla bla // comment"), ==, "bla bla");
+	TEST_ASSERT_RELATION(macro.expand(" // comment"), ==, "");
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -71,7 +71,7 @@ void test_basic( Test_Data & data )
  */
 void test_help( Test_Data & data )
 {
-	using ::fshell2::macro::Macro_Processing;
+	::fshell2::macro::Macro_Processing macro;
 
 	::std::ostringstream os;
 	Macro_Processing::help(os);
@@ -85,13 +85,13 @@ void test_help( Test_Data & data )
  */
 void test_syntax_errors( Test_Data & data )
 {
-	using ::fshell2::macro::Macro_Processing;
+	::fshell2::macro::Macro_Processing macro;
 
 	TEST_THROWING_BLOCK_ENTER;
-	Macro_Processing::get_instance().expand("#define 123");
+	macro.expand("#define 123");
 	TEST_THROWING_BLOCK_EXIT(::fshell2::Macro_Processing_Error);
 	
-	TEST_ASSERT(Macro_Processing::get_instance().expand("  #include \"blabla\"") == "#include \"blabla\"");
+	TEST_ASSERT(macro.expand("  #include \"blabla\"") == "#include \"blabla\"");
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -101,14 +101,14 @@ void test_syntax_errors( Test_Data & data )
  */
 void test_use_case_simple( Test_Data & data )
 {
-	using ::fshell2::macro::Macro_Processing;
+	::fshell2::macro::Macro_Processing macro;
 
-	TEST_ASSERT(Macro_Processing::get_instance().expand("#define alpha beta") == "");
-	TEST_ASSERT_RELATION(Macro_Processing::get_instance().expand("alpha"), ==, "beta");
+	TEST_ASSERT(macro.expand("#define alpha beta") == "");
+	TEST_ASSERT_RELATION(macro.expand("alpha"), ==, "beta");
 	
-	TEST_ASSERT(Macro_Processing::get_instance().expand("#define alpha beta") == "");
+	TEST_ASSERT(macro.expand("#define alpha beta") == "");
 	TEST_THROWING_BLOCK_ENTER;
-	Macro_Processing::get_instance().expand("#define alpha gamma");
+	macro.expand("#define alpha gamma");
 	TEST_THROWING_BLOCK_EXIT(::fshell2::Macro_Processing_Error);
 }
 
@@ -119,17 +119,17 @@ void test_use_case_simple( Test_Data & data )
  */
 void test_use_case_complex( Test_Data & data )
 {
-	using ::fshell2::macro::Macro_Processing;
+	::fshell2::macro::Macro_Processing macro;
 
-	TEST_ASSERT(Macro_Processing::get_instance().expand("#define alpha beta") == "");
-	TEST_ASSERT_RELATION(Macro_Processing::get_instance().expand("alpha"), ==, "beta");
+	TEST_ASSERT(macro.expand("#define alpha beta") == "");
+	TEST_ASSERT_RELATION(macro.expand("alpha"), ==, "beta");
 	
-	TEST_ASSERT(Macro_Processing::get_instance().expand("#define gamma alpha") == "");
-	TEST_ASSERT_RELATION(Macro_Processing::get_instance().expand("gamma"), ==, "beta");
+	TEST_ASSERT(macro.expand("#define gamma alpha") == "");
+	TEST_ASSERT_RELATION(macro.expand("gamma"), ==, "beta");
 	
-	TEST_ASSERT(Macro_Processing::get_instance().expand("#define e(c, f) edgecov(c, f)") == "");
-	TEST_ASSERT(Macro_Processing::get_instance().expand("#define s(A, B) setminus(A, B)") == "");
-	TEST_ASSERT_RELATION(Macro_Processing::get_instance().expand("e(cfg, s(@line(1), @line(1)))"), ==,
+	TEST_ASSERT(macro.expand("#define e(c, f) edgecov(c, f)") == "");
+	TEST_ASSERT(macro.expand("#define s(A, B) setminus(A, B)") == "");
+	TEST_ASSERT_RELATION(macro.expand("e(cfg, s(@line(1), @line(1)))"), ==,
 			"edgecov(cfg, setminus(@line(1), @line(1)))");
 }
 

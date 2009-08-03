@@ -33,6 +33,9 @@
 
 #include <iostream>
 
+#include <fshell2/command/command_processing.hpp>
+#include <fshell2/macro/macro_processing.hpp>
+
 #include <cbmc/src/goto-programs/goto_functions.h>
 
 class language_uit;
@@ -49,25 +52,19 @@ class FShell2
 	typedef FShell2 Self;
 
 	public:
-	static FShell2 & get_instance();
+	FShell2(::optionst const& opts, ::goto_functionst & gf);
 
 	bool process_line(::language_uit & manager, ::std::ostream & os, char const * line);
 
 	void interactive(::language_uit & manager, ::std::ostream & os);
 
-	void set_options(::optionst const& opts);
-
-	void set_cfg(::goto_functionst & cfg);
-
 	~FShell2();
 
 	private:
-	FShell2();
-
-	// this is really painful, we should get rid of this singleton stuff and do
-	// proper construction
-	::optionst const * m_opts;
-	::goto_functionst * m_cfg;
+	::optionst const& m_opts;
+	::goto_functionst & m_gf;
+	::fshell2::command::Command_Processing m_cmd;
+	::fshell2::macro::Macro_Processing m_macro;
 	bool m_first_run;
 
 	void try_query(::language_uit & manager, ::std::ostream & os, char const * line);

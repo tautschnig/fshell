@@ -61,14 +61,18 @@ void test_basic( Test_Data & data )
 	::cmdlinet cmdline;
 	::config.set(cmdline);
 	::language_uit l(cmdline);
+	::optionst options;
+	::goto_functionst cfg;
 	::std::ostringstream os;
 
 	using ::fshell2::command::Command_Processing;
 
-	TEST_ASSERT(Command_Processing::NO_CONTROL_COMMAND == Command_Processing::get_instance().process(l, os, "quit HELP"));
-	TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, "   // comment"));
+	Command_Processing cmd(options, cfg);
+
+	TEST_ASSERT(Command_Processing::NO_CONTROL_COMMAND == cmd.process(l, os, "quit HELP"));
+	TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, "   // comment"));
 	
-	TEST_ASSERT(Command_Processing::QUIT == Command_Processing::get_instance().process(l, os, "quit"));
+	TEST_ASSERT(Command_Processing::QUIT == cmd.process(l, os, "quit"));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -81,12 +85,16 @@ void test_help( Test_Data & data )
 	::cmdlinet cmdline;
 	::config.set(cmdline);
 	::language_uit l(cmdline);
+	::optionst options;
+	::goto_functionst cfg;
 	::std::ostringstream os;
 
 	using ::fshell2::command::Command_Processing;
+
+	Command_Processing cmd(options, cfg);
 	
-	TEST_ASSERT(Command_Processing::HELP == Command_Processing::get_instance().process(l, os, "help"));
-	TEST_ASSERT(Command_Processing::HELP == Command_Processing::get_instance().process(l, os, "  HELP  "));
+	TEST_ASSERT(Command_Processing::HELP == cmd.process(l, os, "help"));
+	TEST_ASSERT(Command_Processing::HELP == cmd.process(l, os, "  HELP  "));
 	Command_Processing::help(os);
 	TEST_ASSERT(data.compare("command_help", os.str()));
 }
@@ -106,15 +114,15 @@ void test_invalid( Test_Data & data )
 	::std::ostringstream os;
 
 	using ::fshell2::command::Command_Processing;
-	Command_Processing::get_instance().set_options(options);
-	Command_Processing::get_instance().set_cfg(cfg);
+
+	Command_Processing cmd(options, cfg);
 
 	TEST_THROWING_BLOCK_ENTER;
-	Command_Processing::get_instance().process(l, os, "add sourcecode \"no_such_file.c\"");
+	cmd.process(l, os, "add sourcecode \"no_such_file.c\"");
 	TEST_THROWING_BLOCK_EXIT1(::fshell2::Command_Processing_Error, "Failed to parse no_such_file.c");
 	
 	TEST_THROWING_BLOCK_ENTER;
-	Command_Processing::get_instance().finalize(l, os);
+	cmd.finalize(l, os);
 	TEST_THROWING_BLOCK_EXIT1(::fshell2::Command_Processing_Error, "No source files loaded!");
 }
 
@@ -133,8 +141,8 @@ void test_use_case( Test_Data & data )
 	::std::ostringstream os;
 
 	using ::fshell2::command::Command_Processing;
-	Command_Processing::get_instance().set_options(options);
-	Command_Processing::get_instance().set_cfg(cfg);
+
+	Command_Processing cmd(options, cfg);
 
 	char * tempname(::strdup("/tmp/srcXXXXXX"));
 	TEST_CHECK(-1 != ::mkstemp(tempname));
@@ -153,25 +161,25 @@ void test_use_case( Test_Data & data )
 	::std::ostringstream cmd_str;
 	cmd_str << "add sourcecode \"" << tempname_str << "\"";
 
-	TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, cmd_str.str().c_str()));
+	TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, cmd_str.str().c_str()));
 	
-	TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, "show filenames"));
+	TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, "show filenames"));
 	TEST_ASSERT(!os.str().empty());
 	
 	os.str("");
-	TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, "show sourcecode all"));
+	TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, "show sourcecode all"));
 	TEST_ASSERT(data.compare("tmp_source_show_all", os.str()));
 	
 	cmd_str.str("");
 	cmd_str << "show sourcecode \"" << tempname_str << "\"";
 	os.str("");
-	TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, cmd_str.str().c_str()));
+	TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, cmd_str.str().c_str()));
 	TEST_ASSERT(data.compare("tmp_source_show", os.str()));
 	
-	TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, "set entry main"));
+	TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, "set entry main"));
 	TEST_ASSERT(::config.main == "main");
 
-	TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, "set limit count 27"));
+	TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, "set limit count 27"));
 	TEST_ASSERT(27 == ::config.fshell.max_test_cases);
 
 	::unlink(tempname_str.c_str());
@@ -192,8 +200,8 @@ void test_use_case_extended_invariants( Test_Data & data )
 	::std::ostringstream os;
 
 	using ::fshell2::command::Command_Processing;
-	Command_Processing::get_instance().set_options(options);
-	Command_Processing::get_instance().set_cfg(cfg);
+
+	Command_Processing cmd(options, cfg);
 
 	{
 		char * tempname(::strdup("/tmp/srcXXXXXX"));
@@ -213,17 +221,17 @@ void test_use_case_extended_invariants( Test_Data & data )
 
 		::std::ostringstream cmd_str;
 		cmd_str << "add sourcecode \"" << tempname_str << "\"";
-		TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, cmd_str.str().c_str()));
+		TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, cmd_str.str().c_str()));
 		::unlink(tempname_str.c_str());
 	}
 	
-	TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, "set entry main"));
+	TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, "set entry main"));
 	TEST_ASSERT(::config.main == "main");
 	// do it once again
-	TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, "set entry main"));
+	TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, "set entry main"));
 
 	TEST_ASSERT(0 == ::config.fshell.max_test_cases);
-	TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, "set limit count 27"));
+	TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, "set limit count 27"));
 	TEST_ASSERT(27 == ::config.fshell.max_test_cases);
 
 	TEST_CHECK(cfg.function_map.end() != cfg.function_map.find("c::foo"));
@@ -246,15 +254,15 @@ void test_use_case_extended_invariants( Test_Data & data )
 
 		::std::ostringstream cmd_str;
 		cmd_str << "add sourcecode \"" << tempname_str << "\"";
-		TEST_ASSERT(Command_Processing::DONE == Command_Processing::get_instance().process(l, os, cmd_str.str().c_str()));
+		TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, cmd_str.str().c_str()));
 		::unlink(tempname_str.c_str());
 	}
 
-	TEST_ASSERT(Command_Processing::get_instance().finalize(l, os));
+	TEST_ASSERT(cmd.finalize(l, os));
 	TEST_CHECK(cfg.function_map.end() != cfg.function_map.find("c::foo"));
 	TEST_CHECK(cfg.function_map.find("c::foo")->second.body_available);
 	// should be a no-op
-	TEST_ASSERT(!Command_Processing::get_instance().finalize(l, os));
+	TEST_ASSERT(!cmd.finalize(l, os));
 }
 
 /** @cond */

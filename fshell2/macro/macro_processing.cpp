@@ -121,11 +121,6 @@ Macro_Processing::~Macro_Processing() {
 	delete[] m_cpp_argv;
 }
 
-Macro_Processing & Macro_Processing::get_instance() {
-	static Macro_Processing instance;
-	return instance;
-}
-	
 ::std::ostream & Macro_Processing::help(::std::ostream & os) {
 	os << "Macro definitions:" << ::std::endl;
 	os << "<Macro> ::= `#define' <Macro Decl> <Some Def or Empty>" << ::std::endl;

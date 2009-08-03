@@ -29,12 +29,9 @@
 #include <fshell2/main/fshell2.hpp>
 #include <fshell2/config/annotations.hpp>
 
-#include <diagnostics/basic_exceptions/invalid_protocol.hpp>
 #include <diagnostics/basic_exceptions/violated_invariance.hpp>
 
-#include <fshell2/command/command_processing.hpp>
 #include <fshell2/exception/command_processing_error.hpp>
-#include <fshell2/macro/macro_processing.hpp>
 #include <fshell2/exception/macro_processing_error.hpp>
 #include <fshell2/fql/parser/query_processing.hpp>
 #include <fshell2/exception/query_processing_error.hpp>
@@ -75,13 +72,8 @@ class Abstraction;
 
 FSHELL2_FQL_NAMESPACE_END;
 
-FShell2 & FShell2::get_instance() {
-	static FShell2 instance;
-	return instance;
-}
-
-FShell2::FShell2() :
-	m_opts(0), m_cfg(0), m_first_run(true) {
+FShell2::FShell2(::optionst const& opts, ::goto_functionst & gf) :
+	m_opts(opts), m_gf(gf), m_cmd(opts, gf), m_first_run(true) {
 	// try to read history from file, ignore errors
 	::read_history(".fshell2_history"); errno = 0;
 }
@@ -91,16 +83,6 @@ FShell2::~FShell2() {
 	::write_history(".fshell2_history"); 
 	// not yet available on OS X, thus left out for now
 	// ::history_truncate_lines(".fshell2_history", 200);
-}
-
-void FShell2::set_options(::optionst const& opts) {
-	m_opts = &opts;
-	::fshell2::command::Command_Processing::get_instance().set_options(opts);
-}
-
-void FShell2::set_cfg(::goto_functionst & cfg) {
-	m_cfg = &cfg;
-	::fshell2::command::Command_Processing::get_instance().set_cfg(cfg);
 }
 
 class Query_Cleanup {
@@ -121,7 +103,7 @@ Query_Cleanup::~Query_Cleanup() {
 }
 
 void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char const * line) {
-	::std::string query(::fshell2::macro::Macro_Processing::get_instance().expand(line));
+	::std::string query(m_macro.expand(line));
 	if (query.empty()) return;
 
 	// there is some query string left, try to parse it
@@ -131,17 +113,16 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 	Query_Cleanup cleanup(query_ast);
 	
 	// parse succeeded, make sure the CFG is prepared
-	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Protocol, 0 != m_cfg);
-	bool mod(::fshell2::command::Command_Processing::get_instance().finalize(manager, os));
+	bool mod(m_cmd.finalize(manager, os));
 
 	if (mod || m_first_run) {
 		// code may have changed, check for failing assertions
 		// we could also disable (using CBMC cmdline) assertions, but that must
 		// include unwinding assertions et al.
 		::bmct bmc(manager.context, manager.ui_message_handler);
-		bmc.options = *m_opts;
+		bmc.options = m_opts;
 		bmc.set_verbosity(manager.get_verbosity());
-		FSHELL2_PROD_CHECK1(::fshell2::FShell2_Error, !bmc.run(*m_cfg),
+		FSHELL2_PROD_CHECK1(::fshell2::FShell2_Error, !bmc.run(m_gf),
 				"Program has failing assertions, cannot proceed.");
 	}
 
@@ -150,7 +131,7 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 	norm.normalize(&query_ast);
 
 	// prepare filter evaluation
-	::fshell2::fql::Evaluate_Filter eval(*m_cfg);
+	::fshell2::fql::Evaluate_Filter eval(m_gf);
 	// evaluate all filters before modifying the CFG
 	query_ast->accept(&eval);
 
@@ -164,7 +145,7 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 		zero.set("value", "false");
 		as->guard = zero;
 
-		::fshell2::instrumentation::GOTO_Transformation inserter(*m_cfg);
+		::fshell2::instrumentation::GOTO_Transformation inserter(m_gf);
 		inserter.insert("main", ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::END_FUNCTION, tmp);
 
 		m_first_run = false;
@@ -188,11 +169,11 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 
 	if (manager.get_verbosity() > 9) {
 		::namespacet const ns(manager.context);
-		m_cfg->output(ns, os);
+		m_gf.output(ns, os);
 	}
 	
 	// compute test goals
-	::fshell2::fql::Compute_Test_Goals goals(manager, *m_opts, eval);
+	::fshell2::fql::Compute_Test_Goals goals(manager, m_opts, eval);
 
 	// do the enumeration
 	::fshell2::Constraint_Strengthening cs(goals);
@@ -211,7 +192,7 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 bool FShell2::process_line(::language_uit & manager, ::std::ostream & os, char const * line) {
 	using ::fshell2::command::Command_Processing;
 
-	switch (Command_Processing::get_instance().process(manager, os, line)) {
+	switch (m_cmd.process(manager, os, line)) {
 		case Command_Processing::QUIT:
 			return true;
 		case Command_Processing::HELP:
