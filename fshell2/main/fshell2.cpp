@@ -79,7 +79,7 @@ FShell2 & FShell2::get_instance() {
 }
 
 FShell2::FShell2() :
-	m_opts(0), m_cfg(0) {
+	m_opts(0), m_cfg(0), m_first_run(true) {
 	// try to read history from file, ignore errors
 	::read_history(".fshell2_history"); errno = 0;
 }
@@ -130,14 +130,18 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 	
 	// parse succeeded, make sure the CFG is prepared
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Protocol, 0 != m_cfg);
-	::fshell2::command::Command_Processing::get_instance().finalize(manager, os);
+	bool mod(::fshell2::command::Command_Processing::get_instance().finalize(manager, os));
 
-	// check for failing assertions
-	::bmct bmc(manager.context, manager.ui_message_handler);
-	bmc.options = *m_opts;
-	bmc.set_verbosity(manager.get_verbosity());
-	FSHELL2_PROD_CHECK1(::fshell2::FShell2_Error, !bmc.run(*m_cfg),
-			"Program has failing assertions, cannot proceed.");
+	if (mod || m_first_run) {
+		// code may have changed, check for failing assertions
+		// we could also disable (using CBMC cmdline) assertions, but that must
+		// include unwinding assertions et al.
+		::bmct bmc(manager.context, manager.ui_message_handler);
+		bmc.options = *m_opts;
+		bmc.set_verbosity(manager.get_verbosity());
+		FSHELL2_PROD_CHECK1(::fshell2::FShell2_Error, !bmc.run(*m_cfg),
+				"Program has failing assertions, cannot proceed.");
+	}
 
 	// normalize the input query
 	::fshell2::fql::Normalization_Visitor norm;
@@ -149,15 +153,20 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 
 	// do automaton instrumentation
 	// for now, only insert a final assert(0)
-	::goto_programt tmp;
-	::goto_programt::targett as(tmp.add_instruction(ASSERT));
-	as->code = ::code_assertt();
-	::exprt zero(::exprt("constant", ::typet("bool")));
-	zero.set("value", "false");
-	as->guard = zero;
+	if (mod || m_first_run) {
+		::goto_programt tmp;
+		::goto_programt::targett as(tmp.add_instruction(ASSERT));
+		as->code = ::code_assertt();
+		::exprt zero(::exprt("constant", ::typet("bool")));
+		zero.set("value", "false");
+		as->guard = zero;
 
-	::fshell2::instrumentation::GOTO_Transformation inserter(*m_cfg);
-	inserter.insert("main", ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::END_FUNCTION, tmp);
+		::fshell2::instrumentation::GOTO_Transformation inserter(*m_cfg);
+		inserter.insert("main", ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::END_FUNCTION, tmp);
+
+		m_first_run = false;
+	}
+
 	/*
 	// do automaton instrumentation
 	::fshell2::instrumentation::Automaton_Inserter aut(prg_cfg, *query_ast);

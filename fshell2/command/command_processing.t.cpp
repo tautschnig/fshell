@@ -250,11 +250,11 @@ void test_use_case_extended_invariants( Test_Data & data )
 		::unlink(tempname_str.c_str());
 	}
 
-	Command_Processing::get_instance().finalize(l, os);
+	TEST_ASSERT(Command_Processing::get_instance().finalize(l, os));
 	TEST_CHECK(cfg.function_map.end() != cfg.function_map.find("c::foo"));
 	TEST_CHECK(cfg.function_map.find("c::foo")->second.body_available);
 	// should be a no-op
-	Command_Processing::get_instance().finalize(l, os);
+	TEST_ASSERT(!Command_Processing::get_instance().finalize(l, os));
 }
 
 /** @cond */

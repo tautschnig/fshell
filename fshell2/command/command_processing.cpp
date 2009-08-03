@@ -274,7 +274,7 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 	return NO_CONTROL_COMMAND;
 }
 
-void Command_Processing::finalize(::language_uit & manager, ::std::ostream & os) {
+bool Command_Processing::finalize(::language_uit & manager, ::std::ostream & os) {
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Protocol, m_opts != 0 && m_cfg != 0);
 	
 	FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,
@@ -285,9 +285,10 @@ void Command_Processing::finalize(::language_uit & manager, ::std::ostream & os)
 	entry += ::config.main;
 	FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,
 			manager.context.has_symbol(entry),
-			::diagnostics::internal::to_string("Could not find entry function ", ::config.main));
+			::diagnostics::internal::to_string("Could not find entry function ",
+				::config.main));
 	
-	if (m_finalized) return;
+	if (m_finalized) return false;
 	
 	FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,
 			!manager.language_files.filemap.empty(),
@@ -296,9 +297,11 @@ void Command_Processing::finalize(::language_uit & manager, ::std::ostream & os)
 	// this must never fail, given all the previous sanity checks
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_finalized);
     ::symbolst::iterator main_iter(manager.context.symbols.find("main"));
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, main_iter != manager.context.symbols.end());
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+			main_iter != manager.context.symbols.end());
 
-    ::goto_convert_functionst converter(manager.context, *m_opts, *m_cfg, manager.ui_message_handler);
+    ::goto_convert_functionst converter(manager.context, *m_opts, *m_cfg,
+			manager.ui_message_handler);
     converter.convert_function(main_iter->first);
 
     // more functions may have been added
@@ -306,6 +309,8 @@ void Command_Processing::finalize(::language_uit & manager, ::std::ostream & os)
 			iter != manager.context.symbols.end(); ++iter)
 	  if(iter->second.type.id() == "code" && iter->second.value.id() != "compiled")
 		  converter.convert_function(iter->first);
+
+	return true;
 }
 
 FSHELL2_COMMAND_NAMESPACE_END;

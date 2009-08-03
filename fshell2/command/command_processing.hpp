@@ -78,7 +78,7 @@ class Command_Processing
 
 	static ::std::ostream & help(::std::ostream & os);
 
-	void finalize(::language_uit & manager, ::std::ostream & os);
+	bool finalize(::language_uit & manager, ::std::ostream & os);
 	
 	inline void set_options(::optionst const& opts);
 

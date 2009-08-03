@@ -68,6 +68,7 @@ class FShell2
 	// proper construction
 	::optionst const * m_opts;
 	::goto_functionst * m_cfg;
+	bool m_first_run;
 
 	void try_query(::language_uit & manager, ::std::ostream & os, char const * line);
 
