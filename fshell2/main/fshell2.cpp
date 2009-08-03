@@ -45,6 +45,8 @@
 #include <fshell2/fql/ast/query.hpp>
 #include <fshell2/exception/fshell2_error.hpp>
 #include <fshell2/tc_generation/constraint_strengthening.hpp>
+#include <fshell2/tc_generation/test_suite_minimization.hpp>
+#include <fshell2/tc_generation/test_suite_output.hpp>
 
 #include <memory>
 #include <cstdlib>
@@ -193,8 +195,17 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 	::fshell2::fql::Compute_Test_Goals goals(manager, *m_opts, eval);
 
 	// do the enumeration
-	::fshell2::Constraint_Strengthening cs(goals, os);
-	cs.generate(*query_ast);
+	::fshell2::Constraint_Strengthening cs(goals);
+	::fshell2::Constraint_Strengthening::test_cases_t test_suite;
+	cs.generate(*query_ast, test_suite);
+
+	// post-minimization
+	::fshell2::Test_Suite_Minimization ts_min;
+	ts_min.minimize(test_suite);
+
+	// output
+	::fshell2::Test_Suite_Output out(goals);
+	out.print_ts(test_suite, os);
 }
 
 bool FShell2::process_line(::language_uit & manager, ::std::ostream & os, char const * line) {

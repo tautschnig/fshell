@@ -18,59 +18,50 @@
  * limitations under the License.
  *******************************************************************************/
 
-#ifndef FSHELL2__TC_GENERATION__CONSTRAINT_STRENGTHENING_HPP
-#define FSHELL2__TC_GENERATION__CONSTRAINT_STRENGTHENING_HPP
-
-/*! \file fshell2/tc_generation/constraint_strengthening.hpp
+/*! \file fshell2/tc_generation/test_suite_output.t.cpp
  * \brief TODO
  *
  * $Id$
  * \author Michael Tautschnig <tautschnig@forsyte.de>
- * \date   Sun May  3 21:42:20 CEST 2009 
+ * \date   Sat Aug  1 00:42:13 CEST 2009 
 */
 
+
+#include <diagnostics/unittest.hpp>
 #include <fshell2/config/config.hpp>
+#include <fshell2/config/annotations.hpp>
 
-#include <list>
+#include <fshell2/tc_generation/test_suite_output.hpp>
 
-class cnf_clause_list_assignmentt;
+#define TEST_COMPONENT_NAME Test_Suite_Output
+#define TEST_COMPONENT_NAMESPACE fshell2
 
 FSHELL2_NAMESPACE_BEGIN;
 
-FSHELL2_FQL_NAMESPACE_BEGIN;
+/** @cond */
+TEST_NAMESPACE_BEGIN;
+TEST_COMPONENT_TEST_NAMESPACE_BEGIN;
+/** @endcond */
+using namespace ::diagnostics::unittest;
 
-class Query;
-class Compute_Test_Goals;
-
-FSHELL2_FQL_NAMESPACE_END;
-
-/*! \brief TODO
-*/
-class Constraint_Strengthening
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * @test A test of Test_Suite_Output
+ *
+ */
+void test( Test_Data & data )
 {
-	/*! \copydoc doc_self
-	*/
-	typedef Constraint_Strengthening Self;
+}
 
-	public:
-	typedef ::std::list< ::cnf_clause_list_assignmentt > test_cases_t;
-	
-	Constraint_Strengthening(::fshell2::fql::Compute_Test_Goals & goals);
-
-	void generate(::fshell2::fql::Query const& query, test_cases_t & tcs);
-
-	private:
-	::fshell2::fql::Compute_Test_Goals & m_goals;
-
-	/*! \copydoc copy_constructor
-	*/
-	Constraint_Strengthening( Self const& rhs );
-
-	/*! \copydoc assignment_op
-	 */
-	Self& operator=( Self const& rhs );
-};
+/** @cond */
+TEST_COMPONENT_TEST_NAMESPACE_END;
+TEST_NAMESPACE_END;
+/** @endcond */
 
 FSHELL2_NAMESPACE_END;
 
-#endif /* FSHELL2__TC_GENERATION__CONSTRAINT_STRENGTHENING_HPP */
+TEST_SUITE_BEGIN;
+TEST_NORMAL_CASE( &test, LEVEL_PROD );
+TEST_SUITE_END;
+
+STREAM_TEST_SYSTEM_MAIN;

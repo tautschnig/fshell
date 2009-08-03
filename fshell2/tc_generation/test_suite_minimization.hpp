@@ -18,53 +18,40 @@
  * limitations under the License.
  *******************************************************************************/
 
-#ifndef FSHELL2__TC_GENERATION__CONSTRAINT_STRENGTHENING_HPP
-#define FSHELL2__TC_GENERATION__CONSTRAINT_STRENGTHENING_HPP
+#ifndef FSHELL2__TC_GENERATION__TEST_SUITE_MINIMIZATION_HPP
+#define FSHELL2__TC_GENERATION__TEST_SUITE_MINIMIZATION_HPP
 
-/*! \file fshell2/tc_generation/constraint_strengthening.hpp
+/*! \file fshell2/tc_generation/test_suite_minimization.hpp
  * \brief TODO
  *
  * $Id$
  * \author Michael Tautschnig <tautschnig@forsyte.de>
- * \date   Sun May  3 21:42:20 CEST 2009 
+ * \date   Fri Jul 31 23:18:36 CEST 2009 
 */
 
 #include <fshell2/config/config.hpp>
 
-#include <list>
-
-class cnf_clause_list_assignmentt;
+#include <fshell2/tc_generation/constraint_strengthening.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 
-FSHELL2_FQL_NAMESPACE_BEGIN;
-
-class Query;
-class Compute_Test_Goals;
-
-FSHELL2_FQL_NAMESPACE_END;
-
 /*! \brief TODO
 */
-class Constraint_Strengthening
+class Test_Suite_Minimization
 {
 	/*! \copydoc doc_self
 	*/
-	typedef Constraint_Strengthening Self;
+	typedef Test_Suite_Minimization Self;
 
 	public:
-	typedef ::std::list< ::cnf_clause_list_assignmentt > test_cases_t;
-	
-	Constraint_Strengthening(::fshell2::fql::Compute_Test_Goals & goals);
+	Test_Suite_Minimization();
 
-	void generate(::fshell2::fql::Query const& query, test_cases_t & tcs);
+	void minimize(Constraint_Strengthening::test_cases_t & test_suite) const;
 
 	private:
-	::fshell2::fql::Compute_Test_Goals & m_goals;
-
 	/*! \copydoc copy_constructor
 	*/
-	Constraint_Strengthening( Self const& rhs );
+	Test_Suite_Minimization( Self const& rhs );
 
 	/*! \copydoc assignment_op
 	 */
@@ -73,4 +60,4 @@ class Constraint_Strengthening
 
 FSHELL2_NAMESPACE_END;
 
-#endif /* FSHELL2__TC_GENERATION__CONSTRAINT_STRENGTHENING_HPP */
+#endif /* FSHELL2__TC_GENERATION__TEST_SUITE_MINIMIZATION_HPP */
