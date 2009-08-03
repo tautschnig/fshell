@@ -18,39 +18,46 @@
  * limitations under the License.
  *******************************************************************************/
 
-/*! \file fshell2/fql/ast/restriction_automaton.cpp
+/*! \file fshell2/fql/ast/pm_filter_adapter.cpp
  * \brief TODO
  *
  * $Id$
  * \author Michael Tautschnig <tautschnig@forsyte.de>
- * \date   Tue Apr 21 23:48:55 CEST 2009 
+ * \date   Sun Aug  2 19:02:04 CEST 2009 
 */
 
-#include <fshell2/fql/ast/restriction_automaton.hpp>
+#include <fshell2/fql/ast/pm_filter_adapter.hpp>
+#include <fshell2/config/annotations.hpp>
+
+#include <diagnostics/basic_exceptions/invalid_argument.hpp>
 
 #include <fshell2/fql/ast/ast_visitor.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Restriction_Automaton::Restriction_Automaton() {
+PM_Filter_Adapter::PM_Filter_Adapter(Filter * f) :
+	m_filter(f) {
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_filter);
 }
 
-void Restriction_Automaton::accept(AST_Visitor * v) const {
+void PM_Filter_Adapter::accept(AST_Visitor * v) const {
 	v->visit(this);
 }
 
-void Restriction_Automaton::accept(AST_Visitor const * v) const {
+void PM_Filter_Adapter::accept(AST_Visitor const * v) const {
 	v->visit(this);
 }
 
-bool Restriction_Automaton::destroy() {
+bool PM_Filter_Adapter::destroy() {
 	if (this->m_ref_count) return false;
 	Factory::get_instance().destroy(this);
+	m_filter->decr_ref_count();
+	m_filter->destroy();
 	return true;
 }
 
-Restriction_Automaton::~Restriction_Automaton() {
+PM_Filter_Adapter::~PM_Filter_Adapter() {
 }
 
 FSHELL2_FQL_NAMESPACE_END;

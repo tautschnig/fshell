@@ -39,26 +39,6 @@ Filter::Filter() {
 Filter::~Filter() {
 }
 
-Filter_Identity::Filter_Identity() {
-}
-
-void Filter_Identity::accept(AST_Visitor * v) const {
-	v->visit(this);
-}
-
-void Filter_Identity::accept(AST_Visitor const * v) const {
-	v->visit(this);
-}
-
-bool Filter_Identity::destroy() {
-	if (this->m_ref_count) return false;
-	Factory::get_instance().destroy(this);
-	return true;
-}
-
-Filter_Identity::~Filter_Identity() {
-}
-
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
 

@@ -29,23 +29,24 @@
 #include <fshell2/fql/normalize/normalization_visitor.hpp>
 #include <fshell2/config/annotations.hpp>
 
-#include <diagnostics/basic_exceptions/not_implemented.hpp>
-
-#include <fshell2/fql/ast/abstraction.hpp>
 #include <fshell2/fql/ast/edgecov.hpp>
-#include <fshell2/fql/ast/filter.hpp>
 #include <fshell2/fql/ast/filter_complement.hpp>
+#include <fshell2/fql/ast/filter_compose.hpp>
 #include <fshell2/fql/ast/filter_enclosing_scopes.hpp>
+#include <fshell2/fql/ast/filter_function.hpp>
 #include <fshell2/fql/ast/filter_intersection.hpp>
 #include <fshell2/fql/ast/filter_setminus.hpp>
 #include <fshell2/fql/ast/filter_union.hpp>
 #include <fshell2/fql/ast/pathcov.hpp>
+#include <fshell2/fql/ast/pm_alternative.hpp>
+#include <fshell2/fql/ast/pm_concat.hpp>
+#include <fshell2/fql/ast/pm_filter_adapter.hpp>
+#include <fshell2/fql/ast/pm_next.hpp>
+#include <fshell2/fql/ast/pm_repeat.hpp>
 #include <fshell2/fql/ast/predicate.hpp>
-#include <fshell2/fql/ast/primitive_filter.hpp>
 #include <fshell2/fql/ast/query.hpp>
-#include <fshell2/fql/ast/restriction_automaton.hpp>
+#include <fshell2/fql/ast/statecov.hpp>
 #include <fshell2/fql/ast/test_goal_sequence.hpp>
-#include <fshell2/fql/ast/test_goal_set.hpp>
 #include <fshell2/fql/ast/tgs_intersection.hpp>
 #include <fshell2/fql/ast/tgs_setminus.hpp>
 #include <fshell2/fql/ast/tgs_union.hpp>
@@ -119,149 +120,28 @@ void Normalization_Visitor::normalize(Query ** query) {
 	m_top_query = 0;
 	(*query)->decr_ref_count();
 }
-
-void Normalization_Visitor::visit(Query const* n) {
-	Smart_FQL_Node_Ptr<Filter> prefix;
-	if (n->get_prefix()) {
-		n->get_prefix()->accept(this);
-		prefix = m_top_filter;
-	}
-
-	n->get_cover()->accept(this);
-	Smart_FQL_Node_Ptr<Test_Goal_Sequence> cover(m_top_tgseq);
-
-	Smart_FQL_Node_Ptr<Restriction_Automaton> passing;
-	if (n->get_passing()) {
-		n->get_passing()->accept(this);
-		passing = m_top_aut;
-	}
-
-	m_top_query = Query::Factory::get_instance().create(prefix.get(), cover.get(), passing.get());
-	m_top_filter = 0;
-	m_top_tgseq = 0;
-	m_top_aut = 0;
-}
-
-void Normalization_Visitor::visit(Test_Goal_Sequence const* n) {
-	Test_Goal_Sequence::seq_t seq;
-	for (Test_Goal_Sequence::seq_t::const_iterator iter(n->get_sequence().begin());
-			iter != n->get_sequence().end(); ++iter) {
-		Smart_FQL_Node_Ptr<Restriction_Automaton> aut;
-		if (iter->first) {
-			iter->first->accept(this);
-			aut = m_top_aut;
-			aut.get()->incr_ref_count();
-		}
-		iter->second->accept(this);
-		m_top_tgset.get()->incr_ref_count();
-		seq.push_back(::std::make_pair(aut.get(), m_top_tgset.get()));
-	}
-
-	Smart_FQL_Node_Ptr<Restriction_Automaton> aut;
-	if (n->get_suffix_automaton()) {
-		n->get_suffix_automaton()->accept(this);
-		aut = m_top_aut;
-	}
 	
-	for (Test_Goal_Sequence::seq_t::const_iterator iter(seq.begin());
-			iter != seq.end(); ++iter) {
-		if (iter->first) iter->first->decr_ref_count();
-		iter->second->decr_ref_count();
-	}
-
-	m_top_tgseq = Test_Goal_Sequence::Factory::get_instance().create(seq, aut.get());
-	m_top_aut = 0;
-	m_top_tgset = 0;
-}
-
-void Normalization_Visitor::visit(Restriction_Automaton const* n) {
-	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
-}
-
-void Normalization_Visitor::visit(Abstraction const* n) {
-	Abstraction::preds_t preds;
-	for (Abstraction::preds_t::const_iterator iter(n->get_predicates().begin());
-			iter != n->get_predicates().end(); ++iter) {
-		(*iter)->accept(this);
-		if (preds.insert(m_top_pred.get()).second) m_top_pred.get()->incr_ref_count();
-	}
-	
-	for (Abstraction::preds_t::const_iterator iter(preds.begin());
-			iter != preds.end(); ++iter)
-		(*iter)->decr_ref_count();
-
-	m_top_abst = Abstraction::Factory::get_instance().create(preds);
-	m_top_pred = 0;
-	
-}
-
-void Normalization_Visitor::visit(Predicate const* n) {
-	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
-}
-
-void Normalization_Visitor::visit(TGS_Union const* n) {
-	n->get_tgs_a()->accept(this);
-	Smart_FQL_Node_Ptr<Test_Goal_Set> tgs_a(m_top_tgset);
-	n->get_tgs_b()->accept(this);
-	Smart_FQL_Node_Ptr<Test_Goal_Set> tgs_b(m_top_tgset);
-
-	if (FQL_Node_Lt_Compare()(tgs_a.get(), tgs_b.get())) {
-		m_top_tgset = TGS_Union::Factory::get_instance().create(tgs_a.get(), tgs_b.get());
-	} else if (FQL_Node_Lt_Compare()(tgs_b.get(), tgs_a.get())) {
-		m_top_tgset = TGS_Union::Factory::get_instance().create(tgs_b.get(), tgs_a.get());
-	} else {
-		m_top_tgset = tgs_a;
-	}
-}
-
-void Normalization_Visitor::visit(TGS_Intersection const* n) {
-	n->get_tgs_a()->accept(this);
-	Smart_FQL_Node_Ptr<Test_Goal_Set> tgs_a(m_top_tgset);
-	n->get_tgs_b()->accept(this);
-	Smart_FQL_Node_Ptr<Test_Goal_Set> tgs_b(m_top_tgset);
-
-	if (FQL_Node_Lt_Compare()(tgs_a.get(), tgs_b.get())) {
-		m_top_tgset = TGS_Intersection::Factory::get_instance().create(tgs_a.get(), tgs_b.get());
-	} else if (FQL_Node_Lt_Compare()(tgs_b.get(), tgs_a.get())) {
-		m_top_tgset = TGS_Intersection::Factory::get_instance().create(tgs_b.get(), tgs_a.get());
-	} else {
-		m_top_tgset = tgs_a;
-	}
-}
-
-void Normalization_Visitor::visit(TGS_Setminus const* n) {
-	n->get_tgs_a()->accept(this);
-	Smart_FQL_Node_Ptr<Test_Goal_Set> tgs_a(m_top_tgset);
-	n->get_tgs_b()->accept(this);
-	Smart_FQL_Node_Ptr<Test_Goal_Set> tgs_b(m_top_tgset);
-
-	m_top_tgset = TGS_Setminus::Factory::get_instance().create(tgs_a.get(), tgs_b.get());
-}
-
 void Normalization_Visitor::visit(Edgecov const* n) {
-	n->get_abstraction()->accept(this);
-	Smart_FQL_Node_Ptr<Abstraction> abst(m_top_abst);
 	n->get_filter()->accept(this);
 	Smart_FQL_Node_Ptr<Filter> filter(m_top_filter);
 
-	m_top_tgset = Edgecov::Factory::get_instance().create(abst.get(), filter.get());
-	m_top_abst = 0;
+	Predicate::preds_t * preds(0);
+	if (n->get_predicates()) {
+		preds = new Predicate::preds_t;
+		for (Predicate::preds_t::const_iterator iter(n->get_predicates()->begin());
+				iter != n->get_predicates()->end(); ++iter) {
+			(*iter)->accept(this);
+			if (preds->insert(m_top_pred.get()).second) m_top_pred.get()->incr_ref_count();
+		}
+	
+		for (Predicate::preds_t::const_iterator iter(preds->begin());
+				iter != preds->end(); ++iter)
+			(*iter)->decr_ref_count();
+		m_top_pred = 0;
+	}
+	
+	m_top_tgset = Edgecov::Factory::get_instance().create(filter.get(), preds);
 	m_top_filter = 0;
-}
-
-void Normalization_Visitor::visit(Pathcov const* n) {
-	n->get_abstraction()->accept(this);
-	Smart_FQL_Node_Ptr<Abstraction> abst(m_top_abst);
-	n->get_filter()->accept(this);
-	Smart_FQL_Node_Ptr<Filter> filter(m_top_filter);
-
-	m_top_tgset = Pathcov::Factory::get_instance().create(abst.get(), filter.get(), n->get_bound());
-	m_top_abst = 0;
-	m_top_filter = 0;
-}
-
-void Normalization_Visitor::visit(Filter_Identity const* n) {
-	m_top_filter = Filter_Identity::Factory::get_instance().create();
 }
 
 void Normalization_Visitor::visit(Filter_Complement const* n) {
@@ -269,18 +149,80 @@ void Normalization_Visitor::visit(Filter_Complement const* n) {
 	m_top_filter = Filter_Complement::Factory::get_instance().create(m_top_filter.get());
 }
 
-void Normalization_Visitor::visit(Filter_Union const* n) {
+void Normalization_Visitor::visit(Filter_Compose const* n) {
 	n->get_filter_a()->accept(this);
 	Smart_FQL_Node_Ptr<Filter> filter_a(m_top_filter);
 	n->get_filter_b()->accept(this);
 	Smart_FQL_Node_Ptr<Filter> filter_b(m_top_filter);
-	
-	if (FQL_Node_Lt_Compare()(filter_a.get(), filter_b.get())) {
-		m_top_filter = Filter_Union::Factory::get_instance().create(filter_a.get(), filter_b.get());
-	} else if (FQL_Node_Lt_Compare()(filter_b.get(), filter_a.get())) {
-		m_top_filter = Filter_Union::Factory::get_instance().create(filter_b.get(), filter_a.get());
-	} else {
-		m_top_filter = filter_a;
+
+	m_top_filter = Filter_Compose::Factory::get_instance().create(filter_a.get(), filter_b.get());
+}
+
+void Normalization_Visitor::visit(Filter_Enclosing_Scopes const* n) {
+	n->get_filter()->accept(this);
+	m_top_filter = Filter_Enclosing_Scopes::Factory::get_instance().create(m_top_filter.get());
+}
+
+void Normalization_Visitor::visit(Filter_Function const* n) {
+	switch (n->get_filter_type()) {
+		case F_IDENTITY:
+			m_top_filter = Filter_Function::Factory::get_instance().create<F_IDENTITY>();
+			break;
+		case F_FILE:
+			m_top_filter = Filter_Function::Factory::get_instance().create<F_FILE>(
+					n->get_string_arg<F_FILE>());
+			break;
+		case F_LINE:
+			m_top_filter = Filter_Function::Factory::get_instance().create<F_LINE>(
+					n->get_int_arg<F_LINE>());
+			break;
+		case F_COLUMN:
+			m_top_filter = Filter_Function::Factory::get_instance().create<F_COLUMN>(
+					n->get_int_arg<F_COLUMN>());
+			break;
+		case F_FUNC:
+			m_top_filter = Filter_Function::Factory::get_instance().create<F_FUNC>(
+					n->get_string_arg<F_FUNC>());
+			break;
+		case F_LABEL:
+			m_top_filter = Filter_Function::Factory::get_instance().create<F_LABEL>(
+					n->get_string_arg<F_LABEL>());
+			break;
+		case F_CALL:
+			m_top_filter = Filter_Function::Factory::get_instance().create<F_CALL>(
+					n->get_string_arg<F_CALL>());
+			break;
+		case F_CALLS:
+			m_top_filter = Filter_Function::Factory::get_instance().create<F_CALLS>();
+			break;
+		case F_ENTRY:
+			m_top_filter = Filter_Function::Factory::get_instance().create<F_ENTRY>(
+					n->get_string_arg<F_ENTRY>());
+			break;
+		case F_EXIT:
+			m_top_filter = Filter_Function::Factory::get_instance().create<F_EXIT>(
+					n->get_string_arg<F_EXIT>());
+			break;
+		case F_EXPR:
+			m_top_filter = Filter_Function::Factory::get_instance().create<F_EXPR>(
+					n->get_string_arg<F_EXPR>());
+			break;
+		case F_REGEXP:
+			m_top_filter = Filter_Function::Factory::get_instance().create<F_REGEXP>(
+					n->get_string_arg<F_REGEXP>());
+			break;
+		case F_BASICBLOCKENTRY:
+			m_top_filter = Filter_Function::Factory::get_instance().create<F_BASICBLOCKENTRY>();
+			break;
+		case F_CONDITIONEDGE:
+			m_top_filter = Filter_Function::Factory::get_instance().create<F_CONDITIONEDGE>();
+			break;
+		case F_DECISIONEDGE:
+			m_top_filter = Filter_Function::Factory::get_instance().create<F_DECISIONEDGE>();
+			break;
+		case F_CONDITIONGRAPH:
+			m_top_filter = Filter_Function::Factory::get_instance().create<F_CONDITIONGRAPH>();
+			break;
 	}
 }
 
@@ -308,69 +250,206 @@ void Normalization_Visitor::visit(Filter_Setminus const* n) {
 	m_top_filter = Filter_Setminus::Factory::get_instance().create(filter_a.get(), filter_b.get());
 }
 
-void Normalization_Visitor::visit(Filter_Enclosing_Scopes const* n) {
-	n->get_filter()->accept(this);
-	m_top_filter = Filter_Enclosing_Scopes::Factory::get_instance().create(m_top_filter.get());
+void Normalization_Visitor::visit(Filter_Union const* n) {
+	n->get_filter_a()->accept(this);
+	Smart_FQL_Node_Ptr<Filter> filter_a(m_top_filter);
+	n->get_filter_b()->accept(this);
+	Smart_FQL_Node_Ptr<Filter> filter_b(m_top_filter);
+	
+	if (FQL_Node_Lt_Compare()(filter_a.get(), filter_b.get())) {
+		m_top_filter = Filter_Union::Factory::get_instance().create(filter_a.get(), filter_b.get());
+	} else if (FQL_Node_Lt_Compare()(filter_b.get(), filter_a.get())) {
+		m_top_filter = Filter_Union::Factory::get_instance().create(filter_b.get(), filter_a.get());
+	} else {
+		m_top_filter = filter_a;
+	}
 }
 
-void Normalization_Visitor::visit(Primitive_Filter const* n) {
-	switch (n->get_filter_type()) {
-		case F_FILE:
-			m_top_filter = Primitive_Filter::Factory::get_instance().create<F_FILE>(
-					n->get_string_arg<F_FILE>());
-			break;
-		case F_LINE:
-			m_top_filter = Primitive_Filter::Factory::get_instance().create<F_LINE>(
-					n->get_int_arg<F_LINE>());
-			break;
-		case F_COLUMN:
-			m_top_filter = Primitive_Filter::Factory::get_instance().create<F_COLUMN>(
-					n->get_int_arg<F_COLUMN>());
-			break;
-		case F_FUNC:
-			m_top_filter = Primitive_Filter::Factory::get_instance().create<F_FUNC>(
-					n->get_string_arg<F_FUNC>());
-			break;
-		case F_LABEL:
-			m_top_filter = Primitive_Filter::Factory::get_instance().create<F_LABEL>(
-					n->get_string_arg<F_LABEL>());
-			break;
-		case F_CALL:
-			m_top_filter = Primitive_Filter::Factory::get_instance().create<F_CALL>(
-					n->get_string_arg<F_CALL>());
-			break;
-		case F_CALLS:
-			m_top_filter = Primitive_Filter::Factory::get_instance().create<F_CALLS>();
-			break;
-		case F_ENTRY:
-			m_top_filter = Primitive_Filter::Factory::get_instance().create<F_ENTRY>(
-					n->get_string_arg<F_ENTRY>());
-			break;
-		case F_EXIT:
-			m_top_filter = Primitive_Filter::Factory::get_instance().create<F_EXIT>(
-					n->get_string_arg<F_EXIT>());
-			break;
-		case F_EXPR:
-			m_top_filter = Primitive_Filter::Factory::get_instance().create<F_EXPR>(
-					n->get_string_arg<F_EXPR>());
-			break;
-		case F_REGEXP:
-			m_top_filter = Primitive_Filter::Factory::get_instance().create<F_REGEXP>(
-					n->get_string_arg<F_REGEXP>());
-			break;
-		case F_BASICBLOCKENTRY:
-			m_top_filter = Primitive_Filter::Factory::get_instance().create<F_BASICBLOCKENTRY>();
-			break;
-		case F_CONDITIONEDGE:
-			m_top_filter = Primitive_Filter::Factory::get_instance().create<F_CONDITIONEDGE>();
-			break;
-		case F_DECISIONEDGE:
-			m_top_filter = Primitive_Filter::Factory::get_instance().create<F_DECISIONEDGE>();
-			break;
-		case F_CONDITIONGRAPH:
-			m_top_filter = Primitive_Filter::Factory::get_instance().create<F_CONDITIONGRAPH>();
-			break;
+void Normalization_Visitor::visit(PM_Alternative const* n) {
+	n->get_path_monitor_a()->accept(this);
+	Smart_FQL_Node_Ptr<Path_Monitor> path_monitor_a(m_top_mon);
+	n->get_path_monitor_b()->accept(this);
+	Smart_FQL_Node_Ptr<Path_Monitor> path_monitor_b(m_top_mon);
+	
+	if (FQL_Node_Lt_Compare()(path_monitor_a.get(), path_monitor_b.get())) {
+		m_top_mon = PM_Alternative::Factory::get_instance().create(path_monitor_a.get(), path_monitor_b.get());
+	} else if (FQL_Node_Lt_Compare()(path_monitor_b.get(), path_monitor_a.get())) {
+		m_top_mon = PM_Alternative::Factory::get_instance().create(path_monitor_b.get(), path_monitor_a.get());
+	} else {
+		m_top_mon = path_monitor_a;
 	}
+}
+
+void Normalization_Visitor::visit(PM_Concat const* n) {
+	n->get_path_monitor_a()->accept(this);
+	Smart_FQL_Node_Ptr<Path_Monitor> path_monitor_a(m_top_mon);
+	n->get_path_monitor_b()->accept(this);
+	Smart_FQL_Node_Ptr<Path_Monitor> path_monitor_b(m_top_mon);
+
+	m_top_mon = PM_Concat::Factory::get_instance().create(path_monitor_a.get(), path_monitor_b.get());
+}
+
+void Normalization_Visitor::visit(PM_Filter_Adapter const* n) {
+	n->get_filter()->accept(this);
+	m_top_mon = PM_Filter_Adapter::Factory::get_instance().create(m_top_filter.get());
+}
+
+void Normalization_Visitor::visit(PM_Next const* n) {
+	n->get_path_monitor_a()->accept(this);
+	Smart_FQL_Node_Ptr<Path_Monitor> path_monitor_a(m_top_mon);
+	n->get_path_monitor_b()->accept(this);
+	Smart_FQL_Node_Ptr<Path_Monitor> path_monitor_b(m_top_mon);
+
+	m_top_mon = PM_Next::Factory::get_instance().create(path_monitor_a.get(), path_monitor_b.get());
+}
+
+void Normalization_Visitor::visit(PM_Repeat const* n) {
+	n->get_path_monitor()->accept(this);
+	m_top_mon = PM_Repeat::Factory::get_instance().create(m_top_mon.get(), n->get_lower_bound(),
+			n->get_upper_bound());
+}
+
+void Normalization_Visitor::visit(Pathcov const* n) {
+	n->get_filter()->accept(this);
+	Smart_FQL_Node_Ptr<Filter> filter(m_top_filter);
+
+	Predicate::preds_t * preds(0);
+	if (n->get_predicates()) {
+		preds = new Predicate::preds_t;
+		for (Predicate::preds_t::const_iterator iter(n->get_predicates()->begin());
+				iter != n->get_predicates()->end(); ++iter) {
+			(*iter)->accept(this);
+			if (preds->insert(m_top_pred.get()).second) m_top_pred.get()->incr_ref_count();
+		}
+	
+		for (Predicate::preds_t::const_iterator iter(preds->begin());
+				iter != preds->end(); ++iter)
+			(*iter)->decr_ref_count();
+		m_top_pred = 0;
+	}
+	
+	m_top_tgset = Pathcov::Factory::get_instance().create(filter.get(), n->get_bound(), preds);
+	m_top_filter = 0;
+}
+
+void Normalization_Visitor::visit(Predicate const* n) {
+	m_top_pred = Predicate::Factory::get_instance().create(new ::exprt(*(n->get_expr())));
+}
+	
+void Normalization_Visitor::visit(Query const* n) {
+	Smart_FQL_Node_Ptr<Filter> prefix;
+	if (n->get_prefix()) {
+		n->get_prefix()->accept(this);
+		prefix = m_top_filter;
+	}
+
+	n->get_cover()->accept(this);
+	Smart_FQL_Node_Ptr<Test_Goal_Sequence> cover(m_top_tgseq);
+
+	Smart_FQL_Node_Ptr<Path_Monitor> passing;
+	if (n->get_passing()) {
+		n->get_passing()->accept(this);
+		passing = m_top_mon;
+	}
+
+	m_top_query = Query::Factory::get_instance().create(prefix.get(), cover.get(), passing.get());
+	m_top_filter = 0;
+	m_top_tgseq = 0;
+	m_top_mon = 0;
+}
+
+void Normalization_Visitor::visit(Statecov const* n) {
+	n->get_filter()->accept(this);
+	Smart_FQL_Node_Ptr<Filter> filter(m_top_filter);
+
+	Predicate::preds_t * preds(0);
+	if (n->get_predicates()) {
+		preds = new Predicate::preds_t;
+		for (Predicate::preds_t::const_iterator iter(n->get_predicates()->begin());
+				iter != n->get_predicates()->end(); ++iter) {
+			(*iter)->accept(this);
+			if (preds->insert(m_top_pred.get()).second) m_top_pred.get()->incr_ref_count();
+		}
+	
+		for (Predicate::preds_t::const_iterator iter(preds->begin());
+				iter != preds->end(); ++iter)
+			(*iter)->decr_ref_count();
+		m_top_pred = 0;
+	}
+	
+	m_top_tgset = Statecov::Factory::get_instance().create(filter.get(), preds);
+	m_top_filter = 0;
+}
+	
+void Normalization_Visitor::visit(TGS_Intersection const* n) {
+	n->get_tgs_a()->accept(this);
+	Smart_FQL_Node_Ptr<Test_Goal_Set> tgs_a(m_top_tgset);
+	n->get_tgs_b()->accept(this);
+	Smart_FQL_Node_Ptr<Test_Goal_Set> tgs_b(m_top_tgset);
+
+	if (FQL_Node_Lt_Compare()(tgs_a.get(), tgs_b.get())) {
+		m_top_tgset = TGS_Intersection::Factory::get_instance().create(tgs_a.get(), tgs_b.get());
+	} else if (FQL_Node_Lt_Compare()(tgs_b.get(), tgs_a.get())) {
+		m_top_tgset = TGS_Intersection::Factory::get_instance().create(tgs_b.get(), tgs_a.get());
+	} else {
+		m_top_tgset = tgs_a;
+	}
+}
+
+void Normalization_Visitor::visit(TGS_Setminus const* n) {
+	n->get_tgs_a()->accept(this);
+	Smart_FQL_Node_Ptr<Test_Goal_Set> tgs_a(m_top_tgset);
+	n->get_tgs_b()->accept(this);
+	Smart_FQL_Node_Ptr<Test_Goal_Set> tgs_b(m_top_tgset);
+
+	m_top_tgset = TGS_Setminus::Factory::get_instance().create(tgs_a.get(), tgs_b.get());
+}
+
+void Normalization_Visitor::visit(TGS_Union const* n) {
+	n->get_tgs_a()->accept(this);
+	Smart_FQL_Node_Ptr<Test_Goal_Set> tgs_a(m_top_tgset);
+	n->get_tgs_b()->accept(this);
+	Smart_FQL_Node_Ptr<Test_Goal_Set> tgs_b(m_top_tgset);
+
+	if (FQL_Node_Lt_Compare()(tgs_a.get(), tgs_b.get())) {
+		m_top_tgset = TGS_Union::Factory::get_instance().create(tgs_a.get(), tgs_b.get());
+	} else if (FQL_Node_Lt_Compare()(tgs_b.get(), tgs_a.get())) {
+		m_top_tgset = TGS_Union::Factory::get_instance().create(tgs_b.get(), tgs_a.get());
+	} else {
+		m_top_tgset = tgs_a;
+	}
+}
+
+void Normalization_Visitor::visit(Test_Goal_Sequence const* n) {
+	Test_Goal_Sequence::seq_t seq;
+	for (Test_Goal_Sequence::seq_t::const_iterator iter(n->get_sequence().begin());
+			iter != n->get_sequence().end(); ++iter) {
+		Smart_FQL_Node_Ptr<Path_Monitor> mon;
+		if (iter->first) {
+			iter->first->accept(this);
+			mon = m_top_mon;
+			mon.get()->incr_ref_count();
+		}
+		iter->second->accept(this);
+		m_top_tgset.get()->incr_ref_count();
+		seq.push_back(::std::make_pair(mon.get(), m_top_tgset.get()));
+	}
+
+	Smart_FQL_Node_Ptr<Path_Monitor> mon;
+	if (n->get_suffix_monitor()) {
+		n->get_suffix_monitor()->accept(this);
+		mon = m_top_mon;
+	}
+	
+	for (Test_Goal_Sequence::seq_t::const_iterator iter(seq.begin());
+			iter != seq.end(); ++iter) {
+		if (iter->first) iter->first->decr_ref_count();
+		iter->second->decr_ref_count();
+	}
+
+	m_top_tgseq = Test_Goal_Sequence::Factory::get_instance().create(seq, mon.get());
+	m_top_mon = 0;
+	m_top_tgset = 0;
 }
 
 FSHELL2_FQL_NAMESPACE_END;

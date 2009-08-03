@@ -37,8 +37,8 @@ FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 Test_Goal_Sequence::Test_Goal_Sequence(Test_Goal_Sequence::seq_t const& seq,
-		Restriction_Automaton * suffix_aut) :
-	m_seq(seq), m_suffix_aut(suffix_aut) {
+		Path_Monitor * suffix_mon) :
+	m_seq(seq), m_suffix_monitor(suffix_mon) {
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, !m_seq.empty());
 }
 
@@ -62,9 +62,9 @@ bool Test_Goal_Sequence::destroy() {
 		iter->second->destroy();
 	}
 	m_seq.clear();
-	if (m_suffix_aut) {
-		m_suffix_aut->decr_ref_count();
-		m_suffix_aut->destroy();
+	if (m_suffix_monitor) {
+		m_suffix_monitor->decr_ref_count();
+		m_suffix_monitor->destroy();
 	}
 	return true;
 }

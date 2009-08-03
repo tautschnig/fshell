@@ -33,7 +33,7 @@
 #include <fshell2/config/annotations.hpp>
 #include <fshell2/fql/ast/test_goal_set.hpp>
 
-#include <fshell2/fql/ast/restriction_automaton.hpp>
+#include <fshell2/fql/ast/path_monitor.hpp>
 
 #include <diagnostics/basic_exceptions/violated_invariance.hpp>
 #include <list>
@@ -52,7 +52,7 @@ class Test_Goal_Sequence : public Test_Goal_Set
 	public:
 	typedef FQL_Node_Factory<Self> Factory;
 
-	typedef ::std::pair< Restriction_Automaton *, Test_Goal_Set * > seq_entry_t;
+	typedef ::std::pair< Path_Monitor *, Test_Goal_Set * > seq_entry_t;
 	typedef ::std::list< seq_entry_t > seq_t;
 
 	/*! \{
@@ -66,18 +66,18 @@ class Test_Goal_Sequence : public Test_Goal_Set
 	virtual bool destroy();
 
 	inline seq_t const& get_sequence() const;
-	inline Restriction_Automaton const * get_suffix_automaton() const;
+	inline Path_Monitor const * get_suffix_monitor() const;
 
 	private:
-	friend Self * FQL_Node_Factory<Self>::create(seq_t & seq, Restriction_Automaton * suffix_aut);
+	friend Self * FQL_Node_Factory<Self>::create(seq_t & seq, Path_Monitor * suffix_mon);
 	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
 
 	seq_t m_seq;
-	Restriction_Automaton * m_suffix_aut;
+	Path_Monitor * m_suffix_monitor;
 
 	/*! Constructor
 	*/
-	Test_Goal_Sequence(seq_t const& seq, Restriction_Automaton * suffix_aut);
+	Test_Goal_Sequence(seq_t const& seq, Path_Monitor * suffix_mon);
 
 	/*! \copydoc copy_constructor
 	*/
@@ -96,20 +96,20 @@ inline Test_Goal_Sequence::seq_t const& Test_Goal_Sequence::get_sequence() const
 	return m_seq;
 }
 
-inline Restriction_Automaton const * Test_Goal_Sequence::get_suffix_automaton() const {
-	return m_suffix_aut;
+inline Path_Monitor const * Test_Goal_Sequence::get_suffix_monitor() const {
+	return m_suffix_monitor;
 }
 
 template <>
 inline Test_Goal_Sequence * FQL_Node_Factory<Test_Goal_Sequence>::create(Test_Goal_Sequence::seq_t & seq,
-		Restriction_Automaton * suffix_aut) {
+		Path_Monitor * suffix_mon) {
 	if (m_available.empty()) {
-		m_available.push_back(new Test_Goal_Sequence(seq, suffix_aut));
+		m_available.push_back(new Test_Goal_Sequence(seq, suffix_mon));
 	} else {
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 				m_available.back()->m_seq.empty());
 		m_available.back()->m_seq.swap(seq);
-		m_available.back()->m_suffix_aut = suffix_aut;
+		m_available.back()->m_suffix_monitor = suffix_mon;
 	}
 
 	::std::pair< ::std::set< Test_Goal_Sequence *, FQL_Node_Lt_Compare>::const_iterator, bool > inserted(
@@ -121,16 +121,16 @@ inline Test_Goal_Sequence * FQL_Node_Factory<Test_Goal_Sequence>::create(Test_Go
 			if (iter->first) iter->first->incr_ref_count();
 			iter->second->incr_ref_count();
 		}
-		if ((*inserted.first)->m_suffix_aut) (*inserted.first)->m_suffix_aut->incr_ref_count();
+		if ((*inserted.first)->m_suffix_monitor) (*inserted.first)->m_suffix_monitor->incr_ref_count();
 	} else {
 		for (Test_Goal_Sequence::seq_t::iterator iter(m_available.back()->m_seq.begin());
 				iter != m_available.back()->m_seq.end(); ++iter) {
 			if (iter->first) iter->first->destroy();
 			iter->second->destroy();
 		}
-		if (m_available.back()->m_suffix_aut) m_available.back()->m_suffix_aut->destroy();
+		if (m_available.back()->m_suffix_monitor) m_available.back()->m_suffix_monitor->destroy();
 		m_available.back()->m_seq.clear();
-		m_available.back()->m_suffix_aut = 0;
+		m_available.back()->m_suffix_monitor = 0;
 	}
 
 	return *(inserted.first);

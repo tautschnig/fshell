@@ -18,44 +18,34 @@
  * limitations under the License.
  *******************************************************************************/
 
-#ifndef FSHELL2__FQL__AST__ABSTRACTION_HPP
-#define FSHELL2__FQL__AST__ABSTRACTION_HPP
+#ifndef FSHELL2__FQL__AST__FILTER_COMPOSE_HPP
+#define FSHELL2__FQL__AST__FILTER_COMPOSE_HPP
 
-/*! \file fshell2/fql/ast/abstraction.hpp
+/*! \file fshell2/fql/ast/filter_compose.hpp
  * \brief TODO
  *
  * $Id$
  * \author Michael Tautschnig <tautschnig@forsyte.de>
- * \date   Tue Apr 21 23:48:55 CEST 2009 
-*/
+ * \date   Sun Aug  2 19:03:16 CEST 2009 
+ */
 
 #include <fshell2/config/config.hpp>
-#include <fshell2/config/annotations.hpp>
-#include <fshell2/fql/ast/fql_node.hpp>
+#include <fshell2/fql/ast/filter.hpp>
 #include <fshell2/fql/ast/fql_node_factory.hpp>
-
-#include <fshell2/fql/ast/predicate.hpp>
-
-#include <diagnostics/basic_exceptions/violated_invariance.hpp>
-#include <set>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-class Predicate;
-
 /*! \brief TODO
 */
-class Abstraction : public FQL_Node
+class Filter_Compose : public Filter
 {
 	/*! \copydoc doc_self
 	*/
-	typedef Abstraction Self;
+	typedef Filter_Compose Self;
 
 	public:
 	typedef FQL_Node_Factory<Self> Factory;
-
-	typedef ::std::set< Predicate *, FQL_Node_Lt_Compare > preds_t;
 
 	/*! \{
 	 * \brief Accept a visitor 
@@ -65,61 +55,57 @@ class Abstraction : public FQL_Node
 	virtual void accept(AST_Visitor const * v) const;
 	/*! \} */
 
-	virtual bool destroy();
+	virtual bool destroy();	
 
-	inline preds_t const & get_predicates() const;
+	inline Filter const * get_filter_a() const;
+	inline Filter const * get_filter_b() const;
 
 	private:
-	friend Self * FQL_Node_Factory<Self>::create(preds_t & predicates);
+	friend Self * FQL_Node_Factory<Self>::create(Filter *, Filter *);
 	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
 
-	preds_t m_predicates;
+	Filter * m_filter_a;
+	Filter * m_filter_b;
 
 	/*! Constructor
 	*/
-	Abstraction(preds_t const& predicates);
+	Filter_Compose(Filter * a, Filter * b);
 
 	/*! \copydoc copy_constructor
 	*/
-	Abstraction( Self const& rhs );
+	Filter_Compose( Self const& rhs );
 
 	/*! \copydoc assignment_op
-	*/
+	 */
 	Self& operator=( Self const& rhs );
 
 	/*! \brief Destructor
 	*/
-	virtual ~Abstraction();
+	virtual ~Filter_Compose();
 };
-	
-inline Abstraction::preds_t const & Abstraction::get_predicates() const {
-	return m_predicates;
+
+inline Filter const * Filter_Compose::get_filter_a() const {
+	return m_filter_a;
+}
+
+inline Filter const * Filter_Compose::get_filter_b() const {
+	return m_filter_b;
 }
 
 template <>
-inline Abstraction * FQL_Node_Factory<Abstraction>::create(Abstraction::preds_t & predicates) {
+inline Filter_Compose * FQL_Node_Factory<Filter_Compose>::create(Filter * filter_a, Filter * filter_b) {
 	if (m_available.empty()) {
-		m_available.push_back(new Abstraction(predicates));
-	} else {
-		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-				m_available.back()->m_predicates.empty());
-		m_available.back()->m_predicates.swap(predicates);
+		m_available.push_back(new Filter_Compose(filter_a, filter_b));
 	}
 
-	::std::pair< ::std::set< Abstraction *, FQL_Node_Lt_Compare>::const_iterator, bool > inserted(
+	m_available.back()->m_filter_a = filter_a;
+	m_available.back()->m_filter_b = filter_b;
+	::std::pair< ::std::set<Filter_Compose *, FQL_Node_Lt_Compare>::const_iterator, bool > inserted(
 			m_used.insert(m_available.back()));
 	if (inserted.second) {
 		m_available.pop_back();
-		for (Abstraction::preds_t::iterator iter((*inserted.first)->m_predicates.begin());
-				iter != (*inserted.first)->m_predicates.end(); ++iter) {
-			(*iter)->incr_ref_count();
-		}
-	} else {
-		for (Abstraction::preds_t::iterator iter(m_available.back()->m_predicates.begin());
-				iter != m_available.back()->m_predicates.end(); ++iter) {
-			(*iter)->destroy();
-		}
-		m_available.back()->m_predicates.clear();
+		filter_a->incr_ref_count();
+		filter_b->incr_ref_count();
 	}
 
 	return *(inserted.first);
@@ -127,5 +113,5 @@ inline Abstraction * FQL_Node_Factory<Abstraction>::create(Abstraction::preds_t 
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
-      
-#endif /* FSHELL2__FQL__AST__ABSTRACTION_HPP */
+
+#endif /* FSHELL2__FQL__AST__FILTER_COMPOSE_HPP */

@@ -36,14 +36,17 @@
 
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
 
-#include <fshell2/fql/ast/abstraction.hpp>
 #include <fshell2/fql/ast/edgecov.hpp>
 #include <fshell2/fql/ast/pathcov.hpp>
+#include <fshell2/fql/ast/pm_alternative.hpp>
+#include <fshell2/fql/ast/pm_concat.hpp>
+#include <fshell2/fql/ast/pm_filter_adapter.hpp>
+#include <fshell2/fql/ast/pm_next.hpp>
+#include <fshell2/fql/ast/pm_repeat.hpp>
 #include <fshell2/fql/ast/predicate.hpp>
 #include <fshell2/fql/ast/query.hpp>
-#include <fshell2/fql/ast/restriction_automaton.hpp>
+#include <fshell2/fql/ast/statecov.hpp>
 #include <fshell2/fql/ast/test_goal_sequence.hpp>
-#include <fshell2/fql/ast/test_goal_set.hpp>
 #include <fshell2/fql/ast/tgs_intersection.hpp>
 #include <fshell2/fql/ast/tgs_setminus.hpp>
 #include <fshell2/fql/ast/tgs_union.hpp>
@@ -205,124 +208,15 @@ Compute_Test_Goals::value_t const& Compute_Test_Goals::compute(Query const& quer
 	return entry->second;
 }
 
-void Compute_Test_Goals::visit(Query const* n) {
-	if (n->get_prefix()) {
-		FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
-		n->get_prefix()->accept(this);
-	}
-
-	n->get_cover()->accept(this);
-
-	if (n->get_passing()) {
-		n->get_passing()->accept(this);
-	}
-}
-
-void Compute_Test_Goals::visit(Test_Goal_Sequence const* n) {
-	::std::pair< tgs_value_t::iterator, bool > entry(m_tgs_map.insert(
-				::std::make_pair(n, value_t())));
-	if (!entry.second) return;
-	
-	for (Test_Goal_Sequence::seq_t::const_iterator iter(n->get_sequence().begin());
-			iter != n->get_sequence().end(); ++iter) {
-		if (iter->first) {
-			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
-			iter->first->accept(this);
-		}
-		iter->second->accept(this);
-		tgs_value_t::const_iterator subgoals(m_tgs_map.find(iter->second));
-		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, subgoals != m_tgs_map.end());
-
-		if (iter != n->get_sequence().begin()) {
-			value_t const backup(entry.first->second);
-			entry.first->second.clear();
-			for (value_t::const_iterator tgi(backup.begin()); tgi != backup.end(); ++tgi)
-				for (value_t::const_iterator sgi(subgoals->second.begin());
-						sgi != subgoals->second.end(); ++sgi)
-					entry.first->second.insert(m_cnf.land(*tgi, *sgi));
-		} else {
-			::std::copy(subgoals->second.begin(), subgoals->second.end(),
-				::std::inserter(entry.first->second, entry.first->second.begin()));
-		}
-	}
-
-	if (n->get_suffix_automaton()) {
-		n->get_suffix_automaton()->accept(this);
-	}
-}
-
-void Compute_Test_Goals::visit(Restriction_Automaton const* n) {
-	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
-}
-
-void Compute_Test_Goals::visit(Abstraction const* n) {
-	for (Abstraction::preds_t::const_iterator iter(n->get_predicates().begin());
-			iter != n->get_predicates().end(); ++iter) {
-		(*iter)->accept(this);
-	}
-}
-
-void Compute_Test_Goals::visit(Predicate const* n) {
-	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
-}
-
-void Compute_Test_Goals::visit(TGS_Union const* n) {
-	::std::pair< tgs_value_t::iterator, bool > entry(m_tgs_map.insert(
-				::std::make_pair(n, value_t())));
-	if (!entry.second) return;
-	
-	n->get_tgs_a()->accept(this);
-	n->get_tgs_b()->accept(this);
-
-	tgs_value_t::const_iterator a_set(m_tgs_map.find(n->get_tgs_a()));
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, a_set != m_tgs_map.end());
-	tgs_value_t::const_iterator b_set(m_tgs_map.find(n->get_tgs_b()));
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, b_set != m_tgs_map.end());
-	::std::set_union(a_set->second.begin(), a_set->second.end(),
-			b_set->second.begin(), b_set->second.end(),
-			::std::inserter(entry.first->second, entry.first->second.begin()));
-}
-
-void Compute_Test_Goals::visit(TGS_Intersection const* n) {
-	::std::pair< tgs_value_t::iterator, bool > entry(m_tgs_map.insert(
-				::std::make_pair(n, value_t())));
-	if (!entry.second) return;
-	
-	n->get_tgs_a()->accept(this);
-	n->get_tgs_b()->accept(this);
-
-	tgs_value_t::const_iterator a_set(m_tgs_map.find(n->get_tgs_a()));
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, a_set != m_tgs_map.end());
-	tgs_value_t::const_iterator b_set(m_tgs_map.find(n->get_tgs_b()));
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, b_set != m_tgs_map.end());
-	::std::set_intersection(a_set->second.begin(), a_set->second.end(),
-			b_set->second.begin(), b_set->second.end(),
-			::std::inserter(entry.first->second, entry.first->second.begin()));
-}
-
-void Compute_Test_Goals::visit(TGS_Setminus const* n) {
-	::std::pair< tgs_value_t::iterator, bool > entry(m_tgs_map.insert(
-				::std::make_pair(n, value_t())));
-	if (!entry.second) return;
-	
-	n->get_tgs_a()->accept(this);
-	n->get_tgs_b()->accept(this);
-
-	tgs_value_t::const_iterator a_set(m_tgs_map.find(n->get_tgs_a()));
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, a_set != m_tgs_map.end());
-	tgs_value_t::const_iterator b_set(m_tgs_map.find(n->get_tgs_b()));
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, b_set != m_tgs_map.end());
-	::std::set_difference(a_set->second.begin(), a_set->second.end(),
-			b_set->second.begin(), b_set->second.end(),
-			::std::inserter(entry.first->second, entry.first->second.begin()));
-}
 
 void Compute_Test_Goals::visit(Edgecov const* n) {
 	::std::pair< tgs_value_t::iterator, bool > entry(m_tgs_map.insert(
 				::std::make_pair(n, value_t())));
 	if (!entry.second) return;
 	
-	n->get_abstraction()->accept(this);
+	if (n->get_predicates()) {
+		FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+	}
 	
 	// for now, we completely ignore the abstraction!
 	Evaluate_Filter::value_t const& filter_val(m_eval_filter.get(*(n->get_filter())));
@@ -397,15 +291,143 @@ void Compute_Test_Goals::visit(Edgecov const* n) {
 	n->get_filter()->accept(this);
 }
 
+void Compute_Test_Goals::visit(PM_Alternative const* n) {
+	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+}
+
+void Compute_Test_Goals::visit(PM_Concat const* n) {
+	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+}
+
+void Compute_Test_Goals::visit(PM_Filter_Adapter const* n) {
+	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+}
+
+void Compute_Test_Goals::visit(PM_Next const* n) {
+	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+}
+
+void Compute_Test_Goals::visit(PM_Repeat const* n) {
+	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+}
+
 void Compute_Test_Goals::visit(Pathcov const* n) {
 	::std::pair< tgs_value_t::iterator, bool > entry(m_tgs_map.insert(
 				::std::make_pair(n, value_t())));
 	if (!entry.second) return;
 	
 	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+}
+
+void Compute_Test_Goals::visit(Predicate const* n) {
+	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+}
+
+void Compute_Test_Goals::visit(Query const* n) {
+	if (n->get_prefix()) {
+		FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+		n->get_prefix()->accept(this);
+	}
+
+	n->get_cover()->accept(this);
+
+	if (n->get_passing()) {
+		n->get_passing()->accept(this);
+	}
+}
+
+void Compute_Test_Goals::visit(Statecov const* n) {
+	::std::pair< tgs_value_t::iterator, bool > entry(m_tgs_map.insert(
+				::std::make_pair(n, value_t())));
+	if (!entry.second) return;
 	
-	n->get_abstraction()->accept(this);
-	n->get_filter()->accept(this);
+	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+}
+
+void Compute_Test_Goals::visit(TGS_Intersection const* n) {
+	// does not match what we wrote in the paper
+	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+	::std::pair< tgs_value_t::iterator, bool > entry(m_tgs_map.insert(
+				::std::make_pair(n, value_t())));
+	if (!entry.second) return;
+	
+	n->get_tgs_a()->accept(this);
+	n->get_tgs_b()->accept(this);
+
+	tgs_value_t::const_iterator a_set(m_tgs_map.find(n->get_tgs_a()));
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, a_set != m_tgs_map.end());
+	tgs_value_t::const_iterator b_set(m_tgs_map.find(n->get_tgs_b()));
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, b_set != m_tgs_map.end());
+	::std::set_intersection(a_set->second.begin(), a_set->second.end(),
+			b_set->second.begin(), b_set->second.end(),
+			::std::inserter(entry.first->second, entry.first->second.begin()));
+}
+
+void Compute_Test_Goals::visit(TGS_Setminus const* n) {
+	::std::pair< tgs_value_t::iterator, bool > entry(m_tgs_map.insert(
+				::std::make_pair(n, value_t())));
+	if (!entry.second) return;
+	
+	n->get_tgs_a()->accept(this);
+	n->get_tgs_b()->accept(this);
+
+	tgs_value_t::const_iterator a_set(m_tgs_map.find(n->get_tgs_a()));
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, a_set != m_tgs_map.end());
+	tgs_value_t::const_iterator b_set(m_tgs_map.find(n->get_tgs_b()));
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, b_set != m_tgs_map.end());
+	::std::set_difference(a_set->second.begin(), a_set->second.end(),
+			b_set->second.begin(), b_set->second.end(),
+			::std::inserter(entry.first->second, entry.first->second.begin()));
+}
+
+void Compute_Test_Goals::visit(TGS_Union const* n) {
+	::std::pair< tgs_value_t::iterator, bool > entry(m_tgs_map.insert(
+				::std::make_pair(n, value_t())));
+	if (!entry.second) return;
+	
+	n->get_tgs_a()->accept(this);
+	n->get_tgs_b()->accept(this);
+
+	tgs_value_t::const_iterator a_set(m_tgs_map.find(n->get_tgs_a()));
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, a_set != m_tgs_map.end());
+	tgs_value_t::const_iterator b_set(m_tgs_map.find(n->get_tgs_b()));
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, b_set != m_tgs_map.end());
+	::std::set_union(a_set->second.begin(), a_set->second.end(),
+			b_set->second.begin(), b_set->second.end(),
+			::std::inserter(entry.first->second, entry.first->second.begin()));
+}
+
+void Compute_Test_Goals::visit(Test_Goal_Sequence const* n) {
+	::std::pair< tgs_value_t::iterator, bool > entry(m_tgs_map.insert(
+				::std::make_pair(n, value_t())));
+	if (!entry.second) return;
+	
+	for (Test_Goal_Sequence::seq_t::const_iterator iter(n->get_sequence().begin());
+			iter != n->get_sequence().end(); ++iter) {
+		if (iter->first) {
+			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+			iter->first->accept(this);
+		}
+		iter->second->accept(this);
+		tgs_value_t::const_iterator subgoals(m_tgs_map.find(iter->second));
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, subgoals != m_tgs_map.end());
+
+		if (iter != n->get_sequence().begin()) {
+			value_t const backup(entry.first->second);
+			entry.first->second.clear();
+			for (value_t::const_iterator tgi(backup.begin()); tgi != backup.end(); ++tgi)
+				for (value_t::const_iterator sgi(subgoals->second.begin());
+						sgi != subgoals->second.end(); ++sgi)
+					entry.first->second.insert(m_cnf.land(*tgi, *sgi));
+		} else {
+			::std::copy(subgoals->second.begin(), subgoals->second.end(),
+				::std::inserter(entry.first->second, entry.first->second.begin()));
+		}
+	}
+
+	if (n->get_suffix_monitor()) {
+		n->get_suffix_monitor()->accept(this);
+	}
 }
 
 FSHELL2_FQL_NAMESPACE_END;

@@ -44,21 +44,24 @@
 #include <set>
 #include <list>
 
-#include <fshell2/fql/ast/abstraction.hpp>
 #include <fshell2/fql/ast/edgecov.hpp>
-#include <fshell2/fql/ast/filter.hpp>
 #include <fshell2/fql/ast/filter_complement.hpp>
+#include <fshell2/fql/ast/filter_compose.hpp>
 #include <fshell2/fql/ast/filter_enclosing_scopes.hpp>
+#include <fshell2/fql/ast/filter_function.hpp>
 #include <fshell2/fql/ast/filter_intersection.hpp>
 #include <fshell2/fql/ast/filter_setminus.hpp>
 #include <fshell2/fql/ast/filter_union.hpp>
 #include <fshell2/fql/ast/pathcov.hpp>
+#include <fshell2/fql/ast/pm_alternative.hpp>
+#include <fshell2/fql/ast/pm_concat.hpp>
+#include <fshell2/fql/ast/pm_filter_adapter.hpp>
+#include <fshell2/fql/ast/pm_next.hpp>
+#include <fshell2/fql/ast/pm_repeat.hpp>
 #include <fshell2/fql/ast/predicate.hpp>
-#include <fshell2/fql/ast/primitive_filter.hpp>
 #include <fshell2/fql/ast/query.hpp>
-#include <fshell2/fql/ast/restriction_automaton.hpp>
+#include <fshell2/fql/ast/statecov.hpp>
 #include <fshell2/fql/ast/test_goal_sequence.hpp>
-#include <fshell2/fql/ast/test_goal_set.hpp>
 #include <fshell2/fql/ast/tgs_intersection.hpp>
 #include <fshell2/fql/ast/tgs_setminus.hpp>
 #include <fshell2/fql/ast/tgs_union.hpp>
@@ -100,16 +103,14 @@ extern "C"
   
   ::fshell2::fql::Filter * FILTER;
   ::fshell2::fql::Predicate * PREDICATE;
-  ::fshell2::fql::Restriction_Automaton * PATH_MONITOR;
+  ::fshell2::fql::Path_Monitor * PATH_MONITOR;
   ::fshell2::fql::Test_Goal_Sequence * TEST_GOAL_SEQUENCE;
   ::fshell2::fql::Test_Goal_Set * TEST_GOAL_SET;
 
   ::std::set< ::fshell2::fql::Predicate *,
     ::fshell2::fql::FQL_Node_Lt_Compare > * PREDICATE_SET;
-  ::std::list< ::std::pair< ::fshell2::fql::Restriction_Automaton *,
+  ::std::list< ::std::pair< ::fshell2::fql::Path_Monitor *,
     ::fshell2::fql::Test_Goal_Set * > > * TGS_LIST;
-  /*::std::pair< ::fshell2::fql::Filter *,
-    ::fshell2::fql::Predicate * > * AUT_STEP_PAIR;*/
 
   ::exprt * EXPRT;
 }
@@ -118,7 +119,8 @@ extern "C"
 %token TOK_L_PARENTHESIS
 %token TOK_R_PARENTHESIS
 %token TOK_COMMA
-/* predicate generators */
+/* filter functions */
+%token TOK_IDENTITY
 %token TOK_FILE
 %token TOK_LINE
 %token <NUMBER> TOK_LINE_ABBREV
@@ -135,15 +137,14 @@ extern "C"
 %token TOK_CONDITIONEDGE
 %token TOK_DECISIONEDGE
 %token TOK_CONDITIONGRAPH
-/* operations on pred generators */
-%token TOK_IDENTITY
+/* operations on target graphs */
 %token TOK_COMPLEMENT
 %token TOK_UNION
 %token TOK_INTERSECT
 %token TOK_SETMINUS
 %token TOK_ENCLOSING_SCOPES
-/* abstraction builders */
-%token TOK_PREDICATES
+%token TOK_COMPOSE
+/* abstraction/predicates */
 %token TOK_L_BRACE
 %token TOK_R_BRACE
 %token TOK_GREATER_OR_EQ
@@ -153,11 +154,12 @@ extern "C"
 %token TOK_LESS
 %token TOK_NEQ
 /* coverage specification */
+%token TOK_STATECOV
 %token TOK_EDGECOV
 %token TOK_PATHCOV
 %token TOK_L_SEQ
 %token TOK_R_SEQ
-/* automaton construction */
+/* path monitors */
 %token TOK_NEXT
 %token TOK_CONCAT
 %token TOK_ALTERNATIVE
@@ -168,12 +170,12 @@ extern "C"
 %token TOK_PASSING
 /* C identifier */
 %token <STRING> TOK_C_IDENT
-/* a quoted string */
+/* a quoted string (no newline) */
 %token <STRING> TOK_QUOTED_STRING
 /* a natural number */
 %token <NUMBER> TOK_NAT_NUMBER
 
-%type <FILTER> Scope Filter Primitive_Filter
+%type <FILTER> Scope Filter Filter_Function
 %type <TEST_GOAL_SEQUENCE> Cover
 %type <PATH_MONITOR> Passing Path_Monitor Path_Monitor_Term Path_Monitor_Factor
 %type <PATH_MONITOR> Path_Monitor_Symbol
@@ -223,7 +225,7 @@ Passing: /* empty */
 Test_Goal_Sequence: Test_Goal_Set
 				  {
 					$$ = new ::fshell2::fql::Test_Goal_Sequence::seq_t;
-					$$->push_back(::std::make_pair< ::fshell2::fql::Restriction_Automaton *,
+					$$->push_back(::std::make_pair< ::fshell2::fql::Path_Monitor *,
 					  ::fshell2::fql::Test_Goal_Set * >(0, $1));
 				  }
 				  | Test_Goal_Sequence TOK_L_SEQ Path_Monitor TOK_R_SEQ Test_Goal_Set
@@ -234,18 +236,21 @@ Test_Goal_Sequence: Test_Goal_Set
 				  | Test_Goal_Sequence TOK_NEXT Test_Goal_Set
 				  {
 				    $$ = $1;
-					$1->push_back(::std::make_pair< ::fshell2::fql::Restriction_Automaton *,
+					$1->push_back(::std::make_pair< ::fshell2::fql::Path_Monitor *,
 					  ::fshell2::fql::Test_Goal_Set * >(0, $3));
 				  }
 				  ;
 
 Path_Monitor: Path_Monitor_Term
 		    {
-		      $$ = 0;
+		      $$ = $1;
 		    }
 		    | Path_Monitor TOK_ALTERNATIVE Path_Monitor_Term
 		    {
-		      $$ = 0;
+		      $$ = ::fshell2::fql::PM_Alternative::Factory::get_instance().create($1, $3);
+			  intermediates.erase($1);
+			  intermediates.erase($3);
+			  intermediates.insert($$);
 		    }
 		    ;
 
@@ -255,39 +260,202 @@ Path_Monitor_Term: Path_Monitor_Factor
 				 }
 				 | Path_Monitor_Term TOK_CONCAT Path_Monitor_Factor
 				 {
-				   $$ = 0;
+		      	   $$ = ::fshell2::fql::PM_Concat::Factory::get_instance().create($1, $3);
+				   intermediates.erase($1);
+				   intermediates.erase($3);
+			   	   intermediates.insert($$);
 				 }
 				 | Path_Monitor_Term TOK_NEXT Path_Monitor_Factor
 				 {
-				   $$ = 0;
+		      	   $$ = ::fshell2::fql::PM_Next::Factory::get_instance().create($1, $3);
+				   intermediates.erase($1);
+				   intermediates.erase($3);
+			       intermediates.insert($$);
 				 }
 				 ;
 
 Path_Monitor_Factor: Preconditions Path_Monitor_Symbol
 				   {
-				     $$ = 0;
+				     $$ = $2;
+					 if ($1 != 0) {
+					   for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
+					     iter != $1->end(); ++iter)
+						 $$->add_precond(*iter);
+					   delete $1;
+					 }
 				   }
 				   | Preconditions TOK_L_PARENTHESIS Path_Monitor TOK_R_PARENTHESIS
 				   {
-					 $$ = 0;
+				     $$ = $3;
+					 if ($1 != 0) {
+					   for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
+					     iter != $1->end(); ++iter)
+						 $$->add_precond(*iter);
+					   delete $1;
+					 }
 				   }
 				   | Path_Monitor_Factor Predicate
 				   {
-				     $$ = 0;
+				     $$ = $1;
+					 $$->add_postcond($2);
 				   }
 				   | Path_Monitor_Factor TOK_KLEENE
 				   {
-				     $$ = 0;
+		      	   	 $$ = ::fshell2::fql::PM_Repeat::Factory::get_instance().create($1, 0, -1);
+				     intermediates.erase($1);
+			   		 intermediates.insert($$);
 				   }
 				   | Path_Monitor_Factor TOK_LESS_OR_EQ TOK_NAT_NUMBER
 				   {
-				     $$ = 0;
+		      	   	 $$ = ::fshell2::fql::PM_Repeat::Factory::get_instance().create($1, 0, $3);
+				     intermediates.erase($1);
+			   		 intermediates.insert($$);
 				   }
 				   | Path_Monitor_Factor TOK_GREATER_OR_EQ TOK_NAT_NUMBER
 				   {
-				     $$ = 0;
+		      	   	 $$ = ::fshell2::fql::PM_Repeat::Factory::get_instance().create($1, $3, -1);
+				     intermediates.erase($1);
+			   		 intermediates.insert($$);
 				   }
 				   ;
+
+Path_Monitor_Symbol: Filter
+				   {
+				     $$ = ::fshell2::fql::PM_Filter_Adapter::Factory::get_instance().create($1);
+				     intermediates.erase($1);
+			   		 intermediates.insert($$);
+				   }
+				   ;
+
+Test_Goal_Set: Preconditions TOK_L_PARENTHESIS Test_Goal_Set TOK_R_PARENTHESIS
+			 {
+			   $$ = $3;
+			   if ($1 != 0) {
+			     for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
+			       iter != $1->end(); ++iter)
+			       $$->add_precond(*iter);
+			     delete $1;
+			   }
+			 }
+			 | Test_Goal_Set Predicate
+			 {
+			   $$ = $1;
+			   $$->add_postcond($2);
+			 }
+			 | Preconditions TOK_UNION TOK_L_PARENTHESIS Test_Goal_Set TOK_COMMA Test_Goal_Set TOK_R_PARENTHESIS
+			 {
+			   $$ = ::fshell2::fql::TGS_Union::Factory::get_instance().create($4, $6);
+			   if ($1 != 0) {
+			     for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
+			       iter != $1->end(); ++iter)
+			       $$->add_precond(*iter);
+			     delete $1;
+			   }
+			   intermediates.erase($4);
+			   intermediates.erase($6);
+			   intermediates.insert($$);
+			 }
+			 | Preconditions TOK_INTERSECT TOK_L_PARENTHESIS Test_Goal_Set TOK_COMMA Test_Goal_Set TOK_R_PARENTHESIS
+			 {
+			   $$ = ::fshell2::fql::TGS_Intersection::Factory::get_instance().create($4, $6);
+			   if ($1 != 0) {
+			     for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
+			       iter != $1->end(); ++iter)
+			       $$->add_precond(*iter);
+			     delete $1;
+			   }
+			   intermediates.erase($4);
+			   intermediates.erase($6);
+			   intermediates.insert($$);
+			 }
+			 | Preconditions TOK_SETMINUS TOK_L_PARENTHESIS Test_Goal_Set TOK_COMMA Test_Goal_Set TOK_R_PARENTHESIS
+			 {
+			   $$ = ::fshell2::fql::TGS_Setminus::Factory::get_instance().create($4, $6);
+			   if ($1 != 0) {
+			     for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
+			       iter != $1->end(); ++iter)
+			       $$->add_precond(*iter);
+			     delete $1;
+			   }
+			   intermediates.erase($4);
+			   intermediates.erase($6);
+			   intermediates.insert($$);
+			 }
+			 | Preconditions TOK_STATECOV TOK_L_PARENTHESIS Filter TOK_R_PARENTHESIS
+			 {
+			   $$ = ::fshell2::fql::Statecov::Factory::get_instance().create($4,
+			     static_cast< ::fshell2::fql::Predicate::preds_t * >(0));
+			   if ($1 != 0) {
+			     for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
+			       iter != $1->end(); ++iter)
+			       $$->add_precond(*iter);
+			     delete $1;
+			   }
+			   intermediates.erase($4);
+			   intermediates.insert($$);
+			 }
+			 | Preconditions TOK_STATECOV TOK_L_PARENTHESIS Filter TOK_COMMA Predicates TOK_R_PARENTHESIS
+			 {
+			   $$ = ::fshell2::fql::Statecov::Factory::get_instance().create($4, $6);
+			   if ($1 != 0) {
+			     for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
+			       iter != $1->end(); ++iter)
+			       $$->add_precond(*iter);
+			     delete $1;
+			   }
+			   intermediates.erase($4);
+			   intermediates.insert($$);
+			 }
+			 | Preconditions TOK_EDGECOV TOK_L_PARENTHESIS Filter TOK_R_PARENTHESIS
+			 {
+			   $$ = ::fshell2::fql::Edgecov::Factory::get_instance().create($4,
+			     static_cast< ::fshell2::fql::Predicate::preds_t * >(0));
+			   if ($1 != 0) {
+			     for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
+			       iter != $1->end(); ++iter)
+			       $$->add_precond(*iter);
+			     delete $1;
+			   }
+			   intermediates.erase($4);
+			   intermediates.insert($$);
+			 }
+			 | Preconditions TOK_EDGECOV TOK_L_PARENTHESIS Filter TOK_COMMA Predicates TOK_R_PARENTHESIS
+			 {
+			   $$ = ::fshell2::fql::Edgecov::Factory::get_instance().create($4, $6);
+			   if ($1 != 0) {
+			     for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
+			       iter != $1->end(); ++iter)
+			       $$->add_precond(*iter);
+			     delete $1;
+			   }
+			   intermediates.erase($4);
+			   intermediates.insert($$);
+			 }
+			 | Preconditions TOK_PATHCOV TOK_L_PARENTHESIS Filter TOK_COMMA TOK_NAT_NUMBER TOK_R_PARENTHESIS
+			 {
+			   $$ = ::fshell2::fql::Pathcov::Factory::get_instance().create($4, $6, 0);
+			   if ($1 != 0) {
+			     for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
+			       iter != $1->end(); ++iter)
+			       $$->add_precond(*iter);
+			     delete $1;
+			   }
+			   intermediates.erase($4);
+			   intermediates.insert($$);
+			 }
+			 | Preconditions TOK_PATHCOV TOK_L_PARENTHESIS Filter TOK_COMMA TOK_NAT_NUMBER TOK_COMMA Predicates TOK_R_PARENTHESIS
+			 {
+			   $$ = ::fshell2::fql::Pathcov::Factory::get_instance().create($4, $6, $8);
+			   if ($1 != 0) {
+			     for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
+			       iter != $1->end(); ++iter)
+			       $$->add_precond(*iter);
+			     delete $1;
+			   }
+			   intermediates.erase($4);
+			   intermediates.insert($$);
+			 }
+			 ;
 
 Preconditions: /* empty */
 			 {
@@ -295,66 +463,11 @@ Preconditions: /* empty */
 			 }
 			 | Preconditions Predicate
 			 {
-			   $$ = 0;
-			 }
-			 ;
-
-Path_Monitor_Symbol: Filter
-				   {
-				     $$ = 0;
-				   }
-				   ;
-
-Test_Goal_Set: Preconditions TOK_L_PARENTHESIS Test_Goal_Set TOK_R_PARENTHESIS
-			 {
-			   $$ = $3;
-			 }
-			 | Test_Goal_Set Predicate
-			 {
-			   $$ = 0;
-			 }
-			 | Preconditions TOK_UNION TOK_L_PARENTHESIS Test_Goal_Set TOK_COMMA Test_Goal_Set TOK_R_PARENTHESIS
-			 {
-			   $$ = ::fshell2::fql::TGS_Union::Factory::get_instance().create($4, $6);
-			   intermediates.insert($$);
-			 }
-			 | Preconditions TOK_INTERSECT TOK_L_PARENTHESIS Test_Goal_Set TOK_COMMA Test_Goal_Set TOK_R_PARENTHESIS
-			 {
-			   $$ = ::fshell2::fql::TGS_Intersection::Factory::get_instance().create($4, $6);
-			   intermediates.insert($$);
-			 }
-			 | Preconditions TOK_SETMINUS TOK_L_PARENTHESIS Test_Goal_Set TOK_COMMA Test_Goal_Set TOK_R_PARENTHESIS
-			 {
-			   $$ = ::fshell2::fql::TGS_Setminus::Factory::get_instance().create($4, $6);
-			   intermediates.insert($$);
-			 }
-			 | Preconditions TOK_EDGECOV TOK_L_PARENTHESIS Filter TOK_R_PARENTHESIS
-			 {
-			   ::std::set< ::fshell2::fql::Predicate *, ::fshell2::fql::FQL_Node_Lt_Compare > empty;
-			   $$ = ::fshell2::fql::Edgecov::Factory::get_instance().create(
-			     ::fshell2::fql::Abstraction::Factory::get_instance().create(empty), $4);
-			   intermediates.insert($$);
-			 }
-			 | Preconditions TOK_EDGECOV TOK_L_PARENTHESIS Filter TOK_COMMA Predicates TOK_R_PARENTHESIS
-			 {
-			   $$ = ::fshell2::fql::Edgecov::Factory::get_instance().create(
-		         ::fshell2::fql::Abstraction::Factory::get_instance().create(*$6), $4);
-			   delete $6;
-			   intermediates.insert($$);
-			 }
-			 | Preconditions TOK_PATHCOV TOK_L_PARENTHESIS Filter TOK_COMMA TOK_NAT_NUMBER TOK_R_PARENTHESIS
-			 {
-			   ::std::set< ::fshell2::fql::Predicate *, ::fshell2::fql::FQL_Node_Lt_Compare > empty;
-			   $$ = ::fshell2::fql::Pathcov::Factory::get_instance().create(
-			     ::fshell2::fql::Abstraction::Factory::get_instance().create(empty), $4, $6);
-			   intermediates.insert($$);
-			 }
-			 | Preconditions TOK_PATHCOV TOK_L_PARENTHESIS Filter TOK_COMMA TOK_NAT_NUMBER TOK_COMMA Predicates TOK_R_PARENTHESIS
-			 {
-			   $$ = ::fshell2::fql::Pathcov::Factory::get_instance().create(
-			     ::fshell2::fql::Abstraction::Factory::get_instance().create(*$8), $4, $6);
-			   delete $8;
-			   intermediates.insert($$);
+			   $$ = $1;
+			   if (0 == $$)
+				 $$ = new ::std::set< ::fshell2::fql::Predicate *,
+				   ::fshell2::fql::FQL_Node_Lt_Compare >;
+			   $$->insert($2);
 			 }
 			 ;
 
@@ -368,10 +481,6 @@ Predicates: Predicate
 		    $$ = $1;
 			$$->insert($3);
 		  }
-		  | TOK_PREDICATES
-		  {
-		    $$ = 0;
-	      }
 		  ;
 
 Predicate: TOK_L_BRACE c_LHS Comparison c_LHS TOK_R_BRACE
@@ -381,8 +490,8 @@ Predicate: TOK_L_BRACE c_LHS Comparison c_LHS TOK_R_BRACE
 		   delete $2;
 		   $3->move_to_operands(*$4);
 		   delete $4;
-		   $$ = 0; //::fshell2::fql::Predicate::Factory::get_instance().create($3);
-		   //intermediates.insert($$);
+		   $$ = ::fshell2::fql::Predicate::Factory::get_instance().create($3);
+		   intermediates.insert($$);
 		 }
 		 | TOK_L_BRACE TOK_QUOTED_STRING TOK_R_BRACE
 		 {
@@ -407,9 +516,9 @@ Predicate: TOK_L_BRACE c_LHS Comparison c_LHS TOK_R_BRACE
 		     1 == ansi_c_parser.parse_tree.declarations.size());
 		   FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 		     1 == ansi_c_parser.parse_tree.declarations.front().value().operands().size());
-		   $$ = 0; /*::fshell2::fql::Predicate::Factory::get_instance().create(new
+		   $$ = ::fshell2::fql::Predicate::Factory::get_instance().create(new
 		     ::exprt(ansi_c_parser.parse_tree.declarations.front().value().operands().front()));
-		   intermediates.insert($$);*/
+		   intermediates.insert($$);
 		   // clean up the things we don't need anymore
 		   ansi_c_parser.clear();
 		 }
@@ -461,139 +570,155 @@ Comparison: TOK_GREATER_OR_EQ
 		  }
 		  ;
 
-Filter: Primitive_Filter
+Filter: Filter_Function
 	  {
 	    $$ = $1;
-	  }
-	  | TOK_IDENTITY
-	  {
-	    $$ = ::fshell2::fql::Filter_Identity::Factory::get_instance().create();
-	    intermediates.insert($$);
 	  }
 	  | TOK_COMPLEMENT TOK_L_PARENTHESIS Filter TOK_R_PARENTHESIS
 	  {
 	    $$ = ::fshell2::fql::Filter_Complement::Factory::get_instance().create($3);
+	 	intermediates.erase($3);
 	    intermediates.insert($$);
 	  }
 	  | TOK_UNION TOK_L_PARENTHESIS Filter TOK_COMMA Filter TOK_R_PARENTHESIS
 	  {
 	    $$ = ::fshell2::fql::Filter_Union::Factory::get_instance().create($3, $5);
+	 	intermediates.erase($3);
+	 	intermediates.erase($5);
 	    intermediates.insert($$);
 	  }
       | TOK_INTERSECT TOK_L_PARENTHESIS Filter TOK_COMMA Filter TOK_R_PARENTHESIS
 	  {
 	    $$ = ::fshell2::fql::Filter_Intersection::Factory::get_instance().create($3, $5);
+	 	intermediates.erase($3);
+	 	intermediates.erase($5);
 	    intermediates.insert($$);
 	  }
       | TOK_SETMINUS TOK_L_PARENTHESIS Filter TOK_COMMA Filter TOK_R_PARENTHESIS
 	  {
 	    $$ = ::fshell2::fql::Filter_Setminus::Factory::get_instance().create($3, $5);
+	 	intermediates.erase($3);
+	 	intermediates.erase($5);
 	    intermediates.insert($$);
 	  }
 	  | TOK_ENCLOSING_SCOPES TOK_L_PARENTHESIS Filter TOK_R_PARENTHESIS
 	  {
 	    $$ = ::fshell2::fql::Filter_Enclosing_Scopes::Factory::get_instance().create($3);
+	 	intermediates.erase($3);
+	    intermediates.insert($$);
+	  }
+	  | TOK_COMPOSE TOK_L_PARENTHESIS Filter TOK_COMMA Filter TOK_R_PARENTHESIS
+	  {
+	    $$ = ::fshell2::fql::Filter_Compose::Factory::get_instance().create($3, $5);
+	 	intermediates.erase($3);
+	 	intermediates.erase($5);
 	    intermediates.insert($$);
 	  }
 	  ;
 
-Primitive_Filter: TOK_FILE TOK_L_PARENTHESIS TOK_QUOTED_STRING TOK_R_PARENTHESIS
-				{
-				  $$ = ::fshell2::fql::Primitive_Filter::Factory::get_instance().create<
-                    ::fshell2::fql::F_FILE>($3);
-	    	      intermediates.insert($$);
-				}
-				| TOK_LINE TOK_L_PARENTHESIS TOK_NAT_NUMBER TOK_R_PARENTHESIS
-				{
-				  $$ = ::fshell2::fql::Primitive_Filter::Factory::get_instance().create<
-                    ::fshell2::fql::F_LINE>($3);
-	    	      intermediates.insert($$);
-				}
-				| TOK_LINE_ABBREV
-				{
-				  $$ = ::fshell2::fql::Primitive_Filter::Factory::get_instance().create<
-                    ::fshell2::fql::F_LINE>($1);
-	    	      intermediates.insert($$);
-				}
-				| TOK_COLUMN TOK_L_PARENTHESIS TOK_NAT_NUMBER TOK_R_PARENTHESIS
-				{
-				  $$ = ::fshell2::fql::Primitive_Filter::Factory::get_instance().create<
-                    ::fshell2::fql::F_COLUMN>($3);
-	    	      intermediates.insert($$);
-				}
-				| TOK_FUNC TOK_L_PARENTHESIS TOK_C_IDENT TOK_R_PARENTHESIS
-				{
-				  $$ = ::fshell2::fql::Primitive_Filter::Factory::get_instance().create<
-                    ::fshell2::fql::F_FUNC>($3);
-	    	      intermediates.insert($$);
-				}
-				| TOK_LABEL TOK_L_PARENTHESIS TOK_C_IDENT TOK_R_PARENTHESIS
-				{
-				  $$ = ::fshell2::fql::Primitive_Filter::Factory::get_instance().create<
-                    ::fshell2::fql::F_LABEL>($3);
-	    	      intermediates.insert($$);
-				}
-				| TOK_CALL TOK_L_PARENTHESIS TOK_C_IDENT TOK_R_PARENTHESIS
-				{
-				  $$ = ::fshell2::fql::Primitive_Filter::Factory::get_instance().create<
-                    ::fshell2::fql::F_CALL>($3);
-	    	      intermediates.insert($$);
-				}
-				| TOK_CALLS
-				{
-				  $$ = ::fshell2::fql::Primitive_Filter::Factory::get_instance().create<
-                    ::fshell2::fql::F_CALLS>();
-	    	      intermediates.insert($$);
-				}
-				| TOK_ENTRY TOK_L_PARENTHESIS TOK_C_IDENT TOK_R_PARENTHESIS
-				{
-				  $$ = ::fshell2::fql::Primitive_Filter::Factory::get_instance().create<
-                    ::fshell2::fql::F_ENTRY>($3);
-	    	      intermediates.insert($$);
-				}
-				| TOK_EXIT TOK_L_PARENTHESIS TOK_C_IDENT TOK_R_PARENTHESIS
-				{
-				  $$ = ::fshell2::fql::Primitive_Filter::Factory::get_instance().create<
-                    ::fshell2::fql::F_EXIT>($3);
-	    	      intermediates.insert($$);
-				}
-				| TOK_EXPR TOK_L_PARENTHESIS TOK_QUOTED_STRING TOK_R_PARENTHESIS
-				{
-				  $$ = ::fshell2::fql::Primitive_Filter::Factory::get_instance().create<
-                    ::fshell2::fql::F_EXPR>($3);
-	    	      intermediates.insert($$);
-				}
-				| TOK_REGEXP TOK_L_PARENTHESIS TOK_QUOTED_STRING TOK_R_PARENTHESIS
-				{
-				  $$ = ::fshell2::fql::Primitive_Filter::Factory::get_instance().create<
-                    ::fshell2::fql::F_REGEXP>($3);
-	    	      intermediates.insert($$);
-				}
-				| TOK_BASICBLOCKENTRY
-				{
-				  $$ = ::fshell2::fql::Primitive_Filter::Factory::get_instance().create<
-                    ::fshell2::fql::F_BASICBLOCKENTRY>();
-	    	      intermediates.insert($$);
-				}
-				| TOK_CONDITIONEDGE
-				{
-				  $$ = ::fshell2::fql::Primitive_Filter::Factory::get_instance().create<
-                    ::fshell2::fql::F_CONDITIONEDGE>();
-	    	      intermediates.insert($$);
-				}
-				| TOK_DECISIONEDGE
-				{
-				  $$ = ::fshell2::fql::Primitive_Filter::Factory::get_instance().create<
-                    ::fshell2::fql::F_DECISIONEDGE>();
-	    	      intermediates.insert($$);
-				}
-				| TOK_CONDITIONGRAPH
-				{
-				  $$ = ::fshell2::fql::Primitive_Filter::Factory::get_instance().create<
-                    ::fshell2::fql::F_CONDITIONGRAPH>();
-	    	      intermediates.insert($$);
-				}
-				;
+Filter_Function: TOK_IDENTITY
+			   {
+			     $$ = ::fshell2::fql::Filter_Function::Factory::get_instance().create<
+                   ::fshell2::fql::F_IDENTITY>();
+	    	     intermediates.insert($$);
+			   }
+			   | TOK_FILE TOK_L_PARENTHESIS TOK_QUOTED_STRING TOK_R_PARENTHESIS
+			   {
+			     $$ = ::fshell2::fql::Filter_Function::Factory::get_instance().create<
+                   ::fshell2::fql::F_FILE>($3);
+	    	     intermediates.insert($$);
+			   }
+			   | TOK_LINE TOK_L_PARENTHESIS TOK_NAT_NUMBER TOK_R_PARENTHESIS
+			   {
+			     $$ = ::fshell2::fql::Filter_Function::Factory::get_instance().create<
+                   ::fshell2::fql::F_LINE>($3);
+	    	     intermediates.insert($$);
+			   }
+			   | TOK_LINE_ABBREV
+			   {
+			     $$ = ::fshell2::fql::Filter_Function::Factory::get_instance().create<
+                   ::fshell2::fql::F_LINE>($1);
+	    	     intermediates.insert($$);
+			   }
+			   | TOK_COLUMN TOK_L_PARENTHESIS TOK_NAT_NUMBER TOK_R_PARENTHESIS
+			   {
+			     $$ = ::fshell2::fql::Filter_Function::Factory::get_instance().create<
+                   ::fshell2::fql::F_COLUMN>($3);
+	    	     intermediates.insert($$);
+			   }
+			   | TOK_FUNC TOK_L_PARENTHESIS TOK_C_IDENT TOK_R_PARENTHESIS
+			   {
+			     $$ = ::fshell2::fql::Filter_Function::Factory::get_instance().create<
+                   ::fshell2::fql::F_FUNC>($3);
+	    	     intermediates.insert($$);
+			   }
+			   | TOK_LABEL TOK_L_PARENTHESIS TOK_C_IDENT TOK_R_PARENTHESIS
+			   {
+			     $$ = ::fshell2::fql::Filter_Function::Factory::get_instance().create<
+                   ::fshell2::fql::F_LABEL>($3);
+	    	     intermediates.insert($$);
+			   }
+			   | TOK_CALL TOK_L_PARENTHESIS TOK_C_IDENT TOK_R_PARENTHESIS
+			   {
+			     $$ = ::fshell2::fql::Filter_Function::Factory::get_instance().create<
+                   ::fshell2::fql::F_CALL>($3);
+	    	     intermediates.insert($$);
+			   }
+			   | TOK_CALLS
+			   {
+			     $$ = ::fshell2::fql::Filter_Function::Factory::get_instance().create<
+                   ::fshell2::fql::F_CALLS>();
+	    	     intermediates.insert($$);
+			   }
+			   | TOK_ENTRY TOK_L_PARENTHESIS TOK_C_IDENT TOK_R_PARENTHESIS
+			   {
+			     $$ = ::fshell2::fql::Filter_Function::Factory::get_instance().create<
+                   ::fshell2::fql::F_ENTRY>($3);
+	    	     intermediates.insert($$);
+			   }
+			   | TOK_EXIT TOK_L_PARENTHESIS TOK_C_IDENT TOK_R_PARENTHESIS
+			   {
+			     $$ = ::fshell2::fql::Filter_Function::Factory::get_instance().create<
+                   ::fshell2::fql::F_EXIT>($3);
+	    	     intermediates.insert($$);
+			   }
+			   | TOK_EXPR TOK_L_PARENTHESIS TOK_QUOTED_STRING TOK_R_PARENTHESIS
+			   {
+			     $$ = ::fshell2::fql::Filter_Function::Factory::get_instance().create<
+                   ::fshell2::fql::F_EXPR>($3);
+	    	     intermediates.insert($$);
+			   }
+			   | TOK_REGEXP TOK_L_PARENTHESIS TOK_QUOTED_STRING TOK_R_PARENTHESIS
+			   {
+			     $$ = ::fshell2::fql::Filter_Function::Factory::get_instance().create<
+                   ::fshell2::fql::F_REGEXP>($3);
+	    	     intermediates.insert($$);
+			   }
+			   | TOK_BASICBLOCKENTRY
+			   {
+			     $$ = ::fshell2::fql::Filter_Function::Factory::get_instance().create<
+                   ::fshell2::fql::F_BASICBLOCKENTRY>();
+	    	     intermediates.insert($$);
+			   }
+			   | TOK_CONDITIONEDGE
+			   {
+			     $$ = ::fshell2::fql::Filter_Function::Factory::get_instance().create<
+                   ::fshell2::fql::F_CONDITIONEDGE>();
+	    	     intermediates.insert($$);
+			   }
+			   | TOK_DECISIONEDGE
+			   {
+			     $$ = ::fshell2::fql::Filter_Function::Factory::get_instance().create<
+                   ::fshell2::fql::F_DECISIONEDGE>();
+	    	     intermediates.insert($$);
+			   }
+			   | TOK_CONDITIONGRAPH
+			   {
+			     $$ = ::fshell2::fql::Filter_Function::Factory::get_instance().create<
+                   ::fshell2::fql::F_CONDITIONGRAPH>();
+	    	     intermediates.insert($$);
+			   }
+			   ;
 
 %%
 

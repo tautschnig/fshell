@@ -18,35 +18,34 @@
  * limitations under the License.
  *******************************************************************************/
 
-#ifndef FSHELL2__FQL__AST__QUERY_HPP
-#define FSHELL2__FQL__AST__QUERY_HPP
+#ifndef FSHELL2__FQL__AST__STATECOV_HPP
+#define FSHELL2__FQL__AST__STATECOV_HPP
 
-/*! \file fshell2/fql/ast/query.hpp
+/*! \file fshell2/fql/ast/statecov.hpp
  * \brief TODO
  *
  * $Id$
  * \author Michael Tautschnig <tautschnig@forsyte.de>
- * \date   Tue Apr 21 23:48:54 CEST 2009 
- */
+ * \date   Sun Aug  2 19:02:40 CEST 2009 
+*/
 
 #include <fshell2/config/config.hpp>
-#include <fshell2/fql/ast/fql_node.hpp>
+#include <fshell2/fql/ast/test_goal_set.hpp>
 #include <fshell2/fql/ast/fql_node_factory.hpp>
 
 #include <fshell2/fql/ast/filter.hpp>
-#include <fshell2/fql/ast/test_goal_sequence.hpp>
-#include <fshell2/fql/ast/path_monitor.hpp>
+#include <fshell2/fql/ast/predicate.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 /*! \brief TODO
 */
-class Query : public FQL_Node
+class Statecov : public Test_Goal_Set
 {
 	/*! \copydoc doc_self
 	*/
-	typedef Query Self;
+	typedef Statecov Self;
 
 	public:
 	typedef FQL_Node_Factory<Self> Factory;
@@ -61,26 +60,23 @@ class Query : public FQL_Node
 
 	virtual bool destroy();
 
-	inline Filter const * get_prefix() const;
-	inline Test_Goal_Sequence const * get_cover() const;
-	inline Path_Monitor const * get_passing() const;
+	inline Filter const * get_filter() const;
+	inline Predicate::preds_t const * get_predicates() const;
 
 	private:
-	friend Self * FQL_Node_Factory<Self>::create(Filter * prefix, Test_Goal_Sequence * cover,
-			Path_Monitor * passing);
+	friend Self * FQL_Node_Factory<Self>::create(Filter * filter, Predicate::preds_t * predicates);
 	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
 
-	Filter * m_prefix;
-	Test_Goal_Sequence * m_cover;
-	Path_Monitor * m_passing;
+	Filter * m_filter;
+	Predicate::preds_t * m_predicates;
 
 	/*! Constructor
 	*/
-	Query(Filter * prefix, Test_Goal_Sequence * cover, Path_Monitor * passing);
+	Statecov(Filter * filter, Predicate::preds_t * predicates);
 
 	/*! \copydoc copy_constructor
 	*/
-	Query( Self const& rhs );
+	Statecov( Self const& rhs );
 
 	/*! \copydoc assignment_op
 	*/
@@ -88,38 +84,44 @@ class Query : public FQL_Node
 
 	/*! \brief Destructor
 	*/
-	virtual ~Query();
+	virtual ~Statecov();
 };
 
-inline Filter const * Query::get_prefix() const {
-	return m_prefix;
+inline Filter const * Statecov::get_filter() const {
+	return m_filter;
 }
 
-inline Test_Goal_Sequence const * Query::get_cover() const {
-	return m_cover;
-}
-
-inline Path_Monitor const * Query::get_passing() const {
-	return m_passing;
+inline Predicate::preds_t const * Statecov::get_predicates() const {
+	return m_predicates;
 }
 
 template <>
-inline Query * FQL_Node_Factory<Query>::create(Filter * prefix, Test_Goal_Sequence * cover,
-		Path_Monitor * passing) {
+inline Statecov * FQL_Node_Factory<Statecov>::create(Filter * filter, Predicate::preds_t * predicates) {
 	if (m_available.empty()) {
-		m_available.push_back(new Query(prefix, cover, passing));
+		m_available.push_back(new Statecov(filter, predicates));
 	}
 
-	m_available.back()->m_prefix = prefix;
-	m_available.back()->m_cover = cover;
-	m_available.back()->m_passing = passing;
-	::std::pair< ::std::set<Query *, FQL_Node_Lt_Compare>::const_iterator, bool > inserted(
+	m_available.back()->m_filter = filter;
+	m_available.back()->m_predicates = predicates;
+	::std::pair< ::std::set<Statecov *, FQL_Node_Lt_Compare>::const_iterator, bool > inserted(
 			m_used.insert(m_available.back()));
 	if (inserted.second) {
 		m_available.pop_back();
-		if (prefix) prefix->incr_ref_count();
-		cover->incr_ref_count();
-		if (passing) passing->incr_ref_count();
+		filter->incr_ref_count();
+		if (predicates) {
+			for (Predicate::preds_t::iterator iter((*inserted.first)->m_predicates->begin());
+					iter != (*inserted.first)->m_predicates->end(); ++iter) {
+				(*iter)->incr_ref_count();
+			}
+		}
+	} else {
+		if (predicates) {
+			for (Predicate::preds_t::iterator iter(predicates->begin());
+					iter != predicates->end(); ++iter) {
+				(*iter)->destroy();
+			}
+			delete predicates;
+		}
 	}
 
 	return *(inserted.first);
@@ -128,4 +130,4 @@ inline Query * FQL_Node_Factory<Query>::create(Filter * prefix, Test_Goal_Sequen
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
 
-#endif /* FSHELL2__FQL__AST__QUERY_HPP */
+#endif /* FSHELL2__FQL__AST__STATECOV_HPP */

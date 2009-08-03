@@ -33,9 +33,13 @@
 #include <fshell2/fql/ast/fql_node.hpp>
 #include <fshell2/fql/ast/fql_node_factory.hpp>
 
+#include <set>
+
+#include <cbmc/src/util/expr.h>
+
 FSHELL2_NAMESPACE_BEGIN;
-      FSHELL2_FQL_NAMESPACE_BEGIN;
-      
+FSHELL2_FQL_NAMESPACE_BEGIN;
+
 /*! \brief TODO
 */
 class Predicate : public FQL_Node
@@ -45,44 +49,69 @@ class Predicate : public FQL_Node
 	typedef Predicate Self;
 
 	public:
-  typedef FQL_Node_Factory<Self> Factory;
+	typedef FQL_Node_Factory<Self> Factory;
 
-  /*! \{
-   * \brief Accept a visitor 
-   * \param  v Visitor
-   */
-  virtual void accept(AST_Visitor * v) const;
-  virtual void accept(AST_Visitor const * v) const;
-  /*! \} */
-		
-  virtual bool destroy();	
+	typedef ::std::set< Predicate *, FQL_Node_Lt_Compare > preds_t;
+
+	/*! \{
+	 * \brief Accept a visitor 
+	 * \param  v Visitor
+	 */
+	virtual void accept(AST_Visitor * v) const;
+	virtual void accept(AST_Visitor const * v) const;
+	/*! \} */
+
+	virtual bool destroy();
+
+	inline ::exprt const * get_expr() const;
 
 	private:
-	friend Self * FQL_Node_Factory<Self>::create();
+	friend Self * FQL_Node_Factory<Self>::create(::exprt *);
 	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
 
-  /*! Constructor
-  */
-  Predicate();
+	::exprt * m_expr;
+
+	/*! Constructor
+	*/
+	Predicate(::exprt * expr);
 
 	/*! \copydoc copy_constructor
 	*/
 	Predicate( Self const& rhs );
 
 	/*! \copydoc assignment_op
-	 */
+	*/
 	Self& operator=( Self const& rhs );
-		
-  /*! \brief Destructor
-  */
-  virtual ~Predicate();
+
+	/*! \brief Destructor
+	*/
+	virtual ~Predicate();
 };
 
+inline ::exprt const * Predicate::get_expr() const {
+	return m_expr;
+}
+
 template <>
-inline Predicate * FQL_Node_Factory<Predicate>::create() {
+inline Predicate * FQL_Node_Factory<Predicate>::create(::exprt * expr) {
+	if (m_available.empty()) {
+		m_available.push_back(new Predicate(expr));
+	}
+
+	m_available.back()->m_expr = expr;
+	::std::pair< ::std::set<Predicate *, FQL_Node_Lt_Compare>::const_iterator, bool > inserted(
+			m_used.insert(m_available.back()));
+	if (inserted.second) {
+		m_available.pop_back();
+	} else {
+		m_available.back()->m_expr = 0;
+		delete expr;
+	}
+
+	return *(inserted.first);
 }
 
 FSHELL2_FQL_NAMESPACE_END;
-      FSHELL2_NAMESPACE_END;
-      
+FSHELL2_NAMESPACE_END;
+
 #endif /* FSHELL2__FQL__AST__PREDICATE_HPP */

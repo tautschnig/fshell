@@ -18,10 +18,10 @@
  * limitations under the License.
  *******************************************************************************/
 
-#ifndef FSHELL2__FQL__AST__RESTRICTION_AUTOMATON_HPP
-#define FSHELL2__FQL__AST__RESTRICTION_AUTOMATON_HPP
+#ifndef FSHELL2__FQL__AST__PATH_MONITOR_HPP
+#define FSHELL2__FQL__AST__PATH_MONITOR_HPP
 
-/*! \file fshell2/fql/ast/restriction_automaton.hpp
+/*! \file fshell2/fql/ast/path_monitor.hpp
  * \brief TODO
  *
  * $Id$
@@ -34,55 +34,53 @@
 #include <fshell2/fql/ast/fql_node_factory.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
-      FSHELL2_FQL_NAMESPACE_BEGIN;
-      
+FSHELL2_FQL_NAMESPACE_BEGIN;
+   
+class Predicate;
+
 /*! \brief TODO
 */
-class Restriction_Automaton : public FQL_Node
+class Path_Monitor : public FQL_Node
 {
 	/*! \copydoc doc_self
 	*/
-	typedef Restriction_Automaton Self;
+	typedef Path_Monitor Self;
 
 	public:
-  typedef FQL_Node_Factory<Self> Factory;
+  	typedef FQL_Node_Factory<Self> Factory;
 
-  /*! \{
-   * \brief Accept a visitor 
-   * \param  v Visitor
-   */
-  virtual void accept(AST_Visitor * v) const;
-  virtual void accept(AST_Visitor const * v) const;
-  /*! \} */
-		
-  virtual bool destroy();	
+	/*! \{
+	 * \brief Accept a visitor 
+	 * \param  v Visitor
+	 */
+	virtual void accept(AST_Visitor * v) const = 0;
+	virtual void accept(AST_Visitor const * v) const = 0;
+	/*! \} */
+
+	virtual bool destroy() = 0;
+
+	void add_precond(Predicate * pred);
+	void add_postcond(Predicate * pred);
+	
+	/*! Constructor
+	*/
+	Path_Monitor();
+
+	/*! \brief Destructor
+	*/
+	virtual ~Path_Monitor();
 
 	private:
-	friend Self * FQL_Node_Factory<Self>::create();
-	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
-
-  /*! Constructor
-  */
-  Restriction_Automaton();
-
 	/*! \copydoc copy_constructor
 	*/
-	Restriction_Automaton( Self const& rhs );
+	Path_Monitor( Self const& rhs );
 
 	/*! \copydoc assignment_op
-	 */
+	*/
 	Self& operator=( Self const& rhs );
-		
-  /*! \brief Destructor
-  */
-  virtual ~Restriction_Automaton();
 };
 
-template <>
-inline Restriction_Automaton * FQL_Node_Factory<Restriction_Automaton>::create() {
-}
-
 FSHELL2_FQL_NAMESPACE_END;
-      FSHELL2_NAMESPACE_END;
-      
-#endif /* FSHELL2__FQL__AST__RESTRICTION_AUTOMATON_HPP */
+FSHELL2_NAMESPACE_END;
+
+#endif /* FSHELL2__FQL__AST__PATH_MONITOR_HPP */

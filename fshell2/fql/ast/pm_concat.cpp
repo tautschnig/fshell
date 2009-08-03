@@ -18,15 +18,15 @@
  * limitations under the License.
  *******************************************************************************/
 
-/*! \file fshell2/fql/ast/pathcov.cpp
+/*! \file fshell2/fql/ast/pm_concat.cpp
  * \brief TODO
  *
  * $Id$
  * \author Michael Tautschnig <tautschnig@forsyte.de>
- * \date   Tue Apr 21 23:48:55 CEST 2009 
+ * \date   Sun Aug  2 19:01:36 CEST 2009 
 */
 
-#include <fshell2/fql/ast/pathcov.hpp>
+#include <fshell2/fql/ast/pm_concat.hpp>
 #include <fshell2/config/annotations.hpp>
 
 #include <diagnostics/basic_exceptions/invalid_argument.hpp>
@@ -36,38 +36,31 @@
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Pathcov::Pathcov(Filter * filter, int bound, Predicate::preds_t * predicates) :
-	m_filter(filter), m_bound(bound), m_predicates(predicates) {
-	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_filter);
-	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_bound > 0);
+PM_Concat::PM_Concat(Path_Monitor * a, Path_Monitor * b) :
+	m_path_monitor_a(a), m_path_monitor_b(b) {
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_path_monitor_a);
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_path_monitor_b);
 }
 
-void Pathcov::accept(AST_Visitor * v) const {
+void PM_Concat::accept(AST_Visitor * v) const {
 	v->visit(this);
 }
 
-void Pathcov::accept(AST_Visitor const * v) const {
+void PM_Concat::accept(AST_Visitor const * v) const {
 	v->visit(this);
 }
 
-bool Pathcov::destroy() {
+bool PM_Concat::destroy() {
 	if (this->m_ref_count) return false;
 	Factory::get_instance().destroy(this);
-	m_filter->decr_ref_count();
-	m_filter->destroy();
-	if (m_predicates) {
-		for (Predicate::preds_t::iterator iter(m_predicates->begin());
-				iter != m_predicates->end(); ++iter) {
-			(*iter)->decr_ref_count();
-			(*iter)->destroy();
-		}
-		delete m_predicates;
-	}
+	m_path_monitor_a->decr_ref_count();
+	m_path_monitor_a->destroy();
+	m_path_monitor_b->decr_ref_count();
+	m_path_monitor_b->destroy();
 	return true;
 }
 
-Pathcov::~Pathcov() {
-	if (m_predicates) delete m_predicates;
+PM_Concat::~PM_Concat() {
 }
 
 FSHELL2_FQL_NAMESPACE_END;

@@ -18,15 +18,15 @@
  * limitations under the License.
  *******************************************************************************/
 
-/*! \file fshell2/fql/ast/pathcov.cpp
+/*! \file fshell2/fql/ast/filter_compose.cpp
  * \brief TODO
  *
  * $Id$
  * \author Michael Tautschnig <tautschnig@forsyte.de>
- * \date   Tue Apr 21 23:48:55 CEST 2009 
+ * \date   Sun Aug  2 19:03:19 CEST 2009 
 */
 
-#include <fshell2/fql/ast/pathcov.hpp>
+#include <fshell2/fql/ast/filter_compose.hpp>
 #include <fshell2/config/annotations.hpp>
 
 #include <diagnostics/basic_exceptions/invalid_argument.hpp>
@@ -36,38 +36,31 @@
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Pathcov::Pathcov(Filter * filter, int bound, Predicate::preds_t * predicates) :
-	m_filter(filter), m_bound(bound), m_predicates(predicates) {
-	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_filter);
-	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_bound > 0);
+Filter_Compose::Filter_Compose(Filter * a, Filter * b) :
+	m_filter_a(a), m_filter_b(b) {
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_filter_a);
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_filter_b);
 }
 
-void Pathcov::accept(AST_Visitor * v) const {
+void Filter_Compose::accept(AST_Visitor * v) const {
 	v->visit(this);
 }
 
-void Pathcov::accept(AST_Visitor const * v) const {
+void Filter_Compose::accept(AST_Visitor const * v) const {
 	v->visit(this);
 }
 
-bool Pathcov::destroy() {
+bool Filter_Compose::destroy() {
 	if (this->m_ref_count) return false;
 	Factory::get_instance().destroy(this);
-	m_filter->decr_ref_count();
-	m_filter->destroy();
-	if (m_predicates) {
-		for (Predicate::preds_t::iterator iter(m_predicates->begin());
-				iter != m_predicates->end(); ++iter) {
-			(*iter)->decr_ref_count();
-			(*iter)->destroy();
-		}
-		delete m_predicates;
-	}
+	m_filter_a->decr_ref_count();
+	m_filter_a->destroy();
+	m_filter_b->decr_ref_count();
+	m_filter_b->destroy();
 	return true;
 }
 
-Pathcov::~Pathcov() {
-	if (m_predicates) delete m_predicates;
+Filter_Compose::~Filter_Compose() {
 }
 
 FSHELL2_FQL_NAMESPACE_END;

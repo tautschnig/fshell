@@ -33,21 +33,24 @@
 #include <fshell2/config/annotations.hpp>
 
 #include <fshell2/fql/ast/ast_visitor.hpp>
-#include <fshell2/fql/ast/abstraction.hpp>
 #include <fshell2/fql/ast/edgecov.hpp>
-#include <fshell2/fql/ast/filter.hpp>
 #include <fshell2/fql/ast/filter_complement.hpp>
+#include <fshell2/fql/ast/filter_compose.hpp>
 #include <fshell2/fql/ast/filter_enclosing_scopes.hpp>
+#include <fshell2/fql/ast/filter_function.hpp>
 #include <fshell2/fql/ast/filter_intersection.hpp>
 #include <fshell2/fql/ast/filter_setminus.hpp>
 #include <fshell2/fql/ast/filter_union.hpp>
 #include <fshell2/fql/ast/pathcov.hpp>
+#include <fshell2/fql/ast/pm_alternative.hpp>
+#include <fshell2/fql/ast/pm_concat.hpp>
+#include <fshell2/fql/ast/pm_filter_adapter.hpp>
+#include <fshell2/fql/ast/pm_next.hpp>
+#include <fshell2/fql/ast/pm_repeat.hpp>
 #include <fshell2/fql/ast/predicate.hpp>
-#include <fshell2/fql/ast/primitive_filter.hpp>
 #include <fshell2/fql/ast/query.hpp>
-#include <fshell2/fql/ast/restriction_automaton.hpp>
+#include <fshell2/fql/ast/statecov.hpp>
 #include <fshell2/fql/ast/test_goal_sequence.hpp>
-#include <fshell2/fql/ast/test_goal_set.hpp>
 #include <fshell2/fql/ast/tgs_intersection.hpp>
 #include <fshell2/fql/ast/tgs_setminus.hpp>
 #include <fshell2/fql/ast/tgs_union.hpp>
@@ -91,70 +94,7 @@ class FQL_Node_Lt_Visitor : public AST_Visitor
 		 * \return cmp_lt( &a, &b )
 		*/
 		bool operator()(FQL_Node const& a, FQL_Node const& b);
-
-		/*! \{
-		 * \brief Visit a @ref fshell2::fql::Query
-		 * \param  n Query
-		 */
-		virtual void visit(Query const* n);
-		/*! \} */
-
-		/*! \{
-		 * \brief Visit a @ref fshell2::fql::Test_Goal_Sequence
-		 * \param  n Test_Goal_Sequence
-		 */
-		virtual void visit(Test_Goal_Sequence const* n);
-		/*! \} */
-
-		/*! \{
-		 * \brief Visit a @ref fshell2::fql::Restriction_Automaton
-		 * \param  n Restriction_Automaton
-		 */
-		virtual void visit(Restriction_Automaton const* n);
-		/*! \} */
-
-		/*! \{
-		 * \brief Visit a @ref fshell2::fql::Abstraction
-		 * \param  n Abstraction
-		 */
-		virtual void visit(Abstraction const* n);
-		/*! \} */
-
-		/*! \{
-		 * \brief Visit a @ref fshell2::fql::Filter_Identity
-		 * \param  n Filter_Identity
-		 */
-		virtual void visit(Filter_Identity const* n);
-		/*! \} */
-
-		/*! \{
-		 * \brief Visit a @ref fshell2::fql::Predicate
-		 * \param  n Predicate
-		 */
-		virtual void visit(Predicate const* n);
-		/*! \} */
-
-		/*! \{
-		 * \brief Visit a @ref fshell2::fql::TGS_Union
-		 * \param  n TGS_Union
-		 */
-		virtual void visit(TGS_Union const* n);
-		/*! \} */
-
-		/*! \{
-		 * \brief Visit a @ref fshell2::fql::TGS_Intersection
-		 * \param  n TGS_Intersection
-		 */
-		virtual void visit(TGS_Intersection const* n);
-		/*! \} */
-
-		/*! \{
-		 * \brief Visit a @ref fshell2::fql::TGS_Setminus
-		 * \param  n TGS_Setminus
-		 */
-		virtual void visit(TGS_Setminus const* n);
-		/*! \} */
-
+	
 		/*! \{
 		 * \brief Visit a @ref fshell2::fql::Edgecov
 		 * \param  n Edgecov
@@ -163,10 +103,10 @@ class FQL_Node_Lt_Visitor : public AST_Visitor
 		/*! \} */
 
 		/*! \{
-		 * \brief Visit a @ref fshell2::fql::Pathcov
-		 * \param  n Pathcov
+		 * \brief Visit a @ref fshell2::fql::Filter_Compose
+		 * \param  n Filter_Compose
 		 */
-		virtual void visit(Pathcov const* n);
+		virtual void visit(Filter_Compose const* n);
 		/*! \} */
 
 		/*! \{
@@ -177,10 +117,17 @@ class FQL_Node_Lt_Visitor : public AST_Visitor
 		/*! \} */
 
 		/*! \{
-		 * \brief Visit a @ref fshell2::fql::Filter_Union
-		 * \param  n Filter_Union
+		 * \brief Visit a @ref fshell2::fql::Filter_Enclosing_Scopes
+		 * \param  n Filter_Enclosing_Scopes
 		 */
-		virtual void visit(Filter_Union const* n);
+		virtual void visit(Filter_Enclosing_Scopes const* n);
+		/*! \} */
+
+		/*! \{
+		 * \brief Visit a @ref fshell2::fql::Filter_Function
+		 * \param  n Filter_Function
+		 */
+		virtual void visit(Filter_Function const* n);
 		/*! \} */
 
 		/*! \{
@@ -198,19 +145,103 @@ class FQL_Node_Lt_Visitor : public AST_Visitor
 		/*! \} */
 
 		/*! \{
-		 * \brief Visit a @ref fshell2::fql::Filter_Enclosing_Scopes
-		 * \param  n Filter_Enclosing_Scopes
+		 * \brief Visit a @ref fshell2::fql::Filter_Union
+		 * \param  n Filter_Union
 		 */
-		virtual void visit(Filter_Enclosing_Scopes const* n);
+		virtual void visit(Filter_Union const* n);
 		/*! \} */
 
 		/*! \{
-		 * \brief Visit a @ref fshell2::fql::Primitive_Filter
-		 * \param  n Primitive_Filter
+		 * \brief Visit a @ref fshell2::fql::PM_Alternative
+		 * \param  n PM_Alternative
 		 */
-		virtual void visit(Primitive_Filter const* n);
+		virtual void visit(PM_Alternative const* n);
 		/*! \} */
-	
+
+		/*! \{
+		 * \brief Visit a @ref fshell2::fql::PM_Concat
+		 * \param  n PM_Concat
+		 */
+		virtual void visit(PM_Concat const* n);
+		/*! \} */
+
+		/*! \{
+		 * \brief Visit a @ref fshell2::fql::PM_Filter_Adapter
+		 * \param  n PM_Filter_Adapter
+		 */
+		virtual void visit(PM_Filter_Adapter const* n);
+		/*! \} */
+
+		/*! \{
+		 * \brief Visit a @ref fshell2::fql::PM_Next
+		 * \param  n PM_Next
+		 */
+		virtual void visit(PM_Next const* n);
+		/*! \} */
+
+		/*! \{
+		 * \brief Visit a @ref fshell2::fql::PM_Repeat
+		 * \param  n PM_Repeat
+		 */
+		virtual void visit(PM_Repeat const* n);
+		/*! \} */
+
+		/*! \{
+		 * \brief Visit a @ref fshell2::fql::Pathcov
+		 * \param  n Pathcov
+		 */
+		virtual void visit(Pathcov const* n);
+		/*! \} */
+
+		/*! \{
+		 * \brief Visit a @ref fshell2::fql::Predicate
+		 * \param  n Predicate
+		 */
+		virtual void visit(Predicate const* n);
+		/*! \} */
+
+		/*! \{
+		 * \brief Visit a @ref fshell2::fql::Query
+		 * \param  n Query
+		 */
+		virtual void visit(Query const* n);
+		/*! \} */
+
+		/*! \{
+		 * \brief Visit a @ref fshell2::fql::Statecov
+		 * \param  n Statecov
+		 */
+		virtual void visit(Statecov const* n);
+		/*! \} */
+
+		/*! \{
+		 * \brief Visit a @ref fshell2::fql::TGS_Intersection
+		 * \param  n TGS_Intersection
+		 */
+		virtual void visit(TGS_Intersection const* n);
+		/*! \} */
+
+		/*! \{
+		 * \brief Visit a @ref fshell2::fql::TGS_Setminus
+		 * \param  n TGS_Setminus
+		 */
+		virtual void visit(TGS_Setminus const* n);
+		/*! \} */
+
+		/*! \{
+		 * \brief Visit a @ref fshell2::fql::TGS_Union
+		 * \param  n TGS_Union
+		 */
+		virtual void visit(TGS_Union const* n);
+		/*! \} */
+
+		/*! \{
+		 * \brief Visit a @ref fshell2::fql::Test_Goal_Sequence
+		 * \param  n Test_Goal_Sequence
+		 */
+		virtual void visit(Test_Goal_Sequence const* n);
+		/*! \} */
+
 	protected:
 		/*! \brief Compare an unidentified AST node to some other node of an AST
 		*/
@@ -249,49 +280,59 @@ class FQL_Node_Lt_Visitor : public AST_Visitor
 				 * compare function
 				 * \param n AST node
 				*/
-				virtual void visit(Query const* n);
-				virtual void visit(Test_Goal_Sequence const* n);
-				virtual void visit(Restriction_Automaton const* n);
-				virtual void visit(Abstraction const* n);
-				virtual void visit(Predicate const* n);
-				virtual void visit(TGS_Union const* n);
-				virtual void visit(TGS_Intersection const* n);
-				virtual void visit(TGS_Setminus const* n);
 				virtual void visit(Edgecov const* n);
-				virtual void visit(Pathcov const* n);
-				virtual void visit(Filter_Identity const* n);
 				virtual void visit(Filter_Complement const* n);
-				virtual void visit(Filter_Union const* n);
+				virtual void visit(Filter_Compose const* n);
+				virtual void visit(Filter_Enclosing_Scopes const* n);
+				virtual void visit(Filter_Function const* n);
 				virtual void visit(Filter_Intersection const* n);
 				virtual void visit(Filter_Setminus const* n);
-				virtual void visit(Filter_Enclosing_Scopes const* n);
-				virtual void visit(Primitive_Filter const* n);
+				virtual void visit(Filter_Union const* n);
+				virtual void visit(PM_Alternative const* n);
+				virtual void visit(PM_Concat const* n);
+				virtual void visit(PM_Filter_Adapter const* n);
+				virtual void visit(PM_Next const* n);
+				virtual void visit(PM_Repeat const* n);
+				virtual void visit(Pathcov const* n);
+				virtual void visit(Predicate const* n);
+				virtual void visit(Query const* n);
+				virtual void visit(Statecov const* n);
+				virtual void visit(TGS_Intersection const* n);
+				virtual void visit(TGS_Setminus const* n);
+				virtual void visit(TGS_Union const* n);
+				virtual void visit(Test_Goal_Sequence const* n);
 				/*! \} */
 
 			private:
+				virtual void visit(Edgecov const* n) const;
 				virtual void visit(FQL_Node const* n);
 				virtual void visit(FQL_Node const* n) const;
+				virtual void visit(Filter const* n);
+				virtual void visit(Filter const* n) const;
+				virtual void visit(Filter_Complement const* n) const;
+				virtual void visit(Filter_Compose const* n) const;
+				virtual void visit(Filter_Enclosing_Scopes const* n) const;
+				virtual void visit(Filter_Function const* n) const;
+				virtual void visit(Filter_Intersection const* n) const;
+				virtual void visit(Filter_Setminus const* n) const;
+				virtual void visit(Filter_Union const* n) const;
+				virtual void visit(PM_Alternative const* n) const;
+				virtual void visit(PM_Concat const* n) const;
+				virtual void visit(PM_Filter_Adapter const* n) const;
+				virtual void visit(PM_Next const* n) const;
+				virtual void visit(PM_Repeat const* n) const;
+				virtual void visit(Path_Monitor const* n);
+				virtual void visit(Path_Monitor const* n) const;
+				virtual void visit(Pathcov const* n) const;
+				virtual void visit(Predicate const* n) const;
 				virtual void visit(Query const* n) const;
+				virtual void visit(Statecov const* n) const;
+				virtual void visit(TGS_Intersection const* n) const;
+				virtual void visit(TGS_Setminus const* n) const;
+				virtual void visit(TGS_Union const* n) const;
 				virtual void visit(Test_Goal_Sequence const* n) const;
 				virtual void visit(Test_Goal_Set const* n);
 				virtual void visit(Test_Goal_Set const* n) const;
-				virtual void visit(Restriction_Automaton const* n) const;
-				virtual void visit(Abstraction const* n) const;
-				virtual void visit(Predicate const* n) const;
-				virtual void visit(TGS_Union const* n) const;
-				virtual void visit(TGS_Intersection const* n) const;
-				virtual void visit(TGS_Setminus const* n) const;
-				virtual void visit(Edgecov const* n) const;
-				virtual void visit(Pathcov const* n) const;
-				virtual void visit(Filter const* n);
-				virtual void visit(Filter const* n) const;
-				virtual void visit(Filter_Identity const* n) const;
-				virtual void visit(Filter_Complement const* n) const;
-				virtual void visit(Filter_Union const* n) const;
-				virtual void visit(Filter_Intersection const* n) const;
-				virtual void visit(Filter_Setminus const* n) const;
-				virtual void visit(Filter_Enclosing_Scopes const* n) const;
-				virtual void visit(Primitive_Filter const* n) const;
 
 				/*! \copydoc copy_constructor
 				*/
@@ -306,29 +347,35 @@ class FQL_Node_Lt_Visitor : public AST_Visitor
 		FQL_Node const * m_other;
 		bool m_lt;
 
+		virtual void visit(Edgecov const* n) const;
 		virtual void visit(FQL_Node const* n);
 		virtual void visit(FQL_Node const* n) const;
+		virtual void visit(Filter const* n);
+		virtual void visit(Filter const* n) const;
+		virtual void visit(Filter_Complement const* n) const;
+		virtual void visit(Filter_Compose const* n) const;
+		virtual void visit(Filter_Enclosing_Scopes const* n) const;
+		virtual void visit(Filter_Function const* n) const;
+		virtual void visit(Filter_Intersection const* n) const;
+		virtual void visit(Filter_Setminus const* n) const;
+		virtual void visit(Filter_Union const* n) const;
+		virtual void visit(PM_Alternative const* n) const;
+		virtual void visit(PM_Concat const* n) const;
+		virtual void visit(PM_Filter_Adapter const* n) const;
+		virtual void visit(PM_Next const* n) const;
+		virtual void visit(PM_Repeat const* n) const;
+		virtual void visit(Path_Monitor const* n);
+		virtual void visit(Path_Monitor const* n) const;
+		virtual void visit(Pathcov const* n) const;
+		virtual void visit(Predicate const* n) const;
 		virtual void visit(Query const* n) const;
+		virtual void visit(Statecov const* n) const;
+		virtual void visit(TGS_Intersection const* n) const;
+		virtual void visit(TGS_Setminus const* n) const;
+		virtual void visit(TGS_Union const* n) const;
 		virtual void visit(Test_Goal_Sequence const* n) const;
 		virtual void visit(Test_Goal_Set const* n);
 		virtual void visit(Test_Goal_Set const* n) const;
-		virtual void visit(Restriction_Automaton const* n) const;
-		virtual void visit(Abstraction const* n) const;
-		virtual void visit(Predicate const* n) const;
-		virtual void visit(TGS_Union const* n) const;
-		virtual void visit(TGS_Intersection const* n) const;
-		virtual void visit(TGS_Setminus const* n) const;
-		virtual void visit(Edgecov const* n) const;
-		virtual void visit(Pathcov const* n) const;
-		virtual void visit(Filter const* n);
-		virtual void visit(Filter const* n) const;
-		virtual void visit(Filter_Identity const* n) const;
-		virtual void visit(Filter_Complement const* n) const;
-		virtual void visit(Filter_Union const* n) const;
-		virtual void visit(Filter_Intersection const* n) const;
-		virtual void visit(Filter_Setminus const* n) const;
-		virtual void visit(Filter_Enclosing_Scopes const* n) const;
-		virtual void visit(Primitive_Filter const* n) const;
 
 		/*! \copydoc copy_constructor
 		*/
@@ -350,6 +397,15 @@ inline bool FQL_Node_Lt_Visitor::cmp_lt(FQL_Node const* a, FQL_Node const* b)
 
 template<>
 inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter const* a, Filter const* b)
+{
+	if (a == b) return false;
+	m_other = b;
+	a->accept(this);
+	return m_lt;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Path_Monitor const* a, Path_Monitor const* b)
 {
 	if (a == b) return false;
 	m_other = b;
@@ -423,742 +479,109 @@ void FQL_Node_Lt_Visitor::Compare_To_Visitor<T>::visit( CL const* n ) \
 	m_inner_lt = m_comparison.cmp_lt< T, CL >( m_other_node, n ); \
 } DUMMY_FUNC
 
-/*
-this is the order we use (smallest element is Query), idea is set inclusion over test goal sets
-Query
-Test_Goal_Sequence
-Restriction_Automaton
-TGS_Setminus
-TGS_Intersection
-TGS_Union
-Pathcov
+/* we use a simple lexicographic order (using class names)
 Edgecov
-Abstraction
-Predicate
-Filter_Identity
-Filter_Setminus
-Filter_Intersection
-Filter_Union
-Filter_Enclosing_Scopes
 Filter_Complement
-Primitive_Filter
+Filter_Compose
+Filter_Enclosing_Scopes
+Filter_Function
+Filter_Intersection
+Filter_Setminus
+Filter_Union
+PM_Alternative
+PM_Concat
+PM_Filter_Adapter
+PM_Next
+PM_Repeat
+Pathcov
+Predicate
+Query
+Statecov
+TGS_Intersection
+TGS_Setminus
+TGS_Union
+Test_Goal_Sequence
 */
 
 /*
-Scripted build:
-for c in Query Test_Goal_Sequence Restriction_Automaton TGS_Setminus TGS_Intersection TGS_Union Pathcov Edgecov Abstraction Predicate Filter_Identity Filter_Setminus Filter_Intersection Filter_Union Filter_Enclosing_Scopes Filter_Complement Primitive_Filter ; do res="false" ; for c2 in Query Test_Goal_Sequence Restriction_Automaton TGS_Setminus TGS_Intersection TGS_Union Pathcov Edgecov Abstraction Predicate Filter_Identity Filter_Setminus Filter_Intersection Filter_Union Filter_Enclosing_Scopes Filter_Complement Primitive_Filter ; do echo -e "template<>\ninline bool FQL_Node_Lt_Visitor::cmp_lt($c const* a, $c2 const* b)\n{"; if [ "$c" = "$c2" ] ; then res="true" ; else echo -e "\treturn $res;" ; fi ; echo -e "}\n" ; done ; echo -e "LT_COMPARISON_BUILDER($c);\n" ; done
+Original scripted build:
+for c in Edgecov Filter_Complement Filter_Compose Filter_Enclosing_Scopes Filter_Function Filter_Intersection Filter_Setminus Filter_Union PM_Alternative PM_Concat PM_Filter_Adapter PM_Next PM_Repeat Pathcov Predicate Query Statecov TGS_Intersection TGS_Setminus TGS_Union Test_Goal_Sequence ; do res="false" ; for c2 in Edgecov Filter_Complement Filter_Compose Filter_Enclosing_Scopes Filter_Function Filter_Intersection Filter_Setminus Filter_Union PM_Alternative PM_Concat PM_Filter_Adapter PM_Next PM_Repeat Pathcov Predicate Query Statecov TGS_Intersection TGS_Setminus TGS_Union Test_Goal_Sequence ; do echo -e "template<>\ninline bool FQL_Node_Lt_Visitor::cmp_lt($c const* a, $c2 const* b)\n{"; if [ "$c" = "$c2" ] ; then res="true" ; else echo -e "\treturn $res;" ; fi ; echo -e "}\n" ; done ; echo -e "LT_COMPARISON_BUILDER($c);\n" ; done
 */
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Restriction_Automaton const* a, Query const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, Edgecov const* b)
 {
 	return false;
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Restriction_Automaton const* a, Test_Goal_Sequence const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, Filter_Complement const* b)
 {
 	return false;
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Restriction_Automaton const* a, Restriction_Automaton const* b)
-{
-	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Restriction_Automaton const* a, TGS_Setminus const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Restriction_Automaton const* a, TGS_Intersection const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Restriction_Automaton const* a, TGS_Union const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Restriction_Automaton const* a, Pathcov const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Restriction_Automaton const* a, Edgecov const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Restriction_Automaton const* a, Abstraction const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Restriction_Automaton const* a, Predicate const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Restriction_Automaton const* a, Filter_Identity const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Restriction_Automaton const* a, Filter_Setminus const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Restriction_Automaton const* a, Filter_Intersection const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Restriction_Automaton const* a, Filter_Union const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Restriction_Automaton const* a, Filter_Enclosing_Scopes const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Restriction_Automaton const* a, Filter_Complement const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Restriction_Automaton const* a, Primitive_Filter const* b)
-{
-	return true;
-}
-
-LT_COMPARISON_BUILDER(Restriction_Automaton);
-
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, Query const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, Filter_Compose const* b)
 {
 	return false;
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, Test_Goal_Sequence const* b)
-{
-	if (a->get_sequence().size() != b->get_sequence().size())
-		return a->get_sequence().size() < b->get_sequence().size();
-	for (Test_Goal_Sequence::seq_t::const_iterator itera(a->get_sequence().begin()),
-			iterb(b->get_sequence().begin()); itera != a->get_sequence().end();
-			++itera, ++iterb) {
-		if (itera->first != iterb->first) {
-			if (itera->first && !iterb->first) return true;
-			if (!itera->first && iterb->first) return false;
-
-			if (cmp_lt(itera->first, iterb->first)) return true;
-			if (cmp_lt(iterb->first, itera->first)) return false;
-		}
-			
-		if (cmp_lt(itera->second, iterb->second)) return true;
-		if (cmp_lt(iterb->second, itera->second)) return false;
-	}
-		
-	if (a->get_suffix_automaton() != b->get_suffix_automaton()) {
-		if (a->get_suffix_automaton() && !b->get_suffix_automaton()) return true;
-		if (!a->get_suffix_automaton() && b->get_suffix_automaton()) return false;
-
-		if (cmp_lt(a->get_suffix_automaton(), b->get_suffix_automaton())) return true;
-		if (cmp_lt(b->get_suffix_automaton(), a->get_suffix_automaton())) return false;
-	}
-
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, Restriction_Automaton const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, TGS_Setminus const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, TGS_Intersection const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, TGS_Union const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, Pathcov const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, Edgecov const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, Abstraction const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, Predicate const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, Filter_Identity const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, Filter_Setminus const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, Filter_Intersection const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, Filter_Union const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, Filter_Enclosing_Scopes const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, Filter_Complement const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, Primitive_Filter const* b)
-{
-	return true;
-}
-
-LT_COMPARISON_BUILDER(Test_Goal_Sequence);
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, Query const* b)
-{
-	if (a->get_prefix() != b->get_prefix()) {
-		if (a->get_prefix() && !b->get_prefix()) return true;
-		if (!a->get_prefix() && b->get_prefix()) return false;
-
-		if (cmp_lt(a->get_prefix(), b->get_prefix())) return true;
-		if (cmp_lt(b->get_prefix(), a->get_prefix())) return false;
-	}
-
-	if (cmp_lt(a->get_cover(), b->get_cover())) return true;
-	if (cmp_lt(b->get_cover(), a->get_cover())) return false;
-	
-	if (a->get_passing() != b->get_passing()) {
-		if (a->get_passing() && !b->get_passing()) return true;
-		if (!a->get_passing() && b->get_passing()) return false;
-
-		if (cmp_lt(a->get_passing(), b->get_passing())) return true;
-		if (cmp_lt(b->get_passing(), a->get_passing())) return false;
-	}
-
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, Test_Goal_Sequence const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, Restriction_Automaton const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, TGS_Setminus const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, TGS_Intersection const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, TGS_Union const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, Pathcov const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, Edgecov const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, Abstraction const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, Predicate const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, Filter_Identity const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, Filter_Setminus const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, Filter_Intersection const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, Filter_Union const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, Filter_Enclosing_Scopes const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, Filter_Complement const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, Primitive_Filter const* b)
-{
-	return true;
-}
-
-LT_COMPARISON_BUILDER(Query);
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, Query const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, Filter_Enclosing_Scopes const* b)
 {
 	return false;
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, Test_Goal_Sequence const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, Filter_Function const* b)
 {
 	return false;
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, Restriction_Automaton const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, Filter_Intersection const* b)
 {
 	return false;
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, TGS_Setminus const* b)
-{
-	if (cmp_lt(a->get_tgs_a(), b->get_tgs_a())) return true;
-	if (cmp_lt(b->get_tgs_a(), a->get_tgs_a())) return false;
-
-	return !cmp_lt(a->get_tgs_b(), b->get_tgs_b());
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, TGS_Intersection const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, TGS_Union const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, Pathcov const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, Edgecov const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, Abstraction const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, Predicate const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, Filter_Identity const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, Filter_Setminus const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, Filter_Intersection const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, Filter_Union const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, Filter_Enclosing_Scopes const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, Filter_Complement const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, Primitive_Filter const* b)
-{
-	return true;
-}
-
-LT_COMPARISON_BUILDER(TGS_Setminus);
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, Query const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, Filter_Setminus const* b)
 {
 	return false;
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, Test_Goal_Sequence const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, Filter_Union const* b)
 {
 	return false;
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, Restriction_Automaton const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, PM_Alternative const* b)
 {
 	return false;
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, TGS_Setminus const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, PM_Concat const* b)
 {
 	return false;
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, TGS_Intersection const* b)
-{
-	if (cmp_lt(a->get_tgs_a(), b->get_tgs_a())) return true;
-	if (cmp_lt(b->get_tgs_a(), a->get_tgs_a())) return false;
-
-	return cmp_lt(a->get_tgs_b(), b->get_tgs_b());
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, TGS_Union const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, Pathcov const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, Edgecov const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, Abstraction const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, Predicate const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, Filter_Identity const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, Filter_Setminus const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, Filter_Intersection const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, Filter_Union const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, Filter_Enclosing_Scopes const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, Filter_Complement const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, Primitive_Filter const* b)
-{
-	return true;
-}
-
-LT_COMPARISON_BUILDER(TGS_Intersection);
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, Query const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, PM_Filter_Adapter const* b)
 {
 	return false;
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, Test_Goal_Sequence const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, PM_Next const* b)
 {
 	return false;
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, Restriction_Automaton const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, TGS_Setminus const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, TGS_Intersection const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, TGS_Union const* b)
-{
-	if (cmp_lt(a->get_tgs_a(), b->get_tgs_a())) return true;
-	if (cmp_lt(b->get_tgs_a(), a->get_tgs_a())) return false;
-
-	return cmp_lt(a->get_tgs_b(), b->get_tgs_b());
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, Pathcov const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, Edgecov const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, Abstraction const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, Predicate const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, Filter_Identity const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, Filter_Setminus const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, Filter_Intersection const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, Filter_Union const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, Filter_Enclosing_Scopes const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, Filter_Complement const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, Primitive_Filter const* b)
-{
-	return true;
-}
-
-LT_COMPARISON_BUILDER(TGS_Union);
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, Query const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, Test_Goal_Sequence const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, Restriction_Automaton const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, TGS_Setminus const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, TGS_Intersection const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, TGS_Union const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, PM_Repeat const* b)
 {
 	return false;
 }
@@ -1170,61 +593,44 @@ inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, Pathcov const* b)
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, Edgecov const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, Abstraction const* b)
-{
-	return false;
-}
-
-template<>
 inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, Predicate const* b)
 {
-	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+	// simple pointer comparison
+	return a->get_expr() < b->get_expr();
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, Filter_Identity const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, Query const* b)
 {
 	return true;
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, Filter_Setminus const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, Statecov const* b)
 {
 	return true;
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, Filter_Intersection const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, TGS_Intersection const* b)
 {
 	return true;
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, Filter_Union const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, TGS_Setminus const* b)
 {
 	return true;
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, Filter_Enclosing_Scopes const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, TGS_Union const* b)
 {
 	return true;
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, Filter_Complement const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, Primitive_Filter const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, Test_Goal_Sequence const* b)
 {
 	return true;
 }
@@ -1232,60 +638,18 @@ inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, Primitive_Filter con
 LT_COMPARISON_BUILDER(Predicate);
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Abstraction const* a, Query const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, Edgecov const* b)
 {
-	return false;
-}
+	if (cmp_lt(a->get_filter(), b->get_filter())) return true;
+	if (cmp_lt(b->get_filter(), a->get_filter())) return false;
 
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Abstraction const* a, Test_Goal_Sequence const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Abstraction const* a, Restriction_Automaton const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Abstraction const* a, TGS_Setminus const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Abstraction const* a, TGS_Intersection const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Abstraction const* a, TGS_Union const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Abstraction const* a, Pathcov const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Abstraction const* a, Edgecov const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Abstraction const* a, Abstraction const* b)
-{
-	if (a->get_predicates().size() != b->get_predicates().size())
-		return a->get_predicates().size() < b->get_predicates().size();
-	for (Abstraction::preds_t::const_iterator itera(a->get_predicates().begin()),
-			iterb(b->get_predicates().begin()); itera != a->get_predicates().end();
+	if (!b->get_predicates()) return false;
+	if (!a->get_predicates()) return true;
+	
+	if (a->get_predicates()->size() != b->get_predicates()->size())
+		return a->get_predicates()->size() < b->get_predicates()->size();
+	for (Predicate::preds_t::const_iterator itera(a->get_predicates()->begin()),
+			iterb(b->get_predicates()->begin()); itera != a->get_predicates()->end();
 			++itera, ++iterb) {
 		if (*itera == *iterb) continue;
 		if (cmp_lt(*itera, *iterb)) return true;
@@ -1295,248 +659,13 @@ inline bool FQL_Node_Lt_Visitor::cmp_lt(Abstraction const* a, Abstraction const*
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Abstraction const* a, Predicate const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, Filter_Complement const* b)
 {
 	return true;
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Abstraction const* a, Filter_Identity const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Abstraction const* a, Filter_Setminus const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Abstraction const* a, Filter_Intersection const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Abstraction const* a, Filter_Union const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Abstraction const* a, Filter_Enclosing_Scopes const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Abstraction const* a, Filter_Complement const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Abstraction const* a, Primitive_Filter const* b)
-{
-	return true;
-}
-
-LT_COMPARISON_BUILDER(Abstraction);
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, Query const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, Test_Goal_Sequence const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, Restriction_Automaton const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, TGS_Setminus const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, TGS_Intersection const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, TGS_Union const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, Pathcov const* b)
-{
-	if (cmp_lt(a->get_abstraction(), b->get_abstraction())) return true;
-	if (cmp_lt(b->get_abstraction(), a->get_abstraction())) return false;
-
-	if (cmp_lt(a->get_filter(), b->get_filter())) return true;
-	if (cmp_lt(b->get_filter(), a->get_filter())) return false;
-	
-	return (a->get_bound() < b->get_bound());
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, Edgecov const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, Abstraction const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, Predicate const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, Filter_Identity const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, Filter_Setminus const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, Filter_Intersection const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, Filter_Union const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, Filter_Enclosing_Scopes const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, Filter_Complement const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, Primitive_Filter const* b)
-{
-	return true;
-}
-
-LT_COMPARISON_BUILDER(Pathcov);
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, Query const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, Test_Goal_Sequence const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, Restriction_Automaton const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, TGS_Setminus const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, TGS_Intersection const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, TGS_Union const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, Pathcov const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, Edgecov const* b)
-{
-	if (cmp_lt(a->get_abstraction(), b->get_abstraction())) return true;
-	if (cmp_lt(b->get_abstraction(), a->get_abstraction())) return false;
-
-	return cmp_lt(a->get_filter(), b->get_filter());
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, Abstraction const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, Predicate const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, Filter_Identity const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, Filter_Setminus const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, Filter_Intersection const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, Filter_Union const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, Filter_Compose const* b)
 {
 	return true;
 }
@@ -1548,13 +677,103 @@ inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, Filter_Enclosing_Scope
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, Filter_Complement const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, Filter_Function const* b)
 {
 	return true;
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, Primitive_Filter const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, Filter_Intersection const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, Filter_Setminus const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, Filter_Union const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, PM_Alternative const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, PM_Concat const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, PM_Filter_Adapter const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, PM_Next const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, PM_Repeat const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, Pathcov const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, Predicate const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, Query const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, Statecov const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, TGS_Intersection const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, TGS_Setminus const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, TGS_Union const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, Test_Goal_Sequence const* b)
 {
 	return true;
 }
@@ -1562,621 +781,7 @@ inline bool FQL_Node_Lt_Visitor::cmp_lt(Edgecov const* a, Primitive_Filter const
 LT_COMPARISON_BUILDER(Edgecov);
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Identity const* a, Query const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Identity const* a, Test_Goal_Sequence const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Identity const* a, Restriction_Automaton const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Identity const* a, TGS_Setminus const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Identity const* a, TGS_Intersection const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Identity const* a, TGS_Union const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Identity const* a, Pathcov const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Identity const* a, Edgecov const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Identity const* a, Abstraction const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Identity const* a, Predicate const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Identity const* a, Filter_Identity const* b)
-{
-	// kind of a singleton
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Identity const* a, Filter_Setminus const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Identity const* a, Filter_Intersection const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Identity const* a, Filter_Union const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Identity const* a, Filter_Enclosing_Scopes const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Identity const* a, Filter_Complement const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Identity const* a, Primitive_Filter const* b)
-{
-	return true;
-}
-
-LT_COMPARISON_BUILDER(Filter_Identity);
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, Query const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, Test_Goal_Sequence const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, Restriction_Automaton const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, TGS_Setminus const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, TGS_Intersection const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, TGS_Union const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, Pathcov const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, Edgecov const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, Abstraction const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, Predicate const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, Filter_Identity const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, Filter_Setminus const* b)
-{
-	if (cmp_lt(a->get_filter_a(), b->get_filter_a())) return true;
-	if (cmp_lt(b->get_filter_a(), a->get_filter_a())) return false;
-
-	return !cmp_lt(a->get_filter_b(), b->get_filter_b());
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, Filter_Intersection const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, Filter_Union const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, Filter_Enclosing_Scopes const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, Filter_Complement const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, Primitive_Filter const* b)
-{
-	return true;
-}
-
-LT_COMPARISON_BUILDER(Filter_Setminus);
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, Query const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, Test_Goal_Sequence const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, Restriction_Automaton const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, TGS_Setminus const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, TGS_Intersection const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, TGS_Union const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, Pathcov const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, Edgecov const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, Abstraction const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, Predicate const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, Filter_Identity const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, Filter_Setminus const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, Filter_Intersection const* b)
-{
-	if (cmp_lt(a->get_filter_a(), b->get_filter_a())) return true;
-	if (cmp_lt(b->get_filter_a(), a->get_filter_a())) return false;
-
-	return cmp_lt(a->get_filter_b(), b->get_filter_b());
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, Filter_Union const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, Filter_Enclosing_Scopes const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, Filter_Complement const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, Primitive_Filter const* b)
-{
-	return true;
-}
-
-LT_COMPARISON_BUILDER(Filter_Intersection);
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, Query const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, Test_Goal_Sequence const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, Restriction_Automaton const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, TGS_Setminus const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, TGS_Intersection const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, TGS_Union const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, Pathcov const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, Edgecov const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, Abstraction const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, Predicate const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, Filter_Identity const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, Filter_Setminus const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, Filter_Intersection const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, Filter_Union const* b)
-{
-	if (cmp_lt(a->get_filter_a(), b->get_filter_a())) return true;
-	if (cmp_lt(b->get_filter_a(), a->get_filter_a())) return false;
-
-	return cmp_lt(a->get_filter_b(), b->get_filter_b());
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, Filter_Enclosing_Scopes const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, Filter_Complement const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, Primitive_Filter const* b)
-{
-	return true;
-}
-
-LT_COMPARISON_BUILDER(Filter_Union);
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, Query const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, Test_Goal_Sequence const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, Restriction_Automaton const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, TGS_Setminus const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, TGS_Intersection const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, TGS_Union const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, Pathcov const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, Edgecov const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, Abstraction const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, Predicate const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, Filter_Identity const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, Filter_Setminus const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, Filter_Intersection const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, Filter_Union const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, Filter_Enclosing_Scopes const* b)
-{
-	return cmp_lt(a->get_filter(), b->get_filter());
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, Filter_Complement const* b)
-{
-	return true;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, Primitive_Filter const* b)
-{
-	return true;
-}
-
-LT_COMPARISON_BUILDER(Filter_Enclosing_Scopes);
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, Query const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, Test_Goal_Sequence const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, Restriction_Automaton const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, TGS_Setminus const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, TGS_Intersection const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, TGS_Union const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, Pathcov const* b)
-{
-	return false;
-}
-
-template<>
 inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, Edgecov const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, Abstraction const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, Predicate const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, Filter_Identity const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, Filter_Setminus const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, Filter_Intersection const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, Filter_Union const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, Filter_Enclosing_Scopes const* b)
 {
 	return false;
 }
@@ -2188,7 +793,115 @@ inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, Filter_Compl
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, Primitive_Filter const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, Filter_Compose const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, Filter_Enclosing_Scopes const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, Filter_Function const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, Filter_Intersection const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, Filter_Setminus const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, Filter_Union const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, PM_Alternative const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, PM_Concat const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, PM_Filter_Adapter const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, PM_Next const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, PM_Repeat const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, Pathcov const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, Predicate const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, Query const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, Statecov const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, TGS_Intersection const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, TGS_Setminus const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, TGS_Union const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, Test_Goal_Sequence const* b)
 {
 	return true;
 }
@@ -2196,108 +909,296 @@ inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Complement const* a, Primitive_Fi
 LT_COMPARISON_BUILDER(Filter_Complement);
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Primitive_Filter const* a, Query const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Compose const* a, Edgecov const* b)
 {
 	return false;
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Primitive_Filter const* a, Test_Goal_Sequence const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Compose const* a, Filter_Complement const* b)
 {
 	return false;
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Primitive_Filter const* a, Restriction_Automaton const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Compose const* a, Filter_Compose const* b)
+{
+	if (cmp_lt(a->get_filter_a(), b->get_filter_a())) return true;
+	if (cmp_lt(b->get_filter_a(), a->get_filter_a())) return false;
+
+	return !cmp_lt(a->get_filter_b(), b->get_filter_b());
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Compose const* a, Filter_Enclosing_Scopes const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Compose const* a, Filter_Function const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Compose const* a, Filter_Intersection const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Compose const* a, Filter_Setminus const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Compose const* a, Filter_Union const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Compose const* a, PM_Alternative const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Compose const* a, PM_Concat const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Compose const* a, PM_Filter_Adapter const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Compose const* a, PM_Next const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Compose const* a, PM_Repeat const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Compose const* a, Pathcov const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Compose const* a, Predicate const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Compose const* a, Query const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Compose const* a, Statecov const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Compose const* a, TGS_Intersection const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Compose const* a, TGS_Setminus const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Compose const* a, TGS_Union const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Compose const* a, Test_Goal_Sequence const* b)
+{
+	return true;
+}
+
+LT_COMPARISON_BUILDER(Filter_Compose);
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, Edgecov const* b)
 {
 	return false;
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Primitive_Filter const* a, TGS_Setminus const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, Filter_Complement const* b)
 {
 	return false;
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Primitive_Filter const* a, TGS_Intersection const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, Filter_Compose const* b)
 {
 	return false;
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Primitive_Filter const* a, TGS_Union const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, Filter_Enclosing_Scopes const* b)
+{
+	return cmp_lt(a->get_filter(), b->get_filter());
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, Filter_Function const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, Filter_Intersection const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, Filter_Setminus const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, Filter_Union const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, PM_Alternative const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, PM_Concat const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, PM_Filter_Adapter const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, PM_Next const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, PM_Repeat const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, Pathcov const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, Predicate const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, Query const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, Statecov const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, TGS_Intersection const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, TGS_Setminus const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, TGS_Union const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Enclosing_Scopes const* a, Test_Goal_Sequence const* b)
+{
+	return true;
+}
+
+LT_COMPARISON_BUILDER(Filter_Enclosing_Scopes);
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Function const* a, Edgecov const* b)
 {
 	return false;
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Primitive_Filter const* a, Pathcov const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Function const* a, Filter_Complement const* b)
 {
 	return false;
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Primitive_Filter const* a, Edgecov const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Function const* a, Filter_Compose const* b)
 {
 	return false;
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Primitive_Filter const* a, Abstraction const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Function const* a, Filter_Enclosing_Scopes const* b)
 {
 	return false;
 }
 
 template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Primitive_Filter const* a, Predicate const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Primitive_Filter const* a, Filter_Identity const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Primitive_Filter const* a, Filter_Setminus const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Primitive_Filter const* a, Filter_Intersection const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Primitive_Filter const* a, Filter_Union const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Primitive_Filter const* a, Filter_Enclosing_Scopes const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Primitive_Filter const* a, Filter_Complement const* b)
-{
-	return false;
-}
-
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Primitive_Filter const* a, Primitive_Filter const* b)
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Function const* a, Filter_Function const* b)
 {
 	if (a->get_filter_type() != b->get_filter_type())
 		return a->get_filter_type() < b->get_filter_type();
 
 	switch (a->get_filter_type()) {
+		case F_IDENTITY:
 		case F_CALLS:
 		case F_BASICBLOCKENTRY:
 		case F_CONDITIONEDGE:
@@ -2329,26 +1230,2155 @@ inline bool FQL_Node_Lt_Visitor::cmp_lt(Primitive_Filter const* a, Primitive_Fil
 	return false;
 }
 
-LT_COMPARISON_BUILDER(Primitive_Filter);
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Function const* a, Filter_Intersection const* b)
+{
+	return true;
+}
 
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Function const* a, Filter_Setminus const* b)
+{
+	return true;
+}
 
-LT_VISIT_BUILDER_TPL(Query);
-LT_VISIT_BUILDER_TPL(Test_Goal_Sequence);
-LT_VISIT_BUILDER_TPL(Restriction_Automaton);
-LT_VISIT_BUILDER_TPL(TGS_Setminus);
-LT_VISIT_BUILDER_TPL(TGS_Intersection);
-LT_VISIT_BUILDER_TPL(TGS_Union);
-LT_VISIT_BUILDER_TPL(Pathcov);
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Function const* a, Filter_Union const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Function const* a, PM_Alternative const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Function const* a, PM_Concat const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Function const* a, PM_Filter_Adapter const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Function const* a, PM_Next const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Function const* a, PM_Repeat const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Function const* a, Pathcov const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Function const* a, Predicate const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Function const* a, Query const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Function const* a, Statecov const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Function const* a, TGS_Intersection const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Function const* a, TGS_Setminus const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Function const* a, TGS_Union const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Function const* a, Test_Goal_Sequence const* b)
+{
+	return true;
+}
+
+LT_COMPARISON_BUILDER(Filter_Function);
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, Edgecov const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, Filter_Complement const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, Filter_Compose const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, Filter_Enclosing_Scopes const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, Filter_Function const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, Filter_Intersection const* b)
+{
+	if (cmp_lt(a->get_filter_a(), b->get_filter_a())) return true;
+	if (cmp_lt(b->get_filter_a(), a->get_filter_a())) return false;
+
+	return cmp_lt(a->get_filter_b(), b->get_filter_b());
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, Filter_Setminus const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, Filter_Union const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, PM_Alternative const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, PM_Concat const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, PM_Filter_Adapter const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, PM_Next const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, PM_Repeat const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, Pathcov const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, Predicate const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, Query const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, Statecov const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, TGS_Intersection const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, TGS_Setminus const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, TGS_Union const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Intersection const* a, Test_Goal_Sequence const* b)
+{
+	return true;
+}
+
+LT_COMPARISON_BUILDER(Filter_Intersection);
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, Edgecov const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, Filter_Complement const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, Filter_Compose const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, Filter_Enclosing_Scopes const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, Filter_Function const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, Filter_Intersection const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, Filter_Setminus const* b)
+{
+	if (cmp_lt(a->get_filter_a(), b->get_filter_a())) return true;
+	if (cmp_lt(b->get_filter_a(), a->get_filter_a())) return false;
+
+	return !cmp_lt(a->get_filter_b(), b->get_filter_b());
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, Filter_Union const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, PM_Alternative const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, PM_Concat const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, PM_Filter_Adapter const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, PM_Next const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, PM_Repeat const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, Pathcov const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, Predicate const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, Query const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, Statecov const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, TGS_Intersection const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, TGS_Setminus const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, TGS_Union const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Setminus const* a, Test_Goal_Sequence const* b)
+{
+	return true;
+}
+
+LT_COMPARISON_BUILDER(Filter_Setminus);
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, Edgecov const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, Filter_Complement const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, Filter_Compose const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, Filter_Enclosing_Scopes const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, Filter_Function const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, Filter_Intersection const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, Filter_Setminus const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, Filter_Union const* b)
+{
+	if (cmp_lt(a->get_filter_a(), b->get_filter_a())) return true;
+	if (cmp_lt(b->get_filter_a(), a->get_filter_a())) return false;
+
+	return cmp_lt(a->get_filter_b(), b->get_filter_b());
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, PM_Alternative const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, PM_Concat const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, PM_Filter_Adapter const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, PM_Next const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, PM_Repeat const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, Pathcov const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, Predicate const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, Query const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, Statecov const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, TGS_Intersection const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, TGS_Setminus const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, TGS_Union const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Filter_Union const* a, Test_Goal_Sequence const* b)
+{
+	return true;
+}
+
+LT_COMPARISON_BUILDER(Filter_Union);
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Alternative const* a, Edgecov const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Alternative const* a, Filter_Complement const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Alternative const* a, Filter_Compose const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Alternative const* a, Filter_Enclosing_Scopes const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Alternative const* a, Filter_Function const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Alternative const* a, Filter_Intersection const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Alternative const* a, Filter_Setminus const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Alternative const* a, Filter_Union const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Alternative const* a, PM_Alternative const* b)
+{
+	if (cmp_lt(a->get_path_monitor_a(), b->get_path_monitor_a())) return true;
+	if (cmp_lt(b->get_path_monitor_a(), a->get_path_monitor_a())) return false;
+
+	return cmp_lt(a->get_path_monitor_b(), b->get_path_monitor_b());
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Alternative const* a, PM_Concat const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Alternative const* a, PM_Filter_Adapter const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Alternative const* a, PM_Next const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Alternative const* a, PM_Repeat const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Alternative const* a, Pathcov const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Alternative const* a, Predicate const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Alternative const* a, Query const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Alternative const* a, Statecov const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Alternative const* a, TGS_Intersection const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Alternative const* a, TGS_Setminus const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Alternative const* a, TGS_Union const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Alternative const* a, Test_Goal_Sequence const* b)
+{
+	return true;
+}
+
+LT_COMPARISON_BUILDER(PM_Alternative);
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Concat const* a, Edgecov const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Concat const* a, Filter_Complement const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Concat const* a, Filter_Compose const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Concat const* a, Filter_Enclosing_Scopes const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Concat const* a, Filter_Function const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Concat const* a, Filter_Intersection const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Concat const* a, Filter_Setminus const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Concat const* a, Filter_Union const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Concat const* a, PM_Alternative const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Concat const* a, PM_Concat const* b)
+{
+	if (cmp_lt(a->get_path_monitor_a(), b->get_path_monitor_a())) return true;
+	if (cmp_lt(b->get_path_monitor_a(), a->get_path_monitor_a())) return false;
+
+	return cmp_lt(a->get_path_monitor_b(), b->get_path_monitor_b());
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Concat const* a, PM_Filter_Adapter const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Concat const* a, PM_Next const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Concat const* a, PM_Repeat const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Concat const* a, Pathcov const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Concat const* a, Predicate const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Concat const* a, Query const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Concat const* a, Statecov const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Concat const* a, TGS_Intersection const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Concat const* a, TGS_Setminus const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Concat const* a, TGS_Union const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Concat const* a, Test_Goal_Sequence const* b)
+{
+	return true;
+}
+
+LT_COMPARISON_BUILDER(PM_Concat);
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Filter_Adapter const* a, Edgecov const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Filter_Adapter const* a, Filter_Complement const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Filter_Adapter const* a, Filter_Compose const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Filter_Adapter const* a, Filter_Enclosing_Scopes const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Filter_Adapter const* a, Filter_Function const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Filter_Adapter const* a, Filter_Intersection const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Filter_Adapter const* a, Filter_Setminus const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Filter_Adapter const* a, Filter_Union const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Filter_Adapter const* a, PM_Alternative const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Filter_Adapter const* a, PM_Concat const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Filter_Adapter const* a, PM_Filter_Adapter const* b)
+{
+	return cmp_lt(b->get_filter(), a->get_filter());
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Filter_Adapter const* a, PM_Next const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Filter_Adapter const* a, PM_Repeat const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Filter_Adapter const* a, Pathcov const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Filter_Adapter const* a, Predicate const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Filter_Adapter const* a, Query const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Filter_Adapter const* a, Statecov const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Filter_Adapter const* a, TGS_Intersection const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Filter_Adapter const* a, TGS_Setminus const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Filter_Adapter const* a, TGS_Union const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Filter_Adapter const* a, Test_Goal_Sequence const* b)
+{
+	return true;
+}
+
+LT_COMPARISON_BUILDER(PM_Filter_Adapter);
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Next const* a, Edgecov const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Next const* a, Filter_Complement const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Next const* a, Filter_Compose const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Next const* a, Filter_Enclosing_Scopes const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Next const* a, Filter_Function const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Next const* a, Filter_Intersection const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Next const* a, Filter_Setminus const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Next const* a, Filter_Union const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Next const* a, PM_Alternative const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Next const* a, PM_Concat const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Next const* a, PM_Filter_Adapter const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Next const* a, PM_Next const* b)
+{
+	if (cmp_lt(a->get_path_monitor_a(), b->get_path_monitor_a())) return true;
+	if (cmp_lt(b->get_path_monitor_a(), a->get_path_monitor_a())) return false;
+
+	return cmp_lt(a->get_path_monitor_b(), b->get_path_monitor_b());
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Next const* a, PM_Repeat const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Next const* a, Pathcov const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Next const* a, Predicate const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Next const* a, Query const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Next const* a, Statecov const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Next const* a, TGS_Intersection const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Next const* a, TGS_Setminus const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Next const* a, TGS_Union const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Next const* a, Test_Goal_Sequence const* b)
+{
+	return true;
+}
+
+LT_COMPARISON_BUILDER(PM_Next);
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Repeat const* a, Edgecov const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Repeat const* a, Filter_Complement const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Repeat const* a, Filter_Compose const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Repeat const* a, Filter_Enclosing_Scopes const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Repeat const* a, Filter_Function const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Repeat const* a, Filter_Intersection const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Repeat const* a, Filter_Setminus const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Repeat const* a, Filter_Union const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Repeat const* a, PM_Alternative const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Repeat const* a, PM_Concat const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Repeat const* a, PM_Filter_Adapter const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Repeat const* a, PM_Next const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Repeat const* a, PM_Repeat const* b)
+{
+	if (cmp_lt(a->get_path_monitor(), b->get_path_monitor())) return true;
+	if (cmp_lt(b->get_path_monitor(), a->get_path_monitor())) return false;
+
+	if (a->get_lower_bound() != b->get_lower_bound())
+		return a->get_lower_bound() < b->get_lower_bound();
+	if (a->get_upper_bound() == -1) return false;
+	if (b->get_upper_bound() == -1) return true;
+	return a->get_upper_bound() < b->get_upper_bound();
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Repeat const* a, Pathcov const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Repeat const* a, Predicate const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Repeat const* a, Query const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Repeat const* a, Statecov const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Repeat const* a, TGS_Intersection const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Repeat const* a, TGS_Setminus const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Repeat const* a, TGS_Union const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(PM_Repeat const* a, Test_Goal_Sequence const* b)
+{
+	return true;
+}
+
+LT_COMPARISON_BUILDER(PM_Repeat);
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, Edgecov const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, Filter_Complement const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, Filter_Compose const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, Filter_Enclosing_Scopes const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, Filter_Function const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, Filter_Intersection const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, Filter_Setminus const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, Filter_Union const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, PM_Alternative const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, PM_Concat const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, PM_Filter_Adapter const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, PM_Next const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, PM_Repeat const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, Pathcov const* b)
+{
+	if (cmp_lt(a->get_filter(), b->get_filter())) return true;
+	if (cmp_lt(b->get_filter(), a->get_filter())) return false;
+	
+	if (a->get_bound() != b->get_bound()) return a->get_bound() < b->get_bound();
+
+	if (!b->get_predicates()) return false;
+	if (!a->get_predicates()) return true;
+	
+	if (a->get_predicates()->size() != b->get_predicates()->size())
+		return a->get_predicates()->size() < b->get_predicates()->size();
+	for (Predicate::preds_t::const_iterator itera(a->get_predicates()->begin()),
+			iterb(b->get_predicates()->begin()); itera != a->get_predicates()->end();
+			++itera, ++iterb) {
+		if (*itera == *iterb) continue;
+		if (cmp_lt(*itera, *iterb)) return true;
+		if (cmp_lt(*iterb, *itera)) return false;
+	}
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, Predicate const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, Query const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, Statecov const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, TGS_Intersection const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, TGS_Setminus const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, TGS_Union const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Pathcov const* a, Test_Goal_Sequence const* b)
+{
+	return true;
+}
+
+LT_COMPARISON_BUILDER(Pathcov);
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, Edgecov const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, Filter_Complement const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, Filter_Compose const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, Filter_Enclosing_Scopes const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, Filter_Function const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, Filter_Intersection const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, Filter_Setminus const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, Filter_Union const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, PM_Alternative const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, PM_Concat const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, PM_Filter_Adapter const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, PM_Next const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, PM_Repeat const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, Pathcov const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, Predicate const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, Query const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, Statecov const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, TGS_Intersection const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, TGS_Setminus const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, TGS_Union const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Test_Goal_Sequence const* a, Test_Goal_Sequence const* b)
+{
+	if (a->get_sequence().size() != b->get_sequence().size())
+		return a->get_sequence().size() < b->get_sequence().size();
+	for (Test_Goal_Sequence::seq_t::const_iterator itera(a->get_sequence().begin()),
+			iterb(b->get_sequence().begin()); itera != a->get_sequence().end();
+			++itera, ++iterb) {
+		if (itera->first != iterb->first) {
+			if (itera->first && !iterb->first) return true;
+			if (!itera->first && iterb->first) return false;
+
+			if (cmp_lt(itera->first, iterb->first)) return true;
+			if (cmp_lt(iterb->first, itera->first)) return false;
+		}
+			
+		if (cmp_lt(itera->second, iterb->second)) return true;
+		if (cmp_lt(iterb->second, itera->second)) return false;
+	}
+		
+	if (a->get_suffix_monitor() != b->get_suffix_monitor()) {
+		if (a->get_suffix_monitor() && !b->get_suffix_monitor()) return true;
+		if (!a->get_suffix_monitor() && b->get_suffix_monitor()) return false;
+
+		if (cmp_lt(a->get_suffix_monitor(), b->get_suffix_monitor())) return true;
+		if (cmp_lt(b->get_suffix_monitor(), a->get_suffix_monitor())) return false;
+	}
+
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, Edgecov const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, Filter_Complement const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, Filter_Compose const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, Filter_Enclosing_Scopes const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, Filter_Function const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, Filter_Intersection const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, Filter_Setminus const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, Filter_Union const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, PM_Alternative const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, PM_Concat const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, PM_Filter_Adapter const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, PM_Next const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, PM_Repeat const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, Pathcov const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, Predicate const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, Query const* b)
+{
+	if (a->get_prefix() != b->get_prefix()) {
+		if (a->get_prefix() && !b->get_prefix()) return true;
+		if (!a->get_prefix() && b->get_prefix()) return false;
+
+		if (cmp_lt(a->get_prefix(), b->get_prefix())) return true;
+		if (cmp_lt(b->get_prefix(), a->get_prefix())) return false;
+	}
+
+	if (cmp_lt(a->get_cover(), b->get_cover())) return true;
+	if (cmp_lt(b->get_cover(), a->get_cover())) return false;
+	
+	if (a->get_passing() != b->get_passing()) {
+		if (a->get_passing() && !b->get_passing()) return true;
+		if (!a->get_passing() && b->get_passing()) return false;
+
+		if (cmp_lt(a->get_passing(), b->get_passing())) return true;
+		if (cmp_lt(b->get_passing(), a->get_passing())) return false;
+	}
+
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, Statecov const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, TGS_Intersection const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, TGS_Setminus const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, TGS_Union const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, Test_Goal_Sequence const* b)
+{
+	return true;
+}
+
+LT_COMPARISON_BUILDER(Query);
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Statecov const* a, Edgecov const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Statecov const* a, Filter_Complement const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Statecov const* a, Filter_Compose const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Statecov const* a, Filter_Enclosing_Scopes const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Statecov const* a, Filter_Function const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Statecov const* a, Filter_Intersection const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Statecov const* a, Filter_Setminus const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Statecov const* a, Filter_Union const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Statecov const* a, PM_Alternative const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Statecov const* a, PM_Concat const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Statecov const* a, PM_Filter_Adapter const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Statecov const* a, PM_Next const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Statecov const* a, PM_Repeat const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Statecov const* a, Pathcov const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Statecov const* a, Predicate const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Statecov const* a, Query const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Statecov const* a, Statecov const* b)
+{
+	if (cmp_lt(a->get_filter(), b->get_filter())) return true;
+	if (cmp_lt(b->get_filter(), a->get_filter())) return false;
+
+	if (!b->get_predicates()) return false;
+	if (!a->get_predicates()) return true;
+	
+	if (a->get_predicates()->size() != b->get_predicates()->size())
+		return a->get_predicates()->size() < b->get_predicates()->size();
+	for (Predicate::preds_t::const_iterator itera(a->get_predicates()->begin()),
+			iterb(b->get_predicates()->begin()); itera != a->get_predicates()->end();
+			++itera, ++iterb) {
+		if (*itera == *iterb) continue;
+		if (cmp_lt(*itera, *iterb)) return true;
+		if (cmp_lt(*iterb, *itera)) return false;
+	}
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Statecov const* a, TGS_Intersection const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Statecov const* a, TGS_Setminus const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Statecov const* a, TGS_Union const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(Statecov const* a, Test_Goal_Sequence const* b)
+{
+	return true;
+}
+
+LT_COMPARISON_BUILDER(Statecov);
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, Edgecov const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, Filter_Complement const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, Filter_Compose const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, Filter_Enclosing_Scopes const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, Filter_Function const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, Filter_Intersection const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, Filter_Setminus const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, Filter_Union const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, PM_Alternative const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, PM_Concat const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, PM_Filter_Adapter const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, PM_Next const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, PM_Repeat const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, Pathcov const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, Predicate const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, Query const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, Statecov const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, TGS_Intersection const* b)
+{
+	if (cmp_lt(a->get_tgs_a(), b->get_tgs_a())) return true;
+	if (cmp_lt(b->get_tgs_a(), a->get_tgs_a())) return false;
+
+	return cmp_lt(a->get_tgs_b(), b->get_tgs_b());
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, TGS_Setminus const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, TGS_Union const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Intersection const* a, Test_Goal_Sequence const* b)
+{
+	return true;
+}
+
+LT_COMPARISON_BUILDER(TGS_Intersection);
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, Edgecov const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, Filter_Complement const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, Filter_Compose const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, Filter_Enclosing_Scopes const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, Filter_Function const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, Filter_Intersection const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, Filter_Setminus const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, Filter_Union const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, PM_Alternative const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, PM_Concat const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, PM_Filter_Adapter const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, PM_Next const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, PM_Repeat const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, Pathcov const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, Predicate const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, Query const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, Statecov const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, TGS_Intersection const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, TGS_Setminus const* b)
+{
+	if (cmp_lt(a->get_tgs_a(), b->get_tgs_a())) return true;
+	if (cmp_lt(b->get_tgs_a(), a->get_tgs_a())) return false;
+
+	return !cmp_lt(a->get_tgs_b(), b->get_tgs_b());
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, TGS_Union const* b)
+{
+	return true;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Setminus const* a, Test_Goal_Sequence const* b)
+{
+	return true;
+}
+
+LT_COMPARISON_BUILDER(TGS_Setminus);
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, Edgecov const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, Filter_Complement const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, Filter_Compose const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, Filter_Enclosing_Scopes const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, Filter_Function const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, Filter_Intersection const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, Filter_Setminus const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, Filter_Union const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, PM_Alternative const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, PM_Concat const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, PM_Filter_Adapter const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, PM_Next const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, PM_Repeat const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, Pathcov const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, Predicate const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, Query const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, Statecov const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, TGS_Intersection const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, TGS_Setminus const* b)
+{
+	return false;
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, TGS_Union const* b)
+{
+	if (cmp_lt(a->get_tgs_a(), b->get_tgs_a())) return true;
+	if (cmp_lt(b->get_tgs_a(), a->get_tgs_a())) return false;
+
+	return cmp_lt(a->get_tgs_b(), b->get_tgs_b());
+}
+
+template<>
+inline bool FQL_Node_Lt_Visitor::cmp_lt(TGS_Union const* a, Test_Goal_Sequence const* b)
+{
+	return true;
+}
+
+LT_COMPARISON_BUILDER(TGS_Union);
+
+LT_COMPARISON_BUILDER(Test_Goal_Sequence);
+
 LT_VISIT_BUILDER_TPL(Edgecov);
-LT_VISIT_BUILDER_TPL(Abstraction);
-LT_VISIT_BUILDER_TPL(Predicate);
-LT_VISIT_BUILDER_TPL(Filter_Identity);
-LT_VISIT_BUILDER_TPL(Filter_Setminus);
-LT_VISIT_BUILDER_TPL(Filter_Intersection);
-LT_VISIT_BUILDER_TPL(Filter_Union);
-LT_VISIT_BUILDER_TPL(Filter_Enclosing_Scopes);
 LT_VISIT_BUILDER_TPL(Filter_Complement);
-LT_VISIT_BUILDER_TPL(Primitive_Filter);
+LT_VISIT_BUILDER_TPL(Filter_Compose);
+LT_VISIT_BUILDER_TPL(Filter_Enclosing_Scopes);
+LT_VISIT_BUILDER_TPL(Filter_Function);
+LT_VISIT_BUILDER_TPL(Filter_Intersection);
+LT_VISIT_BUILDER_TPL(Filter_Setminus);
+LT_VISIT_BUILDER_TPL(Filter_Union);
+LT_VISIT_BUILDER_TPL(PM_Alternative);
+LT_VISIT_BUILDER_TPL(PM_Concat);
+LT_VISIT_BUILDER_TPL(PM_Filter_Adapter);
+LT_VISIT_BUILDER_TPL(PM_Next);
+LT_VISIT_BUILDER_TPL(PM_Repeat);
+LT_VISIT_BUILDER_TPL(Pathcov);
+LT_VISIT_BUILDER_TPL(Predicate);
+LT_VISIT_BUILDER_TPL(Query);
+LT_VISIT_BUILDER_TPL(Statecov);
+LT_VISIT_BUILDER_TPL(TGS_Intersection);
+LT_VISIT_BUILDER_TPL(TGS_Setminus);
+LT_VISIT_BUILDER_TPL(TGS_Union);
+LT_VISIT_BUILDER_TPL(Test_Goal_Sequence);
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;

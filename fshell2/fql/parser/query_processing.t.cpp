@@ -97,6 +97,11 @@ void test_invalid( Test_Data & data )
 	TEST_THROWING_BLOCK_ENTER;
 	::fshell2::fql::Query_Processing::get_instance().parse(os, "bla bla bla", &q);
 	TEST_THROWING_BLOCK_EXIT(::fshell2::Query_Processing_Error);
+	
+	TEST_THROWING_BLOCK_ENTER;
+	::fshell2::fql::Query_Processing::get_instance().parse(os, "cover edges(@basicblockentry)->(@basicblockentry)", &q);
+	TEST_THROWING_BLOCK_EXIT(::fshell2::Query_Processing_Error);
+
 	TEST_ASSERT(0 == q);
 }
 

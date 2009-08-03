@@ -76,7 +76,7 @@ class Filter_Intersection : public Filter
 	Filter_Intersection( Self const& rhs );
 
 	/*! \copydoc assignment_op
-	*/
+	 */
 	Self& operator=( Self const& rhs );
 
 	/*! \brief Destructor

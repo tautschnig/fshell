@@ -37,6 +37,12 @@ Test_Goal_Set::Test_Goal_Set() {
 Test_Goal_Set::~Test_Goal_Set() {
 }
 
+void Test_Goal_Set::add_precond(Predicate * pred) {
+}
+
+void Test_Goal_Set::add_postcond(Predicate * pred) {
+}
+
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
 

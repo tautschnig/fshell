@@ -18,10 +18,10 @@
  * limitations under the License.
  *******************************************************************************/
 
-#ifndef FSHELL2__FQL__AST__PRIMITIVE_FILTER_HPP
-#define FSHELL2__FQL__AST__PRIMITIVE_FILTER_HPP
+#ifndef FSHELL2__FQL__AST__FILTER_FUNCTION_HPP
+#define FSHELL2__FQL__AST__FILTER_FUNCTION_HPP
 
-/*! \file fshell2/fql/ast/primitive_filter.hpp
+/*! \file fshell2/fql/ast/filter_function.hpp
  * \brief TODO
  *
  * $Id$
@@ -38,11 +38,11 @@ FSHELL2_FQL_NAMESPACE_BEGIN;
 
 /*! \brief TODO
 */
-class Primitive_Filter : public Filter
+class Filter_Function : public Filter
 {
 	/*! \copydoc doc_self
 	*/
-	typedef Primitive_Filter Self;
+	typedef Filter_Function Self;
 
 	public:
 	typedef FQL_Node_Factory<Self> Factory;
@@ -57,33 +57,33 @@ class Primitive_Filter : public Filter
 
 	virtual bool destroy();
 
-	inline filter_sub_t const get_filter_type() const;
-	template <filter_sub_t Sub_Type>
+	inline filter_function_t const get_filter_type() const;
+	template <filter_function_t Filter_Function>
 	inline int const get_int_arg() const;
-	template <filter_sub_t Sub_Type>
+	template <filter_function_t Filter_Function>
 	inline ::std::string const& get_string_arg() const;
 
 	private:
-	template <filter_sub_t Sub_Type>
+	template <filter_function_t Filter_Function>
 	friend Self * FQL_Node_Factory<Self>::create();
-	template <filter_sub_t Sub_Type>
+	template <filter_function_t Filter_Function>
 	friend Self * FQL_Node_Factory<Self>::create(int val);
-	template <filter_sub_t Sub_Type>
+	template <filter_function_t Filter_Function>
 	friend Self * FQL_Node_Factory<Self>::create(::std::string const& val);
 	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
 
-	filter_sub_t m_type;
+	filter_function_t m_type;
 	int m_int_value;
 	::std::string m_string_value;
 
 
 	/*! Constructor
 	*/
-	Primitive_Filter(filter_sub_t type, int val, ::std::string const& str_val);
+	Filter_Function(filter_function_t type, int val, ::std::string const& str_val);
 
 	/*! \copydoc copy_constructor
 	*/
-	Primitive_Filter( Self const& rhs );
+	Filter_Function( Self const& rhs );
 
 	/*! \copydoc assignment_op
 	*/
@@ -91,23 +91,23 @@ class Primitive_Filter : public Filter
 
 	/*! \brief Destructor
 	*/
-	virtual ~Primitive_Filter();
+	virtual ~Filter_Function();
 };
 
-inline filter_sub_t const Primitive_Filter::get_filter_type() const {
+inline filter_function_t const Filter_Function::get_filter_type() const {
 	return m_type;
 }
 
 #define FILTER_NO_ARG(subT) \
 template <> \
 template <> \
-inline Primitive_Filter * FQL_Node_Factory<Primitive_Filter>::create<subT>() { \
+inline Filter_Function * FQL_Node_Factory<Filter_Function>::create<subT>() { \
 	if (m_available.empty()) { \
-		m_available.push_back(new Primitive_Filter(subT, -1, "")); \
+		m_available.push_back(new Filter_Function(subT, -1, "")); \
 	} \
 \
 	m_available.back()->m_type = subT; \
-	::std::pair< ::std::set<Primitive_Filter *, FQL_Node_Lt_Compare>::const_iterator, bool > inserted( \
+	::std::pair< ::std::set<Filter_Function *, FQL_Node_Lt_Compare>::const_iterator, bool > inserted( \
 			m_used.insert(m_available.back())); \
 	if (inserted.second) { \
 		m_available.pop_back(); \
@@ -118,20 +118,20 @@ inline Primitive_Filter * FQL_Node_Factory<Primitive_Filter>::create<subT>() { \
 
 #define FILTER_INT_ARG(subT) \
 template <> \
-inline int const Primitive_Filter::get_int_arg<subT>() const { \
+inline int const Filter_Function::get_int_arg<subT>() const { \
 	return m_int_value; \
 } \
 \
 template <> \
 template <> \
-inline Primitive_Filter * FQL_Node_Factory<Primitive_Filter>::create<subT>(int val) { \
+inline Filter_Function * FQL_Node_Factory<Filter_Function>::create<subT>(int val) { \
 	if (m_available.empty()) { \
-		m_available.push_back(new Primitive_Filter(subT, val, "")); \
+		m_available.push_back(new Filter_Function(subT, val, "")); \
 	} \
 \
 	m_available.back()->m_type = subT; \
 	m_available.back()->m_int_value = val; \
-	::std::pair< ::std::set<Primitive_Filter *, FQL_Node_Lt_Compare>::const_iterator, bool > inserted( \
+	::std::pair< ::std::set<Filter_Function *, FQL_Node_Lt_Compare>::const_iterator, bool > inserted( \
 			m_used.insert(m_available.back())); \
 	if (inserted.second) { \
 		m_available.pop_back(); \
@@ -142,20 +142,20 @@ inline Primitive_Filter * FQL_Node_Factory<Primitive_Filter>::create<subT>(int v
 
 #define FILTER_STRING_ARG(subT) \
 template <> \
-inline ::std::string const& Primitive_Filter::get_string_arg<subT>() const { \
+inline ::std::string const& Filter_Function::get_string_arg<subT>() const { \
     return m_string_value; \
 } \
 \
 template <> \
 template <> \
-inline Primitive_Filter * FQL_Node_Factory<Primitive_Filter>::create<subT>(::std::string const& val) { \
+inline Filter_Function * FQL_Node_Factory<Filter_Function>::create<subT>(::std::string const& val) { \
 	if (m_available.empty()) { \
-		m_available.push_back(new Primitive_Filter(subT, -1, val)); \
+		m_available.push_back(new Filter_Function(subT, -1, val)); \
 	} \
 \
 	m_available.back()->m_type = subT; \
 	m_available.back()->m_string_value = val; \
-	::std::pair< ::std::set<Primitive_Filter *, FQL_Node_Lt_Compare>::const_iterator, bool > inserted( \
+	::std::pair< ::std::set<Filter_Function *, FQL_Node_Lt_Compare>::const_iterator, bool > inserted( \
 			m_used.insert(m_available.back())); \
 	if (inserted.second) { \
 		m_available.pop_back(); \
@@ -164,6 +164,7 @@ inline Primitive_Filter * FQL_Node_Factory<Primitive_Filter>::create<subT>(::std
 	return *(inserted.first); \
 } DUMMY_FUNC
 		
+FILTER_NO_ARG(F_IDENTITY);
 FILTER_STRING_ARG(F_FILE);
 FILTER_INT_ARG(F_LINE);
 FILTER_INT_ARG(F_COLUMN);
@@ -183,4 +184,4 @@ FILTER_NO_ARG(F_CONDITIONGRAPH);
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
 
-#endif /* FSHELL2__FQL__AST__PRIMITIVE_FILTER_HPP */
+#endif /* FSHELL2__FQL__AST__FILTER_FUNCTION_HPP */

@@ -33,21 +33,24 @@
 
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
 
-// #include <fshell2/fql/ast/abstraction.hpp>
 // #include <fshell2/fql/ast/edgecov.hpp>
-// #include <fshell2/fql/ast/filter.hpp>
 // #include <fshell2/fql/ast/filter_complement.hpp>
+// #include <fshell2/fql/ast/filter_compose.hpp>
 // #include <fshell2/fql/ast/filter_enclosing_scopes.hpp>
+#include <fshell2/fql/ast/filter_function.hpp>
 // #include <fshell2/fql/ast/filter_intersection.hpp>
 // #include <fshell2/fql/ast/filter_setminus.hpp>
 // #include <fshell2/fql/ast/filter_union.hpp>
 // #include <fshell2/fql/ast/pathcov.hpp>
+// #include <fshell2/fql/ast/pm_alternative.hpp>
+// #include <fshell2/fql/ast/pm_concat.hpp>
+// #include <fshell2/fql/ast/pm_filter_adapter.hpp>
+// #include <fshell2/fql/ast/pm_next.hpp>
+// #include <fshell2/fql/ast/pm_repeat.hpp>
 // #include <fshell2/fql/ast/predicate.hpp>
-#include <fshell2/fql/ast/primitive_filter.hpp>
 // #include <fshell2/fql/ast/query.hpp>
-// #include <fshell2/fql/ast/restriction_automaton.hpp>
+// #include <fshell2/fql/ast/statecov.hpp>
 // #include <fshell2/fql/ast/test_goal_sequence.hpp>
-// #include <fshell2/fql/ast/test_goal_set.hpp>
 // #include <fshell2/fql/ast/tgs_intersection.hpp>
 // #include <fshell2/fql/ast/tgs_setminus.hpp>
 // #include <fshell2/fql/ast/tgs_union.hpp>
@@ -106,17 +109,17 @@ void test( Test_Data & data )
 	::goto_convert(l.context, options, cfg, l.ui_message_handler);
 	Evaluate_Filter eval(cfg);
 	
-	Filter * bb(Primitive_Filter::Factory::get_instance().create<F_BASICBLOCKENTRY>());
+	Filter * bb(Filter_Function::Factory::get_instance().create<F_BASICBLOCKENTRY>());
 	bb->accept(&eval);
 	Evaluate_Filter::value_t const& bb_entries(eval.get(*bb));
 	TEST_ASSERT_RELATION(4, ==, bb_entries.size()); // main, edge after c::main and edges in c::main 
 	
-	Filter * cc(Primitive_Filter::Factory::get_instance().create<F_CONDITIONEDGE>());
+	Filter * cc(Filter_Function::Factory::get_instance().create<F_CONDITIONEDGE>());
 	cc->accept(&eval);
 	Evaluate_Filter::value_t const& cc_entries(eval.get(*cc));
 	TEST_ASSERT_RELATION(2, ==, cc_entries.size());
 	
-	Filter * ff(Primitive_Filter::Factory::get_instance().create<F_FILE>(tempname_str));
+	Filter * ff(Filter_Function::Factory::get_instance().create<F_FILE>(tempname_str));
 	ff->accept(&eval);
 	Evaluate_Filter::value_t const& ff_entries(eval.get(*ff));
 	TEST_ASSERT_RELATION(6, ==, ff_entries.size());

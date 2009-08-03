@@ -18,40 +18,49 @@
  * limitations under the License.
  *******************************************************************************/
 
-/*! \file fshell2/fql/ast/primitive_filter.cpp
+/*! \file fshell2/fql/ast/pm_next.cpp
  * \brief TODO
  *
  * $Id$
  * \author Michael Tautschnig <tautschnig@forsyte.de>
- * \date   Tue Apr 21 23:48:56 CEST 2009 
+ * \date   Sun Aug  2 19:01:43 CEST 2009 
 */
 
-#include <fshell2/fql/ast/primitive_filter.hpp>
+#include <fshell2/fql/ast/pm_next.hpp>
+#include <fshell2/config/annotations.hpp>
+
+#include <diagnostics/basic_exceptions/invalid_argument.hpp>
 
 #include <fshell2/fql/ast/ast_visitor.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Primitive_Filter::Primitive_Filter(filter_sub_t type, int val, ::std::string const& str_val) :
-	m_type(type), m_int_value(val), m_string_value(str_val) {
+PM_Next::PM_Next(Path_Monitor * a, Path_Monitor * b) :
+	m_path_monitor_a(a), m_path_monitor_b(b) {
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_path_monitor_a);
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_path_monitor_b);
 }
 
-void Primitive_Filter::accept(AST_Visitor * v) const {
+void PM_Next::accept(AST_Visitor * v) const {
 	v->visit(this);
 }
 
-void Primitive_Filter::accept(AST_Visitor const * v) const {
+void PM_Next::accept(AST_Visitor const * v) const {
 	v->visit(this);
 }
 
-bool Primitive_Filter::destroy() {
+bool PM_Next::destroy() {
 	if (this->m_ref_count) return false;
 	Factory::get_instance().destroy(this);
+	m_path_monitor_a->decr_ref_count();
+	m_path_monitor_a->destroy();
+	m_path_monitor_b->decr_ref_count();
+	m_path_monitor_b->destroy();
 	return true;
 }
 
-Primitive_Filter::~Primitive_Filter() {
+PM_Next::~PM_Next() {
 }
 
 FSHELL2_FQL_NAMESPACE_END;

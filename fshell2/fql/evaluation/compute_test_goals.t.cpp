@@ -34,21 +34,25 @@
 #include <fshell2/fql/evaluation/compute_test_goals.hpp>
 
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
-#include <fshell2/fql/ast/abstraction.hpp>
+
 #include <fshell2/fql/ast/edgecov.hpp>
-// #include <fshell2/fql/ast/filter.hpp>
 // #include <fshell2/fql/ast/filter_complement.hpp>
+// #include <fshell2/fql/ast/filter_compose.hpp>
 // #include <fshell2/fql/ast/filter_enclosing_scopes.hpp>
+#include <fshell2/fql/ast/filter_function.hpp>
 // #include <fshell2/fql/ast/filter_intersection.hpp>
 // #include <fshell2/fql/ast/filter_setminus.hpp>
 // #include <fshell2/fql/ast/filter_union.hpp>
 // #include <fshell2/fql/ast/pathcov.hpp>
-// #include <fshell2/fql/ast/predicate.hpp>
-#include <fshell2/fql/ast/primitive_filter.hpp>
+// #include <fshell2/fql/ast/pm_alternative.hpp>
+// #include <fshell2/fql/ast/pm_concat.hpp>
+// #include <fshell2/fql/ast/pm_filter_adapter.hpp>
+// #include <fshell2/fql/ast/pm_next.hpp>
+// #include <fshell2/fql/ast/pm_repeat.hpp>
+#include <fshell2/fql/ast/predicate.hpp>
 #include <fshell2/fql/ast/query.hpp>
-// #include <fshell2/fql/ast/restriction_automaton.hpp>
+// #include <fshell2/fql/ast/statecov.hpp>
 #include <fshell2/fql/ast/test_goal_sequence.hpp>
-// #include <fshell2/fql/ast/test_goal_set.hpp>
 // #include <fshell2/fql/ast/tgs_intersection.hpp>
 // #include <fshell2/fql/ast/tgs_setminus.hpp>
 // #include <fshell2/fql/ast/tgs_union.hpp>
@@ -110,20 +114,18 @@ void test( Test_Data & data )
     
 	::goto_convert(l.context, options, cfg, l.ui_message_handler);
 		
-	Filter * bb(Primitive_Filter::Factory::get_instance().create<F_BASICBLOCKENTRY>());
+	Filter * bb(Filter_Function::Factory::get_instance().create<F_BASICBLOCKENTRY>());
 
 	Evaluate_Filter eval(cfg);
 	bb->accept(&eval);
 	Evaluate_Filter::value_t const& bb_entries(eval.get(*bb));
 	TEST_CHECK_RELATION(6, ==, bb_entries.size());
 	
-	::std::set< Predicate *, FQL_Node_Lt_Compare > empty;
-	Abstraction * abst(Abstraction::Factory::get_instance().create(empty));
+	Edgecov * e(Edgecov::Factory::get_instance().create(bb,
+				static_cast< Predicate::preds_t * >(0)));
 
-	Edgecov * e(Edgecov::Factory::get_instance().create(abst, bb));
-
-	::std::list< ::std::pair< Restriction_Automaton *, Test_Goal_Set * > > seq_list;
-	seq_list.push_back(::std::make_pair<Restriction_Automaton *, Test_Goal_Set *>(0, e));
+	Test_Goal_Sequence::seq_t seq_list;
+	seq_list.push_back(::std::make_pair<Path_Monitor *, Test_Goal_Set *>(0, e));
 	Test_Goal_Sequence * s(Test_Goal_Sequence::Factory::get_instance().create(seq_list, 0));
 
 	Query * q(Query::Factory::get_instance().create(0, s, 0));

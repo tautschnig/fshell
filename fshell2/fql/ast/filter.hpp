@@ -76,62 +76,6 @@ class Filter : public FQL_Node
 
 };
 
-/*! \brief TODO
-*/
-class Filter_Identity : public Filter
-{
-	/*! \copydoc doc_self
-	*/
-	typedef Filter_Identity Self;
-
-	public:
-	typedef FQL_Node_Factory<Self> Factory;
-
-	/*! \{
-	 * \brief Accept a visitor 
-	 * \param  v Visitor
-	 */
-	virtual void accept(AST_Visitor * v) const;
-	virtual void accept(AST_Visitor const * v) const;
-	/*! \} */
-
-	virtual bool destroy();	
-
-	private:
-	friend Self * FQL_Node_Factory<Self>::create();
-	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
-
-	/*! Constructor
-	*/
-	Filter_Identity();
-
-	/*! \copydoc copy_constructor
-	*/
-	Filter_Identity( Self const& rhs );
-
-	/*! \copydoc assignment_op
-	*/
-	Self& operator=( Self const& rhs );
-
-	/*! \brief Destructor
-	*/
-	virtual ~Filter_Identity();
-};
-
-template <>
-inline Filter_Identity * FQL_Node_Factory<Filter_Identity>::create() {
-	if (m_used.empty()) {
-		if (m_available.empty()) {
-			m_used.insert(new Filter_Identity());
-		} else {
-			m_used.insert(m_available.back());
-			m_available.pop_back();
-		}
-	}
-
-	return *(m_used.begin());
-}
-
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
 

@@ -30,24 +30,26 @@
 #include <fshell2/config/annotations.hpp>
 #include <fshell2/exception/query_processing_error.hpp>
 
-#include <diagnostics/basic_exceptions/not_implemented.hpp>
 #include <diagnostics/basic_exceptions/violated_invariance.hpp>
+#include <diagnostics/basic_exceptions/not_implemented.hpp>
 
-#include <fshell2/fql/ast/abstraction.hpp>
 #include <fshell2/fql/ast/edgecov.hpp>
-#include <fshell2/fql/ast/filter.hpp>
 #include <fshell2/fql/ast/filter_complement.hpp>
+#include <fshell2/fql/ast/filter_compose.hpp>
 #include <fshell2/fql/ast/filter_enclosing_scopes.hpp>
+#include <fshell2/fql/ast/filter_function.hpp>
 #include <fshell2/fql/ast/filter_intersection.hpp>
 #include <fshell2/fql/ast/filter_setminus.hpp>
 #include <fshell2/fql/ast/filter_union.hpp>
 #include <fshell2/fql/ast/pathcov.hpp>
-#include <fshell2/fql/ast/predicate.hpp>
-#include <fshell2/fql/ast/primitive_filter.hpp>
+#include <fshell2/fql/ast/pm_alternative.hpp>
+#include <fshell2/fql/ast/pm_concat.hpp>
+#include <fshell2/fql/ast/pm_filter_adapter.hpp>
+#include <fshell2/fql/ast/pm_next.hpp>
+#include <fshell2/fql/ast/pm_repeat.hpp>
 #include <fshell2/fql/ast/query.hpp>
-#include <fshell2/fql/ast/restriction_automaton.hpp>
+#include <fshell2/fql/ast/statecov.hpp>
 #include <fshell2/fql/ast/test_goal_sequence.hpp>
-#include <fshell2/fql/ast/test_goal_set.hpp>
 #include <fshell2/fql/ast/tgs_intersection.hpp>
 #include <fshell2/fql/ast/tgs_setminus.hpp>
 #include <fshell2/fql/ast/tgs_union.hpp>
@@ -73,78 +75,8 @@ Evaluate_Filter::value_t const& Evaluate_Filter::get(Filter const& f) const {
 	return entry->second;
 }
 
-void Evaluate_Filter::visit(Query const* n) {
-	if (n->get_prefix()) {
-		n->get_prefix()->accept(this);
-	}
-
-	n->get_cover()->accept(this);
-	
-	if (n->get_passing()) {
-		n->get_passing()->accept(this);
-	}
-}
-
-void Evaluate_Filter::visit(Test_Goal_Sequence const* n) {
-	for (Test_Goal_Sequence::seq_t::const_iterator iter(n->get_sequence().begin());
-			iter != n->get_sequence().end(); ++iter) {
-		if (iter->first) {
-			iter->first->accept(this);
-		}
-		iter->second->accept(this);
-	}
-
-	if (n->get_suffix_automaton()) {
-		n->get_suffix_automaton()->accept(this);
-	}
-}
-
-void Evaluate_Filter::visit(Restriction_Automaton const* n) {
-	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
-}
-
-void Evaluate_Filter::visit(Abstraction const* n) {
-	for (Abstraction::preds_t::const_iterator iter(n->get_predicates().begin());
-			iter != n->get_predicates().end(); ++iter) {
-		(*iter)->accept(this);
-	}
-}
-
-void Evaluate_Filter::visit(Predicate const* n) {
-	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
-}
-
-void Evaluate_Filter::visit(TGS_Union const* n) {
-	n->get_tgs_a()->accept(this);
-	n->get_tgs_b()->accept(this);
-}
-
-void Evaluate_Filter::visit(TGS_Intersection const* n) {
-	n->get_tgs_a()->accept(this);
-	n->get_tgs_b()->accept(this);
-}
-
-void Evaluate_Filter::visit(TGS_Setminus const* n) {
-	n->get_tgs_a()->accept(this);
-	n->get_tgs_b()->accept(this);
-}
-
 void Evaluate_Filter::visit(Edgecov const* n) {
-	n->get_abstraction()->accept(this);
 	n->get_filter()->accept(this);
-}
-
-void Evaluate_Filter::visit(Pathcov const* n) {
-	n->get_abstraction()->accept(this);
-	n->get_filter()->accept(this);
-}
-
-void Evaluate_Filter::visit(Filter_Identity const* n) {
-	::std::pair< filter_value_t::iterator, bool > entry(m_filter_map.insert(
-				::std::make_pair(n, value_t())));
-	if (!entry.second) return;
-
-	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
 }
 
 void Evaluate_Filter::visit(Filter_Complement const* n) {
@@ -153,7 +85,7 @@ void Evaluate_Filter::visit(Filter_Complement const* n) {
 	if (!entry.second) return;
 	
 	n->get_filter()->accept(this);
-	Filter_Identity * id(Filter_Identity::Factory::get_instance().create());
+	Filter_Function * id(Filter_Function::Factory::get_instance().create<F_IDENTITY>());
 	id->accept(this);
 
 	filter_value_t::const_iterator id_set(m_filter_map.find(id));
@@ -165,7 +97,7 @@ void Evaluate_Filter::visit(Filter_Complement const* n) {
 			::std::inserter(entry.first->second, entry.first->second.begin()));
 }
 
-void Evaluate_Filter::visit(Filter_Union const* n) {
+void Evaluate_Filter::visit(Filter_Compose const* n) {
 	::std::pair< filter_value_t::iterator, bool > entry(m_filter_map.insert(
 				::std::make_pair(n, value_t())));
 	if (!entry.second) return;
@@ -173,47 +105,7 @@ void Evaluate_Filter::visit(Filter_Union const* n) {
 	n->get_filter_a()->accept(this);
 	n->get_filter_b()->accept(this);
 
-	filter_value_t::const_iterator a_set(m_filter_map.find(n->get_filter_a()));
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, a_set != m_filter_map.end());
-	filter_value_t::const_iterator b_set(m_filter_map.find(n->get_filter_b()));
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, b_set != m_filter_map.end());
-	::std::set_union(a_set->second.begin(), a_set->second.end(),
-			b_set->second.begin(), b_set->second.end(),
-			::std::inserter(entry.first->second, entry.first->second.begin()));
-}
-
-void Evaluate_Filter::visit(Filter_Intersection const* n) {
-	::std::pair< filter_value_t::iterator, bool > entry(m_filter_map.insert(
-				::std::make_pair(n, value_t())));
-	if (!entry.second) return;
-	
-	n->get_filter_a()->accept(this);
-	n->get_filter_b()->accept(this);
-
-	filter_value_t::const_iterator a_set(m_filter_map.find(n->get_filter_a()));
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, a_set != m_filter_map.end());
-	filter_value_t::const_iterator b_set(m_filter_map.find(n->get_filter_b()));
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, b_set != m_filter_map.end());
-	::std::set_intersection(a_set->second.begin(), a_set->second.end(),
-			b_set->second.begin(), b_set->second.end(),
-			::std::inserter(entry.first->second, entry.first->second.begin()));
-}
-
-void Evaluate_Filter::visit(Filter_Setminus const* n) {
-	::std::pair< filter_value_t::iterator, bool > entry(m_filter_map.insert(
-				::std::make_pair(n, value_t())));
-	if (!entry.second) return;
-	
-	n->get_filter_a()->accept(this);
-	n->get_filter_b()->accept(this);
-
-	filter_value_t::const_iterator a_set(m_filter_map.find(n->get_filter_a()));
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, a_set != m_filter_map.end());
-	filter_value_t::const_iterator b_set(m_filter_map.find(n->get_filter_b()));
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, b_set != m_filter_map.end());
-	::std::set_difference(a_set->second.begin(), a_set->second.end(),
-			b_set->second.begin(), b_set->second.end(),
-			::std::inserter(entry.first->second, entry.first->second.begin()));
+	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
 }
 
 void Evaluate_Filter::visit(Filter_Enclosing_Scopes const* n) {
@@ -226,12 +118,15 @@ void Evaluate_Filter::visit(Filter_Enclosing_Scopes const* n) {
 	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
 }
 
-void Evaluate_Filter::visit(Primitive_Filter const* n) {
+void Evaluate_Filter::visit(Filter_Function const* n) {
 	::std::pair< filter_value_t::iterator, bool > entry(m_filter_map.insert(
 				::std::make_pair(n, value_t())));
 	if (!entry.second) return;
 	
 	switch (n->get_filter_type()) {
+		case F_IDENTITY:
+			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+			break;
 		case F_FILE:
 			{
 				::std::string const& arg(n->get_string_arg<F_FILE>());
@@ -415,6 +310,129 @@ void Evaluate_Filter::visit(Primitive_Filter const* n) {
 		case F_CONDITIONGRAPH:
 			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
 			break;
+	}
+}
+
+void Evaluate_Filter::visit(Filter_Intersection const* n) {
+	::std::pair< filter_value_t::iterator, bool > entry(m_filter_map.insert(
+				::std::make_pair(n, value_t())));
+	if (!entry.second) return;
+	
+	n->get_filter_a()->accept(this);
+	n->get_filter_b()->accept(this);
+
+	filter_value_t::const_iterator a_set(m_filter_map.find(n->get_filter_a()));
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, a_set != m_filter_map.end());
+	filter_value_t::const_iterator b_set(m_filter_map.find(n->get_filter_b()));
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, b_set != m_filter_map.end());
+	::std::set_intersection(a_set->second.begin(), a_set->second.end(),
+			b_set->second.begin(), b_set->second.end(),
+			::std::inserter(entry.first->second, entry.first->second.begin()));
+}
+
+void Evaluate_Filter::visit(Filter_Setminus const* n) {
+	::std::pair< filter_value_t::iterator, bool > entry(m_filter_map.insert(
+				::std::make_pair(n, value_t())));
+	if (!entry.second) return;
+	
+	n->get_filter_a()->accept(this);
+	n->get_filter_b()->accept(this);
+
+	filter_value_t::const_iterator a_set(m_filter_map.find(n->get_filter_a()));
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, a_set != m_filter_map.end());
+	filter_value_t::const_iterator b_set(m_filter_map.find(n->get_filter_b()));
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, b_set != m_filter_map.end());
+	::std::set_difference(a_set->second.begin(), a_set->second.end(),
+			b_set->second.begin(), b_set->second.end(),
+			::std::inserter(entry.first->second, entry.first->second.begin()));
+}
+
+void Evaluate_Filter::visit(Filter_Union const* n) {
+	::std::pair< filter_value_t::iterator, bool > entry(m_filter_map.insert(
+				::std::make_pair(n, value_t())));
+	if (!entry.second) return;
+	
+	n->get_filter_a()->accept(this);
+	n->get_filter_b()->accept(this);
+
+	filter_value_t::const_iterator a_set(m_filter_map.find(n->get_filter_a()));
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, a_set != m_filter_map.end());
+	filter_value_t::const_iterator b_set(m_filter_map.find(n->get_filter_b()));
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, b_set != m_filter_map.end());
+	::std::set_union(a_set->second.begin(), a_set->second.end(),
+			b_set->second.begin(), b_set->second.end(),
+			::std::inserter(entry.first->second, entry.first->second.begin()));
+}
+
+void Evaluate_Filter::visit(PM_Alternative const* n) {
+	n->get_path_monitor_a()->accept(this);
+	n->get_path_monitor_b()->accept(this);
+}
+
+void Evaluate_Filter::visit(PM_Concat const* n) {
+	n->get_path_monitor_a()->accept(this);
+	n->get_path_monitor_b()->accept(this);
+}
+
+void Evaluate_Filter::visit(PM_Filter_Adapter const* n) {
+	n->get_filter()->accept(this);
+}
+
+void Evaluate_Filter::visit(PM_Next const* n) {
+	n->get_path_monitor_a()->accept(this);
+	n->get_path_monitor_b()->accept(this);
+}
+
+void Evaluate_Filter::visit(PM_Repeat const* n) {
+	n->get_path_monitor()->accept(this);
+}
+
+void Evaluate_Filter::visit(Pathcov const* n) {
+	n->get_filter()->accept(this);
+}
+
+void Evaluate_Filter::visit(Query const* n) {
+	if (n->get_prefix()) {
+		n->get_prefix()->accept(this);
+	}
+
+	n->get_cover()->accept(this);
+	
+	if (n->get_passing()) {
+		n->get_passing()->accept(this);
+	}
+}
+
+void Evaluate_Filter::visit(Statecov const* n) {
+	n->get_filter()->accept(this);
+}
+
+void Evaluate_Filter::visit(TGS_Intersection const* n) {
+	n->get_tgs_a()->accept(this);
+	n->get_tgs_b()->accept(this);
+}
+
+void Evaluate_Filter::visit(TGS_Setminus const* n) {
+	n->get_tgs_a()->accept(this);
+	n->get_tgs_b()->accept(this);
+}
+
+void Evaluate_Filter::visit(TGS_Union const* n) {
+	n->get_tgs_a()->accept(this);
+	n->get_tgs_b()->accept(this);
+}
+
+void Evaluate_Filter::visit(Test_Goal_Sequence const* n) {
+	for (Test_Goal_Sequence::seq_t::const_iterator iter(n->get_sequence().begin());
+			iter != n->get_sequence().end(); ++iter) {
+		if (iter->first) {
+			iter->first->accept(this);
+		}
+		iter->second->accept(this);
+	}
+
+	if (n->get_suffix_monitor()) {
+		n->get_suffix_monitor()->accept(this);
 	}
 }
 

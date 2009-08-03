@@ -27,13 +27,18 @@
 */
 
 #include <fshell2/fql/ast/predicate.hpp>
+#include <fshell2/config/annotations.hpp>
+
+#include <diagnostics/basic_exceptions/invalid_argument.hpp>
 
 #include <fshell2/fql/ast/ast_visitor.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Predicate::Predicate() {
+Predicate::Predicate(::exprt * expr) :
+	m_expr(expr) {
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_expr);
 }
 
 void Predicate::accept(AST_Visitor * v) const {
@@ -47,10 +52,13 @@ void Predicate::accept(AST_Visitor const * v) const {
 bool Predicate::destroy() {
 	if (this->m_ref_count) return false;
 	Factory::get_instance().destroy(this);
+	delete m_expr;
+	m_expr = 0;
 	return true;
 }
 
 Predicate::~Predicate() {
+	if (m_expr != 0) delete m_expr;
 }
 
 FSHELL2_FQL_NAMESPACE_END;

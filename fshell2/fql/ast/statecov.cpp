@@ -18,15 +18,15 @@
  * limitations under the License.
  *******************************************************************************/
 
-/*! \file fshell2/fql/ast/pathcov.cpp
+/*! \file fshell2/fql/ast/statecov.cpp
  * \brief TODO
  *
  * $Id$
  * \author Michael Tautschnig <tautschnig@forsyte.de>
- * \date   Tue Apr 21 23:48:55 CEST 2009 
+ * \date   Sun Aug  2 19:02:33 CEST 2009 
 */
 
-#include <fshell2/fql/ast/pathcov.hpp>
+#include <fshell2/fql/ast/statecov.hpp>
 #include <fshell2/config/annotations.hpp>
 
 #include <diagnostics/basic_exceptions/invalid_argument.hpp>
@@ -36,21 +36,20 @@
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Pathcov::Pathcov(Filter * filter, int bound, Predicate::preds_t * predicates) :
-	m_filter(filter), m_bound(bound), m_predicates(predicates) {
+Statecov::Statecov(Filter * filter, Predicate::preds_t * predicates) :
+	m_filter(filter), m_predicates(predicates) {
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_filter);
-	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_bound > 0);
 }
 
-void Pathcov::accept(AST_Visitor * v) const {
+void Statecov::accept(AST_Visitor * v) const {
 	v->visit(this);
 }
 
-void Pathcov::accept(AST_Visitor const * v) const {
+void Statecov::accept(AST_Visitor const * v) const {
 	v->visit(this);
 }
 
-bool Pathcov::destroy() {
+bool Statecov::destroy() {
 	if (this->m_ref_count) return false;
 	Factory::get_instance().destroy(this);
 	m_filter->decr_ref_count();
@@ -66,7 +65,7 @@ bool Pathcov::destroy() {
 	return true;
 }
 
-Pathcov::~Pathcov() {
+Statecov::~Statecov() {
 	if (m_predicates) delete m_predicates;
 }
 

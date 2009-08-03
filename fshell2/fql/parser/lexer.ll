@@ -65,16 +65,17 @@ does; this breaks compilation with -pedantic */
 
 #include <fshell2/fql/ast/fql_node.hpp>
 
-namespace fshell2 {
-  namespace fql {
-    class Abstraction;
-	class Filter;
-	class Predicate;
-	class Restriction_Automaton;
-	class Test_Goal_Sequence;
-	class Test_Goal_Set;
-  }
-}
+FSHELL2_NAMESPACE_BEGIN;
+FSHELL2_FQL_NAMESPACE_BEGIN;
+
+class Filter;
+class Predicate;
+class Path_Monitor;
+class Test_Goal_Sequence;
+class Test_Goal_Set;
+
+FSHELL2_FQL_NAMESPACE_END;
+FSHELL2_NAMESPACE_END;
 
 #include <set>
 #include <list>
@@ -99,7 +100,8 @@ extern ::std::set< ::fshell2::fql::FQL_Node * > intermediates;
 TOK_L_PARENTHESIS       \(
 TOK_R_PARENTHESIS       \)
 TOK_COMMA               ,
-/* predicate generators */
+/* filter functions */
+TOK_IDENTITY            ID
 TOK_FILE                @FILE
 TOK_LINE                @LINE
 TOK_LINE_ABBREV         @[0-9]+
@@ -116,15 +118,14 @@ TOK_BASICBLOCKENTRY     @BASICBLOCKENTRY
 TOK_CONDITIONEDGE       @CONDITIONEDGE
 TOK_DECISIONEDGE        @DECISIONEDGE
 TOK_CONDITIONGRAPH      @CONDITIONGRAPH
-/* operations on pred generators */
+/* operations on target graphs */
 TOK_COMPLEMENT          COMPLEMENT
 TOK_UNION               UNION
 TOK_INTERSECT           INTERSECT
 TOK_SETMINUS            SETMINUS
 TOK_ENCLOSING_SCOPES    ENCLOSING_SCOPES
-TOK_IDENTITY            ID
-/* abstraction builders */
-TOK_PREDICATES          %AP%
+TOK_COMPOSE             COMPOSE
+/* abstraction/predicates */
 TOK_L_BRACE             \{
 TOK_R_BRACE             \}
 TOK_GREATER_OR_EQ       >=
@@ -134,11 +135,12 @@ TOK_LESS_OR_EQ          <=
 TOK_LESS                <
 TOK_NEQ                 !=
 /* coverage specification */
+TOK_STATECOV            STATES
 TOK_EDGECOV             EDGES
 TOK_PATHCOV             PATHS
 TOK_L_SEQ               -\[
 TOK_R_SEQ               \]>
-/* automaton construction */
+/* path monitors */
 TOK_NEXT                ->
 TOK_CONCAT              \.
 TOK_ALTERNATIVE         \+
@@ -162,8 +164,10 @@ TOK_NAT_NUMBER          [0-9]+
 {TOK_R_PARENTHESIS}   { return TOK_R_PARENTHESIS; }
 {TOK_COMMA}   { return TOK_COMMA; }
 
+<query_cover,query_passing>{TOK_IDENTITY}   { return TOK_IDENTITY; }
 <query_scope,query_cover,query_passing>{TOK_FILE}   { return TOK_FILE; }
-<query_scope,query_cover,query_passing>{TOK_LINE_ABBREV}   { 
+<query_cover,query_passing>{TOK_LINE}   { return TOK_LINE; }
+<query_cover,query_passing>{TOK_LINE_ABBREV}   { 
                                         yylval.NUMBER = strtol( yytext+1, 0, 10 );
                                         FSHELL2_PROD_CHECK1(::diagnostics::Parse_Error, 
                                           EINVAL != errno, "Invalid number" );
@@ -171,28 +175,27 @@ TOK_NAT_NUMBER          [0-9]+
                                           ERANGE != errno, "Number out of range" );
                                         return TOK_LINE_ABBREV; 
                                       }
-<query_scope,query_cover,query_passing>{TOK_COLUMN}   { return TOK_COLUMN; }
+<query_cover,query_passing>{TOK_COLUMN}   { return TOK_COLUMN; }
 <query_scope,query_cover,query_passing>{TOK_FUNC}   { return TOK_FUNC; }
-<query_scope,query_cover,query_passing>{TOK_LABEL}   { return TOK_LABEL; }
-<query_scope,query_cover,query_passing>{TOK_CALL}   { return TOK_CALL; }
-<query_scope,query_cover,query_passing>{TOK_CALLS}   { return TOK_CALLS; }
-<query_scope,query_cover,query_passing>{TOK_ENTRY}   { return TOK_ENTRY; }
-<query_scope,query_cover,query_passing>{TOK_EXIT}   { return TOK_EXIT; }
-<query_scope,query_cover,query_passing>{TOK_EXPR}   { return TOK_EXPR; }
-<query_scope,query_cover,query_passing>{TOK_REGEXP}   { return TOK_REGEXP; }
-<query_cover>{TOK_BASICBLOCKENTRY}   { return TOK_BASICBLOCKENTRY; }
-<query_cover>{TOK_CONDITIONEDGE}   { return TOK_CONDITIONEDGE; }
-<query_cover>{TOK_DECISIONEDGE}   { return TOK_DECISIONEDGE; }
-<query_cover>{TOK_CONDITIONGRAPH}   { return TOK_CONDITIONGRAPH; }
+<query_cover,query_passing>{TOK_LABEL}   { return TOK_LABEL; }
+<query_cover,query_passing>{TOK_CALL}   { return TOK_CALL; }
+<query_cover,query_passing>{TOK_CALLS}   { return TOK_CALLS; }
+<query_cover,query_passing>{TOK_ENTRY}   { return TOK_ENTRY; }
+<query_cover,query_passing>{TOK_EXIT}   { return TOK_EXIT; }
+<query_cover,query_passing>{TOK_EXPR}   { return TOK_EXPR; }
+<query_cover,query_passing>{TOK_REGEXP}   { return TOK_REGEXP; }
+<query_cover,query_passing>{TOK_BASICBLOCKENTRY}   { return TOK_BASICBLOCKENTRY; }
+<query_cover,query_passing>{TOK_CONDITIONEDGE}   { return TOK_CONDITIONEDGE; }
+<query_cover,query_passing>{TOK_DECISIONEDGE}   { return TOK_DECISIONEDGE; }
+<query_cover,query_passing>{TOK_CONDITIONGRAPH}   { return TOK_CONDITIONGRAPH; }
 
-<query_scope,query_cover,query_passing>{TOK_IDENTITY}   { return TOK_IDENTITY; }
 <query_scope,query_cover,query_passing>{TOK_COMPLEMENT}   { return TOK_COMPLEMENT; }
 <query_scope,query_cover,query_passing>{TOK_UNION}   { return TOK_UNION; }
 <query_scope,query_cover,query_passing>{TOK_INTERSECT}   { return TOK_INTERSECT; }
 <query_scope,query_cover,query_passing>{TOK_SETMINUS}   { return TOK_SETMINUS; }
 <query_scope,query_cover,query_passing>{TOK_ENCLOSING_SCOPES}   { return TOK_ENCLOSING_SCOPES; }
+<query_scope,query_cover,query_passing>{TOK_COMPOSE}   { return TOK_COMPOSE; }
 
-<query_cover,query_passing>{TOK_PREDICATES}   { return TOK_PREDICATES; }
 <query_cover,query_passing>{TOK_L_BRACE}   { return TOK_L_BRACE; }
 <query_cover,query_passing>{TOK_R_BRACE}   { return TOK_R_BRACE; }
 <query_cover,query_passing>{TOK_GREATER_OR_EQ}   { return TOK_GREATER_OR_EQ; }

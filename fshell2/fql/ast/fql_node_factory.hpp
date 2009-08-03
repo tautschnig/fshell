@@ -38,17 +38,19 @@
 #include <list>
 #include <vector>
 
+class exprt;
+
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-class Abstraction;
 class Filter;
+class Path_Monitor;
 class Predicate;
 class Test_Goal_Set;
 class Test_Goal_Sequence;
-class Restriction_Automaton;
 
 typedef enum {
+	F_IDENTITY = 0,
 	F_FILE = 1,
 	F_LINE = 2,
 	F_COLUMN = 3,
@@ -64,7 +66,7 @@ typedef enum {
 	F_CONDITIONEDGE = 13,
 	F_DECISIONEDGE = 14,
 	F_CONDITIONGRAPH = 15
-} filter_sub_t;
+} filter_function_t;
 
 /*! \brief TODO
 */
@@ -78,23 +80,35 @@ class FQL_Node_Factory
 	public:
 	static Self & get_instance();
 
-	Element * create();
-	Element * create(::std::set<Predicate *, FQL_Node_Lt_Compare> &);
-	Element * create(Abstraction * abst, Filter * filter);
+	// Edgecov, Statecov
+	Element * create(Filter * filter, ::std::set<Predicate *, FQL_Node_Lt_Compare> * predicates);
+	// Filter_Complement, Filter_Enclosing_Scopes, PM_Filter_Adapter
 	Element * create(Filter * filter);
+	// Filter_Compose, Filter_Intersection, Filter_Setminus, Filter_Union
 	Element * create(Filter * a, Filter * b);
-	Element * create(Abstraction * abst, Filter * filter, int bound);
-	template <filter_sub_t Filter_Sub_Type>
+	// Filter_Function
+	template <filter_function_t Filter_Function>
 	Element * create();
-	template <filter_sub_t Filter_Sub_Type>
+	template <filter_function_t Filter_Function>
 	Element * create(int val);
-	template <filter_sub_t Filter_Sub_Type>
+	template <filter_function_t Filter_Function>
 	Element * create(::std::string const& val);
+	// Pathcov
+	Element * create(Filter * filter, int bound, ::std::set<Predicate *, FQL_Node_Lt_Compare> * predicates);
+	// PM_Alternative, PM_Concat, PM_Next
+	Element * create(Path_Monitor * a, Path_Monitor * b);
+	// PM_Repeat
+	Element * create(Path_Monitor * pm, int lower, int upper);
+	// Predicate
+	Element * create(::exprt * expr);
+	// Query
 	Element * create(Filter * prefix, Test_Goal_Sequence * cover,
-			Restriction_Automaton * passing);
+			Path_Monitor * passing);
+	// Test_Goal_Sequence
+	Element * create(::std::list< ::std::pair< Path_Monitor *, Test_Goal_Set * > > & seq,
+			Path_Monitor * suffix_aut);
+	// TGS_Intersection, TGS_Setminus, TGS_Union
 	Element * create(Test_Goal_Set * a, Test_Goal_Set * b);
-	Element * create(::std::list< ::std::pair< Restriction_Automaton *, Test_Goal_Set * > > & seq,
-			Restriction_Automaton * suffix_aut);
 	
 	void destroy(Element * e);
 

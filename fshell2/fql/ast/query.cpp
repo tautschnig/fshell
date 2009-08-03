@@ -37,7 +37,7 @@ FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 Query::Query(Filter * prefix, Test_Goal_Sequence * cover,
-		Restriction_Automaton * passing) :
+		Path_Monitor * passing) :
 	m_prefix(prefix), m_cover(cover), m_passing(passing) {
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_cover);
 }

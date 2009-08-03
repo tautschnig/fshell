@@ -18,35 +18,31 @@
  * limitations under the License.
  *******************************************************************************/
 
-#ifndef FSHELL2__FQL__AST__QUERY_HPP
-#define FSHELL2__FQL__AST__QUERY_HPP
+#ifndef FSHELL2__FQL__AST__PM_NEXT_HPP
+#define FSHELL2__FQL__AST__PM_NEXT_HPP
 
-/*! \file fshell2/fql/ast/query.hpp
+/*! \file fshell2/fql/ast/pm_next.hpp
  * \brief TODO
  *
  * $Id$
  * \author Michael Tautschnig <tautschnig@forsyte.de>
- * \date   Tue Apr 21 23:48:54 CEST 2009 
- */
+ * \date   Sun Aug  2 19:01:46 CEST 2009 
+*/
 
 #include <fshell2/config/config.hpp>
-#include <fshell2/fql/ast/fql_node.hpp>
-#include <fshell2/fql/ast/fql_node_factory.hpp>
-
-#include <fshell2/fql/ast/filter.hpp>
-#include <fshell2/fql/ast/test_goal_sequence.hpp>
 #include <fshell2/fql/ast/path_monitor.hpp>
+#include <fshell2/fql/ast/fql_node_factory.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 /*! \brief TODO
 */
-class Query : public FQL_Node
+class PM_Next : public Path_Monitor
 {
 	/*! \copydoc doc_self
 	*/
-	typedef Query Self;
+	typedef PM_Next Self;
 
 	public:
 	typedef FQL_Node_Factory<Self> Factory;
@@ -59,67 +55,57 @@ class Query : public FQL_Node
 	virtual void accept(AST_Visitor const * v) const;
 	/*! \} */
 
-	virtual bool destroy();
+	virtual bool destroy();	
 
-	inline Filter const * get_prefix() const;
-	inline Test_Goal_Sequence const * get_cover() const;
-	inline Path_Monitor const * get_passing() const;
+	inline Path_Monitor const * get_path_monitor_a() const;
+	inline Path_Monitor const * get_path_monitor_b() const;
 
 	private:
-	friend Self * FQL_Node_Factory<Self>::create(Filter * prefix, Test_Goal_Sequence * cover,
-			Path_Monitor * passing);
+	friend Self * FQL_Node_Factory<Self>::create(Path_Monitor *, Path_Monitor *);
 	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
 
-	Filter * m_prefix;
-	Test_Goal_Sequence * m_cover;
-	Path_Monitor * m_passing;
+	Path_Monitor * m_path_monitor_a;
+	Path_Monitor * m_path_monitor_b;
 
 	/*! Constructor
 	*/
-	Query(Filter * prefix, Test_Goal_Sequence * cover, Path_Monitor * passing);
+	PM_Next(Path_Monitor * a, Path_Monitor * b);
 
 	/*! \copydoc copy_constructor
 	*/
-	Query( Self const& rhs );
+	PM_Next( Self const& rhs );
 
 	/*! \copydoc assignment_op
-	*/
+	 */
 	Self& operator=( Self const& rhs );
 
 	/*! \brief Destructor
 	*/
-	virtual ~Query();
+	virtual ~PM_Next();
 };
 
-inline Filter const * Query::get_prefix() const {
-	return m_prefix;
+inline Path_Monitor const * PM_Next::get_path_monitor_a() const {
+	return m_path_monitor_a;
 }
 
-inline Test_Goal_Sequence const * Query::get_cover() const {
-	return m_cover;
-}
-
-inline Path_Monitor const * Query::get_passing() const {
-	return m_passing;
+inline Path_Monitor const * PM_Next::get_path_monitor_b() const {
+	return m_path_monitor_b;
 }
 
 template <>
-inline Query * FQL_Node_Factory<Query>::create(Filter * prefix, Test_Goal_Sequence * cover,
-		Path_Monitor * passing) {
+inline PM_Next * FQL_Node_Factory<PM_Next>::create(Path_Monitor * path_monitor_a, Path_Monitor * path_monitor_b) {
 	if (m_available.empty()) {
-		m_available.push_back(new Query(prefix, cover, passing));
+		m_available.push_back(new PM_Next(path_monitor_a, path_monitor_b));
 	}
 
-	m_available.back()->m_prefix = prefix;
-	m_available.back()->m_cover = cover;
-	m_available.back()->m_passing = passing;
-	::std::pair< ::std::set<Query *, FQL_Node_Lt_Compare>::const_iterator, bool > inserted(
+	m_available.back()->m_path_monitor_a = path_monitor_a;
+	m_available.back()->m_path_monitor_b = path_monitor_b;
+	::std::pair< ::std::set<PM_Next *, FQL_Node_Lt_Compare>::const_iterator, bool > inserted(
 			m_used.insert(m_available.back()));
 	if (inserted.second) {
 		m_available.pop_back();
-		if (prefix) prefix->incr_ref_count();
-		cover->incr_ref_count();
-		if (passing) passing->incr_ref_count();
+		path_monitor_a->incr_ref_count();
+		path_monitor_b->incr_ref_count();
 	}
 
 	return *(inserted.first);
@@ -128,4 +114,4 @@ inline Query * FQL_Node_Factory<Query>::create(Filter * prefix, Test_Goal_Sequen
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
 
-#endif /* FSHELL2__FQL__AST__QUERY_HPP */
+#endif /* FSHELL2__FQL__AST__PM_NEXT_HPP */

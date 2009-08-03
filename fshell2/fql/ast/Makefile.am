@@ -8,22 +8,29 @@ include $(top_srcdir)/model.am
 # SUBDIRS = dir1 dir2 dirX
 SUBDIRS =
 
+CBMC_OBJS = $(top_builddir)/cbmc/src/util/util.o \
+						$(top_builddir)/cbmc/src/big-int/bigint.o \
+						$(top_builddir)/cbmc/src/ansi-c/ansi-c.o
+
+$(CBMC_OBJS):
+	$(MAKE) -C $(top_builddir)/cbmc/src util.dir big-int.dir ansi-c.dir
+
 include_fshell2_fql_astdir = $(includedir)/fshell2/fql/ast
 noinst_LTLIBRARIES = libast.la
-libast_la_SOURCES = ast_visitor.cpp fql_ast_printer.cpp fql_node.cpp pathcov.cpp predicate.cpp primitive_filter.cpp query.cpp restriction_automaton.cpp test_goal_sequence.cpp test_goal_set.cpp tgs_intersection.cpp tgs_setminus.cpp tgs_union.cpp abstraction.cpp edgecov.cpp filter.cpp filter_complement.cpp filter_enclosing_scopes.cpp filter_intersection.cpp filter_setminus.cpp filter_union.cpp fql_node_lt_visitor.cpp
-include_fshell2_fql_ast_HEADERS = ast_visitor.hpp fql_ast_printer.hpp fql_node_factory.hpp pathcov.hpp predicate.hpp primitive_filter.hpp query.hpp restriction_automaton.hpp test_goal_sequence.hpp test_goal_set.hpp tgs_intersection.hpp tgs_setminus.hpp tgs_union.hpp abstraction.hpp edgecov.hpp filter.hpp filter_complement.hpp filter_enclosing_scopes.hpp filter_intersection.hpp filter_setminus.hpp filter_union.hpp fql_node.hpp standard_ast_visitor_aspect.hpp fql_node_lt_visitor.hpp
+libast_la_SOURCES = ast_visitor.cpp fql_ast_printer.cpp fql_node.cpp pathcov.cpp predicate.cpp  query.cpp  test_goal_sequence.cpp test_goal_set.cpp tgs_intersection.cpp tgs_setminus.cpp tgs_union.cpp  edgecov.cpp filter.cpp filter_complement.cpp filter_enclosing_scopes.cpp filter_intersection.cpp filter_setminus.cpp filter_union.cpp fql_node_lt_visitor.cpp path_monitor.cpp pm_alternative.cpp pm_concat.cpp pm_filter_adapter.cpp pm_next.cpp pm_repeat.cpp statecov.cpp filter_compose.cpp filter_function.cpp
+include_fshell2_fql_ast_HEADERS = ast_visitor.hpp fql_ast_printer.hpp fql_node_factory.hpp pathcov.hpp predicate.hpp  query.hpp  test_goal_sequence.hpp test_goal_set.hpp tgs_intersection.hpp tgs_setminus.hpp tgs_union.hpp  edgecov.hpp filter.hpp filter_complement.hpp filter_enclosing_scopes.hpp filter_intersection.hpp filter_setminus.hpp filter_union.hpp fql_node.hpp standard_ast_visitor_aspect.hpp fql_node_lt_visitor.hpp filter_compose.hpp path_monitor.hpp statecov.hpp pm_concat.hpp pm_filter_adapter.hpp pm_repeat.hpp filter_function.hpp pm_next.hpp pm_alternative.hpp
 check_PROGRAMS = fql_ast_printer fql_node_lt_visitor
 fql_ast_printer_SOURCES = fql_ast_printer.t.cpp
 # add additional objects required to build fql_ast_printer here, like
 # fql_ast_printer_LDADD = ../base/libbase.la libbla.la
-fql_ast_printer_LDADD = libast.la
+fql_ast_printer_LDADD = libast.la $(CBMC_OBJS)
 # note that this entry (fql_ast_printer_SOURCES, fql_ast_printer_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually
 fql_node_lt_visitor_SOURCES = fql_node_lt_visitor.t.cpp
 # add additional objects required to build fql_node_lt_visitor here, like
 # fql_node_lt_visitor_LDADD = ../base/libbase.la libbla.la
-fql_node_lt_visitor_LDADD = libast.la
+fql_node_lt_visitor_LDADD = libast.la $(CBMC_OBJS)
 # note that this entry (fql_node_lt_visitor_SOURCES, fql_node_lt_visitor_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually

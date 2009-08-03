@@ -74,31 +74,52 @@ class Compute_Test_Goals : public ::bmct, public Standard_AST_Visitor_Aspect<AST
 	void initialize();
 	
 	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Query
-	 * \param  n Query
+	 * \brief Visit a @ref fshell2::fql::Edgecov
+	 * \param  n Edgecov
 	 */
-	virtual void visit(Query const* n);
+	virtual void visit(Edgecov const* n);
 	/*! \} */
 
 	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Test_Goal_Sequence
-	 * \param  n Test_Goal_Sequence
+	 * \brief Visit a @ref fshell2::fql::PM_Alternative
+	 * \param  n PM_Alternative
 	 */
-	virtual void visit(Test_Goal_Sequence const* n);
+	virtual void visit(PM_Alternative const* n);
 	/*! \} */
 
 	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Restriction_Automaton
-	 * \param  n Restriction_Automaton
+	 * \brief Visit a @ref fshell2::fql::PM_Concat
+	 * \param  n PM_Concat
 	 */
-	virtual void visit(Restriction_Automaton const* n);
+	virtual void visit(PM_Concat const* n);
 	/*! \} */
 
 	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Abstraction
-	 * \param  n Abstraction
+	 * \brief Visit a @ref fshell2::fql::PM_Filter_Adapter
+	 * \param  n PM_Filter_Adapter
 	 */
-	virtual void visit(Abstraction const* n);
+	virtual void visit(PM_Filter_Adapter const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::PM_Next
+	 * \param  n PM_Next
+	 */
+	virtual void visit(PM_Next const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::PM_Repeat
+	 * \param  n PM_Repeat
+	 */
+	virtual void visit(PM_Repeat const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Pathcov
+	 * \param  n Pathcov
+	 */
+	virtual void visit(Pathcov const* n);
 	/*! \} */
 
 	/*! \{
@@ -109,10 +130,17 @@ class Compute_Test_Goals : public ::bmct, public Standard_AST_Visitor_Aspect<AST
 	/*! \} */
 
 	/*! \{
-	 * \brief Visit a @ref fshell2::fql::TGS_Union
-	 * \param  n TGS_Union
+	 * \brief Visit a @ref fshell2::fql::Query
+	 * \param  n Query
 	 */
-	virtual void visit(TGS_Union const* n);
+	virtual void visit(Query const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Statecov
+	 * \param  n Statecov
+	 */
+	virtual void visit(Statecov const* n);
 	/*! \} */
 
 	/*! \{
@@ -130,17 +158,17 @@ class Compute_Test_Goals : public ::bmct, public Standard_AST_Visitor_Aspect<AST
 	/*! \} */
 
 	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Edgecov
-	 * \param  n Edgecov
+	 * \brief Visit a @ref fshell2::fql::TGS_Union
+	 * \param  n TGS_Union
 	 */
-	virtual void visit(Edgecov const* n);
+	virtual void visit(TGS_Union const* n);
 	/*! \} */
 
 	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Pathcov
-	 * \param  n Pathcov
+	 * \brief Visit a @ref fshell2::fql::Test_Goal_Sequence
+	 * \param  n Test_Goal_Sequence
 	 */
-	virtual void visit(Pathcov const* n);
+	virtual void visit(Test_Goal_Sequence const* n);
 	/*! \} */
 
 	bool m_is_initialized;

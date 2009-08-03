@@ -18,7 +18,7 @@
  * limitations under the License.
  *******************************************************************************/
 
-/*! \file fshell2/fql/ast/pathcov.cpp
+/*! \file fshell2/fql/ast/path_monitor.cpp
  * \brief TODO
  *
  * $Id$
@@ -26,49 +26,25 @@
  * \date   Tue Apr 21 23:48:55 CEST 2009 
 */
 
-#include <fshell2/fql/ast/pathcov.hpp>
-#include <fshell2/config/annotations.hpp>
-
-#include <diagnostics/basic_exceptions/invalid_argument.hpp>
+#include <fshell2/fql/ast/path_monitor.hpp>
 
 #include <fshell2/fql/ast/ast_visitor.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Pathcov::Pathcov(Filter * filter, int bound, Predicate::preds_t * predicates) :
-	m_filter(filter), m_bound(bound), m_predicates(predicates) {
-	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_filter);
-	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_bound > 0);
+Path_Monitor::Path_Monitor() {
 }
 
-void Pathcov::accept(AST_Visitor * v) const {
-	v->visit(this);
+Path_Monitor::~Path_Monitor() {
+}
+	
+void Path_Monitor::add_precond(Predicate * pred) {
 }
 
-void Pathcov::accept(AST_Visitor const * v) const {
-	v->visit(this);
+void Path_Monitor::add_postcond(Predicate * pred) {
 }
-
-bool Pathcov::destroy() {
-	if (this->m_ref_count) return false;
-	Factory::get_instance().destroy(this);
-	m_filter->decr_ref_count();
-	m_filter->destroy();
-	if (m_predicates) {
-		for (Predicate::preds_t::iterator iter(m_predicates->begin());
-				iter != m_predicates->end(); ++iter) {
-			(*iter)->decr_ref_count();
-			(*iter)->destroy();
-		}
-		delete m_predicates;
-	}
-	return true;
-}
-
-Pathcov::~Pathcov() {
-	if (m_predicates) delete m_predicates;
-}
+	
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;

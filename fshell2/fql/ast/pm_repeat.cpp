@@ -18,46 +18,48 @@
  * limitations under the License.
  *******************************************************************************/
 
-/*! \file fshell2/fql/ast/abstraction.cpp
+/*! \file fshell2/fql/ast/pm_repeat.cpp
  * \brief TODO
  *
  * $Id$
  * \author Michael Tautschnig <tautschnig@forsyte.de>
- * \date   Tue Apr 21 23:48:55 CEST 2009 
+ * \date   Sun Aug  2 19:02:19 CEST 2009 
 */
 
-#include <fshell2/fql/ast/abstraction.hpp>
+#include <fshell2/fql/ast/pm_repeat.hpp>
+#include <fshell2/config/annotations.hpp>
+
+#include <diagnostics/basic_exceptions/invalid_argument.hpp>
 
 #include <fshell2/fql/ast/ast_visitor.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Abstraction::Abstraction(Abstraction::preds_t const& predicates) :
-	m_predicates(predicates) {
+PM_Repeat::PM_Repeat(Path_Monitor * a, int lower, int upper) :
+	m_path_monitor(a), m_lower_bound(lower), m_upper_bound(upper) {
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_path_monitor);
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_lower_bound >= 0);
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_upper_bound >= -1);
 }
 
-void Abstraction::accept(AST_Visitor * v) const {
+void PM_Repeat::accept(AST_Visitor * v) const {
 	v->visit(this);
 }
 
-void Abstraction::accept(AST_Visitor const * v) const {
+void PM_Repeat::accept(AST_Visitor const * v) const {
 	v->visit(this);
 }
 
-bool Abstraction::destroy() {
+bool PM_Repeat::destroy() {
 	if (this->m_ref_count) return false;
 	Factory::get_instance().destroy(this);
-	for (preds_t::iterator iter(m_predicates.begin());
-			iter != m_predicates.end(); ++iter) {
-		(*iter)->decr_ref_count();
-		(*iter)->destroy();
-	}
-	m_predicates.clear();
+	m_path_monitor->decr_ref_count();
+	m_path_monitor->destroy();
 	return true;
 }
 
-Abstraction::~Abstraction() {
+PM_Repeat::~PM_Repeat() {
 }
 
 FSHELL2_FQL_NAMESPACE_END;

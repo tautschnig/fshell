@@ -63,6 +63,14 @@ void FQL_Node_Lt_Visitor::Compare_To_Visitor<T>::visit(Filter const* n)
 LT_VISIT_BUILDER_CPP_BASE(Filter, FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, false));
 
 template <typename T>
+void FQL_Node_Lt_Visitor::Compare_To_Visitor<T>::visit(Path_Monitor const* n)
+{
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, false);
+}
+
+LT_VISIT_BUILDER_CPP_BASE(Path_Monitor, FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, false));
+
+template <typename T>
 void FQL_Node_Lt_Visitor::Compare_To_Visitor<T>::visit(Test_Goal_Set const* n)
 {
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, false);
@@ -70,23 +78,27 @@ void FQL_Node_Lt_Visitor::Compare_To_Visitor<T>::visit(Test_Goal_Set const* n)
 
 LT_VISIT_BUILDER_CPP_BASE(Test_Goal_Set, FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, false));
 
-LT_VISIT_BUILDER_1(Query);
-LT_VISIT_BUILDER_1(Test_Goal_Sequence);
-LT_VISIT_BUILDER_1(Restriction_Automaton);
-LT_VISIT_BUILDER_1(TGS_Setminus);
-LT_VISIT_BUILDER_1(TGS_Intersection);
-LT_VISIT_BUILDER_1(TGS_Union);
-LT_VISIT_BUILDER_1(Pathcov);
 LT_VISIT_BUILDER_1(Edgecov);
-LT_VISIT_BUILDER_1(Abstraction);
-LT_VISIT_BUILDER_1(Predicate);
-LT_VISIT_BUILDER_1(Filter_Identity);
-LT_VISIT_BUILDER_1(Filter_Setminus);
-LT_VISIT_BUILDER_1(Filter_Intersection);
-LT_VISIT_BUILDER_1(Filter_Union);
-LT_VISIT_BUILDER_1(Filter_Enclosing_Scopes);
 LT_VISIT_BUILDER_1(Filter_Complement);
-LT_VISIT_BUILDER_1(Primitive_Filter);
+LT_VISIT_BUILDER_1(Filter_Compose);
+LT_VISIT_BUILDER_1(Filter_Enclosing_Scopes);
+LT_VISIT_BUILDER_1(Filter_Function);
+LT_VISIT_BUILDER_1(Filter_Intersection);
+LT_VISIT_BUILDER_1(Filter_Setminus);
+LT_VISIT_BUILDER_1(Filter_Union);
+LT_VISIT_BUILDER_1(PM_Alternative);
+LT_VISIT_BUILDER_1(PM_Concat);
+LT_VISIT_BUILDER_1(PM_Filter_Adapter);
+LT_VISIT_BUILDER_1(PM_Next);
+LT_VISIT_BUILDER_1(PM_Repeat);
+LT_VISIT_BUILDER_1(Pathcov);
+LT_VISIT_BUILDER_1(Predicate);
+LT_VISIT_BUILDER_1(Query);
+LT_VISIT_BUILDER_1(Statecov);
+LT_VISIT_BUILDER_1(TGS_Intersection);
+LT_VISIT_BUILDER_1(TGS_Setminus);
+LT_VISIT_BUILDER_1(TGS_Union);
+LT_VISIT_BUILDER_1(Test_Goal_Sequence);
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;

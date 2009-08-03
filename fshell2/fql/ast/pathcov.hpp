@@ -27,14 +27,14 @@
  * $Id$
  * \author Michael Tautschnig <tautschnig@forsyte.de>
  * \date   Tue Apr 21 23:48:55 CEST 2009 
- */
+*/
 
 #include <fshell2/config/config.hpp>
 #include <fshell2/fql/ast/test_goal_set.hpp>
 #include <fshell2/fql/ast/fql_node_factory.hpp>
 
-#include <fshell2/fql/ast/abstraction.hpp>
 #include <fshell2/fql/ast/filter.hpp>
+#include <fshell2/fql/ast/predicate.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
@@ -60,21 +60,21 @@ class Pathcov : public Test_Goal_Set
 
 	virtual bool destroy();
 
-	inline Abstraction const * get_abstraction() const;
 	inline Filter const * get_filter() const;
 	inline int const get_bound() const;
+	inline Predicate::preds_t const * get_predicates() const;
 
 	private:
-	friend Self * FQL_Node_Factory<Self>::create(Abstraction * abst, Filter * filter, int bound);
+	friend Self * FQL_Node_Factory<Self>::create(Filter * filter, int bound, Predicate::preds_t * predicates);
 	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
 
-	Abstraction * m_abst;
 	Filter * m_filter;
 	int m_bound;
+	Predicate::preds_t * m_predicates;
 
 	/*! Constructor
 	*/
-	Pathcov(Abstraction * abst, Filter * filter, int bound);
+	Pathcov(Filter * filter, int bound, Predicate::preds_t * predicates);
 
 	/*! \copydoc copy_constructor
 	*/
@@ -89,10 +89,6 @@ class Pathcov : public Test_Goal_Set
 	virtual ~Pathcov();
 };
 
-inline Abstraction const * Pathcov::get_abstraction() const {
-	return m_abst;
-}
-
 inline Filter const * Pathcov::get_filter() const {
 	return m_filter;
 }
@@ -101,26 +97,42 @@ inline int const Pathcov::get_bound() const {
 	return m_bound;
 }
 
+inline Predicate::preds_t const * Pathcov::get_predicates() const {
+	return m_predicates;
+}
+
 template <>
-inline Pathcov * FQL_Node_Factory<Pathcov>::create(Abstraction * abst, Filter * filter, int bound) {
+inline Pathcov * FQL_Node_Factory<Pathcov>::create(Filter * filter, int bound, Predicate::preds_t * predicates) {
 	if (m_available.empty()) {
-		m_available.push_back(new Pathcov(abst, filter, bound));
+		m_available.push_back(new Pathcov(filter, bound, predicates));
 	}
 
-	m_available.back()->m_abst = abst;
 	m_available.back()->m_filter = filter;
 	m_available.back()->m_bound = bound;
+	m_available.back()->m_predicates = predicates;
 	::std::pair< ::std::set<Pathcov *, FQL_Node_Lt_Compare>::const_iterator, bool > inserted(
 			m_used.insert(m_available.back()));
 	if (inserted.second) {
 		m_available.pop_back();
-		abst->incr_ref_count();
 		filter->incr_ref_count();
+		if (predicates) {
+			for (Predicate::preds_t::iterator iter((*inserted.first)->m_predicates->begin());
+					iter != (*inserted.first)->m_predicates->end(); ++iter) {
+				(*iter)->incr_ref_count();
+			}
+		}
+	} else {
+		if (predicates) {
+			for (Predicate::preds_t::iterator iter(predicates->begin());
+					iter != predicates->end(); ++iter) {
+				(*iter)->destroy();
+			}
+			delete predicates;
+		}
 	}
 
 	return *(inserted.first);
 }
-
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;

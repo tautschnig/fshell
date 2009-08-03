@@ -33,21 +33,24 @@
 
 #include <fshell2/fql/ast/fql_ast_printer.hpp>
 
-#include <fshell2/fql/ast/abstraction.hpp>
 #include <fshell2/fql/ast/edgecov.hpp>
-#include <fshell2/fql/ast/filter.hpp>
 #include <fshell2/fql/ast/filter_complement.hpp>
+#include <fshell2/fql/ast/filter_compose.hpp>
 #include <fshell2/fql/ast/filter_enclosing_scopes.hpp>
+#include <fshell2/fql/ast/filter_function.hpp>
 #include <fshell2/fql/ast/filter_intersection.hpp>
 #include <fshell2/fql/ast/filter_setminus.hpp>
 #include <fshell2/fql/ast/filter_union.hpp>
 #include <fshell2/fql/ast/pathcov.hpp>
+#include <fshell2/fql/ast/pm_alternative.hpp>
+#include <fshell2/fql/ast/pm_concat.hpp>
+#include <fshell2/fql/ast/pm_filter_adapter.hpp>
+#include <fshell2/fql/ast/pm_next.hpp>
+#include <fshell2/fql/ast/pm_repeat.hpp>
 #include <fshell2/fql/ast/predicate.hpp>
-#include <fshell2/fql/ast/primitive_filter.hpp>
 #include <fshell2/fql/ast/query.hpp>
-#include <fshell2/fql/ast/restriction_automaton.hpp>
+#include <fshell2/fql/ast/statecov.hpp>
 #include <fshell2/fql/ast/test_goal_sequence.hpp>
-#include <fshell2/fql/ast/test_goal_set.hpp>
 #include <fshell2/fql/ast/tgs_intersection.hpp>
 #include <fshell2/fql/ast/tgs_setminus.hpp>
 #include <fshell2/fql/ast/tgs_union.hpp>
@@ -71,22 +74,20 @@ using namespace ::diagnostics::unittest;
  */
 void test( Test_Data & data )
 {
-	Filter * file(Primitive_Filter::Factory::get_instance().create<F_FILE>("bla.c"));
-	Filter * line(Primitive_Filter::Factory::get_instance().create<F_LINE>(42));
-	Filter * col(Primitive_Filter::Factory::get_instance().create<F_COLUMN>(13));
-	Filter * bb(Primitive_Filter::Factory::get_instance().create<F_BASICBLOCKENTRY>());
+	Filter * file(Filter_Function::Factory::get_instance().create<F_FILE>("bla.c"));
+	Filter * line(Filter_Function::Factory::get_instance().create<F_LINE>(42));
+	Filter * col(Filter_Function::Factory::get_instance().create<F_COLUMN>(13));
+	Filter * bb(Filter_Function::Factory::get_instance().create<F_BASICBLOCKENTRY>());
 
 	Filter * intersec1(Filter_Intersection::Factory::get_instance().create(
 				Filter_Intersection::Factory::get_instance().create(file,line),
 				Filter_Intersection::Factory::get_instance().create(col,bb)));
 
-	::std::set< Predicate *, FQL_Node_Lt_Compare > empty;
-	Abstraction * cfg(Abstraction::Factory::get_instance().create(empty));
+	Edgecov * e(Edgecov::Factory::get_instance().create(intersec1, 
+				static_cast< Predicate::preds_t * >(0)));
 
-	Edgecov * e(Edgecov::Factory::get_instance().create(cfg, intersec1));
-
-	::std::list< ::std::pair< Restriction_Automaton *, Test_Goal_Set * > > seq_list;
-	seq_list.push_back(::std::make_pair<Restriction_Automaton *, Test_Goal_Set *>(0, e));
+	Test_Goal_Sequence::seq_t seq_list;
+	seq_list.push_back(::std::make_pair<Path_Monitor *, Test_Goal_Set *>(0, e));
 	Test_Goal_Sequence * s(Test_Goal_Sequence::Factory::get_instance().create(seq_list, 0));
 
 	Query * q(Query::Factory::get_instance().create(file, s, 0));
@@ -97,13 +98,13 @@ void test( Test_Data & data )
 	TEST_ASSERT(data.compare("printed_query_1", os.str()));
 	os.str("");
 
-	Filter * cg(Primitive_Filter::Factory::get_instance().create<F_CONDITIONGRAPH>());
-	Pathcov * p(Pathcov::Factory::get_instance().create(cfg, cg, 1));
+	Filter * cg(Filter_Function::Factory::get_instance().create<F_CONDITIONGRAPH>());
+	Pathcov * p(Pathcov::Factory::get_instance().create(cg, 1, 0));
 
 	Test_Goal_Set * union1(TGS_Union::Factory::get_instance().create(e, p));
 
-	::std::list< ::std::pair< Restriction_Automaton *, Test_Goal_Set * > > seq_list2;
-	seq_list2.push_back(::std::make_pair<Restriction_Automaton *, Test_Goal_Set *>(0, union1));
+	Test_Goal_Sequence::seq_t seq_list2;
+	seq_list2.push_back(::std::make_pair<Path_Monitor *, Test_Goal_Set *>(0, union1));
 	Test_Goal_Sequence * s2(Test_Goal_Sequence::Factory::get_instance().create(seq_list2, 0));
 
 	Query * q2(Query::Factory::get_instance().create(0, s2, 0));
