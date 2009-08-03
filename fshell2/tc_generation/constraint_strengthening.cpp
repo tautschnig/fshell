@@ -208,6 +208,13 @@ void Constraint_Strengthening::generate(::fshell2::fql::Query const& query) {
 		goal_cl.push_back(cnf.land(*iter, s));
 	}
 	cnf.lcnf(goal_cl);
+	
+	// MC/DC support:
+	// check maximum cardinality required in path set predicates and duplicate
+	// formula accordingly (k times)
+	// add constraints over tuples of formula instances, if necessary, +proper
+	// auxiliary variables
+	// store mapping between variable names (k=3: 1..n  n+1..2n  2n+1..3n)
 
 	::satcheck_minisatt minisat;
 	minisat.set_message_handler(cnf.get_message_handler());
@@ -224,6 +231,9 @@ void Constraint_Strengthening::generate(::fshell2::fql::Query const& query) {
 
 		// store the Boolean variable values
 		cnf.copy_assignment_from(minisat);
+
+		// solution has k paths!
+
 		++tcs;
 		// get the assignments
 		m_os << "IN:";
