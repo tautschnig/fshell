@@ -36,6 +36,7 @@ all-local:
 			tar xzf $(top_srcdir)/cbmc-src.tar.gz ; \
 		elif [ -z "`find cbmc -cnewer $(top_srcdir)/cbmc-src.tar.gz -type f`" ] ; then \
 			tar xzf $(top_srcdir)/cbmc-src.tar.gz ; \
+			$(MAKE) -C cbmc/src/ clean ; \
 		fi ; \
 	fi
 	if [ "$(top_srcdir)" != "." ] ; then \
