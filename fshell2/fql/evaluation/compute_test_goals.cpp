@@ -35,6 +35,7 @@
 #include <fshell2/exception/fshell2_error.hpp>
 
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
+#include <fshell2/fql/evaluation/automaton_inserter.hpp>
 
 #include <fshell2/fql/ast/edgecov.hpp>
 #include <fshell2/fql/ast/pathcov.hpp>
@@ -64,9 +65,9 @@ FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 Compute_Test_Goals::Compute_Test_Goals(::language_uit & manager,
-		::optionst const& opts, Evaluate_Filter const& eval) :
+		::optionst const& opts, Evaluate_Filter const& eval, Automaton_Inserter const& aut) :
 	::bmct(manager.context, manager.ui_message_handler),
-	m_is_initialized(false), m_eval_filter(eval), m_cnf(),
+	m_is_initialized(false), m_eval_filter(eval), m_aut(aut), m_cnf(),
 	m_bv(m_cnf) {
 	this->options = opts;
 	this->options.set_option("dimacs", false);
@@ -291,26 +292,6 @@ void Compute_Test_Goals::visit(Edgecov const* n) {
 	n->get_filter()->accept(this);
 }
 
-void Compute_Test_Goals::visit(PM_Alternative const* n) {
-	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
-}
-
-void Compute_Test_Goals::visit(PM_Concat const* n) {
-	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
-}
-
-void Compute_Test_Goals::visit(PM_Filter_Adapter const* n) {
-	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
-}
-
-void Compute_Test_Goals::visit(PM_Next const* n) {
-	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
-}
-
-void Compute_Test_Goals::visit(PM_Repeat const* n) {
-	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
-}
-
 void Compute_Test_Goals::visit(Pathcov const* n) {
 	::std::pair< tgs_value_t::iterator, bool > entry(m_tgs_map.insert(
 				::std::make_pair(n, value_t())));
@@ -324,16 +305,7 @@ void Compute_Test_Goals::visit(Predicate const* n) {
 }
 
 void Compute_Test_Goals::visit(Query const* n) {
-	if (n->get_prefix()) {
-		FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
-		n->get_prefix()->accept(this);
-	}
-
 	n->get_cover()->accept(this);
-
-	if (n->get_passing()) {
-		n->get_passing()->accept(this);
-	}
 }
 
 void Compute_Test_Goals::visit(Statecov const* n) {
@@ -405,8 +377,8 @@ void Compute_Test_Goals::visit(Test_Goal_Sequence const* n) {
 	for (Test_Goal_Sequence::seq_t::const_iterator iter(n->get_sequence().begin());
 			iter != n->get_sequence().end(); ++iter) {
 		if (iter->first) {
+			Automaton_Inserter::value_t const& aut_val(m_aut.get(*iter));
 			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
-			iter->first->accept(this);
 		}
 		iter->second->accept(this);
 		tgs_value_t::const_iterator subgoals(m_tgs_map.find(iter->second));
@@ -423,10 +395,6 @@ void Compute_Test_Goals::visit(Test_Goal_Sequence const* n) {
 			::std::copy(subgoals->second.begin(), subgoals->second.end(),
 				::std::inserter(entry.first->second, entry.first->second.begin()));
 		}
-	}
-
-	if (n->get_suffix_monitor()) {
-		n->get_suffix_monitor()->accept(this);
 	}
 }
 

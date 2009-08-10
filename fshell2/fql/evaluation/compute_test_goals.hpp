@@ -42,6 +42,7 @@ FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 class Evaluate_Filter;
+class Automaton_Inserter;
 
 /*! \brief TODO
 */
@@ -56,7 +57,8 @@ class Compute_Test_Goals : public ::bmct, public Standard_AST_Visitor_Aspect<AST
 	typedef ::std::set< test_goal_t > value_t;
 	typedef ::std::map< Test_Goal_Set const*, value_t > tgs_value_t;
 	
-	Compute_Test_Goals(::language_uit & manager, ::optionst const& opts, Evaluate_Filter const& eval);
+	Compute_Test_Goals(::language_uit & manager, ::optionst const& opts, Evaluate_Filter const& eval,
+			Automaton_Inserter const& aut);
 
 	virtual ~Compute_Test_Goals();
 
@@ -79,42 +81,7 @@ class Compute_Test_Goals : public ::bmct, public Standard_AST_Visitor_Aspect<AST
 	 */
 	virtual void visit(Edgecov const* n);
 	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::PM_Alternative
-	 * \param  n PM_Alternative
-	 */
-	virtual void visit(PM_Alternative const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::PM_Concat
-	 * \param  n PM_Concat
-	 */
-	virtual void visit(PM_Concat const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::PM_Filter_Adapter
-	 * \param  n PM_Filter_Adapter
-	 */
-	virtual void visit(PM_Filter_Adapter const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::PM_Next
-	 * \param  n PM_Next
-	 */
-	virtual void visit(PM_Next const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::PM_Repeat
-	 * \param  n PM_Repeat
-	 */
-	virtual void visit(PM_Repeat const* n);
-	/*! \} */
-
+	
 	/*! \{
 	 * \brief Visit a @ref fshell2::fql::Pathcov
 	 * \param  n Pathcov
@@ -173,6 +140,7 @@ class Compute_Test_Goals : public ::bmct, public Standard_AST_Visitor_Aspect<AST
 
 	bool m_is_initialized;
 	Evaluate_Filter const& m_eval_filter;
+	Automaton_Inserter const& m_aut;
 	::cnf_clause_list_assignmentt m_cnf;
 	::bv_cbmct m_bv;
 

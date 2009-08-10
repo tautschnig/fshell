@@ -52,11 +52,11 @@ class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	typedef Evaluate_Filter Self;
 
 	public:
-	typedef ::std::pair< ::goto_programt::const_targett, ::goto_programt::const_targett > cfg_edge_t;
+	typedef ::std::pair< ::goto_programt::targett, ::goto_programt::targett > cfg_edge_t;
 	typedef ::std::set< cfg_edge_t > value_t;
 	typedef ::std::map< Filter const*, value_t > filter_value_t;
 
-	Evaluate_Filter(::goto_functionst const& ts);
+	Evaluate_Filter(::goto_functionst & ts);
 
 	virtual ~Evaluate_Filter();
 
@@ -208,7 +208,7 @@ class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	typedef struct {
 	} empty_t;
 
-	::goto_functionst const& m_ts;
+	::goto_functionst & m_ts;
 	filter_value_t m_filter_map;
 	::cfgt< empty_t > m_cfg;
 

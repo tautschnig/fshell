@@ -48,8 +48,9 @@ void GOTO_Transformation::copy_annotations(::goto_programt::const_targett src, :
 	}
 }
 
-int GOTO_Transformation::insert(::std::string const& f, GOTO_Transformation::position_t const pos,
-			::goto_program_instruction_typet const stmt_type, ::goto_programt const& prg) {
+GOTO_Transformation::value_t const& GOTO_Transformation::insert(::std::string const& f,
+		GOTO_Transformation::position_t const pos,
+		::goto_program_instruction_typet const stmt_type, ::goto_programt const& prg) {
 	::goto_functionst::function_mapt::iterator entry(m_goto.function_map.find(f));
 	FSHELL2_PROD_CHECK1(::fshell2::Instrumentation_Error, entry != m_goto.function_map.end(),
 			"Function " + f + " not found in goto program");
@@ -58,32 +59,64 @@ int GOTO_Transformation::insert(::std::string const& f, GOTO_Transformation::pos
 	FSHELL2_PROD_CHECK1(::fshell2::Instrumentation_Error, !entry->second.is_inlined(),
 			"Cannot (yet) instrument inlined functions");
 	
-	int insert_count(0);
+	value_t bak;
 	for (::goto_programt::targett iter(entry->second.body.instructions.begin());
 			iter != entry->second.body.instructions.end(); ++iter) {
 		if (iter->type == stmt_type) {
-			::goto_programt tmp;
-			tmp.copy_from(prg);
-			copy_annotations(iter, tmp);
-			switch (pos) {
-				case BEFORE:
-					entry->second.body.destructive_insert(iter, tmp);
-					break;
-				case AFTER:
-					{
-						::goto_programt::targett next(iter);
-						++next;
-						entry->second.body.destructive_insert(next, tmp);
-					}
-					break;
-			}
-			++insert_count;
+			::goto_programt::targett next(iter);
+			++next;
+			insert(pos, ::std::make_pair(iter, next), prg);
+			bak.insert(m_inserted.begin(), m_inserted.end());
 		}
 	}
 
 	entry->second.body.update();
 
-	return insert_count;
+	m_inserted.swap(bak);
+	return m_inserted;
+}
+	
+GOTO_Transformation::value_t const& GOTO_Transformation::insert(position_t const pos,
+		::std::pair< ::goto_programt::targett, ::goto_programt::targett > const& edge,
+		::goto_programt const& prg) {
+	::goto_programt tmp;
+	tmp.copy_from(prg);
+	// TODO OUCH, we don't know which list to splice, but splice is implemented
+	// as a member function of the iterator, so this should be safe at least
+	::goto_programt::instructionst hack;
+	m_inserted.clear();
+	bool do_insert(!tmp.instructions.empty());
+	switch (pos) {
+		case BEFORE:
+			copy_annotations(edge.first, tmp);
+			// TODO should be entry->second.body.destructive_insert(edge.second,
+			// tmp), but we don't know which function it is; destructive_insert
+			// is implemented via splice
+			hack.splice(edge.first, tmp.instructions);
+			if (do_insert) {
+				::goto_programt::targett pred(edge.first);
+				pred--;
+				m_inserted.insert(::std::make_pair(pred, edge.first));
+			}
+			break;
+		case AFTER:
+			copy_annotations(edge.second, tmp);
+			::goto_programt::targett last_inst(tmp.instructions.end());
+			last_inst--;
+			hack.splice(edge.second, tmp.instructions);
+			if (do_insert) {
+				m_inserted.insert(::std::make_pair(last_inst, ++last_inst));
+			}
+			break;
+	}
+	return m_inserted;
+}
+	
+void GOTO_Transformation::update_all() {
+	for (::goto_functionst::function_mapt::iterator iter(m_goto.function_map.begin());
+			iter != m_goto.function_map.end(); ++iter) {
+		iter->second.body.update();
+	}
 }
 
 

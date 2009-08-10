@@ -49,14 +49,23 @@ class GOTO_Transformation
 		BEFORE,
 		AFTER
 	} position_t;
+	
+	typedef ::std::pair< ::goto_programt::targett, ::goto_programt::targett > cfg_edge_t;
+	typedef ::std::set< cfg_edge_t > value_t;
 
 	GOTO_Transformation(::goto_functionst & gf);
 
-	int insert(::std::string const& f, position_t const pos,
+	value_t const& insert(::std::string const& f, position_t const pos,
 			::goto_program_instruction_typet const stmt_type, ::goto_programt const& prg);
+
+	value_t const& insert(position_t const pos, ::std::pair< ::goto_programt::targett,
+			::goto_programt::targett > const& edge, ::goto_programt const& prg);
+
+	void update_all();
 
 	private:
 	::goto_functionst & m_goto;
+	value_t m_inserted;
 
 	static void copy_annotations(::goto_programt::const_targett src, ::goto_programt & target);
 

@@ -115,7 +115,7 @@ void test_use_case( Test_Data & data )
 	as->guard = zero;
 
 	::fshell2::instrumentation::GOTO_Transformation inserter(cfg);
-	TEST_ASSERT(1 == inserter.insert("main", ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::END_FUNCTION, tmp));
+	TEST_ASSERT_RELATION(1, ==, inserter.insert("main", ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::END_FUNCTION, tmp).size());
 }
 
 /** @cond */

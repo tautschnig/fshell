@@ -60,7 +60,7 @@
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Evaluate_Filter::Evaluate_Filter(::goto_functionst const& ts) :
+Evaluate_Filter::Evaluate_Filter(::goto_functionst & ts) :
 	m_ts(ts) {
 	m_cfg(m_ts);
 }
@@ -130,15 +130,15 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 		case F_FILE:
 			{
 				::std::string const& arg(n->get_string_arg<F_FILE>());
-				for (::goto_functionst::function_mapt::const_iterator iter(m_ts.function_map.begin());
+				for (::goto_functionst::function_mapt::iterator iter(m_ts.function_map.begin());
 						iter != m_ts.function_map.end(); ++iter) {
 					if (!iter->second.body_available) continue;
-					for (::goto_programt::instructionst::const_iterator f_iter(iter->second.body.instructions.begin());
+					for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
 							f_iter != iter->second.body.instructions.end(); ++f_iter) {
 						if (f_iter->location.is_nil() || f_iter->location.get_file() != arg) continue;
-						::cfgt< empty_t >::entriest::const_iterator cfg_node(m_cfg.entries.find(f_iter));
+						::cfgt< empty_t >::entriest::iterator cfg_node(m_cfg.entries.find(f_iter));
 						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.entries.end());
-						for (::goto_programt::const_targetst::const_iterator s_iter(cfg_node->second.successors.begin());
+						for (::goto_programt::targetst::iterator s_iter(cfg_node->second.successors.begin());
 								s_iter != cfg_node->second.successors.end(); ++s_iter)
 							entry.first->second.insert(::std::make_pair(f_iter, *s_iter));
 					}
@@ -155,18 +155,18 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 			break;
 		case F_FUNC:
 			{
-				::goto_functionst::function_mapt::const_iterator fct(m_ts.function_map.find(
+				::goto_functionst::function_mapt::iterator fct(m_ts.function_map.find(
 							n->get_string_arg<F_FUNC>()));
 				FSHELL2_PROD_CHECK1(::fshell2::Query_Processing_Error, fct != m_ts.function_map.end() &&
 						fct->second.body_available, ::diagnostics::internal::to_string("Cannot evaluate ",
 							*n, " (function not available)"));
-				for (::goto_programt::instructionst::const_iterator f_iter(fct->second.body.instructions.begin());
+				for (::goto_programt::instructionst::iterator f_iter(fct->second.body.instructions.begin());
 						f_iter != fct->second.body.instructions.end(); ++f_iter) {
 					// don't cover edges leaving the function
 					if (f_iter->is_function_call() || f_iter->is_return()) continue;
-					::cfgt< empty_t >::entriest::const_iterator cfg_node(m_cfg.entries.find(f_iter));
+					::cfgt< empty_t >::entriest::iterator cfg_node(m_cfg.entries.find(f_iter));
 					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.entries.end());
-					for (::goto_programt::const_targetst::const_iterator s_iter(cfg_node->second.successors.begin());
+					for (::goto_programt::targetst::iterator s_iter(cfg_node->second.successors.begin());
 							s_iter != cfg_node->second.successors.end(); ++s_iter)
 						entry.first->second.insert(::std::make_pair(f_iter, *s_iter));
 				}
@@ -176,15 +176,15 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 			break;
 			{
 				::std::string const& arg(n->get_string_arg<F_LABEL>());
-				for (::goto_functionst::function_mapt::const_iterator iter(m_ts.function_map.begin());
+				for (::goto_functionst::function_mapt::iterator iter(m_ts.function_map.begin());
 						iter != m_ts.function_map.end(); ++iter) {
 					if (!iter->second.body_available) continue;
-					for (::goto_programt::instructionst::const_iterator f_iter(iter->second.body.instructions.begin());
+					for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
 							f_iter != iter->second.body.instructions.end(); ++f_iter) {
 						if (::std::find(f_iter->labels.begin(), f_iter->labels.end(), arg) == f_iter->labels.end()) continue;
-						::cfgt< empty_t >::entriest::const_iterator cfg_node(m_cfg.entries.find(f_iter));
+						::cfgt< empty_t >::entriest::iterator cfg_node(m_cfg.entries.find(f_iter));
 						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.entries.end());
-						for (::goto_programt::const_targetst::const_iterator s_iter(cfg_node->second.successors.begin());
+						for (::goto_programt::targetst::iterator s_iter(cfg_node->second.successors.begin());
 								s_iter != cfg_node->second.successors.end(); ++s_iter)
 							entry.first->second.insert(::std::make_pair(f_iter, *s_iter));
 					}
@@ -196,15 +196,15 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
 			break;
 		case F_CALLS:
-			for (::goto_functionst::function_mapt::const_iterator iter(m_ts.function_map.begin());
+			for (::goto_functionst::function_mapt::iterator iter(m_ts.function_map.begin());
 					iter != m_ts.function_map.end(); ++iter) {
 				if (!iter->second.body_available) continue;
-				for (::goto_programt::instructionst::const_iterator f_iter(iter->second.body.instructions.begin());
+				for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
 						f_iter != iter->second.body.instructions.end(); ++f_iter) {
 					if (!f_iter->is_function_call()) continue;
-					::cfgt< empty_t >::entriest::const_iterator cfg_node(m_cfg.entries.find(f_iter));
+					::cfgt< empty_t >::entriest::iterator cfg_node(m_cfg.entries.find(f_iter));
 					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.entries.end());
-					for (::goto_programt::const_targetst::const_iterator s_iter(cfg_node->second.successors.begin());
+					for (::goto_programt::targetst::iterator s_iter(cfg_node->second.successors.begin());
 							s_iter != cfg_node->second.successors.end(); ++s_iter)
 						entry.first->second.insert(::std::make_pair(f_iter, *s_iter));
 				}
@@ -212,14 +212,14 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 			break;
 		case F_ENTRY:
 			{
-				::goto_functionst::function_mapt::const_iterator fct(m_ts.function_map.find(
+				::goto_functionst::function_mapt::iterator fct(m_ts.function_map.find(
 							n->get_string_arg<F_ENTRY>()));
 				FSHELL2_PROD_CHECK1(::fshell2::Query_Processing_Error, fct != m_ts.function_map.end() &&
 						fct->second.body_available, ::diagnostics::internal::to_string("Cannot evaluate ",
 							*n, " (function not available)"));
-				for (::goto_programt::instructionst::const_iterator f_iter(fct->second.body.instructions.begin());
+				for (::goto_programt::instructionst::iterator f_iter(fct->second.body.instructions.begin());
 						f_iter != fct->second.body.instructions.end(); ++f_iter) {
-					::cfgt< empty_t >::entriest::const_iterator cfg_node(m_cfg.entries.find(f_iter));
+					::cfgt< empty_t >::entriest::iterator cfg_node(m_cfg.entries.find(f_iter));
 					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.entries.end());
 					if (f_iter->is_skip() || f_iter->is_location() || f_iter->is_end_function() ||
 							f_iter->is_atomic_begin() || f_iter->is_atomic_end()) continue;
@@ -228,7 +228,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 						// some generate code, according to symex_other.cpp
 						if (stmt != "cpp_delete" && stmt != "cpp_delete[]" && stmt != "printf") continue;
 					}
-					for (::goto_programt::const_targetst::const_iterator s_iter(cfg_node->second.successors.begin());
+					for (::goto_programt::targetst::iterator s_iter(cfg_node->second.successors.begin());
 							s_iter != cfg_node->second.successors.end(); ++s_iter)
 						entry.first->second.insert(::std::make_pair(f_iter, *s_iter));
 					// a single match suffices
@@ -238,17 +238,17 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 			break;
 		case F_EXIT:
 			{
-				::goto_functionst::function_mapt::const_iterator fct(m_ts.function_map.find(
+				::goto_functionst::function_mapt::iterator fct(m_ts.function_map.find(
 							n->get_string_arg<F_EXIT>()));
 				FSHELL2_PROD_CHECK1(::fshell2::Query_Processing_Error, fct != m_ts.function_map.end() &&
 						fct->second.body_available, ::diagnostics::internal::to_string("Cannot evaluate ",
 							*n, " (function not available)"));
-				for (::goto_programt::instructionst::const_iterator f_iter(fct->second.body.instructions.begin());
+				for (::goto_programt::instructionst::iterator f_iter(fct->second.body.instructions.begin());
 						f_iter != fct->second.body.instructions.end(); ++f_iter) {
 					if (!f_iter->is_return()) continue;
-					::cfgt< empty_t >::entriest::const_iterator cfg_node(m_cfg.entries.find(f_iter));
+					::cfgt< empty_t >::entriest::iterator cfg_node(m_cfg.entries.find(f_iter));
 					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.entries.end());
-					for (::goto_programt::const_targetst::const_iterator s_iter(cfg_node->second.successors.begin());
+					for (::goto_programt::targetst::iterator s_iter(cfg_node->second.successors.begin());
 							s_iter != cfg_node->second.successors.end(); ++s_iter)
 						entry.first->second.insert(::std::make_pair(f_iter, *s_iter));
 				}
@@ -263,13 +263,13 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
 			break;
 		case F_BASICBLOCKENTRY:
-			for (::goto_functionst::function_mapt::const_iterator iter(m_ts.function_map.begin());
+			for (::goto_functionst::function_mapt::iterator iter(m_ts.function_map.begin());
 					iter != m_ts.function_map.end(); ++iter) {
 				if (!iter->second.body_available) continue;
 				bool take_next(false);
-				for (::goto_programt::instructionst::const_iterator f_iter(iter->second.body.instructions.begin());
+				for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
 						f_iter != iter->second.body.instructions.end(); ++f_iter) {
-					::cfgt< empty_t >::entriest::const_iterator cfg_node(m_cfg.entries.find(f_iter));
+					::cfgt< empty_t >::entriest::iterator cfg_node(m_cfg.entries.find(f_iter));
 					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.entries.end());
 					if (cfg_node->second.predecessors.empty()) take_next = true;
 					if (f_iter->is_skip() || f_iter->is_location() || f_iter->is_end_function() ||
@@ -282,7 +282,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 					if (!cfg_node->second.successors.empty() && (take_next ||
 								cfg_node->second.successors.size() > 1 || cfg_node->second.predecessors.size() > 1)) {
 						take_next = false;
-						for (::goto_programt::const_targetst::const_iterator s_iter(cfg_node->second.successors.begin());
+						for (::goto_programt::targetst::iterator s_iter(cfg_node->second.successors.begin());
 								s_iter != cfg_node->second.successors.end(); ++s_iter)
 							entry.first->second.insert(::std::make_pair(f_iter, *s_iter));
 					}
@@ -290,15 +290,15 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 			}
 			break;
 		case F_CONDITIONEDGE:
-			for (::goto_functionst::function_mapt::const_iterator iter(m_ts.function_map.begin());
+			for (::goto_functionst::function_mapt::iterator iter(m_ts.function_map.begin());
 					iter != m_ts.function_map.end(); ++iter) {
 				if (!iter->second.body_available) continue;
-				for (::goto_programt::instructionst::const_iterator f_iter(iter->second.body.instructions.begin());
+				for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
 						f_iter != iter->second.body.instructions.end(); ++f_iter) {
 					if (!f_iter->is_goto() || f_iter->guard.is_true() || f_iter->guard.is_false()) continue;
-					::cfgt< empty_t >::entriest::const_iterator cfg_node(m_cfg.entries.find(f_iter));
+					::cfgt< empty_t >::entriest::iterator cfg_node(m_cfg.entries.find(f_iter));
 					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.entries.end());
-					for (::goto_programt::const_targetst::const_iterator s_iter(cfg_node->second.successors.begin());
+					for (::goto_programt::targetst::iterator s_iter(cfg_node->second.successors.begin());
 							s_iter != cfg_node->second.successors.end(); ++s_iter)
 						entry.first->second.insert(::std::make_pair(f_iter, *s_iter));
 				}
@@ -393,6 +393,7 @@ void Evaluate_Filter::visit(Pathcov const* n) {
 
 void Evaluate_Filter::visit(Query const* n) {
 	if (n->get_prefix()) {
+		FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
 		n->get_prefix()->accept(this);
 	}
 

@@ -30,10 +30,10 @@ $(CBMC_OBJS):
 	-$(MAKE) -C $(top_builddir)/cbmc/src
 
 noinst_LTLIBRARIES = libevaluation.la
-libevaluation_la_SOURCES = evaluate_filter.cpp compute_test_goals.cpp
+libevaluation_la_SOURCES = evaluate_filter.cpp compute_test_goals.cpp evaluate_path_monitor.cpp automaton_inserter.cpp
 include_fshell2_fql_evaluationdir = $(includedir)/fshell2/fql/evaluation
-include_fshell2_fql_evaluation_HEADERS = evaluate_filter.hpp compute_test_goals.hpp
-check_PROGRAMS = evaluate_filter compute_test_goals
+include_fshell2_fql_evaluation_HEADERS = evaluate_filter.hpp compute_test_goals.hpp automaton_inserter.hpp evaluate_path_monitor.hpp
+check_PROGRAMS = evaluate_filter compute_test_goals evaluate_path_monitor automaton_inserter
 evaluate_filter_SOURCES = evaluate_filter.t.cpp
 # add additional objects required to build evaluate_filter here, like
 # evaluate_filter_LDADD = ../base/libbase.la libbla.la
@@ -44,7 +44,21 @@ evaluate_filter_LDADD = libevaluation.la ../ast/libast.la ../../exception/libexc
 compute_test_goals_SOURCES = compute_test_goals.t.cpp
 # add additional objects required to build compute_test_goals here, like
 # compute_test_goals_LDADD = ../base/libbase.la libbla.la
-compute_test_goals_LDADD = libevaluation.la ../ast/libast.la ../../exception/libexception.la $(CBMC_OBJS)
+compute_test_goals_LDADD = libevaluation.la ../../instrumentation/libinstrumentation.la ../ast/libast.la ../../exception/libexception.la $(CBMC_OBJS)
 # note that this entry (compute_test_goals_SOURCES, compute_test_goals_LDADD) will not be removed
+# by update-makefiles.pl, if the sources files are removed;
+# it must then be removed manually
+automaton_inserter_SOURCES = automaton_inserter.t.cpp
+# add additional objects required to build automaton_inserter here, like
+# automaton_inserter_LDADD = ../base/libbase.la libbla.la
+automaton_inserter_LDADD =
+# note that this entry (automaton_inserter_SOURCES, automaton_inserter_LDADD) will not be removed
+# by update-makefiles.pl, if the sources files are removed;
+# it must then be removed manually
+evaluate_path_monitor_SOURCES = evaluate_path_monitor.t.cpp
+# add additional objects required to build evaluate_path_monitor here, like
+# evaluate_path_monitor_LDADD = ../base/libbase.la libbla.la
+evaluate_path_monitor_LDADD =
+# note that this entry (evaluate_path_monitor_SOURCES, evaluate_path_monitor_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually

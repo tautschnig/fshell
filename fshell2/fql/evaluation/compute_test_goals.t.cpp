@@ -34,6 +34,8 @@
 #include <fshell2/fql/evaluation/compute_test_goals.hpp>
 
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
+#include <fshell2/fql/evaluation/evaluate_path_monitor.hpp>
+#include <fshell2/fql/evaluation/automaton_inserter.hpp>
 
 #include <fshell2/fql/ast/edgecov.hpp>
 // #include <fshell2/fql/ast/filter_complement.hpp>
@@ -133,7 +135,13 @@ void test( Test_Data & data )
 
 	Query * q(Query::Factory::get_instance().create(0, s, 0));
 
-	Compute_Test_Goals goals(l, options, eval);
+	::fshell2::fql::Evaluate_Path_Monitor pm_eval;
+	q->accept(&pm_eval);
+	
+	::fshell2::fql::Automaton_Inserter aut(pm_eval, eval, cfg);
+	aut.insert(*q);
+
+	Compute_Test_Goals goals(l, options, eval, aut);
 	Compute_Test_Goals::value_t const& bb_goals(goals.compute(*q));
 
 	// Huh - 5? TODO ...

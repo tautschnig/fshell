@@ -37,8 +37,9 @@
 #include <fshell2/exception/query_processing_error.hpp>
 #include <fshell2/fql/normalize/normalization_visitor.hpp>
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
+#include <fshell2/fql/evaluation/evaluate_path_monitor.hpp>
+#include <fshell2/fql/evaluation/automaton_inserter.hpp>
 #include <fshell2/fql/evaluation/compute_test_goals.hpp>
-#include <fshell2/instrumentation/goto_transformation.hpp>
 #include <fshell2/fql/ast/query.hpp>
 #include <fshell2/exception/fshell2_error.hpp>
 #include <fshell2/tc_generation/constraint_strengthening.hpp>
@@ -52,7 +53,6 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
-#include <cbmc/src/util/std_code.h>
 #include <cbmc/src/cbmc/bmc.h>
 
 namespace std {
@@ -129,57 +129,51 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 		bmc.set_verbosity(manager.get_verbosity());
 		FSHELL2_PROD_CHECK1(::fshell2::FShell2_Error, !bmc.run(m_gf),
 				"Program has failing assertions, cannot proceed.");
+		m_first_run = false;
 	}
 
 	// normalize the input query
 	::fshell2::fql::Normalization_Visitor norm;
 	norm.normalize(&query_ast);
 	cleanup.set_object(query_ast);
+	
+	// copy goto program, it will be modified
+	::goto_functionst gf_copy;
+	gf_copy.copy_from(m_gf);
 
 	// prepare filter evaluation
-	::fshell2::fql::Evaluate_Filter eval(m_gf);
+	::fshell2::fql::Evaluate_Filter filter_eval(gf_copy);
 	// evaluate all filters before modifying the CFG
-	query_ast->accept(&eval);
+	query_ast->accept(&filter_eval);
 
+	// build automata from path monitor expressions
+	::fshell2::fql::Evaluate_Path_Monitor pm_eval;
+	query_ast->accept(&pm_eval);
+	
 	// do automaton instrumentation
-	// for now, only insert a final assert(0)
-	if (mod || m_first_run) {
-		::goto_programt tmp;
-		::goto_programt::targett as(tmp.add_instruction(ASSERT));
-		as->code = ::code_assertt();
-		::exprt zero(::exprt("constant", ::typet("bool")));
-		zero.set("value", "false");
-		as->guard = zero;
-
-		::fshell2::instrumentation::GOTO_Transformation inserter(m_gf);
-		inserter.insert("main", ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::END_FUNCTION, tmp);
-
-		m_first_run = false;
-	}
+	::fshell2::fql::Automaton_Inserter aut(pm_eval, filter_eval, gf_copy);
+	aut.insert(*query_ast);
 
 	/*
-	// do automaton instrumentation
-	::fshell2::instrumentation::Automaton_Inserter aut(prg_cfg, *query_ast);
-	::goto_functionst instrumented_cfg;
-	aut.instrument(instrumented_cfg);
-
 	// build CFGs with abstraction
 	::fshell2::instrumentation::Abstract_CFG_Builder abst(instrumented_cfg, *ast);
 	::std::map< ::fshell2::fql::Abstraction const*, ::goto_functionst const > abst_map;
 	abst.build(abst_map);
-
-	// find proper strategy
-	::fshell2::fql::Strategy_Selection_Visitor strat;
-	::fshell2::fql::Strategy_Selection_Visitor::strategy_t s(strat.select(*ast));
 	*/
 
 	if (manager.get_verbosity() > 9) {
 		::namespacet const ns(manager.context);
-		m_gf.output(ns, os);
+		gf_copy.output(ns, os);
 	}
 	
 	// compute test goals
-	::fshell2::fql::Compute_Test_Goals goals(manager, m_opts, eval);
+	::fshell2::fql::Compute_Test_Goals goals(manager, m_opts, filter_eval, aut);
+
+	/*
+	// find proper strategy
+	::fshell2::fql::Strategy_Selection_Visitor strat;
+	::fshell2::fql::Strategy_Selection_Visitor::strategy_t s(strat.select(*ast));
+	*/
 
 	// do the enumeration
 	::fshell2::Constraint_Strengthening cs(goals);
