@@ -12,7 +12,7 @@ vpath %.ll $(srcdir)
 
 DIAGNOSTICSLEVEL ?= @DIAGNOSTICSLEVEL@
 
-AM_CPPFLAGS = -I$(top_builddir) -I$(top_srcdir) -I$(top_srcdir)/cbmc/src/ -I$(top_srcdir)/cbmc/src/util/ -DFSHELL2_DEBUG__LEVEL__=$(DIAGNOSTICSLEVEL)
+AM_CPPFLAGS = -I$(top_builddir) -I$(top_srcdir) -I$(top_srcdir)/cbmc/src/ -I$(top_srcdir)/cbmc/src/util/ -I$(top_srcdir)/astl/include -DFSHELL2_DEBUG__LEVEL__=$(DIAGNOSTICSLEVEL)
 
 MAINTAINERCLEANFILES = Makefile.in
 MOSTLYCLEANFILES = diag_stamp_*
@@ -32,6 +32,7 @@ AM_CPPFLAGS += -I@DIAGNOSTICSDIR@/include
 AM_LDFLAGS += -L@DIAGNOSTICSDIR@/lib
 
 check-local::
+	if [ "$(top_builddir)" = "." ] ; then $(MAKE) -C $(top_srcdir)/astl check ; fi
 	mkdir -p $(top_srcdir)/test
 	for t in $(check_PROGRAMS) ; do \
 		( check_path=`pwd` ; cd $(top_srcdir) ; \
@@ -39,6 +40,7 @@ check-local::
   done
 else
 check-local::
+	if [ "$(top_builddir)" = "." ] ; then $(MAKE) -C $(top_srcdir)/astl check ; fi
 	mkdir -p $(top_srcdir)/test
 	for t in $(check_PROGRAMS) ; do \
 		( check_path=`pwd` ; cd $(top_srcdir) ; \

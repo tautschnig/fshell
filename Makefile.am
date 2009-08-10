@@ -28,6 +28,15 @@ dist-hook:
 	for file in $(AUX_DIST) $(AUX_DIST_EXTRA) ; do cp $$file $(distdir)/$$file ; done
 
 all-local:
+	if [ ! -d astl/.git ] ; then \
+		if [ ! -d astl ] ; then \
+			tar xzf $(top_srcdir)/astl-src.tar.gz ; \
+		elif [ -z "`find astl -cnewer $(top_srcdir)/astl-src.tar.gz -type f`" ] ; then \
+			tar xzf $(top_srcdir)/astl-src.tar.gz ; \
+			$(MAKE) -C astl/ clean ; \
+		fi ; \
+	fi
+	$(MAKE) -C $(top_srcdir)/astl
 	if [ "$(top_srcdir)" = "." ] ; then \
 		$(top_srcdir)/config/update-makefiles.pl @enable_install_headers@ @disable_update_makefiles@ @with_diagnostics@ fshell2/ ; \
 	fi
@@ -49,4 +58,9 @@ cbmc-src.tar.gz: $(shell find cbmc -name "*.cpp" -o -name "*.h")
 	rm -f $@
 	make -C cbmc/src/ clean
 	tar czf $@ cbmc/src/
+
+astl-src.tar.gz: $(shell find astl -name "*.cpp" -o -name "*.cc" -o -name "*.h")
+	rm -f $@
+	make -C astl/ clean
+	tar czf $@ astl/
 
