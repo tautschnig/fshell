@@ -296,11 +296,16 @@ bool Command_Processing::finalize(::language_uit & manager, ::std::ostream & os)
 			manager.ui_message_handler);
     converter.convert_function(main_iter->first);
 
-    // more functions may have been added
-    for(::symbolst::iterator iter(manager.context.symbols.begin());
-			iter != manager.context.symbols.end(); ++iter)
-	  if(iter->second.type.id() == "code" && iter->second.value.id() != "compiled")
-		  converter.convert_function(iter->first);
+    // more functions may have been added, but iterators are unstable, copy
+	// symbol names first
+	::std::vector< ::irep_idt > symbols;
+	for(::symbolst::iterator iter(manager.context.symbols.begin()); iter !=
+			manager.context.symbols.end(); ++iter)
+		if(iter->second.type.id() == "code" && iter->second.value.id() != "compiled")
+			symbols.push_back(iter->first);
+	for(::std::vector< ::irep_idt >::const_iterator iter(symbols.begin());
+			iter != symbols.end(); ++iter)
+		converter.convert_function(*iter);
 
 	return true;
 }
