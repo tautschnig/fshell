@@ -8,32 +8,15 @@ include $(top_srcdir)/model.am
 # SUBDIRS = dir1 dir2 dirX
 SUBDIRS =
 
-CBMC_OBJS = ../../cbmc/src/goto-programs/goto-programs.o \
-						../../cbmc/src/pointer-analysis/pointer-analysis.o \
-						../../cbmc/src/util/util.o ../../cbmc/src/big-int/bigint.o \
-						../../cbmc/src/langapi/langapi.o \
-						../../cbmc/src/ansi-c/ansi-c.o \
-						../../cbmc/src/langapi/csp_dummy.o \
-						../../cbmc/src/langapi/cpp_dummy.o \
-						../../cbmc/src/langapi/specc_dummy.o \
-						../../cbmc/src/langapi/php_dummy.o \
-						../../cbmc/src/langapi/intrep_dummy.o \
-						../../cbmc/src/langapi/pvs_dummy.o \
-						../../cbmc/src/langapi/smvlang_dummy.o \
-						../../cbmc/src/langapi/promela_dummy.o \
-						../../cbmc/src/langapi/verilog_dummy.o \
-						../../cbmc/src/langapi/vhdl_dummy.o \
-						../../cbmc/src/langapi/smtlang_dummy.o \
-						../../cbmc/src/langapi/xmllang_dummy.o \
-						../../cbmc/src/langapi/netlist_dummy.o \
-						../../cbmc/src/langapi/pascal_dummy.o \
-						../../cbmc/src/langapi/bplang_dummy.o \
-						../../cbmc/src/langapi/csharp_dummy.o \
-						../../cbmc/src/langapi/nsf_dummy.o \
-						../../cbmc/src/langapi/mdllang_dummy.o
+CBMC_OBJS = $(top_builddir)/cbmc/src/goto-programs/goto-programs.o \
+						$(top_builddir)/cbmc/src/pointer-analysis/pointer-analysis.o \
+						$(top_builddir)/cbmc/src/util/util.o \
+						$(top_builddir)/cbmc/src/big-int/bigint.o \
+						$(top_builddir)/cbmc/src/langapi/langapi.o \
+						$(top_builddir)/cbmc/src/ansi-c/ansi-c.o
 
 $(CBMC_OBJS):
-	$(MAKE) -C ../../cbmc/src util.dir big-int.dir goto-programs.dir \
+	$(MAKE) -C $(top_builddir)/cbmc/src util.dir big-int.dir goto-programs.dir \
 		pointer-analysis.dir langapi.dir ansi-c.dir
 
 include_fshell2_instrumentationdir = $(includedir)/fshell2/instrumentation

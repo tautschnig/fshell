@@ -39,6 +39,8 @@
 
 #include <cbmc/src/util/config.h>
 #include <cbmc/src/langapi/language_ui.h>
+#include <cbmc/src/langapi/mode.h>
+#include <cbmc/src/ansi-c/ansi_c_language.h>
 
 #define TEST_COMPONENT_NAME FShell2
 #define TEST_COMPONENT_NAMESPACE fshell2
@@ -58,6 +60,7 @@ using namespace ::diagnostics::unittest;
  */
 void test_single( Test_Data & data )
 {
+	::register_language(new_ansi_c_language);
 	::cmdlinet cmdline;
 	::config.set(cmdline);
 	::language_uit l(cmdline);
@@ -77,6 +80,7 @@ void test_single( Test_Data & data )
  */
 void test_interactive( Test_Data & data )
 {
+	::register_language(new_ansi_c_language);
 	::cmdlinet cmdline;
 	::config.set(cmdline);
 	::language_uit l(cmdline);

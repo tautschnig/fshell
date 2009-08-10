@@ -35,6 +35,8 @@
 
 #include <cbmc/src/util/config.h>
 #include <cbmc/src/langapi/language_ui.h>
+#include <cbmc/src/langapi/mode.h>
+#include <cbmc/src/ansi-c/ansi_c_language.h>
 
 #include <fshell2/command/command_processing.hpp>
 #include <fshell2/exception/command_processing_error.hpp>
@@ -58,6 +60,7 @@ using namespace ::diagnostics::unittest;
  */
 void test_basic( Test_Data & data )
 {
+	::register_language(new_ansi_c_language);
 	::cmdlinet cmdline;
 	::config.set(cmdline);
 	::language_uit l(cmdline);
@@ -82,6 +85,7 @@ void test_basic( Test_Data & data )
  */
 void test_help( Test_Data & data )
 {
+	::register_language(new_ansi_c_language);
 	::cmdlinet cmdline;
 	::config.set(cmdline);
 	::language_uit l(cmdline);
@@ -106,6 +110,7 @@ void test_help( Test_Data & data )
  */
 void test_invalid( Test_Data & data )
 {
+	::register_language(new_ansi_c_language);
 	::cmdlinet cmdline;
 	::config.set(cmdline);
 	::language_uit l(cmdline);
@@ -133,6 +138,7 @@ void test_invalid( Test_Data & data )
  */
 void test_use_case( Test_Data & data )
 {
+	::register_language(new_ansi_c_language);
 	::cmdlinet cmdline;
 	::config.set(cmdline);
 	::language_uit l(cmdline);
@@ -192,6 +198,7 @@ void test_use_case( Test_Data & data )
  */
 void test_use_case_extended_invariants( Test_Data & data )
 {
+	::register_language(new_ansi_c_language);
 	::cmdlinet cmdline;
 	::config.set(cmdline);
 	::language_uit l(cmdline);

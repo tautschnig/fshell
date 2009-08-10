@@ -60,6 +60,8 @@
 #include <cbmc/src/util/config.h>
 #include <cbmc/src/langapi/language_ui.h>
 #include <cbmc/src/goto-programs/goto_convert_functions.h>
+#include <cbmc/src/langapi/mode.h>
+#include <cbmc/src/ansi-c/ansi_c_language.h>
 
 #define TEST_COMPONENT_NAME Evaluate_Filter
 #define TEST_COMPONENT_NAMESPACE fshell2::fql
@@ -95,6 +97,7 @@ void test( Test_Data & data )
 	::unlink(tempname);
 	::free(tempname);
 
+	::register_language(new_ansi_c_language);
 	::cmdlinet cmdline;
 	::config.set(cmdline);
 	::language_uit l(cmdline);

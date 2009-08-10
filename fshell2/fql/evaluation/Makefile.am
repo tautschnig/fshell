@@ -24,25 +24,7 @@ CBMC_OBJS = $(top_builddir)/cbmc/src/goto-programs/goto-programs.o \
 						$(top_builddir)/cbmc/src/cbmc/counterexample_beautification.o \
 						$(top_builddir)/cbmc/src/cbmc/symex_bmc.o \
 						$(top_builddir)/cbmc/src/langapi/langapi.o \
-						$(top_builddir)/cbmc/src/ansi-c/ansi-c.o \
-						$(top_builddir)/cbmc/src/langapi/csp_dummy.o \
-						$(top_builddir)/cbmc/src/langapi/cpp_dummy.o \
-						$(top_builddir)/cbmc/src/langapi/specc_dummy.o \
-						$(top_builddir)/cbmc/src/langapi/intrep_dummy.o \
-						$(top_builddir)/cbmc/src/langapi/pvs_dummy.o \
-						$(top_builddir)/cbmc/src/langapi/smvlang_dummy.o \
-						$(top_builddir)/cbmc/src/langapi/promela_dummy.o \
-						$(top_builddir)/cbmc/src/langapi/verilog_dummy.o \
-						$(top_builddir)/cbmc/src/langapi/vhdl_dummy.o \
-						$(top_builddir)/cbmc/src/langapi/smtlang_dummy.o \
-						$(top_builddir)/cbmc/src/langapi/xmllang_dummy.o \
-						$(top_builddir)/cbmc/src/langapi/netlist_dummy.o \
-						$(top_builddir)/cbmc/src/langapi/pascal_dummy.o \
-						$(top_builddir)/cbmc/src/langapi/bplang_dummy.o \
-						$(top_builddir)/cbmc/src/langapi/csharp_dummy.o \
-						$(top_builddir)/cbmc/src/langapi/nsf_dummy.o \
-						$(top_builddir)/cbmc/src/langapi/php_dummy.o \
-						$(top_builddir)/cbmc/src/langapi/mdllang_dummy.o
+						$(top_builddir)/cbmc/src/ansi-c/ansi-c.o
 
 $(CBMC_OBJS):
 	-$(MAKE) -C $(top_builddir)/cbmc/src
