@@ -41,7 +41,7 @@ PM_Repeat::PM_Repeat(Path_Monitor * a, int lower, int upper) :
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_path_monitor);
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_lower_bound >= 0);
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_upper_bound >= -1);
-	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, -1 m_upper_bound || m_upper_bound >= m_lower_bound);
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, -1 == m_upper_bound || m_upper_bound >= m_lower_bound);
 }
 
 void PM_Repeat::accept(AST_Visitor * v) const {

@@ -35,15 +35,9 @@
 #include <fshell2/exception/fshell2_error.hpp>
 
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
-#include <fshell2/fql/evaluation/automaton_inserter.hpp>
 
 #include <fshell2/fql/ast/edgecov.hpp>
 #include <fshell2/fql/ast/pathcov.hpp>
-#include <fshell2/fql/ast/pm_alternative.hpp>
-#include <fshell2/fql/ast/pm_concat.hpp>
-#include <fshell2/fql/ast/pm_filter_adapter.hpp>
-#include <fshell2/fql/ast/pm_next.hpp>
-#include <fshell2/fql/ast/pm_repeat.hpp>
 #include <fshell2/fql/ast/predicate.hpp>
 #include <fshell2/fql/ast/query.hpp>
 #include <fshell2/fql/ast/statecov.hpp>
@@ -65,9 +59,9 @@ FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 Compute_Test_Goals::Compute_Test_Goals(::language_uit & manager,
-		::optionst const& opts, Evaluate_Filter const& eval, Automaton_Inserter const& aut) :
+		::optionst const& opts, Evaluate_Filter const& eval) :
 	::bmct(manager.context, manager.ui_message_handler),
-	m_is_initialized(false), m_eval_filter(eval), m_aut(aut), m_cnf(),
+	m_is_initialized(false), m_eval_filter(eval), m_cnf(),
 	m_bv(m_cnf) {
 	this->options = opts;
 	this->options.set_option("dimacs", false);
@@ -104,7 +98,7 @@ void Compute_Test_Goals::initialize() {
 	if (m_is_initialized) return;
 
 	// build the Boolean equation
-	FSHELL2_PROD_CHECK1(::fshell2::FShell2_Error, !this->run(m_eval_filter.get_ts()),
+	FSHELL2_PROD_CHECK1(::fshell2::FShell2_Error, !this->run(m_eval_filter.get_goto_functions()),
 			"Failed to build Boolean program representation");
 	// protected field, can't read here
 	// FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, this->_symex.remaining_claims);
@@ -220,24 +214,24 @@ void Compute_Test_Goals::visit(Edgecov const* n) {
 	}
 	
 	// for now, we completely ignore the abstraction!
-	Evaluate_Filter::value_t const& filter_val(m_eval_filter.get(*(n->get_filter())));
+	target_graph_t::edges_t const& filter_val(m_eval_filter.get(*(n->get_filter())).get_edges());
 	::std::cerr << filter_val.size() << " edges must be covered" << ::std::endl;
-	for (Evaluate_Filter::value_t::const_iterator iter(filter_val.begin());
+	for (CFA::edges_t::const_iterator iter(filter_val.begin());
 			iter != filter_val.end(); ++iter) {
 		::std::pair< pc_to_bool_var_t::const_iterator, pc_to_bool_var_t::const_iterator >
-			guards(m_pc_to_bool_var_and_guard.equal_range(iter->first));
+			guards(m_pc_to_bool_var_and_guard.equal_range(iter->first.second));
 		// FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, guards.first != guards.second);
 		
 		if (guards.first == guards.second) {
 			::std::cerr << "WARNING: no guards for expr ";
-			if (iter->first->is_goto()) {
-				::std::cerr << "FILTER Instr: IF " << ::from_expr(this->ns, "", iter->first->guard);
-			} else if (iter->first->is_assert()) {
-				::std::cerr << "FILTER Instr: ASSERT " << ::from_expr(this->ns, "", iter->first->guard);
+			if (iter->first.second->is_goto()) {
+				::std::cerr << "FILTER Instr: IF " << ::from_expr(this->ns, "", iter->first.second->guard);
+			} else if (iter->first.second->is_assert()) {
+				::std::cerr << "FILTER Instr: ASSERT " << ::from_expr(this->ns, "", iter->first.second->guard);
 			} else {
-				::std::cerr << "FILTER Instr: " << ::from_expr(this->ns, "", iter->first->code);
+				::std::cerr << "FILTER Instr: " << ::from_expr(this->ns, "", iter->first.second->code);
 			}
-			::std::cerr << " @" << iter->first->location << ::std::endl;
+			::std::cerr << " @" << iter->first.second->location << ::std::endl;
 			continue;
 		}
 
@@ -247,7 +241,7 @@ void Compute_Test_Goals::visit(Edgecov const* n) {
 		// - otherwise, iff it is a goto, the guard_literal of the goto must be
 		// true if the second statement is the jump target (and not the skip
 		// target)
-		if (!iter->first->is_goto()) {
+		if (!iter->first.second->is_goto()) {
 			::bvt set;
 			for (; guards.first != guards.second; ++(guards.first)) {
 				if (guards.first->second.first.is_false()) continue;
@@ -265,8 +259,8 @@ void Compute_Test_Goals::visit(Edgecov const* n) {
 			::bvt set;
 			for (; guards.first != guards.second; ++(guards.first)) {
 				if (guards.first->second.first.is_false()) continue;
-				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == iter->first->targets.size());
-				bool is_goto_target(iter->first->targets.front() == iter->second);
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == iter->first.second->targets.size());
+				bool is_goto_target(iter->first.second->targets.front() == iter->second.second);
 				// ::std::cerr << "Real goto: " << (char const*) (is_goto_target?"yes":"no") << ::std::endl;
 				if (guards.first->second.first.is_true() && (
 							(is_goto_target && guards.first->second.second.is_true()) ||
@@ -288,8 +282,6 @@ void Compute_Test_Goals::visit(Edgecov const* n) {
 			if (!set.empty()) entry.first->second.insert(m_cnf.lor(set));
 		}
 	}
-
-	n->get_filter()->accept(this);
 }
 
 void Compute_Test_Goals::visit(Pathcov const* n) {
@@ -376,10 +368,6 @@ void Compute_Test_Goals::visit(Test_Goal_Sequence const* n) {
 	
 	for (Test_Goal_Sequence::seq_t::const_iterator iter(n->get_sequence().begin());
 			iter != n->get_sequence().end(); ++iter) {
-		if (iter->first) {
-			Automaton_Inserter::value_t const& aut_val(m_aut.get(*iter));
-			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
-		}
 		iter->second->accept(this);
 		tgs_value_t::const_iterator subgoals(m_tgs_map.find(iter->second));
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, subgoals != m_tgs_map.end());

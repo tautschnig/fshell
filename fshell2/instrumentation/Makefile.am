@@ -12,12 +12,23 @@ CBMC_OBJS = $(top_builddir)/cbmc/src/goto-programs/goto-programs.o \
 						$(top_builddir)/cbmc/src/pointer-analysis/pointer-analysis.o \
 						$(top_builddir)/cbmc/src/util/util.o \
 						$(top_builddir)/cbmc/src/big-int/bigint.o \
+						$(top_builddir)/cbmc/src/goto-symex/goto-symex.o \
+						$(top_builddir)/cbmc/src/cbmc/bmc.o \
+						$(top_builddir)/cbmc/src/cbmc/show_vcc.o \
+						$(top_builddir)/cbmc/src/cbmc/cbmc_solvers.o \
+						$(top_builddir)/cbmc/src/solvers/solvers.o \
+						$(top_builddir)/cbmc/src/cbmc/dimacs.o \
+						$(top_builddir)/cbmc/src/cbmc/bv_cbmc.o \
+						$(top_builddir)/cbmc/src/cbmc/document_subgoals.o \
+						$(top_builddir)/cbmc/src/cbmc/counterexample_beautification_greedy.o \
+						$(top_builddir)/cbmc/src/cbmc/counterexample_beautification.o \
+						$(top_builddir)/cbmc/src/cbmc/symex_bmc.o \
 						$(top_builddir)/cbmc/src/langapi/langapi.o \
 						$(top_builddir)/cbmc/src/ansi-c/ansi-c.o
 
 $(CBMC_OBJS):
-	$(MAKE) -C $(top_builddir)/cbmc/src util.dir big-int.dir goto-programs.dir \
-		pointer-analysis.dir langapi.dir ansi-c.dir
+	-$(MAKE) -C $(top_builddir)/cbmc/src
+
 
 include_fshell2_instrumentationdir = $(includedir)/fshell2/instrumentation
 noinst_LTLIBRARIES = libinstrumentation.la

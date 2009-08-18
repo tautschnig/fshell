@@ -107,6 +107,23 @@ Query_Cleanup::~Query_Cleanup() {
 	m_q = 0;
 }
 
+class Context_Backup {
+	public:
+		Context_Backup(::language_uit & manager);
+		~Context_Backup();
+	private:
+		::language_uit & m_manager;
+		::contextt m_context;
+};
+
+Context_Backup::Context_Backup(::language_uit & manager) :
+	m_manager(manager), m_context(m_manager.context) {
+}
+
+Context_Backup::~Context_Backup() {
+	m_manager.context.swap(m_context);
+}
+
 void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char const * line) {
 	::std::string query(m_macro.expand(line));
 	if (query.empty()) return;
@@ -151,8 +168,9 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 	query_ast->accept(&pm_eval);
 	
 	// do automaton instrumentation
-	::fshell2::fql::Automaton_Inserter aut(pm_eval, filter_eval, gf_copy);
-	aut.insert(*query_ast);
+	Context_Backup context_backup(manager);
+	::fshell2::fql::Automaton_Inserter aut(pm_eval, filter_eval, gf_copy, manager.context);
+	aut.insert();
 
 	/*
 	// build CFGs with abstraction
@@ -167,7 +185,7 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 	}
 	
 	// compute test goals
-	::fshell2::fql::Compute_Test_Goals goals(manager, m_opts, filter_eval, aut);
+	::fshell2::fql::Compute_Test_Goals goals(manager, m_opts, filter_eval);
 
 	// do the enumeration
 	::fshell2::Constraint_Strengthening cs(goals);

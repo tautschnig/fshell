@@ -50,22 +50,24 @@ class GOTO_Transformation
 		AFTER
 	} position_t;
 	
-	typedef ::std::pair< ::goto_programt::targett, ::goto_programt::targett > cfg_edge_t;
-	typedef ::std::set< cfg_edge_t > value_t;
+	typedef ::std::pair< ::goto_programt *, ::goto_programt::targett > goto_node_t;
+	typedef ::std::list< goto_node_t > inserted_t;
+	typedef ::std::pair< goto_node_t, goto_node_t > goto_edge_t;
 
 	GOTO_Transformation(::goto_functionst & gf);
 
-	value_t const& insert(::std::string const& f, position_t const pos,
+	inserted_t const& insert(::std::string const& f, position_t const pos,
 			::goto_program_instruction_typet const stmt_type, ::goto_programt const& prg);
 
-	value_t const& insert(position_t const pos, ::std::pair< ::goto_programt::targett,
-			::goto_programt::targett > const& edge, ::goto_programt const& prg);
+	inserted_t const& insert(position_t const pos, goto_edge_t const& edge,
+			::goto_programt const& prg);
 
-	void update_all();
+	inserted_t & make_nondet_choice(::goto_programt & dest, int const num, ::contextt context);
 
 	private:
 	::goto_functionst & m_goto;
-	value_t m_inserted;
+	inserted_t m_inserted;
+	int m_nondet_var_count;
 
 	static void copy_annotations(::goto_programt::const_targett src, ::goto_programt & target);
 

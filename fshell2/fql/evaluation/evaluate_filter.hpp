@@ -33,15 +33,16 @@
 
 #include <fshell2/fql/ast/ast_visitor.hpp>
 #include <fshell2/fql/ast/standard_ast_visitor_aspect.hpp>
+#include <fshell2/fql/evaluation/cfa.hpp>
 
-#include <cbmc/src/goto-programs/goto_functions.h>
-#include <cbmc/src/goto-programs/cfg.h>
-
-#include <set>
 #include <map>
+
+template <typename T> class extended_cfgt;
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
+
+typedef CFA target_graph_t;
 
 /*! \brief TODO
 */
@@ -52,17 +53,15 @@ class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	typedef Evaluate_Filter Self;
 
 	public:
-	typedef ::std::pair< ::goto_programt::targett, ::goto_programt::targett > cfg_edge_t;
-	typedef ::std::set< cfg_edge_t > value_t;
-	typedef ::std::map< Filter const*, value_t > filter_value_t;
+	typedef ::std::map< Filter const*, target_graph_t > filter_value_t;
 
 	Evaluate_Filter(::goto_functionst & ts);
 
 	virtual ~Evaluate_Filter();
 
-	value_t const& get(Filter const& f) const;
+	target_graph_t const& get(Filter const& f) const;
 
-	inline ::goto_functionst const& get_ts() const;
+	inline ::goto_functionst const& get_goto_functions() const;
 
 	/*! \{
 	 * \brief Visit a @ref fshell2::fql::Edgecov
@@ -207,10 +206,11 @@ class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	private:
 	typedef struct {
 	} empty_t;
+	typedef ::extended_cfgt< empty_t > cfg_t;
 
-	::goto_functionst & m_ts;
+	::goto_functionst & m_gf;
 	filter_value_t m_filter_map;
-	::cfgt< empty_t > m_cfg;
+	cfg_t & m_cfg;
 
 	/*! \copydoc copy_constructor
 	*/
@@ -221,8 +221,8 @@ class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	Self& operator=( Self const& rhs );
 };
 	
-inline ::goto_functionst const& Evaluate_Filter::get_ts() const {
-	return m_ts;
+inline ::goto_functionst const& Evaluate_Filter::get_goto_functions() const {
+	return m_gf;
 }
 
 FSHELL2_FQL_NAMESPACE_END;

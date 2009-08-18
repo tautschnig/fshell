@@ -123,8 +123,8 @@ void test( Test_Data & data )
 
 	Evaluate_Filter eval(cfg);
 	bb->accept(&eval);
-	Evaluate_Filter::value_t const& bb_entries(eval.get(*bb));
-	TEST_CHECK_RELATION(6, ==, bb_entries.size());
+	target_graph_t const& bb_entries(eval.get(*bb));
+	TEST_CHECK_RELATION(6, ==, bb_entries.get_edges().size());
 	
 	Edgecov * e(Edgecov::Factory::get_instance().create(bb,
 				static_cast< Predicate::preds_t * >(0)));
@@ -138,10 +138,7 @@ void test( Test_Data & data )
 	::fshell2::fql::Evaluate_Path_Monitor pm_eval;
 	q->accept(&pm_eval);
 	
-	::fshell2::fql::Automaton_Inserter aut(pm_eval, eval, cfg);
-	aut.insert(*q);
-
-	Compute_Test_Goals goals(l, options, eval, aut);
+	Compute_Test_Goals goals(l, options, eval);
 	Compute_Test_Goals::value_t const& bb_goals(goals.compute(*q));
 
 	// Huh - 5? TODO ...

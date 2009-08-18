@@ -114,18 +114,18 @@ void test( Test_Data & data )
 	
 	Filter * bb(Filter_Function::Factory::get_instance().create<F_BASICBLOCKENTRY>());
 	bb->accept(&eval);
-	Evaluate_Filter::value_t const& bb_entries(eval.get(*bb));
-	TEST_ASSERT_RELATION(4, ==, bb_entries.size()); // main, edge after c::main and edges in c::main 
+	target_graph_t const& bb_entries(eval.get(*bb));
+	TEST_ASSERT_RELATION(4, ==, bb_entries.get_edges().size()); // main, edge after c::main and edges in c::main 
 	
 	Filter * cc(Filter_Function::Factory::get_instance().create<F_CONDITIONEDGE>());
 	cc->accept(&eval);
-	Evaluate_Filter::value_t const& cc_entries(eval.get(*cc));
-	TEST_ASSERT_RELATION(2, ==, cc_entries.size());
+	target_graph_t const& cc_entries(eval.get(*cc));
+	TEST_ASSERT_RELATION(2, ==, cc_entries.get_edges().size());
 	
 	Filter * ff(Filter_Function::Factory::get_instance().create<F_FILE>(tempname_str));
 	ff->accept(&eval);
-	Evaluate_Filter::value_t const& ff_entries(eval.get(*ff));
-	TEST_ASSERT_RELATION(6, ==, ff_entries.size());
+	target_graph_t const& ff_entries(eval.get(*ff));
+	TEST_ASSERT_RELATION(6, ==, ff_entries.get_edges().size());
 }
 
 /** @cond */

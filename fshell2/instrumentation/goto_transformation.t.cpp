@@ -40,8 +40,10 @@
 #include <cbmc/src/langapi/language_ui.h>
 #include <cbmc/src/goto-programs/goto_convert_functions.h>
 #include <cbmc/src/util/std_code.h>
+#include <cbmc/src/util/std_expr.h>
 #include <cbmc/src/langapi/mode.h>
 #include <cbmc/src/ansi-c/ansi_c_language.h>
+#include <cbmc/src/cbmc/bmc.h>
 
 #define TEST_COMPONENT_NAME GOTO_Transformation
 #define TEST_COMPONENT_NAMESPACE fshell2::instrumentation
@@ -118,6 +120,96 @@ void test_use_case( Test_Data & data )
 	TEST_ASSERT_RELATION(1, ==, inserter.insert("main", ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::END_FUNCTION, tmp).size());
 }
 
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * @test A test of GOTO_Transformation
+ *
+ */
+void test_use_case2( Test_Data & data )
+{
+	::register_language(new_ansi_c_language);
+	::cmdlinet cmdline;
+	::config.set(cmdline);
+	::language_uit l(cmdline);
+	::optionst options;
+  
+	::languaget *languagep=get_language_from_filename("bla.c");
+	TEST_CHECK(languagep);
+	language_filet language_file;
+
+  	std::pair<language_filest::filemapt::iterator, bool> res=l.language_files.filemap.insert(
+           ::std::make_pair<std::string, language_filet>("bla.c", language_file));
+
+  	language_filet &lf=res.first->second;
+  	lf.filename="bla.c";
+  	lf.language=languagep;
+
+	::goto_functionst cfg;
+	::fshell2::instrumentation::GOTO_Transformation inserter(cfg);
+	
+	cfg.function_map["c::tmp_func"].body_available = true;
+	cfg.function_map["c::tmp_func"].type.return_type() = ::empty_typet(); 
+	::config.main = "tmp_func";
+	::symbol_exprt func_expr("c::tmp_func", ::typet("code"));
+	::symbolt func_symb;
+	func_symb.from_irep(func_expr);
+	func_symb.value = ::code_blockt();
+	func_symb.mode = "C";
+	func_symb.name = "c::tmp_func";
+	func_symb.base_name = "tmp_func";
+	l.context.move(func_symb);
+	TEST_CHECK(!l.final());
+	::symbolst::iterator main_iter(l.context.symbols.find("main"));
+	TEST_CHECK(main_iter != l.context.symbols.end());
+    ::goto_convert_functionst converter(l.context, options, cfg, l.ui_message_handler);
+    converter.convert_function(main_iter->first);
+		
+	::fshell2::instrumentation::GOTO_Transformation::inserted_t & targets(
+			inserter.make_nondet_choice(cfg.function_map["c::tmp_func"].body, 3, l.context));
+	TEST_ASSERT_RELATION(3, ==, targets.size());
+	TEST_ASSERT_RELATION(12, ==, cfg.function_map["c::tmp_func"].body.instructions.size());
+	cfg.function_map["c::tmp_func"].body.add_instruction(END_FUNCTION);
+
+	{
+		::false_exprt f;
+		targets.front().second->make_assertion(f);
+		(++(targets.begin()))->second->make_skip();
+		(++(++(targets.begin())))->second->make_skip();
+	
+		::bmct bmc(l.context, l.ui_message_handler);
+		bmc.options = options;
+		bmc.set_verbosity(l.get_verbosity());
+		TEST_ASSERT(bmc.run(cfg));
+	}
+
+	{
+		::false_exprt f;
+		targets.front().second->make_skip();
+		(++(targets.begin()))->second->make_assertion(f);
+		(++(++(targets.begin())))->second->make_skip();
+
+		::bmct bmc(l.context, l.ui_message_handler);
+		bmc.options = options;
+		bmc.set_verbosity(l.get_verbosity());
+		TEST_ASSERT(bmc.run(cfg));
+	}
+
+	{
+		::false_exprt f;
+		targets.front().second->make_skip();
+		(++(targets.begin()))->second->make_skip();
+		(++(++(targets.begin())))->second->make_assertion(f);
+
+		/*::namespacet const ns(l.context);
+		cfg.output(ns, ::std::cerr);*/
+
+		::bmct bmc(l.context, l.ui_message_handler);
+		bmc.options = options;
+		bmc.set_verbosity(l.get_verbosity());
+		TEST_ASSERT(bmc.run(cfg));
+	}
+}
+
 /** @cond */
 TEST_COMPONENT_TEST_NAMESPACE_END;
 TEST_NAMESPACE_END;
@@ -127,8 +219,9 @@ FSHELL2_INSTRUMENTATION_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
 
 TEST_SUITE_BEGIN;
-TEST_NORMAL_CASE( &test_invalid, LEVEL_PROD );
+TEST_NORMAL_CASE( &test_invalid, LEVEL_DEBUG );
 TEST_NORMAL_CASE( &test_use_case, LEVEL_PROD );
+TEST_NORMAL_CASE( &test_use_case2, LEVEL_PROD );
 TEST_SUITE_END;
 
 STREAM_TEST_SYSTEM_MAIN;

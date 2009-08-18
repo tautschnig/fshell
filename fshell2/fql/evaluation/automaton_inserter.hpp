@@ -31,15 +31,19 @@
 
 #include <fshell2/config/config.hpp>
 
-#include <fshell2/fql/evaluation/evaluate_filter.hpp>
-#include <fshell2/fql/evaluation/evaluate_path_monitor.hpp>
-#include <fshell2/instrumentation/goto_transformation.hpp>
-#include <fshell2/fql/ast/test_goal_sequence.hpp>
-
 #include <cbmc/src/goto-programs/goto_functions.h>
 
 FSHELL2_NAMESPACE_BEGIN;
+FSHELL2_INSTRUMENTATION_NAMESPACE_BEGIN;
+
+class GOTO_Transformation;
+
+FSHELL2_INSTRUMENTATION_NAMESPACE_END;
+
 FSHELL2_FQL_NAMESPACE_BEGIN;
+
+class Evaluate_Path_Monitor;
+class Evaluate_Filter;
 
 /*! \brief TODO
 */
@@ -50,30 +54,20 @@ class Automaton_Inserter
 	typedef Automaton_Inserter Self;
 
 	public:
-	typedef Evaluate_Filter::value_t value_t;
-	typedef ::std::map< Test_Goal_Sequence::seq_entry_t const*, value_t > pm_value_t;
-
 	Automaton_Inserter(Evaluate_Path_Monitor const& pm_eval,
 			Evaluate_Filter const& filter_eval,
-			::goto_functionst & gf);
+			::goto_functionst & gf, ::contextt & context);
 
-	~Automaton_Inserter();
+	virtual ~Automaton_Inserter();
 	
-	value_t const& get(Test_Goal_Sequence::seq_entry_t const& seq) const;
-
-	void insert(Query const& query);
+	void insert();
 
 	private:
 	Evaluate_Path_Monitor const& m_pm_eval;
 	Evaluate_Filter const& m_filter_eval;
 	::goto_functionst & m_gf;
-	::fshell2::instrumentation::GOTO_Transformation m_inserter;
-	pm_value_t m_pm_acc_edges_map;
-	value_t m_acc_edges;
-	int m_aut_index;
-	Evaluate_Filter::value_t m_last_insert;
-
-	void insert(Path_Monitor const& pm);
+	::contextt & m_context;
+	::fshell2::instrumentation::GOTO_Transformation & m_inserter;
 
 	/*! \copydoc copy_constructor
 	*/

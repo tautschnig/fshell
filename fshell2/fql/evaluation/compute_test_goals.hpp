@@ -42,7 +42,6 @@ FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 class Evaluate_Filter;
-class Automaton_Inserter;
 
 /*! \brief TODO
 */
@@ -57,8 +56,7 @@ class Compute_Test_Goals : public ::bmct, public Standard_AST_Visitor_Aspect<AST
 	typedef ::std::set< test_goal_t > value_t;
 	typedef ::std::map< Test_Goal_Set const*, value_t > tgs_value_t;
 	
-	Compute_Test_Goals(::language_uit & manager, ::optionst const& opts, Evaluate_Filter const& eval,
-			Automaton_Inserter const& aut);
+	Compute_Test_Goals(::language_uit & manager, ::optionst const& opts, Evaluate_Filter const& eval);
 
 	virtual ~Compute_Test_Goals();
 
@@ -140,7 +138,6 @@ class Compute_Test_Goals : public ::bmct, public Standard_AST_Visitor_Aspect<AST
 
 	bool m_is_initialized;
 	Evaluate_Filter const& m_eval_filter;
-	Automaton_Inserter const& m_aut;
 	::cnf_clause_list_assignmentt m_cnf;
 	::bv_cbmct m_bv;
 

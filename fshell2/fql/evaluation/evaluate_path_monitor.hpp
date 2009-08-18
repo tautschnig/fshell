@@ -55,31 +55,52 @@ class Evaluate_Path_Monitor : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	class Filter_Index {
 		typedef Filter_Index Self;
 		public:
-		typedef Filter const * char_type;
+		typedef int char_type;
 
-		//Filter_Index();
+		Filter_Index();
+
+		int to_index(Filter const* f);
 
 		static bool lt(const char_type x, const char_type y) {
 			return x < y;
 		}
 
-		//~Filter_Index();
+		int id_index() const {
+			return 0;
+		}
+	
+		Filter const* lookup_index(int index) const;
+
+		~Filter_Index();
 
 		private:
+		::std::map< Filter const*, int > m_filter_to_int;
+		::std::map< int, Filter const* > m_int_to_filter;
+		int m_next_index;
 
 		Filter_Index(Self const& rhs);
 		Self& operator=(Self const& rhs);
 	};
 
-	typedef ::astl::NFA_mmap_backedge< Filter_Index > automaton_t;
-	typedef ::std::map< Path_Monitor const*, automaton_t > pm_aut_t;
+	typedef ::astl::NFA_mmap_backedge< Filter_Index > trace_automaton_t;
 
 	Evaluate_Path_Monitor();
 
 	virtual ~Evaluate_Path_Monitor();
 
-	automaton_t const& get(Path_Monitor const& pm) const;
+	inline trace_automaton_t const& get_cov_seq_aut() const;
+	inline trace_automaton_t const& get_passing_aut() const;
 
+	inline Filter const* lookup_index(int index) const;
+	inline int id_index() const;
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Edgecov
+	 * \param  n Edgecov
+	 */
+	virtual void visit(Edgecov const* n);
+	/*! \} */
+	
 	/*! \{
 	 * \brief Visit a @ref fshell2::fql::PM_Alternative
 	 * \param  n PM_Alternative
@@ -116,10 +137,52 @@ class Evaluate_Path_Monitor : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	/*! \} */
 
 	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Pathcov
+	 * \param  n Pathcov
+	 */
+	virtual void visit(Pathcov const* n);
+	/*! \} */
+
+	/*! \{
 	 * \brief Visit a @ref fshell2::fql::Query
 	 * \param  n Query
 	 */
 	virtual void visit(Query const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Predicate
+	 * \param  n Predicate
+	 */
+	virtual void visit(Predicate const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Statecov
+	 * \param  n Statecov
+	 */
+	virtual void visit(Statecov const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::TGS_Intersection
+	 * \param  n TGS_Intersection
+	 */
+	virtual void visit(TGS_Intersection const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::TGS_Setminus
+	 * \param  n TGS_Setminus
+	 */
+	virtual void visit(TGS_Setminus const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::TGS_Union
+	 * \param  n TGS_Union
+	 */
+	virtual void visit(TGS_Union const* n);
 	/*! \} */
 
 	/*! \{
@@ -130,10 +193,15 @@ class Evaluate_Path_Monitor : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	/*! \} */
 
 	private:
-	pm_aut_t m_pm_aut_map;
+	Filter_Index m_filter_index;
+	trace_automaton_t m_cov_seq_aut;
+	trace_automaton_t m_passing_aut;
 
-	automaton_t * m_current_aut;
-	::std::pair< automaton_t::state_type, automaton_t::state_type > m_top_states;
+	trace_automaton_t * m_current_aut;
+	trace_automaton_t::state_type m_current_initial;
+	trace_automaton_t::state_type m_current_final;
+
+	void simplify(trace_automaton_t & aut);
 
 	/*! \copydoc copy_constructor
 	*/
@@ -143,6 +211,22 @@ class Evaluate_Path_Monitor : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	 */
 	Self& operator=( Self const& rhs );
 };
+
+Evaluate_Path_Monitor::trace_automaton_t const& Evaluate_Path_Monitor::get_cov_seq_aut() const {
+	return m_cov_seq_aut;
+}
+
+Evaluate_Path_Monitor::trace_automaton_t const& Evaluate_Path_Monitor::get_passing_aut() const {
+	return m_passing_aut;
+}
+	
+Filter const* Evaluate_Path_Monitor::lookup_index(int index) const {
+	return m_filter_index.lookup_index(index);
+}
+	
+int Evaluate_Path_Monitor::id_index() const {
+	return m_filter_index.id_index();
+}
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
