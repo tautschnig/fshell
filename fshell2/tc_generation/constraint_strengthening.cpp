@@ -43,6 +43,12 @@ Constraint_Strengthening::Constraint_Strengthening(::fshell2::fql::Compute_Test_
 
 void Constraint_Strengthening::generate(::fshell2::fql::Query const& query,
 		test_cases_t & tcs) {
+	/*
+	// find proper strategy
+	::fshell2::fql::Strategy_Selection_Visitor strat;
+	::fshell2::fql::Strategy_Selection_Visitor::strategy_t s(strat.select(*ast));
+	*/
+
 	::fshell2::fql::Compute_Test_Goals::value_t const& goal_set(m_goals.compute(query));
 	::cnf_clause_list_assignmentt & cnf(m_goals.get_cnf());
 

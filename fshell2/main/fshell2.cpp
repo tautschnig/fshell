@@ -169,12 +169,6 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 	// compute test goals
 	::fshell2::fql::Compute_Test_Goals goals(manager, m_opts, filter_eval, aut);
 
-	/*
-	// find proper strategy
-	::fshell2::fql::Strategy_Selection_Visitor strat;
-	::fshell2::fql::Strategy_Selection_Visitor::strategy_t s(strat.select(*ast));
-	*/
-
 	// do the enumeration
 	::fshell2::Constraint_Strengthening cs(goals);
 	::fshell2::Constraint_Strengthening::test_cases_t test_suite;
