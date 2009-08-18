@@ -124,7 +124,7 @@ void test_use_case( Test_Data & data )
 	q->destroy();
 	
 	::fshell2::fql::Query_Processing::get_instance().parse(os,
-				"in @file(\"bla.c\") cover edges(id) passing @func(main)", &q);
+				"in @file(\"bla.c\") cover edges(id) passing @func(main)*", &q);
 	TEST_ASSERT(q != 0);
 	os.str("");
 	os << *q;
@@ -132,11 +132,19 @@ void test_use_case( Test_Data & data )
 	q->destroy();
 	
 	::fshell2::fql::Query_Processing::get_instance().parse(os,
-				"in @file(\"bla.c\") cover edges(@BASICBLOCKENTRY) passing setminus(@file(\"bla.c\"),@func(unimplemented))", &q);
+				"in @file(\"bla.c\") cover edges(@BASICBLOCKENTRY) passing setminus(@file(\"bla.c\"),@func(unimplemented))*", &q);
 	TEST_ASSERT(q != 0);
 	os.str("");
 	os << *q;
 	TEST_ASSERT(data.compare("parsed_use_case_query_3", os.str()));
+	q->destroy();
+	
+	::fshell2::fql::Query_Processing::get_instance().parse(os,
+				"in @file(\"bla.c\") cover edges(@BASICBLOCKENTRY) -[ @func(main)+@func(other) ]> edges(@BASICBLOCKENTRY) passing @func(main)*.@func(other).id*", &q);
+	TEST_ASSERT(q != 0);
+	os.str("");
+	os << *q;
+	TEST_ASSERT(data.compare("parsed_use_case_query_4", os.str()));
 	q->destroy();
 }
 
