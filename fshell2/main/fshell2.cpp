@@ -135,7 +135,7 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 	
 	// parse succeeded, make sure the CFG is prepared
 	bool mod(m_cmd.finalize(manager, os));
-
+	
 	if (mod || m_first_run) {
 		// code may have changed, check for failing assertions
 		// we could also disable (using CBMC cmdline) assertions, but that must
@@ -178,7 +178,7 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 	abst.build(abst_map);
 	*/
 
-	if (manager.get_verbosity() > 9) {
+	if (m_opts.get_bool_option("show-goto-functions")) {
 		::namespacet const ns(manager.context);
 		gf_copy.output(ns, os);
 	}
