@@ -209,7 +209,7 @@ class Evaluate_Path_Monitor : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	test_goal_map_t m_test_goal_map;
 	test_goal_reverse_map_t m_reverse_test_goal_map;
 
-	void simplify(trace_automaton_t & aut);
+	void simplify(trace_automaton_t & aut, bool update_tg);
 
 	/*! \copydoc copy_constructor
 	*/
