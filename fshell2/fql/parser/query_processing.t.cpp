@@ -59,9 +59,9 @@ void test_basic( Test_Data & data )
 {
 	::std::ostringstream os;
 	::fshell2::fql::Query * q(0);
+	Query_Processing qp;
 
-	::fshell2::fql::Query_Processing::get_instance().parse(os,
-				"cover edges(@file(\"bla.c\"))", &q);
+	qp.parse(os, "cover edges(@file(\"bla.c\"))", &q);
 	TEST_ASSERT(q != 0);
 	os.str("");
 
@@ -93,13 +93,14 @@ void test_invalid( Test_Data & data )
 {
 	::std::ostringstream os;
 	::fshell2::fql::Query * q(0);
+	Query_Processing qp;
 
 	TEST_THROWING_BLOCK_ENTER;
-	::fshell2::fql::Query_Processing::get_instance().parse(os, "bla bla bla", &q);
+	qp.parse(os, "bla bla bla", &q);
 	TEST_THROWING_BLOCK_EXIT(::fshell2::Query_Processing_Error);
 	
 	TEST_THROWING_BLOCK_ENTER;
-	::fshell2::fql::Query_Processing::get_instance().parse(os, "cover edges(@basicblockentry)->(@basicblockentry)", &q);
+	qp.parse(os, "cover edges(@basicblockentry)->(@basicblockentry)", &q);
 	TEST_THROWING_BLOCK_EXIT(::fshell2::Query_Processing_Error);
 
 	TEST_ASSERT(0 == q);
@@ -114,33 +115,30 @@ void test_use_case( Test_Data & data )
 {
 	::std::ostringstream os;
 	::fshell2::fql::Query * q(0);
+	Query_Processing qp;
 	
-	::fshell2::fql::Query_Processing::get_instance().parse(os,
-				"cover edges(@file(\"bla.c\"))", &q);
+	qp.parse(os, "cover edges(@file(\"bla.c\"))", &q);
 	TEST_ASSERT(q != 0);
 	os.str("");
 	os << *q;
 	TEST_ASSERT(data.compare("parsed_use_case_query_1", os.str()));
 	q->destroy();
 	
-	::fshell2::fql::Query_Processing::get_instance().parse(os,
-				"in @file(\"bla.c\") cover edges(id) passing @func(main)*", &q);
+	qp.parse(os, "in @file(\"bla.c\") cover edges(id) passing @func(main)*", &q);
 	TEST_ASSERT(q != 0);
 	os.str("");
 	os << *q;
 	TEST_ASSERT(data.compare("parsed_use_case_query_2", os.str()));
 	q->destroy();
 	
-	::fshell2::fql::Query_Processing::get_instance().parse(os,
-				"in @file(\"bla.c\") cover edges(@BASICBLOCKENTRY) passing setminus(@file(\"bla.c\"),@func(unimplemented))*", &q);
+	qp.parse(os, "in @file(\"bla.c\") cover edges(@BASICBLOCKENTRY) passing setminus(@file(\"bla.c\"),@func(unimplemented))*", &q);
 	TEST_ASSERT(q != 0);
 	os.str("");
 	os << *q;
 	TEST_ASSERT(data.compare("parsed_use_case_query_3", os.str()));
 	q->destroy();
 	
-	::fshell2::fql::Query_Processing::get_instance().parse(os,
-				"in @file(\"bla.c\") cover edges(@BASICBLOCKENTRY) -[ @func(main)+@func(other) ]> edges(@BASICBLOCKENTRY) passing @func(main)*.@func(other).id*", &q);
+	qp.parse(os, "in @file(\"bla.c\") cover edges(@BASICBLOCKENTRY) -[ @func(main)+@func(other) ]> edges(@BASICBLOCKENTRY) passing @func(main)*.@func(other).id*", &q);
 	TEST_ASSERT(q != 0);
 	os.str("");
 	os << *q;

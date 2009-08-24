@@ -33,7 +33,6 @@
 
 #include <fshell2/exception/command_processing_error.hpp>
 #include <fshell2/exception/macro_processing_error.hpp>
-#include <fshell2/fql/parser/query_processing.hpp>
 #include <fshell2/exception/query_processing_error.hpp>
 #include <fshell2/fql/normalize/normalization_visitor.hpp>
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
@@ -130,7 +129,7 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 
 	// there is some query string left, try to parse it
 	::fshell2::fql::Query * query_ast(0);
-	::fshell2::fql::Query_Processing::get_instance().parse(os, query.c_str(), &query_ast);
+	m_fql_parser.parse(os, query.c_str(), &query_ast);
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, query_ast != 0);
 	Query_Cleanup cleanup(query_ast);
 	

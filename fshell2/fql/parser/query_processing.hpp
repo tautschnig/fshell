@@ -47,15 +47,13 @@ class Query_Processing
 	typedef Query_Processing Self;
 
 	public:
-	static Query_Processing & get_instance();
+	Query_Processing();
 
 	void parse(::std::ostream & os, char const * query, Query ** query_ast);
 
 	static ::std::ostream & help(::std::ostream & os);
 
 	private:
-	Query_Processing();
-
 	/*! \copydoc copy_constructor
 	*/
 	Query_Processing( Self const& rhs );

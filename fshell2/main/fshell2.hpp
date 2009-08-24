@@ -35,6 +35,7 @@
 
 #include <fshell2/command/command_processing.hpp>
 #include <fshell2/macro/macro_processing.hpp>
+#include <fshell2/fql/parser/query_processing.hpp>
 
 #include <cbmc/src/goto-programs/goto_functions.h>
 
@@ -65,6 +66,7 @@ class FShell2
 	::goto_functionst & m_gf;
 	::fshell2::command::Command_Processing m_cmd;
 	::fshell2::macro::Macro_Processing m_macro;
+	::fshell2::fql::Query_Processing m_fql_parser;
 	bool m_first_run;
 
 	void try_query(::language_uit & manager, ::std::ostream & os, char const * line);

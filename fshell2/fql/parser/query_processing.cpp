@@ -51,11 +51,6 @@ FSHELL2_FQL_NAMESPACE_BEGIN;
 Query_Processing::Query_Processing() {
 }
 
-Query_Processing::Query_Processing & Query_Processing::get_instance() {
-	static Query_Processing instance;
-	return instance;
-}
-	
 ::std::ostream & Query_Processing::help(::std::ostream & os) {
 	os << "FQL:" << ::std::endl << FQL_HELP << ::std::endl;
 	return os;
