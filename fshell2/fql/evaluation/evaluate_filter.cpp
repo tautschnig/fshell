@@ -76,6 +76,13 @@ target_graph_t const& Evaluate_Filter::get(Filter const& f) const {
 			entry != m_filter_map.end());
 	return entry->second;
 }
+	
+Evaluate_Filter::edge_to_filters_t const& Evaluate_Filter::get(::goto_programt::const_targett const& n) const {
+	static edge_to_filters_t no_entry;
+	node_to_filters_t::const_iterator entry(m_node_to_filters_map.find(n));
+	if (entry != m_node_to_filters_map.end()) return entry->second;
+	return no_entry;
+}
 
 void Evaluate_Filter::visit(Edgecov const* n) {
 	n->get_filter()->accept(this);
@@ -105,6 +112,11 @@ void Evaluate_Filter::visit(Filter_Complement const* n) {
 			f_set->second.get_initial_states().begin(), f_set->second.get_initial_states().end(),
 			::std::inserter(initial, initial.begin()));
 	entry.first->second.set_initial_states(initial);
+
+	for (target_graph_t::edges_t::const_iterator e_iter(entry.first->second.get_edges().begin());
+			e_iter != entry.first->second.get_edges().end(); ++e_iter) {
+		m_node_to_filters_map[ e_iter->first.second ][ *e_iter ].insert(n);
+	}
 }
 
 void Evaluate_Filter::visit(Filter_Compose const* n) {
@@ -129,6 +141,11 @@ void Evaluate_Filter::visit(Filter_Compose const* n) {
 	::std::copy(a_set->second.get_initial_states().begin(), a_set->second.get_initial_states().end(),
 			::std::inserter(initial, initial.begin()));
 	entry.first->second.set_initial_states(initial);
+
+	for (target_graph_t::edges_t::const_iterator e_iter(entry.first->second.get_edges().begin());
+			e_iter != entry.first->second.get_edges().end(); ++e_iter) {
+		m_node_to_filters_map[ e_iter->first.second ][ *e_iter ].insert(n);
+	}
 }
 
 void Evaluate_Filter::visit(Filter_Enclosing_Scopes const* n) {
@@ -362,6 +379,11 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 				
 	entry.first->second.set_edges(edges);
 	entry.first->second.set_initial_states(initial);
+
+	for (target_graph_t::edges_t::const_iterator e_iter(entry.first->second.get_edges().begin());
+			e_iter != entry.first->second.get_edges().end(); ++e_iter) {
+		m_node_to_filters_map[ e_iter->first.second ][ *e_iter ].insert(n);
+	}
 }
 
 void Evaluate_Filter::visit(Filter_Intersection const* n) {
@@ -387,6 +409,11 @@ void Evaluate_Filter::visit(Filter_Intersection const* n) {
 			b_set->second.get_initial_states().begin(), b_set->second.get_initial_states().end(),
 			::std::inserter(initial, initial.begin()));
 	entry.first->second.set_initial_states(initial);
+
+	for (target_graph_t::edges_t::const_iterator e_iter(entry.first->second.get_edges().begin());
+			e_iter != entry.first->second.get_edges().end(); ++e_iter) {
+		m_node_to_filters_map[ e_iter->first.second ][ *e_iter ].insert(n);
+	}
 }
 
 void Evaluate_Filter::visit(Filter_Setminus const* n) {
@@ -412,6 +439,11 @@ void Evaluate_Filter::visit(Filter_Setminus const* n) {
 			b_set->second.get_initial_states().begin(), b_set->second.get_initial_states().end(),
 			::std::inserter(initial, initial.begin()));
 	entry.first->second.set_initial_states(initial);
+
+	for (target_graph_t::edges_t::const_iterator e_iter(entry.first->second.get_edges().begin());
+			e_iter != entry.first->second.get_edges().end(); ++e_iter) {
+		m_node_to_filters_map[ e_iter->first.second ][ *e_iter ].insert(n);
+	}
 }
 
 void Evaluate_Filter::visit(Filter_Union const* n) {
@@ -437,6 +469,11 @@ void Evaluate_Filter::visit(Filter_Union const* n) {
 			b_set->second.get_initial_states().begin(), b_set->second.get_initial_states().end(),
 			::std::inserter(initial, initial.begin()));
 	entry.first->second.set_initial_states(initial);
+
+	for (target_graph_t::edges_t::const_iterator e_iter(entry.first->second.get_edges().begin());
+			e_iter != entry.first->second.get_edges().end(); ++e_iter) {
+		m_node_to_filters_map[ e_iter->first.second ][ *e_iter ].insert(n);
+	}
 }
 
 void Evaluate_Filter::visit(PM_Alternative const* n) {

@@ -31,6 +31,8 @@
 
 #include <fshell2/config/config.hpp>
 
+#include <fshell2/fql/evaluation/evaluate_path_monitor.hpp>
+
 #include <cbmc/src/cbmc/bmc.h>
 #include <cbmc/src/cbmc/bv_cbmc.h>
 #include <cbmc/src/solvers/sat/cnf_clause_list.h>
@@ -39,7 +41,7 @@ FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 class Query;
-class Evaluate_Path_Monitor;
+class Evaluate_Filter;
 class Automaton_Inserter;
 
 /*! \brief TODO
@@ -55,12 +57,15 @@ class Compute_Test_Goals : public ::bmct
 	typedef ::std::set< test_goal_t > test_goals_t;
 	
 	Compute_Test_Goals(::language_uit & manager, ::optionst const& opts,
-			::goto_functionst const& gf, Evaluate_Path_Monitor const& pm_eval,
+			::goto_functionst const& gf, Evaluate_Filter const& filter_eval,
+			Evaluate_Path_Monitor const& pm_eval,
 			Automaton_Inserter const& a_i);
 
 	virtual ~Compute_Test_Goals();
 
 	test_goals_t const& compute(Query const& query);
+
+	test_goals_t const& get_satisfied_test_goals();
 
 	inline ::cnf_clause_list_assignmentt & get_cnf();
 
@@ -75,16 +80,20 @@ class Compute_Test_Goals : public ::bmct
 	
 	bool m_is_initialized;
 	::goto_functionst const& m_gf;
+	Evaluate_Filter const& m_filter_eval;
 	Evaluate_Path_Monitor const& m_pm_eval;
 	Automaton_Inserter const& m_aut_insert;
 	::cnf_clause_list_assignmentt m_cnf;
 	::bv_cbmct m_bv;
-
-	typedef ::std::map< goto_programt::const_targett,
-				::std::map< goto_programt::const_targett, 
+	typedef ::std::map< Evaluate_Path_Monitor::trace_automaton_t::state_type, 
+		::std::map< ::goto_programt::const_targett, test_goal_t > > state_context_tg_t;
+	state_context_tg_t m_state_context_tg_map;
+	typedef ::std::map< ::goto_programt::const_targett,
+				::std::map< ::goto_programt::const_targett, 
 					::std::set< ::literalt > > > pc_to_context_and_guards_t;
 	pc_to_context_and_guards_t m_pc_to_guard;
 	test_goals_t m_test_goals;
+	test_goals_t m_satisfied_goals;
 
 	/*! \copydoc copy_constructor
 	*/

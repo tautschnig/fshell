@@ -70,6 +70,7 @@ class Evaluate_Path_Monitor : public Standard_AST_Visitor_Aspect<AST_Visitor>
 			return 0;
 		}
 	
+		int lookup_filter(Filter const* f) const;
 		Filter const* lookup_index(int index) const;
 
 		private:
@@ -98,6 +99,7 @@ class Evaluate_Path_Monitor : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	inline bool is_test_goal_state(trace_automaton_t::state_type const& state) const;
 
 	inline Filter const* lookup_index(int index) const;
+	inline int lookup_filter(Filter const* filter) const;
 	inline int id_index() const;
 
 	/*! \{
@@ -207,9 +209,10 @@ class Evaluate_Path_Monitor : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	trace_automaton_t::state_type m_current_initial;
 	trace_automaton_t::state_type m_current_final;
 	test_goal_map_t m_test_goal_map;
+	test_goal_map_t::iterator m_test_goal_map_entry;
 	test_goal_reverse_map_t m_reverse_test_goal_map;
 
-	void simplify(trace_automaton_t & aut, bool update_tg);
+	void simplify(trace_automaton_t & aut);
 
 	/*! \copydoc copy_constructor
 	*/
@@ -226,6 +229,10 @@ bool Evaluate_Path_Monitor::is_test_goal_state(trace_automaton_t::state_type con
 
 Filter const* Evaluate_Path_Monitor::lookup_index(int index) const {
 	return m_filter_index.lookup_index(index);
+}
+	
+int Evaluate_Path_Monitor::lookup_filter(Filter const * filter) const {
+	return m_filter_index.lookup_filter(filter);
 }
 	
 int Evaluate_Path_Monitor::id_index() const {

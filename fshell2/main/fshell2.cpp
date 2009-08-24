@@ -188,7 +188,7 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 	}
 	
 	// compute test goals
-	::fshell2::fql::Compute_Test_Goals goals(manager, m_opts, gf_copy, pm_eval, aut);
+	::fshell2::fql::Compute_Test_Goals goals(manager, m_opts, gf_copy, filter_eval, pm_eval, aut);
 
 	// do the enumeration
 	::fshell2::Constraint_Strengthening cs(goals);

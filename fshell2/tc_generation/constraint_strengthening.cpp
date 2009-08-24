@@ -93,6 +93,9 @@ void Constraint_Strengthening::generate(::fshell2::fql::Query const& query,
 		tcs.back().copy_assignment_from(minisat);
 
 		// deactivate test goals
+		::fshell2::fql::Compute_Test_Goals::test_goals_t const& satisfied_tg(m_goals.get_satisfied_test_goals());
+		::std::cerr << "NOT IMPLEMENTED" << ::std::endl;
+
 		unsigned const size1(aux_var_map.size());
 		for (::std::map< ::literalt, ::literalt >::iterator iter(aux_var_map.begin());
 				iter != aux_var_map.end();) {

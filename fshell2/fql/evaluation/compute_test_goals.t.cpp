@@ -141,7 +141,7 @@ void test( Test_Data & data )
 	::fshell2::fql::Automaton_Inserter aut(pm_eval, eval, gf, cfg, l.context);
 	aut.insert();
 	
-	Compute_Test_Goals goals(l, options, gf, pm_eval, aut);
+	Compute_Test_Goals goals(l, options, gf, eval, pm_eval, aut);
 	Compute_Test_Goals::test_goals_t const& bb_goals(goals.compute(*q));
 
 	// Huh - 5? TODO ...

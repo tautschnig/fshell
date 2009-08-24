@@ -74,13 +74,18 @@ int Evaluate_Path_Monitor::Filter_Index::to_index(Filter const* f) {
 
 Filter const* Evaluate_Path_Monitor::Filter_Index::lookup_index(int index) const {
 	::std::map< int, Filter const* >::const_iterator entry(m_int_to_filter.find(index));
-	FSHELL2_DEBUG_ASSERT1(::diagnostics::Invalid_Argument, m_int_to_filter.end() != entry,
-			::diagnostics::internal::to_string("Lookup of index ", index, " failed"));
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_int_to_filter.end() != entry);
+	return entry->second;
+}
+
+int Evaluate_Path_Monitor::Filter_Index::lookup_filter(Filter const* filter) const {
+	::std::map< Filter const*, int >::const_iterator entry(m_filter_to_int.find(filter));
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_filter_to_int.end() != entry);
 	return entry->second;
 }
 
 Evaluate_Path_Monitor::Evaluate_Path_Monitor() :
-	m_current_aut(0) {
+	m_current_aut(0), m_test_goal_map_entry(m_test_goal_map.end()) {
 }
 
 Evaluate_Path_Monitor::~Evaluate_Path_Monitor() {
@@ -113,6 +118,9 @@ void Evaluate_Path_Monitor::visit(Edgecov const* n) {
 	m_current_final = m_current_aut->new_state();
 	m_current_aut->set_trans(m_current_initial, m_filter_index.to_index(n->get_filter()),
 			m_current_final);
+	
+	m_test_goal_map_entry->second.insert(m_current_final);
+	m_reverse_test_goal_map.insert(::std::make_pair(m_current_final, m_test_goal_map_entry));
 }
 
 void Evaluate_Path_Monitor::visit(PM_Alternative const* n) {
@@ -205,8 +213,8 @@ void Evaluate_Path_Monitor::visit(Query const* n) {
 	m_current_aut->initial().insert(m_current_initial);
 	m_current_aut->final(m_current_final) = 1;
 
-	simplify(m_cov_seq_aut, true);
-	simplify(m_passing_aut, false);
+	simplify(m_cov_seq_aut);
+	simplify(m_passing_aut);
 }
 
 void Evaluate_Path_Monitor::visit(Statecov const* n) {
@@ -242,15 +250,13 @@ void Evaluate_Path_Monitor::visit(Test_Goal_Sequence const* n) {
 
 	trace_automaton_t::state_type initial(m_current_initial);
 	trace_automaton_t::state_type final(m_current_final);
-
+	
+	m_test_goal_map_entry = m_test_goal_map.insert(::std::make_pair(
+				&(n->get_sequence().front()), test_goal_states_t())).first;
 	n->get_sequence().front().second->accept(this);
 
 	m_current_aut->set_trans(final, -1, m_current_initial);
 	final = m_current_final;
-	test_goal_map_t::iterator tg_entry(m_test_goal_map.insert(::std::make_pair(
-					&(n->get_sequence().front()), test_goal_states_t())).first);
-	tg_entry->second.insert(m_current_final);
-	m_reverse_test_goal_map.insert(::std::make_pair(m_current_final, tg_entry));
 
 	for (Test_Goal_Sequence::seq_t::const_iterator iter(++(n->get_sequence().begin()));
 			iter != n->get_sequence().end(); ++iter) {
@@ -268,14 +274,12 @@ void Evaluate_Path_Monitor::visit(Test_Goal_Sequence const* n) {
 		m_current_aut->set_trans(final, -1, m_current_initial);
 		final = m_current_final;
 
+		m_test_goal_map_entry = m_test_goal_map.insert(::std::make_pair(
+					&(*iter), test_goal_states_t())).first;
 		iter->second->accept(this);
 
 		m_current_aut->set_trans(final, -1, m_current_initial);
 		final = m_current_final;
-		test_goal_map_t::iterator tg_entry(m_test_goal_map.insert(::std::make_pair(
-						&(*iter), test_goal_states_t())).first);
-		tg_entry->second.insert(m_current_final);
-		m_reverse_test_goal_map.insert(::std::make_pair(m_current_final, tg_entry));
 	}
 		
 	if (n->get_suffix_monitor()) {
@@ -293,7 +297,7 @@ void Evaluate_Path_Monitor::visit(Test_Goal_Sequence const* n) {
 	m_current_aut->final(final) = 1;
 }
 
-void Evaluate_Path_Monitor::simplify(trace_automaton_t & aut, bool update_tg) {
+void Evaluate_Path_Monitor::simplify(trace_automaton_t & aut) {
 	for (trace_automaton_t::const_iterator iter(aut.begin()); iter != aut.end(); ++iter) {
 		trace_automaton_t::edges_type in_edges(aut.delta2_backwards(*iter));
 		trace_automaton_t::edges_type out_edges(aut.delta2(*iter));
@@ -310,17 +314,6 @@ void Evaluate_Path_Monitor::simplify(trace_automaton_t & aut, bool update_tg) {
 						aut.set_trans(i_iter->second, o_iter->first, o_iter->second);
 				// copy acceptance marker
 				if (aut.final(*iter)) aut.final(i_iter->second) = 1;
-				if (update_tg) {
-					test_goal_reverse_map_t::const_iterator r_map_entry(m_reverse_test_goal_map.find(
-								*iter));
-					if (m_reverse_test_goal_map.end() != r_map_entry) {
-						r_map_entry->second->second.insert(i_iter->second);
-						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-								m_reverse_test_goal_map.end() == m_reverse_test_goal_map.find(i_iter->second));
-						m_reverse_test_goal_map.insert(::std::make_pair(i_iter->second,
-									r_map_entry->second));
-					}
-				}
 				// edge done, remove it
 				trace_automaton_t::edges_type::const_iterator i_iter_bak(i_iter);
 				++i_iter;
@@ -366,15 +359,10 @@ void Evaluate_Path_Monitor::simplify(trace_automaton_t & aut, bool update_tg) {
 		}
 
 		if (del_state) {
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+					!(&aut == &m_cov_seq_aut) || m_reverse_test_goal_map.end() == m_reverse_test_goal_map.find(state));
 			dead_states.insert(state);
 			aut.del_state(state);
-			if (update_tg) {
-				test_goal_reverse_map_t::iterator r_map_entry(m_reverse_test_goal_map.find(state));
-				if (m_reverse_test_goal_map.end() != r_map_entry) {
-					r_map_entry->second->second.erase(state);
-					m_reverse_test_goal_map.erase(r_map_entry);
-				}
-			}
 		}
 	}
 }

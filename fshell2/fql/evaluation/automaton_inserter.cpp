@@ -64,6 +64,14 @@ Automaton_Inserter::instrumentation_points_t const& Automaton_Inserter::get_test
 			entry != m_tg_instrumentation_map.end());
 	return entry->second;
 }
+	
+CFA::edge_t const& Automaton_Inserter::get_target_graph_edge(::goto_programt::const_targett const& node) const {
+	::std::map< ::goto_programt::const_targett, CFA::edge_t >::const_iterator entry(
+			m_target_edge_map.find(node));
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Protocol,
+			entry != m_target_edge_map.end());
+	return entry->second;
+}
 
 typedef Evaluate_Path_Monitor::trace_automaton_t trace_automaton_t;
 
@@ -118,8 +126,9 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 
 	m_inserter.insert("main", ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::FUNCTION_CALL, defs);
 
-	typedef ::std::map< int, Filter const* > index_to_filter_t;
-	index_to_filter_t index_to_filter;
+	// we only need a subset of the filters and we should better know which ones
+	typedef ::std::map< Filter const*, int > filter_to_int_t;
+	filter_to_int_t local_filter_map;
 	typedef ::std::map< int, ::std::map< trace_automaton_t::state_type,
 			::std::set< trace_automaton_t::state_type > > > transition_map_t;
 	transition_map_t transitions;
@@ -130,30 +139,13 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 		trace_automaton_t::edges_type const out_edges(aut.delta2(*iter));
 		for (trace_automaton_t::edges_type::const_iterator e_iter(out_edges.begin());
 				e_iter != out_edges.end(); ++e_iter) {
-			::std::pair< index_to_filter_t::iterator, bool > entry(index_to_filter.insert(
-						::std::make_pair< int, Filter const* >(e_iter->first, 0)));
-			if (entry.second) {
-				entry.first->second = m_pm_eval.lookup_index(e_iter->first);
-			}
-
 			transitions[ e_iter->first ][ mapped_state ].insert(
 					state_map.find(e_iter->second)->second);
-		}
-	}
-
-	// map edges to filter evaluations
-	typedef ::std::map< ::goto_programt::targett, 
-			::std::map< CFA::edge_t, ::std::set< int > > > node_to_filter_t;
-	node_to_filter_t node_to_filter;
-
-	for (index_to_filter_t::const_iterator iter(index_to_filter.begin());
-			iter != index_to_filter.end(); ++iter) {
-		if (m_pm_eval.id_index() == iter->first) continue;
-		// copying, we need non-const stuff in here
-		CFA target_graph(m_filter_eval.get(*(iter->second)));
-		for (CFA::edges_t::iterator e_iter(target_graph.get_edges().begin());
-				e_iter != target_graph.get_edges().end(); ++e_iter) {
-			node_to_filter[ e_iter->first.second ][ *e_iter ].insert(iter->first);
+			
+			if (m_pm_eval.id_index() == e_iter->first) continue;
+			Filter const* flt(m_pm_eval.lookup_index(e_iter->first));
+			if (local_filter_map.end() == local_filter_map.find(flt))
+				local_filter_map[ flt ] = e_iter->first;
 		}
 	}
 
@@ -180,78 +172,79 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_cfg.end() != cfg_node);
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !cfg_node->second.successors.empty());
 			
-			node_to_filter_t::const_iterator entry(node_to_filter.find(i_iter));
-			if (node_to_filter.end() == entry) {
+			Evaluate_Filter::edge_to_filters_t const& entry(m_filter_eval.get(i_iter));
+			if (entry.empty()) {
 				::goto_programt tmp;
-				if (map_tg) {
+				/*if (map_tg) {
 					::goto_programt::targett call(tmp.add_instruction(FUNCTION_CALL));
 					::code_function_callt fct;
 					fct.function() = ::exprt("symbol");
 					fct.function().set("identifier", ::diagnostics::internal::to_string(
 								"c::tg_record$", suffix, "$", m_pm_eval.id_index()));
 					call->code = fct;
-				}
+				}*/
 				::goto_programt::targett call(tmp.add_instruction(FUNCTION_CALL));
 				::code_function_callt fct;
 				fct.function() = ::exprt("symbol");
 				fct.function().set("identifier", ::diagnostics::internal::to_string(
 							"c::filter_trans$", suffix, "$", m_pm_eval.id_index()));
 				call->code = fct;
-				m_inserter.insert(::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::std::make_pair(
-							::std::make_pair(&(iter->second.body), i_iter),
-							cfg_node->second.successors.front()), tmp);
+				
+				CFA::edge_t edge(::std::make_pair(&(iter->second.body), i_iter),
+							cfg_node->second.successors.front());
+				for (::goto_programt::const_targett tmp_iter(tmp.instructions.begin());
+						tmp_iter != tmp.instructions.end(); ++tmp_iter)
+					m_target_edge_map.insert(::std::make_pair(tmp_iter, edge)); 
+				
+				m_inserter.insert(::fshell2::instrumentation::GOTO_Transformation::BEFORE, edge, tmp);
 			} else {
 				FSHELL2_PROD_ASSERT(::diagnostics::Not_Implemented, (cfg_node->second.successors.size() == 1) ||
 						i_iter->is_goto());
-				// ensure that the symmetric difference between CFG successors
-				// and filter entries is the same is the missing entries in
-				// filter map
-				int missing(0);
-
 				for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
 						s_iter != cfg_node->second.successors.end(); ++s_iter) {
-					::std::map< CFA::edge_t, ::std::set< int > >::const_iterator edge_map_iter(
-							entry->second.find(::std::make_pair(::std::make_pair(&(iter->second.body), i_iter), *s_iter)));
-					::std::set< int >::size_type count(0);
-					if (entry->second.end() != edge_map_iter) {
-						count = edge_map_iter->second.size();
-					} else {
-						++missing;
+					Evaluate_Filter::edge_to_filters_t::const_iterator edge_map_iter(
+							entry.find(::std::make_pair(::std::make_pair(&(iter->second.body), i_iter), *s_iter)));
+					::std::set< int > filters;
+					if (entry.end() != edge_map_iter) {
+						for (::std::set< Filter const* >::const_iterator f_iter(edge_map_iter->second.begin());
+							f_iter != edge_map_iter->second.end(); ++f_iter) {
+							filter_to_int_t::const_iterator int_entry(local_filter_map.find(*f_iter));
+							if (local_filter_map.end() == int_entry) continue;
+							filters.insert(int_entry->second);
+						}
 					}
 				
-					::goto_programt tg_record;
+					//::goto_programt tg_record;
 					::goto_programt tmp;
 					::fshell2::instrumentation::GOTO_Transformation::inserted_t & targets(
-							m_inserter.make_nondet_choice(tmp, count + 1, m_context));
+							m_inserter.make_nondet_choice(tmp, filters.size() + 1, m_context));
 					::fshell2::instrumentation::GOTO_Transformation::inserted_t::iterator t_iter(
 							targets.begin());
-					if (entry->second.end() != edge_map_iter) {
-						for (::std::set< int >::const_iterator f_iter(edge_map_iter->second.begin());
-								f_iter != edge_map_iter->second.end(); ++f_iter, ++t_iter) {
-							if (map_tg) {
-								::goto_programt::targett call(tg_record.add_instruction(FUNCTION_CALL));
-								::code_function_callt fct;
-								fct.function() = ::exprt("symbol");
-								fct.function().set("identifier", ::diagnostics::internal::to_string(
-											"c::tg_record$", suffix, "$", *f_iter));
-								call->code = fct;
-							}
-							t_iter->second->type = FUNCTION_CALL;
+					for (::std::set< int >::const_iterator f_iter(filters.begin()); f_iter != filters.end(); 
+							++f_iter, ++t_iter) {
+						/*if (map_tg) {
+							::goto_programt::targett call(tg_record.add_instruction(FUNCTION_CALL));
 							::code_function_callt fct;
 							fct.function() = ::exprt("symbol");
 							fct.function().set("identifier", ::diagnostics::internal::to_string(
-										"c::filter_trans$", suffix, "$", *f_iter));
-							t_iter->second->code = fct;
-						}
+										"c::tg_record$", suffix, "$", *f_iter));
+							call->code = fct;
+						}*/
+						t_iter->second->type = FUNCTION_CALL;
+						::code_function_callt fct;
+						fct.function() = ::exprt("symbol");
+						fct.function().set("identifier", ::diagnostics::internal::to_string(
+									"c::filter_trans$", suffix, "$", *f_iter));
+						t_iter->second->code = fct;
 					}
-					if (map_tg) {
+					/*if (map_tg) {
 						::goto_programt::targett call(tg_record.add_instruction(FUNCTION_CALL));
 						::code_function_callt fct;
 						fct.function() = ::exprt("symbol");
 						fct.function().set("identifier", ::diagnostics::internal::to_string(
 									"c::tg_record$", suffix, "$", m_pm_eval.id_index()));
 						call->code = fct;
-					}
+					}*/
 					t_iter->second->type = FUNCTION_CALL;
 					::code_function_callt fct;
 					fct.function() = ::exprt("symbol");
@@ -259,7 +252,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 								"c::filter_trans$", suffix, "$", m_pm_eval.id_index()));
 					t_iter->second->code = fct;
 
-					tmp.destructive_insert(tmp.instructions.begin(), tg_record);
+					//tmp.destructive_insert(tmp.instructions.begin(), tg_record);
 
 					if (i_iter->is_goto()) {
 						// CBMC doesn't support non-det goto statements at the moment, but
@@ -278,12 +271,13 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 						tmp.destructive_insert(tmp.instructions.begin(), if_prg);
 					}
 					
-					m_inserter.insert(::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::std::make_pair(
-								::std::make_pair(&(iter->second.body), i_iter), *s_iter), tmp);
-				}
+					CFA::edge_t edge(::std::make_pair(&(iter->second.body), i_iter), *s_iter);
+					for (::goto_programt::const_targett tmp_iter(tmp.instructions.begin());
+							tmp_iter != tmp.instructions.end(); ++tmp_iter)
+						m_target_edge_map.insert(::std::make_pair(tmp_iter, edge));
 
-				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node->second.successors.size() - missing ==
-						entry->second.size());
+					m_inserter.insert(::fshell2::instrumentation::GOTO_Transformation::BEFORE, edge, tmp);
+				}
 			}
 		}
 	}
@@ -336,6 +330,15 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 					t_iter->second->type = ASSIGN;
 					t_iter->second->code = ::code_assignt(::symbol_expr(state_symb), ::from_integer(
 								*s_iter, state_symb.type));
+					if (map_tg) {
+						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 
+								reverse_state_map.end() != reverse_state_map.find(*s_iter));
+						trace_automaton_t::state_type const unmapped_state(
+								reverse_state_map.find(*s_iter)->second);
+						if (m_pm_eval.is_test_goal_state(unmapped_state)) {
+							m_tg_instrumentation_map[ unmapped_state ].push_back(*t_iter);
+						}
+					}
 				}
 			}
 
@@ -359,6 +362,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 		body.update();
 	}
 
+	/*
 	if (map_tg) {
 		for (transition_map_t::const_iterator iter(transitions.begin());
 				iter != transitions.end(); ++iter) {
@@ -415,6 +419,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 			body.update();
 		}
 	}
+	*/
 	
 	// final assertion
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !final.empty());

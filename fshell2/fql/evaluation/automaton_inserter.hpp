@@ -32,6 +32,7 @@
 #include <fshell2/config/config.hpp>
 
 #include <fshell2/instrumentation/goto_transformation.hpp>
+#include <fshell2/fql/evaluation/cfa.hpp>
 #include <fshell2/fql/evaluation/evaluate_path_monitor.hpp>
 
 #include <list>
@@ -72,6 +73,7 @@ class Automaton_Inserter
 
 	instrumentation_points_t const& get_test_goal_instrumentation(
 			Evaluate_Path_Monitor::trace_automaton_t::state_type const& state) const;
+	CFA::edge_t const& get_target_graph_edge(::goto_programt::const_targett const& node) const;
 
 	private:
 	Evaluate_Path_Monitor const& m_pm_eval;
@@ -81,6 +83,7 @@ class Automaton_Inserter
 	::fshell2::instrumentation::CFG & m_cfg;
 	::fshell2::instrumentation::GOTO_Transformation m_inserter;
 	instrumentation_map_t m_tg_instrumentation_map;
+	::std::map< ::goto_programt::const_targett, CFA::edge_t > m_target_edge_map;
 
 	void insert(char const * suffix, Evaluate_Path_Monitor::trace_automaton_t const& aut,
 			::exprt & final_cond, bool map_tg);

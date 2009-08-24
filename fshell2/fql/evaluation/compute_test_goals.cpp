@@ -34,6 +34,7 @@
 
 #include <fshell2/exception/fshell2_error.hpp>
 
+#include <fshell2/fql/evaluation/evaluate_filter.hpp>
 #include <fshell2/fql/evaluation/evaluate_path_monitor.hpp>
 #include <fshell2/fql/evaluation/automaton_inserter.hpp>
 
@@ -53,11 +54,11 @@ FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 Compute_Test_Goals::Compute_Test_Goals(::language_uit & manager, ::optionst const& opts,
-		::goto_functionst const& gf, Evaluate_Path_Monitor const& pm_eval,
-		Automaton_Inserter const& a_i) :
+		::goto_functionst const& gf, Evaluate_Filter const& filter_eval,
+		Evaluate_Path_Monitor const& pm_eval, Automaton_Inserter const& a_i) :
 	::bmct(manager.context, manager.ui_message_handler),
-	m_is_initialized(false), m_gf(gf), m_pm_eval(pm_eval), m_aut_insert(a_i), m_cnf(),
-	m_bv(m_cnf) {
+	m_is_initialized(false), m_gf(gf), m_filter_eval(filter_eval), m_pm_eval(pm_eval),
+	m_aut_insert(a_i), m_cnf(), m_bv(m_cnf) {
 	this->options = opts;
 	this->options.set_option("dimacs", false);
 	this->options.set_option("cvc", false);
@@ -111,7 +112,8 @@ void Compute_Test_Goals::initialize() {
 		/*::goto_programt tmp;
 		tmp.output_instruction(this->ns, "", ::std::cerr, iter->source.pc);
 		iter->output(this->ns, ::std::cerr);*/
-		if (!iter->is_location()) continue;
+		//if (!iter->is_location()) continue;
+		if (!iter->is_assignment() || iter->assignment_type == ::symex_targett::HIDDEN) continue;
 		m_pc_to_guard[ iter->source.pc ][ most_recent_caller ].insert(iter->guard_literal);
 	}
 					
@@ -121,38 +123,54 @@ void Compute_Test_Goals::initialize() {
 Compute_Test_Goals::test_goals_t const& Compute_Test_Goals::compute(Query const& query) {
 	initialize();
 	m_test_goals.clear();
+	
+	typedef ::std::map< ::goto_programt::const_targett,
+				::std::set< ::goto_programt::const_targett > > context_to_pcs_t;
 
 	for (Test_Goal_Sequence::seq_t::const_iterator iter(query.get_cover()->get_sequence().begin());
 			iter != query.get_cover()->get_sequence().end(); ++iter) {
 
-		Automaton_Inserter::instrumentation_points_t subgoal_nodes;
+		context_to_pcs_t context_to_pcs;
 		Evaluate_Path_Monitor::test_goal_states_t const& states(
 				m_pm_eval.get_test_goal_states(*iter));
 		for (Evaluate_Path_Monitor::test_goal_states_t::const_iterator s_iter(
 					states.begin()); s_iter != states.end(); ++s_iter) {
 			Automaton_Inserter::instrumentation_points_t const& nodes(
 					m_aut_insert.get_test_goal_instrumentation(*s_iter));
-			subgoal_nodes.insert(subgoal_nodes.end(), nodes.begin(), nodes.end());
+			for (Automaton_Inserter::instrumentation_points_t::const_iterator n_iter(
+						nodes.begin()); n_iter != nodes.end(); ++n_iter) {
+				//FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, n_iter->second->is_location());
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, n_iter->second->is_assign());
+				pc_to_context_and_guards_t::const_iterator guards_entry(m_pc_to_guard.find(n_iter->second));
+				if (m_pc_to_guard.end() == guards_entry) {
+					::std::cerr << "WARNING: no guards for expr "
+						<< ::from_expr(this->ns, "", n_iter->second->code);
+					::std::cerr << " @" << n_iter->second->location << ::std::endl;
+					continue;
+				}
+
+				for (::std::map< ::goto_programt::const_targett, ::std::set< ::literalt > >::const_iterator
+						c_iter(guards_entry->second.begin()); c_iter != guards_entry->second.end(); ++c_iter)
+					context_to_pcs[ c_iter->first ].insert(n_iter->second);
+			}
 		}
 
 		test_goals_t subgoals;
-		for (Automaton_Inserter::instrumentation_points_t::const_iterator n_iter(
-					subgoal_nodes.begin()); n_iter != subgoal_nodes.end(); ++n_iter) {
-			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, n_iter->second->is_location());
-			pc_to_context_and_guards_t::const_iterator guards_entry(m_pc_to_guard.find(n_iter->second));
+		for (context_to_pcs_t::const_iterator c_iter(context_to_pcs.begin()); c_iter != context_to_pcs.end();
+				++c_iter) {
+			::bvt set;
+			for (::std::set< ::goto_programt::const_targett >::const_iterator t_iter(c_iter->second.begin());
+					t_iter != c_iter->second.end(); ++t_iter) {
+				pc_to_context_and_guards_t::const_iterator guards_entry(m_pc_to_guard.find(*t_iter));
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_pc_to_guard.end() != guards_entry);
+				::std::map< ::goto_programt::const_targett, ::std::set< ::literalt > >::const_iterator
+					inner_guards_entry(guards_entry->second.find(c_iter->first));
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+						guards_entry->second.end() != inner_guards_entry);
 
-			if (m_pc_to_guard.end() == guards_entry) {
-				::std::cerr << "WARNING: no guards for expr "
-					<< ::from_expr(this->ns, "", n_iter->second->code);
-				::std::cerr << " @" << n_iter->second->location << ::std::endl;
-				continue;
-			}
-
-			for (::std::map< ::goto_programt::const_targett, ::std::set< ::literalt > >::const_iterator
-					c_iter(guards_entry->second.begin()); c_iter != guards_entry->second.end(); ++c_iter) {
-				::bvt set;
-				for (::std::set< ::literalt >::const_iterator l_iter(c_iter->second.begin());
-						l_iter != c_iter->second.end(); ++l_iter) {
+				for (::std::set< ::literalt >::const_iterator l_iter(
+							inner_guards_entry->second.begin()); l_iter != inner_guards_entry->second.end();
+						++l_iter) {
 					// I think this does not even happen
 					if (l_iter->is_false()) continue;
 					// we will always take this edge, a trivial goal
@@ -166,7 +184,13 @@ Compute_Test_Goals::test_goals_t const& Compute_Test_Goals::compute(Query const&
 					// ::std::cerr << "Adding non-trivial guard " << guards.first->second.first.dimacs() << ::std::endl;
 					set.push_back(*l_iter);
 				}
-				if (!set.empty()) subgoals.insert(m_cnf.lor(set));
+			}
+			if (!set.empty()) {
+				::literalt tg(m_cnf.lor(set));
+				subgoals.insert(tg);
+				for (Evaluate_Path_Monitor::test_goal_states_t::const_iterator s_iter(
+							states.begin()); s_iter != states.end(); ++s_iter)
+					m_state_context_tg_map[ *s_iter ].insert(::std::make_pair(c_iter->first, tg));
 			}
 		}
 		
@@ -185,6 +209,111 @@ Compute_Test_Goals::test_goals_t const& Compute_Test_Goals::compute(Query const&
 	return m_test_goals;
 }
 
+Compute_Test_Goals::test_goals_t const& Compute_Test_Goals::get_satisfied_test_goals() {
+	m_satisfied_goals.clear();
+	Evaluate_Path_Monitor::trace_automaton_t const& aut(m_pm_eval.get_cov_seq_aut());
+	typedef Evaluate_Path_Monitor::trace_automaton_t::state_type state_t;
+	::std::list< ::std::list< state_t > > exec_sequences;
+	::std::list< ::goto_programt::const_targett > path;
+	for (::std::set< state_t >::const_iterator iter(aut.initial().begin());
+			iter != aut.initial().end(); ++iter) {
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 
+				!m_pm_eval.is_test_goal_state(*iter));
+		exec_sequences.push_back(::std::list< state_t >(1, *iter));
+	}
+	// walk the steps and compare all non-instrumented and non-hidden PCs to
+	// the cov seq automaton; do forall current states, try all transitions
+	// and record new state-set; all test-goal-states must be recorded and
+	// mapped back to literals
+	for (::symex_target_equationt::SSA_stepst::const_iterator iter( 
+				_equation.SSA_steps.begin() ); iter != _equation.SSA_steps.end(); ++iter)
+	{
+		if (m_cnf.l_get(iter->guard_literal) != ::tvt(true)) continue;
+		if (iter->is_assignment() && iter->assignment_type == ::symex_targett::HIDDEN) continue;
+		if (::fshell2::instrumentation::GOTO_Transformation::is_instrumented(iter->source.pc)) continue;
+		path.push_back(iter->source.pc);
+		Evaluate_Filter::edge_to_filters_t const& edge_map(m_filter_eval.get(iter->source.pc));
+		for (::std::list< ::std::list< state_t > >::iterator s_iter(exec_sequences.begin());
+				s_iter != exec_sequences.end();) {
+			Evaluate_Path_Monitor::trace_automaton_t::edges_type const out_edges(aut.delta2(s_iter->back()));
+			bool succ_found(false);
+			for (Evaluate_Path_Monitor::trace_automaton_t::edges_type::const_iterator o_iter(
+						out_edges.begin()); o_iter != out_edges.end(); ++o_iter) {
+				if (m_pm_eval.id_index() == o_iter->first) {
+					if (succ_found) {
+						exec_sequences.insert(s_iter, *s_iter);
+					} else {
+						succ_found = true;
+					}
+					s_iter->push_back(o_iter->second);
+				} else {
+					for (Evaluate_Filter::edge_to_filters_t::const_iterator e_f_iter(
+								edge_map.begin()); e_f_iter != edge_map.end(); ++e_f_iter) {
+						// must handle goto here
+						for (::std::set< Filter const* >::const_iterator f_iter(e_f_iter->second.begin());
+								f_iter != e_f_iter->second.end(); ++f_iter) {
+							if (m_pm_eval.lookup_filter(*f_iter) == o_iter->first) {
+								if (succ_found) {
+									exec_sequences.insert(s_iter, *s_iter);
+								} else {
+									succ_found = true;
+								}
+								s_iter->push_back(o_iter->second);
+							}
+						}
+					}
+				}
+			}
+			if (succ_found) {
+				++s_iter;
+			} else {
+				::std::list< ::std::list< state_t > >::iterator s_iter_bak(s_iter);
+				++s_iter;
+				exec_sequences.erase(s_iter_bak);
+			}
+		}
+	}
+
+	/*
+	for (::std::list< ::std::list< state_t > >::const_iterator s_iter(exec_sequences.begin());
+			s_iter != exec_sequences.end(); ++s_iter) {
+		if (!aut.final(s_iter->back())) continue;
+		::std::cerr << "TG reached!" << ::std::endl;
+		::std::list< ::goto_programt::const_targett >::const_iterator p_iter(path.begin());
+		::std::vector< ::literalt > goals;
+		for (::std::list< state_t >::const_iterator iter(++(s_iter->begin())); iter != s_iter->end();
+				++iter, ++p_iter) {
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, path.end() != p_iter);
+			if (m_pm_eval.is_test_goal_state(*iter)) {
+				state_context_tg_t::const_iterator tg_map_entry(m_state_context_tg_map.find(*iter));
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_state_context_tg_map.end() != tg_map_entry);
+				FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, !tg_map_entry->second.empty(),
+						::diagnostics::internal::to_string("No contexts for state ", *iter));
+				::std::map< ::goto_programt::const_targett, test_goal_t >::const_iterator entry(tg_map_entry->second.end());
+				for (::std::map< ::goto_programt::const_targett, test_goal_t >::const_iterator c_iter(
+							tg_map_entry->second.begin()); c_iter != tg_map_entry->second.end(); ++c_iter) {
+					CFA::edge_t const& edge(m_aut_insert.get_target_graph_edge(c_iter->first));
+					// handle goto!!
+					::goto_programt tmp;
+					::std::cerr << "Comparing" << ::std::endl;
+					tmp.output_instruction(this->ns, "", ::std::cerr, edge.first.second);
+					::std::cerr << "and" << ::std::endl;
+					tmp.output_instruction(this->ns, "", ::std::cerr, *p_iter);
+					if (edge.first.second == *p_iter) {
+						entry = c_iter;
+						break;
+					}
+				}
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, tg_map_entry->second.end() != entry);
+				goals.push_back(entry->second);
+			}
+		}
+		// somehow lookup goals
+	}
+	*/
+
+	return m_satisfied_goals;
+}
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
