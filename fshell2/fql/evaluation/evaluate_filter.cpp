@@ -34,6 +34,7 @@
 #include <diagnostics/basic_exceptions/invalid_protocol.hpp>
 #include <diagnostics/basic_exceptions/not_implemented.hpp>
 
+#include <fshell2/instrumentation/cfg.hpp>
 #include <fshell2/fql/ast/edgecov.hpp>
 #include <fshell2/fql/ast/filter_complement.hpp>
 #include <fshell2/fql/ast/filter_compose.hpp>
@@ -55,21 +56,18 @@
 #include <fshell2/fql/ast/tgs_setminus.hpp>
 #include <fshell2/fql/ast/tgs_union.hpp>
 
-#include <cbmc/src/goto-programs/extended_cfg.h>
-
 #include <algorithm>
 #include <iterator>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Evaluate_Filter::Evaluate_Filter(::goto_functionst & gf) :
-	m_gf(gf), m_cfg(*new cfg_t()) {
-	m_cfg(m_gf);
+Evaluate_Filter::Evaluate_Filter(::goto_functionst & gf,
+		::fshell2::instrumentation::CFG & cfg) :
+	m_gf(gf), m_cfg(cfg) {
 }
 
 Evaluate_Filter::~Evaluate_Filter() {
-	delete &m_cfg;
 }
 
 target_graph_t const& Evaluate_Filter::get(Filter const& f) const {
@@ -144,6 +142,8 @@ void Evaluate_Filter::visit(Filter_Enclosing_Scopes const* n) {
 }
 
 void Evaluate_Filter::visit(Filter_Function const* n) {
+	using ::fshell2::instrumentation::CFG;
+
 	::std::pair< filter_value_t::iterator, bool > entry(m_filter_map.insert(
 				::std::make_pair(n, target_graph_t())));
 	if (!entry.second) return;
@@ -167,9 +167,9 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 					initial.insert(::std::make_pair(&(iter->second.body), iter->second.body.instructions.begin()));
 					for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
 							f_iter != iter->second.body.instructions.end(); ++f_iter) {
-						cfg_t::entriest::iterator cfg_node(m_cfg.entries.find(f_iter));
-						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.entries.end());
-						for (cfg_t::successorst::iterator s_iter(cfg_node->second.successors.begin());
+						CFG::entries_t::iterator cfg_node(m_cfg.find(f_iter));
+						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.end());
+						for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
 								s_iter != cfg_node->second.successors.end(); ++s_iter)
 							edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), *s_iter));
 					}
@@ -194,9 +194,9 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 				initial.insert(::std::make_pair(&(fct->second.body), fct->second.body.instructions.begin()));
 				for (::goto_programt::instructionst::iterator f_iter(fct->second.body.instructions.begin());
 						f_iter != fct->second.body.instructions.end(); ++f_iter) {
-					cfg_t::entriest::iterator cfg_node(m_cfg.entries.find(f_iter));
-					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.entries.end());
-					for (cfg_t::successorst::iterator s_iter(cfg_node->second.successors.begin());
+					CFG::entries_t::iterator cfg_node(m_cfg.find(f_iter));
+					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.end());
+					for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
 							s_iter != cfg_node->second.successors.end(); ++s_iter) {
 						// cover edges leaving the function? yes.
 						// if (s_iter->first != &(fct->second.body)) continue;
@@ -215,9 +215,9 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 					for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
 							f_iter != iter->second.body.instructions.end(); ++f_iter) {
 						if (::std::find(f_iter->labels.begin(), f_iter->labels.end(), arg) == f_iter->labels.end()) continue;
-						cfg_t::entriest::iterator cfg_node(m_cfg.entries.find(f_iter));
-						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.entries.end());
-						for (cfg_t::successorst::iterator s_iter(cfg_node->second.successors.begin());
+						CFG::entries_t::iterator cfg_node(m_cfg.find(f_iter));
+						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.end());
+						for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
 								s_iter != cfg_node->second.successors.end(); ++s_iter) {
 							initial.insert(::std::make_pair(&(iter->second.body), f_iter));
 							edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), *s_iter));
@@ -237,9 +237,9 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 				for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
 						f_iter != iter->second.body.instructions.end(); ++f_iter) {
 					if (!f_iter->is_function_call()) continue;
-					cfg_t::entriest::iterator cfg_node(m_cfg.entries.find(f_iter));
-					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.entries.end());
-					for (cfg_t::successorst::iterator s_iter(cfg_node->second.successors.begin());
+					CFG::entries_t::iterator cfg_node(m_cfg.find(f_iter));
+					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.end());
+					for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
 							s_iter != cfg_node->second.successors.end(); ++s_iter) {
 						initial.insert(::std::make_pair(&(iter->second.body), f_iter));
 						edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), *s_iter));
@@ -256,8 +256,8 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 						::diagnostics::internal::to_string("Cannot evaluate ", *n, " (function not available)"));
 				for (::goto_programt::instructionst::iterator f_iter(fct->second.body.instructions.begin());
 						f_iter != fct->second.body.instructions.end(); ++f_iter) {
-					cfg_t::entriest::iterator cfg_node(m_cfg.entries.find(f_iter));
-					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.entries.end());
+					CFG::entries_t::iterator cfg_node(m_cfg.find(f_iter));
+					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.end());
 					// skip edges that will never resolve to Boolean variables
 					// usable in test goals
 					if (f_iter->is_skip() || f_iter->is_location() || f_iter->is_end_function() ||
@@ -267,7 +267,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 						// some generate code, according to symex_other.cpp
 						if (stmt != "cpp_delete" && stmt != "cpp_delete[]" && stmt != "printf") continue;
 					}
-					for (cfg_t::successorst::iterator s_iter(cfg_node->second.successors.begin());
+					for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
 							s_iter != cfg_node->second.successors.end(); ++s_iter) {
 						initial.insert(::std::make_pair(&(fct->second.body), f_iter));
 						edges.insert(::std::make_pair(::std::make_pair(&(fct->second.body), f_iter), *s_iter));
@@ -287,9 +287,9 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 				for (::goto_programt::instructionst::iterator f_iter(fct->second.body.instructions.begin());
 						f_iter != fct->second.body.instructions.end(); ++f_iter) {
 					if (!f_iter->is_return()) continue;
-					cfg_t::entriest::iterator cfg_node(m_cfg.entries.find(f_iter));
-					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.entries.end());
-					for (cfg_t::successorst::iterator s_iter(cfg_node->second.successors.begin());
+					CFG::entries_t::iterator cfg_node(m_cfg.find(f_iter));
+					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.end());
+					for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
 							s_iter != cfg_node->second.successors.end(); ++s_iter) {
 						initial.insert(::std::make_pair(&(fct->second.body), f_iter));
 						edges.insert(::std::make_pair(::std::make_pair(&(fct->second.body), f_iter), *s_iter));
@@ -312,8 +312,8 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 				bool take_next(false);
 				for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
 						f_iter != iter->second.body.instructions.end(); ++f_iter) {
-					cfg_t::entriest::iterator cfg_node(m_cfg.entries.find(f_iter));
-					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.entries.end());
+					CFG::entries_t::iterator cfg_node(m_cfg.find(f_iter));
+					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.end());
 					if (cfg_node->second.predecessors.empty()) take_next = true;
 					if (f_iter->is_skip() || f_iter->is_location() || f_iter->is_end_function() ||
 							f_iter->is_atomic_begin() || f_iter->is_atomic_end()) continue;
@@ -325,7 +325,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 					if (!cfg_node->second.successors.empty() && (take_next ||
 								cfg_node->second.successors.size() > 1 || cfg_node->second.predecessors.size() > 1)) {
 						take_next = false;
-						for (cfg_t::successorst::iterator s_iter(cfg_node->second.successors.begin());
+						for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
 								s_iter != cfg_node->second.successors.end(); ++s_iter) {
 							initial.insert(::std::make_pair(&(iter->second.body), f_iter));
 							edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), *s_iter));
@@ -341,9 +341,9 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 				for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
 						f_iter != iter->second.body.instructions.end(); ++f_iter) {
 					if (!f_iter->is_goto() || f_iter->guard.is_true() || f_iter->guard.is_false()) continue;
-					cfg_t::entriest::iterator cfg_node(m_cfg.entries.find(f_iter));
-					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.entries.end());
-					for (cfg_t::successorst::iterator s_iter(cfg_node->second.successors.begin());
+					CFG::entries_t::iterator cfg_node(m_cfg.find(f_iter));
+					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.end());
+					for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
 							s_iter != cfg_node->second.successors.end(); ++s_iter) {
 						initial.insert(::std::make_pair(&(iter->second.body), f_iter));
 						edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), *s_iter));

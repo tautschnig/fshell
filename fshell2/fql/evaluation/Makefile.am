@@ -37,14 +37,14 @@ check_PROGRAMS = cfa evaluate_filter evaluate_path_monitor automaton_inserter co
 evaluate_filter_SOURCES = evaluate_filter.t.cpp
 # add additional objects required to build evaluate_filter here, like
 # evaluate_filter_LDADD = ../base/libbase.la libbla.la
-evaluate_filter_LDADD = libevaluation.la ../ast/libast.la ../../exception/libexception.la $(CBMC_OBJS)
+evaluate_filter_LDADD = libevaluation.la ../ast/libast.la ../../instrumentation/libinstrumentation.la ../../exception/libexception.la $(CBMC_OBJS)
 # note that this entry (evaluate_filter_SOURCES, evaluate_filter_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually
 compute_test_goals_SOURCES = compute_test_goals.t.cpp
 # add additional objects required to build compute_test_goals here, like
 # compute_test_goals_LDADD = ../base/libbase.la libbla.la
-compute_test_goals_LDADD = libevaluation.la ../../instrumentation/libinstrumentation.la ../ast/libast.la ../../exception/libexception.la $(CBMC_OBJS)
+compute_test_goals_LDADD = libevaluation.la ../ast/libast.la ../../instrumentation/libinstrumentation.la ../../exception/libexception.la $(CBMC_OBJS)
 # note that this entry (compute_test_goals_SOURCES, compute_test_goals_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually
@@ -58,7 +58,7 @@ automaton_inserter_LDADD =
 evaluate_path_monitor_SOURCES = evaluate_path_monitor.t.cpp
 # add additional objects required to build evaluate_path_monitor here, like
 # evaluate_path_monitor_LDADD = ../base/libbase.la libbla.la
-evaluate_path_monitor_LDADD = libevaluation.la ../ast/libast.la ../../exception/libexception.la $(CBMC_OBJS)
+evaluate_path_monitor_LDADD = libevaluation.la ../ast/libast.la ../../instrumentation/libinstrumentation.la ../../exception/libexception.la $(CBMC_OBJS)
 # note that this entry (target_graph_SOURCES, target_graph_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually

@@ -33,6 +33,7 @@
 
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
 
+#include <fshell2/instrumentation/cfg.hpp>
 // #include <fshell2/fql/ast/edgecov.hpp>
 // #include <fshell2/fql/ast/filter_complement.hpp>
 // #include <fshell2/fql/ast/filter_compose.hpp>
@@ -102,15 +103,17 @@ void test( Test_Data & data )
 	::config.set(cmdline);
 	::language_uit l(cmdline);
 	::optionst options;
-	::goto_functionst cfg;
+	::goto_functionst gf;
 
 	TEST_CHECK(!l.parse(tempname_str));
 	::unlink(tempname_str.c_str());
 	TEST_CHECK(!l.typecheck());
 	TEST_CHECK(!l.final());
     
-	::goto_convert(l.context, options, cfg, l.ui_message_handler);
-	Evaluate_Filter eval(cfg);
+	::goto_convert(l.context, options, gf, l.ui_message_handler);
+	::fshell2::instrumentation::CFG cfg;
+	cfg.compute_edges(gf);
+	Evaluate_Filter eval(gf, cfg);
 	
 	Filter * bb(Filter_Function::Factory::get_instance().create<F_BASICBLOCKENTRY>());
 	bb->accept(&eval);

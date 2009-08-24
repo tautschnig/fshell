@@ -37,9 +37,13 @@
 
 #include <map>
 
-template <typename T> class extended_cfgt;
-
 FSHELL2_NAMESPACE_BEGIN;
+FSHELL2_INSTRUMENTATION_NAMESPACE_BEGIN;
+
+class CFG;
+
+FSHELL2_INSTRUMENTATION_NAMESPACE_END;
+
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 typedef CFA target_graph_t;
@@ -55,7 +59,8 @@ class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	public:
 	typedef ::std::map< Filter const*, target_graph_t > filter_value_t;
 
-	explicit Evaluate_Filter(::goto_functionst & ts);
+	Evaluate_Filter(::goto_functionst & ts,
+			::fshell2::instrumentation::CFG & cfg);
 
 	virtual ~Evaluate_Filter();
 
@@ -204,13 +209,9 @@ class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	/*! \} */
 		
 	private:
-	typedef struct {
-	} empty_t;
-	typedef ::extended_cfgt< empty_t > cfg_t;
-
 	::goto_functionst & m_gf;
 	filter_value_t m_filter_map;
-	cfg_t & m_cfg;
+	::fshell2::instrumentation::CFG & m_cfg;
 
 	/*! \copydoc copy_constructor
 	*/

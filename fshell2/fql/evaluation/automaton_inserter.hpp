@@ -35,12 +35,11 @@
 
 #include <cbmc/src/goto-programs/goto_functions.h>
 
-template <typename T> class extended_cfgt;
-
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_INSTRUMENTATION_NAMESPACE_BEGIN;
 
 class GOTO_Transformation;
+class CFG;
 
 FSHELL2_INSTRUMENTATION_NAMESPACE_END;
 
@@ -59,23 +58,20 @@ class Automaton_Inserter
 	public:
 	Automaton_Inserter(Evaluate_Path_Monitor const& pm_eval,
 			Evaluate_Filter const& filter_eval,
-			::goto_functionst & gf, ::contextt & context);
+			::goto_functionst & gf,
+			::fshell2::instrumentation::CFG & cfg, ::contextt & context);
 
 	~Automaton_Inserter();
 	
 	void insert();
 
 	private:
-	typedef struct {
-	} empty_t;
-	typedef ::extended_cfgt< empty_t > cfg_t;
-
 	Evaluate_Path_Monitor const& m_pm_eval;
 	Evaluate_Filter const& m_filter_eval;
 	::goto_functionst & m_gf;
 	::contextt & m_context;
 	::fshell2::instrumentation::GOTO_Transformation & m_inserter;
-	cfg_t & m_cfg;
+	::fshell2::instrumentation::CFG & m_cfg;
 
 	void insert(char const * suffix, Evaluate_Path_Monitor::trace_automaton_t const& aut, ::exprt & final_cond);
 

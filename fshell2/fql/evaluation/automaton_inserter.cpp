@@ -32,12 +32,12 @@
 #include <diagnostics/basic_exceptions/violated_invariance.hpp>
 #include <diagnostics/basic_exceptions/not_implemented.hpp>
 
+#include <fshell2/instrumentation/cfg.hpp>
 #include <fshell2/instrumentation/goto_transformation.hpp>
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
 #include <fshell2/fql/evaluation/evaluate_path_monitor.hpp>
 #include <fshell2/fql/ast/query.hpp>
 
-#include <cbmc/src/goto-programs/extended_cfg.h>
 #include <cbmc/src/util/std_code.h>
 #include <cbmc/src/util/std_expr.h>
 #include <cbmc/src/util/arith_tools.h>
@@ -48,22 +48,23 @@ FSHELL2_FQL_NAMESPACE_BEGIN;
 			
 Automaton_Inserter::Automaton_Inserter(Evaluate_Path_Monitor const& pm_eval,
 			Evaluate_Filter const& filter_eval, ::goto_functionst & gf,
+			::fshell2::instrumentation::CFG & cfg,
 			::contextt & context) :
 	m_pm_eval(pm_eval), m_filter_eval(filter_eval), m_gf(gf),
 	m_context(context),
 	m_inserter(*(new ::fshell2::instrumentation::GOTO_Transformation(m_gf))),
-	m_cfg(*new cfg_t()) {
-	m_cfg(m_gf);
+	m_cfg(cfg) {
 }
 
 Automaton_Inserter::~Automaton_Inserter() {
-	delete &m_cfg;
 	delete &m_inserter;
 }
 
 typedef Evaluate_Path_Monitor::trace_automaton_t trace_automaton_t;
 
 void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& aut, ::exprt & final_cond) {
+	using ::fshell2::instrumentation::CFG;
+
 	// traverse the automaton and collect relevant filters; for each filter build
 	// a map< state_t, set< state_t > >
 	// add a map from states to new indices for efficiency
@@ -154,9 +155,9 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 		::goto_programt::instructionst::iterator end_func_iter(iter->second.body.instructions.end());
 		--end_func_iter;
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, end_func_iter->is_end_function());
-		cfg_t::entriest::iterator cfg_node_for_end_func(m_cfg.entries.find(end_func_iter));
+		CFG::entries_t::iterator cfg_node_for_end_func(m_cfg.find(end_func_iter));
 		// function may have been added by earlier instrumentation
-		if (m_cfg.entries.end() == cfg_node_for_end_func) continue;
+		if (m_cfg.end() == cfg_node_for_end_func) continue;
 		// maybe this function is never called, then there is no successor,
 		// and we can skip this function altogether; thereby we also skip CBMC
 		// main
@@ -164,9 +165,9 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 		
 		for (::goto_programt::instructionst::iterator i_iter(iter->second.body.instructions.begin());
 				i_iter != iter->second.body.instructions.end(); ++i_iter) {
-			cfg_t::entriest::iterator cfg_node(m_cfg.entries.find(i_iter));
+			CFG::entries_t::iterator cfg_node(m_cfg.find(i_iter));
 			// statement may have been added by earlier instrumentation
-			if (m_cfg.entries.end() == cfg_node) continue;
+			if (m_cfg.end() == cfg_node) continue;
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !cfg_node->second.successors.empty());
 			
 			node_to_filter_t::const_iterator entry(node_to_filter.find(i_iter));
@@ -189,7 +190,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 				// filter map
 				int missing(0);
 
-				for (cfg_t::successorst::iterator s_iter(cfg_node->second.successors.begin());
+				for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
 						s_iter != cfg_node->second.successors.end(); ++s_iter) {
 					::std::map< CFA::edge_t, ::std::set< int > >::const_iterator edge_map_iter(
 							entry->second.find(::std::make_pair(::std::make_pair(&(iter->second.body), i_iter), *s_iter)));

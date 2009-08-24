@@ -33,6 +33,7 @@
 
 #include <fshell2/fql/evaluation/compute_test_goals.hpp>
 
+#include <fshell2/instrumentation/cfg.hpp>
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
 #include <fshell2/fql/evaluation/evaluate_path_monitor.hpp>
 #include <fshell2/fql/evaluation/automaton_inserter.hpp>
@@ -110,18 +111,20 @@ void test( Test_Data & data )
 	::language_uit l(cmdline);
 	::optionst options;
 	options.set_option("assertions", true);
-	::goto_functionst cfg;
+	::goto_functionst gf;
 
 	TEST_CHECK(!l.parse(tempname_str));
 	::unlink(tempname_str.c_str());
 	TEST_CHECK(!l.typecheck());
 	TEST_CHECK(!l.final());
     
-	::goto_convert(l.context, options, cfg, l.ui_message_handler);
+	::goto_convert(l.context, options, gf, l.ui_message_handler);
+	::fshell2::instrumentation::CFG cfg;
+	cfg.compute_edges(gf);
 		
 	Filter * bb(Filter_Function::Factory::get_instance().create<F_BASICBLOCKENTRY>());
 
-	Evaluate_Filter eval(cfg);
+	Evaluate_Filter eval(gf, cfg);
 	bb->accept(&eval);
 	target_graph_t const& bb_entries(eval.get(*bb));
 	TEST_CHECK_RELATION(6, ==, bb_entries.get_edges().size());

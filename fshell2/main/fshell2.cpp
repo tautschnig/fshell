@@ -34,6 +34,7 @@
 #include <fshell2/exception/command_processing_error.hpp>
 #include <fshell2/exception/macro_processing_error.hpp>
 #include <fshell2/exception/query_processing_error.hpp>
+#include <fshell2/instrumentation/cfg.hpp>
 #include <fshell2/fql/normalize/normalization_visitor.hpp>
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
 #include <fshell2/fql/evaluation/evaluate_path_monitor.hpp>
@@ -156,9 +157,12 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 	// copy goto program, it will be modified
 	::goto_functionst gf_copy;
 	gf_copy.copy_from(m_gf);
+	// build a CFG to have forward and backward edges
+	::fshell2::instrumentation::CFG cfg;
+	cfg.compute_edges(gf_copy);
 
 	// prepare filter evaluation
-	::fshell2::fql::Evaluate_Filter filter_eval(gf_copy);
+	::fshell2::fql::Evaluate_Filter filter_eval(gf_copy, cfg);
 	// evaluate all filters before modifying the CFG
 	query_ast->accept(&filter_eval);
 
@@ -168,7 +172,7 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 	
 	// do automaton instrumentation
 	Context_Backup context_backup(manager);
-	::fshell2::fql::Automaton_Inserter aut(pm_eval, filter_eval, gf_copy, manager.context);
+	::fshell2::fql::Automaton_Inserter aut(pm_eval, filter_eval, gf_copy, cfg, manager.context);
 	aut.insert();
 
 	/*

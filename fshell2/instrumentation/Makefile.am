@@ -32,8 +32,8 @@ $(CBMC_OBJS):
 
 include_fshell2_instrumentationdir = $(includedir)/fshell2/instrumentation
 noinst_LTLIBRARIES = libinstrumentation.la
-libinstrumentation_la_SOURCES = goto_transformation.cpp
-include_fshell2_instrumentation_HEADERS = goto_transformation.hpp
+libinstrumentation_la_SOURCES = goto_transformation.cpp cfg.cpp
+include_fshell2_instrumentation_HEADERS = goto_transformation.hpp cfg.hpp
 check_PROGRAMS = goto_transformation
 goto_transformation_SOURCES = goto_transformation.t.cpp
 # add additional objects required to build goto_transformation here, like
