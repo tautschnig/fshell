@@ -206,7 +206,6 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 			}
 			break;
 		case F_LABEL:
-			break;
 			{
 				::std::string const& arg(n->get_string_arg<F_LABEL>());
 				for (::goto_functionst::function_mapt::iterator iter(m_gf.function_map.begin());
