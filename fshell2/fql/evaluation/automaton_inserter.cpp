@@ -328,9 +328,13 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 
 			for (::std::set< trace_automaton_t::state_type >::const_iterator s_iter(tr_iter->second.begin());
 					s_iter != tr_iter->second.end(); ++s_iter, ++t_iter) {
-				t_iter->second->type = ASSIGN;
-				t_iter->second->code = ::code_assignt(::symbol_expr(state_symb), ::from_integer(
-							*s_iter, state_symb.type));
+				if (tr_iter->first == *s_iter) {
+					t_iter->second->type = SKIP;
+				} else {
+					t_iter->second->type = ASSIGN;
+					t_iter->second->code = ::code_assignt(::symbol_expr(state_symb), ::from_integer(
+								*s_iter, state_symb.type));
+				}
 			}
 
 			::goto_programt::targett goto_stmt(body.add_instruction());
