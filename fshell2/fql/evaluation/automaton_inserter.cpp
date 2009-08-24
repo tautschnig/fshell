@@ -30,6 +30,7 @@
 #include <fshell2/config/annotations.hpp>
 
 #include <diagnostics/basic_exceptions/violated_invariance.hpp>
+#include <diagnostics/basic_exceptions/invalid_protocol.hpp>
 #include <diagnostics/basic_exceptions/not_implemented.hpp>
 
 #include <fshell2/instrumentation/cfg.hpp>
@@ -52,17 +53,22 @@ Automaton_Inserter::Automaton_Inserter(Evaluate_Path_Monitor const& pm_eval,
 			::contextt & context) :
 	m_pm_eval(pm_eval), m_filter_eval(filter_eval), m_gf(gf),
 	m_context(context),
-	m_inserter(*(new ::fshell2::instrumentation::GOTO_Transformation(m_gf))),
-	m_cfg(cfg) {
+	m_cfg(cfg),
+	m_inserter(m_gf) {
 }
 
-Automaton_Inserter::~Automaton_Inserter() {
-	delete &m_inserter;
+Automaton_Inserter::instrumentation_points_t const& Automaton_Inserter::get_test_goal_instrumentation(
+			Evaluate_Path_Monitor::trace_automaton_t::state_type const& state) const {
+	instrumentation_map_t::const_iterator entry(m_tg_instrumentation_map.find(state));
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Protocol,
+			entry != m_tg_instrumentation_map.end());
+	return entry->second;
 }
 
 typedef Evaluate_Path_Monitor::trace_automaton_t trace_automaton_t;
 
-void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& aut, ::exprt & final_cond) {
+void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& aut,
+		::exprt & final_cond, bool map_tg) {
 	using ::fshell2::instrumentation::CFG;
 
 	// traverse the automaton and collect relevant filters; for each filter build
@@ -71,6 +77,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 	// store accepting state for passing and cov_seq
 
 	::std::map< trace_automaton_t::state_type, trace_automaton_t::state_type > state_map;
+	::std::map< trace_automaton_t::state_type, trace_automaton_t::state_type > reverse_state_map;
 	::std::set< trace_automaton_t::state_type > final;
 
 	trace_automaton_t::state_type idx(0);
@@ -78,6 +85,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 			iter != aut.end(); ++iter) {
 		trace_automaton_t::state_type const cur_idx(idx++);
 		state_map.insert(::std::make_pair(*iter, cur_idx));
+		reverse_state_map.insert(::std::make_pair(cur_idx, *iter));
 		if (aut.final(*iter)) final.insert(cur_idx);
 	}
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !aut.initial().empty());
@@ -296,6 +304,16 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 				t_iter->second->type = ASSIGN;
 				t_iter->second->code = ::code_assignt(::symbol_expr(state_symb), ::from_integer(
 							*s_iter, state_symb.type));
+
+				if (map_tg) {
+					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 
+							reverse_state_map.end() != reverse_state_map.find(*s_iter));
+					trace_automaton_t::state_type const unmapped_state(
+							reverse_state_map.find(*s_iter)->second);
+					if (m_pm_eval.is_test_goal_state(unmapped_state)) {
+						m_tg_instrumentation_map[ unmapped_state ].push_back(*t_iter);
+					}
+				}
 			}
 
 			::goto_programt::targett goto_stmt(body.add_instruction());
@@ -333,8 +351,8 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 
 void Automaton_Inserter::insert() {
 	::exprt c_s_final_cond, p_final_cond;
-	insert("c_s", m_pm_eval.get_cov_seq_aut(), c_s_final_cond);
-	insert("p", m_pm_eval.get_passing_aut(), p_final_cond);
+	insert("c_s", m_pm_eval.get_cov_seq_aut(), c_s_final_cond, true);
+	insert("p", m_pm_eval.get_passing_aut(), p_final_cond, false);
 	
 	::goto_programt tmp;
 	::goto_programt::targett as(tmp.add_instruction(ASSERT));

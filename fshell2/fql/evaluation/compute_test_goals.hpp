@@ -41,7 +41,8 @@
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-class Evaluate_Filter;
+class Evaluate_Path_Monitor;
+class Automaton_Inserter;
 
 /*! \brief TODO
 */
@@ -56,7 +57,9 @@ class Compute_Test_Goals : public ::bmct, public Standard_AST_Visitor_Aspect<AST
 	typedef ::std::set< test_goal_t > value_t;
 	typedef ::std::map< Test_Goal_Set const*, value_t > tgs_value_t;
 	
-	Compute_Test_Goals(::language_uit & manager, ::optionst const& opts, Evaluate_Filter const& eval);
+	Compute_Test_Goals(::language_uit & manager, ::optionst const& opts,
+			::goto_functionst const& gf, Evaluate_Path_Monitor const& pm_eval,
+			Automaton_Inserter const& a_i);
 
 	virtual ~Compute_Test_Goals();
 
@@ -137,13 +140,19 @@ class Compute_Test_Goals : public ::bmct, public Standard_AST_Visitor_Aspect<AST
 	/*! \} */
 
 	bool m_is_initialized;
-	Evaluate_Filter const& m_eval_filter;
+	::goto_functionst const& m_gf;
+	Evaluate_Path_Monitor const& m_pm_eval;
+	Automaton_Inserter const& m_aut_insert;
 	::cnf_clause_list_assignmentt m_cnf;
 	::bv_cbmct m_bv;
 
-	typedef ::std::multimap< goto_programt::const_targett,
+	/*typedef ::std::multimap< goto_programt::const_targett,
 			::std::pair< ::literalt, ::literalt > > pc_to_bool_var_t;
-	pc_to_bool_var_t m_pc_to_bool_var_and_guard;
+	pc_to_bool_var_t m_pc_to_bool_var_and_guard;*/
+	typedef ::std::map< goto_programt::const_targett,
+				::std::map< goto_programt::const_targett, 
+					::std::set< ::literalt > > > pc_to_context_and_guards_t;
+	pc_to_context_and_guards_t m_pc_to_guard;
 
 	tgs_value_t m_tgs_map;
 

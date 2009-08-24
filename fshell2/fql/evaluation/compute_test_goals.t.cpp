@@ -122,26 +122,26 @@ void test( Test_Data & data )
 	::fshell2::instrumentation::CFG cfg;
 	cfg.compute_edges(gf);
 		
-	Filter * bb(Filter_Function::Factory::get_instance().create<F_BASICBLOCKENTRY>());
-
 	Evaluate_Filter eval(gf, cfg);
-	bb->accept(&eval);
-	target_graph_t const& bb_entries(eval.get(*bb));
-	TEST_CHECK_RELATION(6, ==, bb_entries.get_edges().size());
 	
+	Filter * bb(Filter_Function::Factory::get_instance().create<F_BASICBLOCKENTRY>());
 	Edgecov * e(Edgecov::Factory::get_instance().create(bb,
 				static_cast< Predicate::preds_t * >(0)));
-
 	Test_Goal_Sequence::seq_t seq_list;
 	seq_list.push_back(::std::make_pair<Path_Monitor *, Test_Goal_Set *>(0, e));
 	Test_Goal_Sequence * s(Test_Goal_Sequence::Factory::get_instance().create(seq_list, 0));
-
 	Query * q(Query::Factory::get_instance().create(0, s, 0));
+	q->accept(&eval);
+	target_graph_t const& bb_entries(eval.get(*bb));
+	TEST_CHECK_RELATION(6, ==, bb_entries.get_edges().size());
 
 	::fshell2::fql::Evaluate_Path_Monitor pm_eval;
 	q->accept(&pm_eval);
+
+	::fshell2::fql::Automaton_Inserter aut(pm_eval, eval, gf, cfg, l.context);
+	aut.insert();
 	
-	Compute_Test_Goals goals(l, options, eval);
+	Compute_Test_Goals goals(l, options, gf, pm_eval, aut);
 	Compute_Test_Goals::value_t const& bb_goals(goals.compute(*q));
 
 	// Huh - 5? TODO ...

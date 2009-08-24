@@ -34,7 +34,8 @@
 
 #include <fshell2/exception/fshell2_error.hpp>
 
-#include <fshell2/fql/evaluation/evaluate_filter.hpp>
+#include <fshell2/fql/evaluation/evaluate_path_monitor.hpp>
+#include <fshell2/fql/evaluation/automaton_inserter.hpp>
 
 #include <fshell2/fql/ast/edgecov.hpp>
 #include <fshell2/fql/ast/pathcov.hpp>
@@ -58,10 +59,11 @@
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Compute_Test_Goals::Compute_Test_Goals(::language_uit & manager,
-		::optionst const& opts, Evaluate_Filter const& eval) :
+Compute_Test_Goals::Compute_Test_Goals(::language_uit & manager, ::optionst const& opts,
+		::goto_functionst const& gf, Evaluate_Path_Monitor const& pm_eval,
+		Automaton_Inserter const& a_i) :
 	::bmct(manager.context, manager.ui_message_handler),
-	m_is_initialized(false), m_eval_filter(eval), m_cnf(),
+	m_is_initialized(false), m_gf(gf), m_pm_eval(pm_eval), m_aut_insert(a_i), m_cnf(),
 	m_bv(m_cnf) {
 	this->options = opts;
 	this->options.set_option("dimacs", false);
@@ -98,7 +100,7 @@ void Compute_Test_Goals::initialize() {
 	if (m_is_initialized) return;
 
 	// build the Boolean equation
-	FSHELL2_PROD_CHECK1(::fshell2::FShell2_Error, !this->run(m_eval_filter.get_goto_functions()),
+	FSHELL2_PROD_CHECK1(::fshell2::FShell2_Error, !this->run(m_gf),
 			"Failed to build Boolean program representation");
 	// protected field, can't read here
 	// FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, this->_symex.remaining_claims);
@@ -106,87 +108,20 @@ void Compute_Test_Goals::initialize() {
 	// ::std::cerr << "Mapping program:" << ::std::endl;
 	// ::std::cerr << this->_equation << ::std::endl;
 
-	// build a map from GOTO instructions to variable numbers by walking the
-	// equation; this is a bit more complicated than just taking the
-	// guard_literal of the state as the original guards have been shifted
-	// to to build dominating expressions
+	// build a map from GOTO instructions to guard literals by walking the
+	// equation; group them by calling points
+	::goto_programt::const_targett most_recent_caller;
 	for (::symex_target_equationt::SSA_stepst::const_iterator iter( 
 				_equation.SSA_steps.begin() ); iter != _equation.SSA_steps.end(); ++iter)
 	{
+		if (iter->source.pc->is_function_call()) most_recent_caller = iter->source.pc;
+		/*::goto_programt tmp;
+		tmp.output_instruction(this->ns, "", ::std::cerr, iter->source.pc);
+		iter->output(this->ns, ::std::cerr);*/
+		if (!iter->is_assignment()) continue;
 		// don't consider hidden assignments
-		if (iter->is_assignment() && iter->assignment_type == ::symex_targett::HIDDEN) continue;
-		// goto deserves special care
-		if (!iter->source.pc->is_goto()) {
-			m_pc_to_bool_var_and_guard.insert(::std::make_pair(iter->source.pc, ::std::make_pair(iter->guard_literal,
-							(iter->is_assume() || iter->is_assert())?iter->cond_literal : ::const_literal(true))));
-			/* if (iter->source.pc->is_assert()) {
-				::std::cerr << "Instr: ASSERT " << ::from_expr(this->ns, "", iter->source.pc->guard) << ::std::endl;
-			} else {
-				::std::cerr << "Instr: " << ::from_expr(this->ns, "", iter->source.pc->code) << ::std::endl;
-			}
-			::std::cerr << "Guard: " << iter->guard_literal.dimacs() << ::std::endl;
-			*/
-			continue;
-		}
-
-		if (!iter->is_location()) continue;
-		// first step is location, carries the reachability-guard
-		FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, iter->is_location());
-		// unguarded goto
-		if (iter->source.pc->guard.is_true() || iter->source.pc->guard.is_false()) {
-			// ::std::cerr << "(GOTO) Trivial guard: " << ::const_literal(iter->source.pc->guard.is_true()).dimacs() << ::std::endl;
-			m_pc_to_bool_var_and_guard.insert(::std::make_pair(iter->source.pc, ::std::make_pair(iter->guard_literal,
-							::const_literal(iter->source.pc->guard.is_true()))));
-			continue;
-		}
-		// loop-bound-exceeded handling is missing
-		// we might need to distinguish forward vs. backwards goto here
-		::goto_programt::const_targett succ(iter->source.pc);
-		++succ;
-        
-		// now there are two possibilites - either the next state is a hidden
-		// assignment (with the same program counter), then its lhs is the
-		// desired guard; otherwise the guard is the last one in a long list
-		::symex_target_equationt::SSA_stepst::const_iterator next_state(iter); ++next_state;
-		FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, next_state != this->_equation.SSA_steps.end());
-		::exprt const * real_guard(0);
-		// skip this statement if it seems to be without effect
-		if (next_state->source.pc == succ &&
-				next_state->is_assignment() && next_state->assignment_type == ::symex_targett::HIDDEN )
-		{
-			real_guard = &(next_state->lhs);
-		}
-		else
-		{
-			// now we know that *next_state has a non-trivial guard; but this
-			// guard may be a conjunction of several guards, pick the last one
-			real_guard = next_state->guard_expr.has_operands() ? 
-				&(next_state->guard_expr.operands().back()) : &(next_state->guard_expr);
-		}
-		// the resulting guard may be trivial
-		if (real_guard->is_true() || real_guard->is_false()) {
-			m_pc_to_bool_var_and_guard.insert(::std::make_pair(iter->source.pc, ::std::make_pair(iter->guard_literal,
-							::const_literal(real_guard->is_true()))));
-			continue;
-		}
-		// ... or a negated symbol
-		bool neg(false);
-		/*
-		this would be more beautiful, no new variables
-		if (real_guard->id() == "not") {
-			neg = true;
-			real_guard = &(real_guard->op0());
-		}
-		::std::cerr << "real guard: " << ::from_expr(this->ns, "", *real_guard) << ::std::endl;
-		// lookup the name in the symbol map
-		::literalt dest;
-		::prop_convt const& prop(m_bv); // terrible overload of literal with different signature
-		FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, !prop.literal(*real_guard, dest));
-		*/
-		::literalt dest(m_bv.convert(*real_guard));
-		// ::std::cerr << "(GOTO) Found mapping for " << real_guard->get("identifier") << ": " << dest.dimacs() << ::std::endl;
-		// entry has been found, store it in the map
-		m_pc_to_bool_var_and_guard.insert(::std::make_pair(iter->source.pc, ::std::make_pair(iter->guard_literal, neg?::neg(dest):dest)));
+		if (iter->assignment_type == ::symex_targett::HIDDEN) continue;
+		m_pc_to_guard[ iter->source.pc ][ most_recent_caller ].insert(iter->guard_literal);
 	}
 					
 	m_is_initialized = true;
@@ -208,7 +143,8 @@ void Compute_Test_Goals::visit(Edgecov const* n) {
 	::std::pair< tgs_value_t::iterator, bool > entry(m_tgs_map.insert(
 				::std::make_pair(n, value_t())));
 	if (!entry.second) return;
-	
+/*
+
 	if (n->get_predicates()) {
 		FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
 	}
@@ -282,6 +218,7 @@ void Compute_Test_Goals::visit(Edgecov const* n) {
 			if (!set.empty()) entry.first->second.insert(m_cnf.lor(set));
 		}
 	}
+*/
 }
 
 void Compute_Test_Goals::visit(Pathcov const* n) {
@@ -368,8 +305,55 @@ void Compute_Test_Goals::visit(Test_Goal_Sequence const* n) {
 	
 	for (Test_Goal_Sequence::seq_t::const_iterator iter(n->get_sequence().begin());
 			iter != n->get_sequence().end(); ++iter) {
-		iter->second->accept(this);
+
+		Automaton_Inserter::instrumentation_points_t subgoal_nodes;
+		Evaluate_Path_Monitor::test_goal_states_t const& states(
+				m_pm_eval.get_test_goal_states(*iter));
+		for (Evaluate_Path_Monitor::test_goal_states_t::const_iterator s_iter(
+					states.begin()); s_iter != states.end(); ++s_iter) {
+			Automaton_Inserter::instrumentation_points_t const& nodes(
+					m_aut_insert.get_test_goal_instrumentation(*s_iter));
+			subgoal_nodes.insert(subgoal_nodes.end(), nodes.begin(), nodes.end());
+		}
+
+		for (Automaton_Inserter::instrumentation_points_t::const_iterator n_iter(
+					subgoal_nodes.begin()); n_iter != subgoal_nodes.end(); ++n_iter) {
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, n_iter->second->is_assign());
+			pc_to_context_and_guards_t::const_iterator guards_entry(m_pc_to_guard.find(n_iter->second));
+
+			if (m_pc_to_guard.end() == guards_entry) {
+				::std::cerr << "WARNING: no guards for expr "
+					<< ::from_expr(this->ns, "", n_iter->second->code);
+				::std::cerr << " @" << n_iter->second->location << ::std::endl;
+				continue;
+			}
+
+			for (::std::map< ::goto_programt::const_targett, ::std::set< ::literalt > >::const_iterator
+					c_iter(guards_entry->second.begin()); c_iter != guards_entry->second.end(); ++c_iter) {
+				::bvt set;
+				for (::std::set< ::literalt >::const_iterator l_iter(c_iter->second.begin());
+						l_iter != c_iter->second.end(); ++l_iter) {
+					// I think this does not even happen
+					if (l_iter->is_false()) continue;
+					// we will always take this edge, a trivial goal
+					if (l_iter->is_true()) {
+						set.clear();
+						// just make sure we have a single entry in there to get at
+						// least one test case
+						set.push_back(*l_iter);
+						break;
+					}
+					// ::std::cerr << "Adding non-trivial guard " << guards.first->second.first.dimacs() << ::std::endl;
+					set.push_back(*l_iter);
+				}
+				if (!set.empty()) m_tgs_map[ iter->second ].insert(m_cnf.lor(set));
+			}
+		}
+		
+		//iter->second->accept(this);
 		tgs_value_t::const_iterator subgoals(m_tgs_map.find(iter->second));
+		// this will happen, if all subgoals are infeasible, so deal with it
+		// properly!
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, subgoals != m_tgs_map.end());
 
 		if (iter != n->get_sequence().begin()) {
@@ -384,6 +368,7 @@ void Compute_Test_Goals::visit(Test_Goal_Sequence const* n) {
 				::std::inserter(entry.first->second, entry.first->second.begin()));
 		}
 	}
+	
 }
 
 FSHELL2_FQL_NAMESPACE_END;

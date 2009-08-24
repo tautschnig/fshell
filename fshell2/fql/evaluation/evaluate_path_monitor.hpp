@@ -33,6 +33,7 @@
 
 #include <fshell2/fql/ast/ast_visitor.hpp>
 #include <fshell2/fql/ast/standard_ast_visitor_aspect.hpp>
+#include <fshell2/fql/ast/test_goal_sequence.hpp>
 
 #include <map>
 
@@ -81,6 +82,11 @@ class Evaluate_Path_Monitor : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	};
 
 	typedef ::astl::NFA_mmap_backedge< Filter_Index > trace_automaton_t;
+	typedef ::std::set< trace_automaton_t::state_type > test_goal_states_t;
+	typedef ::std::map< Test_Goal_Sequence::seq_entry_t const* const,
+			test_goal_states_t > test_goal_map_t;
+	typedef ::std::map< trace_automaton_t::state_type, test_goal_map_t::iterator >
+		test_goal_reverse_map_t;
 
 	Evaluate_Path_Monitor();
 
@@ -88,6 +94,8 @@ class Evaluate_Path_Monitor : public Standard_AST_Visitor_Aspect<AST_Visitor>
 
 	trace_automaton_t const& get_cov_seq_aut() const;
 	trace_automaton_t const& get_passing_aut() const;
+	test_goal_states_t const& get_test_goal_states(Test_Goal_Sequence::seq_entry_t const& s) const;
+	inline bool is_test_goal_state(trace_automaton_t::state_type const& state) const;
 
 	inline Filter const* lookup_index(int index) const;
 	inline int id_index() const;
@@ -198,6 +206,8 @@ class Evaluate_Path_Monitor : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	trace_automaton_t * m_current_aut;
 	trace_automaton_t::state_type m_current_initial;
 	trace_automaton_t::state_type m_current_final;
+	test_goal_map_t m_test_goal_map;
+	test_goal_reverse_map_t m_reverse_test_goal_map;
 
 	void simplify(trace_automaton_t & aut);
 
@@ -209,6 +219,10 @@ class Evaluate_Path_Monitor : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	 */
 	Self& operator=( Self const& rhs );
 };
+	
+bool Evaluate_Path_Monitor::is_test_goal_state(trace_automaton_t::state_type const& state) const {
+	return (m_reverse_test_goal_map.end() != m_reverse_test_goal_map.find(state));
+}
 
 Filter const* Evaluate_Path_Monitor::lookup_index(int index) const {
 	return m_filter_index.lookup_index(index);

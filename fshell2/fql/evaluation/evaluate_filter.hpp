@@ -66,8 +66,6 @@ class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 
 	target_graph_t const& get(Filter const& f) const;
 
-	inline ::goto_functionst const& get_goto_functions() const;
-
 	/*! \{
 	 * \brief Visit a @ref fshell2::fql::Edgecov
 	 * \param  n Edgecov
@@ -222,10 +220,6 @@ class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	Self& operator=( Self const& rhs );
 };
 	
-inline ::goto_functionst const& Evaluate_Filter::get_goto_functions() const {
-	return m_gf;
-}
-
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
 

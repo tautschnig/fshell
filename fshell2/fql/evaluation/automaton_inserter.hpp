@@ -31,14 +31,17 @@
 
 #include <fshell2/config/config.hpp>
 
+#include <fshell2/instrumentation/goto_transformation.hpp>
 #include <fshell2/fql/evaluation/evaluate_path_monitor.hpp>
+
+#include <list>
+#include <map>
 
 #include <cbmc/src/goto-programs/goto_functions.h>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_INSTRUMENTATION_NAMESPACE_BEGIN;
 
-class GOTO_Transformation;
 class CFG;
 
 FSHELL2_INSTRUMENTATION_NAMESPACE_END;
@@ -56,24 +59,31 @@ class Automaton_Inserter
 	typedef Automaton_Inserter Self;
 
 	public:
+	typedef ::std::list< ::fshell2::instrumentation::GOTO_Transformation::goto_node_t > instrumentation_points_t;
+	typedef ::std::map< Evaluate_Path_Monitor::trace_automaton_t::state_type,
+			instrumentation_points_t > instrumentation_map_t;
+
 	Automaton_Inserter(Evaluate_Path_Monitor const& pm_eval,
 			Evaluate_Filter const& filter_eval,
 			::goto_functionst & gf,
 			::fshell2::instrumentation::CFG & cfg, ::contextt & context);
 
-	~Automaton_Inserter();
-	
 	void insert();
+
+	instrumentation_points_t const& get_test_goal_instrumentation(
+			Evaluate_Path_Monitor::trace_automaton_t::state_type const& state) const;
 
 	private:
 	Evaluate_Path_Monitor const& m_pm_eval;
 	Evaluate_Filter const& m_filter_eval;
 	::goto_functionst & m_gf;
 	::contextt & m_context;
-	::fshell2::instrumentation::GOTO_Transformation & m_inserter;
 	::fshell2::instrumentation::CFG & m_cfg;
+	::fshell2::instrumentation::GOTO_Transformation m_inserter;
+	instrumentation_map_t m_tg_instrumentation_map;
 
-	void insert(char const * suffix, Evaluate_Path_Monitor::trace_automaton_t const& aut, ::exprt & final_cond);
+	void insert(char const * suffix, Evaluate_Path_Monitor::trace_automaton_t const& aut,
+			::exprt & final_cond, bool map_tg);
 
 	/*! \copydoc copy_constructor
 	*/
