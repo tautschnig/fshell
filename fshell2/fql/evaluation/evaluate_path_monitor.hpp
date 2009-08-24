@@ -86,8 +86,8 @@ class Evaluate_Path_Monitor : public Standard_AST_Visitor_Aspect<AST_Visitor>
 
 	virtual ~Evaluate_Path_Monitor();
 
-	inline trace_automaton_t const& get_cov_seq_aut() const;
-	inline trace_automaton_t const& get_passing_aut() const;
+	trace_automaton_t const& get_cov_seq_aut() const;
+	trace_automaton_t const& get_passing_aut() const;
 
 	inline Filter const* lookup_index(int index) const;
 	inline int id_index() const;
@@ -210,14 +210,6 @@ class Evaluate_Path_Monitor : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	Self& operator=( Self const& rhs );
 };
 
-Evaluate_Path_Monitor::trace_automaton_t const& Evaluate_Path_Monitor::get_cov_seq_aut() const {
-	return m_cov_seq_aut;
-}
-
-Evaluate_Path_Monitor::trace_automaton_t const& Evaluate_Path_Monitor::get_passing_aut() const {
-	return m_passing_aut;
-}
-	
 Filter const* Evaluate_Path_Monitor::lookup_index(int index) const {
 	return m_filter_index.lookup_index(index);
 }

@@ -30,6 +30,8 @@
 #include <fshell2/config/annotations.hpp>
 
 #include <diagnostics/basic_exceptions/violated_invariance.hpp>
+#include <diagnostics/basic_exceptions/invalid_argument.hpp>
+#include <diagnostics/basic_exceptions/invalid_protocol.hpp>
 #include <diagnostics/basic_exceptions/not_implemented.hpp>
 
 #include <fshell2/fql/ast/edgecov.hpp>
@@ -72,7 +74,7 @@ int Evaluate_Path_Monitor::Filter_Index::to_index(Filter const* f) {
 
 Filter const* Evaluate_Path_Monitor::Filter_Index::lookup_index(int index) const {
 	::std::map< int, Filter const* >::const_iterator entry(m_int_to_filter.find(index));
-	if (m_int_to_filter.end() == entry) return 0;
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_int_to_filter.end() != entry);
 	return entry->second;
 }
 
@@ -81,6 +83,16 @@ Evaluate_Path_Monitor::Evaluate_Path_Monitor() :
 }
 
 Evaluate_Path_Monitor::~Evaluate_Path_Monitor() {
+}
+
+Evaluate_Path_Monitor::trace_automaton_t const& Evaluate_Path_Monitor::get_cov_seq_aut() const {
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Protocol, 0 != m_cov_seq_aut.state_count());
+	return m_cov_seq_aut;
+}
+
+Evaluate_Path_Monitor::trace_automaton_t const& Evaluate_Path_Monitor::get_passing_aut() const {
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Protocol, 0 != m_passing_aut.state_count());
+	return m_passing_aut;
 }
 
 void Evaluate_Path_Monitor::visit(Edgecov const* n) {

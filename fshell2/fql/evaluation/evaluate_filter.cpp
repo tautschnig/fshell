@@ -31,6 +31,7 @@
 #include <fshell2/exception/query_processing_error.hpp>
 
 #include <diagnostics/basic_exceptions/violated_invariance.hpp>
+#include <diagnostics/basic_exceptions/invalid_protocol.hpp>
 #include <diagnostics/basic_exceptions/not_implemented.hpp>
 
 #include <fshell2/fql/ast/edgecov.hpp>
@@ -73,7 +74,7 @@ Evaluate_Filter::~Evaluate_Filter() {
 
 target_graph_t const& Evaluate_Filter::get(Filter const& f) const {
 	filter_value_t::const_iterator entry(m_filter_map.find(&f));
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Protocol,
 			entry != m_filter_map.end());
 	return entry->second;
 }
