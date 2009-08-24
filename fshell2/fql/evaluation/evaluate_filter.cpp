@@ -150,6 +150,8 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 				
 	CFA::edges_t edges;
 	CFA::initial_states_t initial;
+
+	::std::string prefix("c::");
 	
 	switch (n->get_filter_type()) {
 		case F_IDENTITY:
@@ -187,7 +189,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 		case F_FUNC:
 			{
 				::goto_functionst::function_mapt::iterator fct(m_gf.function_map.find(
-							n->get_string_arg<F_FUNC>()));
+							prefix + n->get_string_arg<F_FUNC>()));
 				FSHELL2_PROD_CHECK1(::fshell2::Query_Processing_Error, fct != m_gf.function_map.end() &&
 						fct->second.body_available && !fct->second.body.instructions.empty(),
 						::diagnostics::internal::to_string("Cannot evaluate ", *n, " (function not available)"));
@@ -249,7 +251,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 		case F_ENTRY:
 			{
 				::goto_functionst::function_mapt::iterator fct(m_gf.function_map.find(
-							n->get_string_arg<F_ENTRY>()));
+							prefix + n->get_string_arg<F_ENTRY>()));
 				FSHELL2_PROD_CHECK1(::fshell2::Query_Processing_Error, fct != m_gf.function_map.end() &&
 						fct->second.body_available && !fct->second.body.instructions.empty(),
 						::diagnostics::internal::to_string("Cannot evaluate ", *n, " (function not available)"));
@@ -279,7 +281,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 		case F_EXIT:
 			{
 				::goto_functionst::function_mapt::iterator fct(m_gf.function_map.find(
-							n->get_string_arg<F_EXIT>()));
+							prefix + n->get_string_arg<F_EXIT>()));
 				FSHELL2_PROD_CHECK1(::fshell2::Query_Processing_Error, fct != m_gf.function_map.end() &&
 						fct->second.body_available && !fct->second.body.instructions.empty(),
 						::diagnostics::internal::to_string("Cannot evaluate ", *n, " (function not available)"));
