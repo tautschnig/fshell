@@ -76,9 +76,6 @@ Filter const* Evaluate_Path_Monitor::Filter_Index::lookup_index(int index) const
 	return entry->second;
 }
 
-Evaluate_Path_Monitor::Filter_Index::~Filter_Index() {
-}
-
 Evaluate_Path_Monitor::Evaluate_Path_Monitor() :
 	m_current_aut(0) {
 }

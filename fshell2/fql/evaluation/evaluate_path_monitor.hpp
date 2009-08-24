@@ -71,8 +71,6 @@ class Evaluate_Path_Monitor : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	
 		Filter const* lookup_index(int index) const;
 
-		~Filter_Index();
-
 		private:
 		::std::map< Filter const*, int > m_filter_to_int;
 		::std::map< int, Filter const* > m_int_to_filter;

@@ -54,8 +54,6 @@ class CFA
 
 	CFA();
 
-	~CFA();
-	
 	/*! \copydoc copy_constructor
 	*/
 	CFA( Self const& rhs );

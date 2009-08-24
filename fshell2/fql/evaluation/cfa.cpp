@@ -34,9 +34,6 @@ FSHELL2_FQL_NAMESPACE_BEGIN;
 CFA::CFA() {
 }
 
-CFA::~CFA() {
-}
-	
 CFA::CFA(Self const& rhs) :
 	m_edges(rhs.m_edges), m_initial(rhs.m_initial) {
 }

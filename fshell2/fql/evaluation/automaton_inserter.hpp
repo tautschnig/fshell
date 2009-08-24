@@ -58,7 +58,7 @@ class Automaton_Inserter
 			Evaluate_Filter const& filter_eval,
 			::goto_functionst & gf, ::contextt & context);
 
-	virtual ~Automaton_Inserter();
+	~Automaton_Inserter();
 	
 	void insert();
 

@@ -55,7 +55,7 @@ class Constraint_Strengthening
 	public:
 	typedef ::std::list< ::cnf_clause_list_assignmentt > test_cases_t;
 	
-	Constraint_Strengthening(::fshell2::fql::Compute_Test_Goals & goals);
+	explicit Constraint_Strengthening(::fshell2::fql::Compute_Test_Goals & goals);
 
 	void generate(::fshell2::fql::Query const& query, test_cases_t & tcs);
 

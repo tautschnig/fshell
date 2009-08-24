@@ -51,7 +51,7 @@ class Test_Suite_Output
 	typedef Test_Suite_Output Self;
 
 	public:
-	Test_Suite_Output(::fshell2::fql::Compute_Test_Goals & goals);
+	explicit Test_Suite_Output(::fshell2::fql::Compute_Test_Goals & goals);
 	
 	::std::ostream & print_ts(Constraint_Strengthening::test_cases_t &
 			test_suite, ::std::ostream & os);

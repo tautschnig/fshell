@@ -55,7 +55,7 @@ class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	public:
 	typedef ::std::map< Filter const*, target_graph_t > filter_value_t;
 
-	Evaluate_Filter(::goto_functionst & ts);
+	explicit Evaluate_Filter(::goto_functionst & ts);
 
 	virtual ~Evaluate_Filter();
 
