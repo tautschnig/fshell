@@ -86,8 +86,10 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert(::std::string
 		if (iter->type == stmt_type) {
 			::goto_programt::targett next(iter);
 			++next;
+			::goto_programt tmp;
+			tmp.copy_from(prg);
 			insert(pos, ::std::make_pair(::std::make_pair(&(entry->second.body), iter),
-						::std::make_pair(&(entry->second.body), next)), prg);
+						::std::make_pair(&(entry->second.body), next)), tmp);
 			if (!m_inserted.empty()) {
 				iter = m_inserted.back().second;
 				if (BEFORE == pos) ++iter;
@@ -101,11 +103,9 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert(::std::string
 }
 	
 GOTO_Transformation::inserted_t const& GOTO_Transformation::insert(position_t
-		const pos, goto_edge_t const& edge, ::goto_programt const& prg) {
+		const pos, goto_edge_t const& edge, ::goto_programt & prg) {
 	m_inserted.clear();
 	if (prg.instructions.empty()) return m_inserted;
-	::goto_programt tmp;
-	tmp.copy_from(prg);
 	
 	switch (pos) {
 		case BEFORE:
@@ -116,7 +116,7 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert(position_t
 						for (::goto_programt::instructiont::targetst::iterator t_iter((*iter)->targets.begin());
 								t_iter != (*iter)->targets.end(); ) {
 							if (*t_iter == edge.first.second) {
-								(*iter)->targets.insert(t_iter, tmp.instructions.begin());
+								(*iter)->targets.insert(t_iter, prg.instructions.begin());
 								::goto_programt::instructiont::targetst::iterator t_iter_bak(t_iter);
 								++t_iter;
 								(*iter)->targets.erase(t_iter_bak);
@@ -126,8 +126,8 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert(position_t
 						}
 					}
 				}
-				set_annotations(edge.first.second, tmp);
-				edge.first.first->destructive_insert(edge.first.second, tmp);
+				set_annotations(edge.first.second, prg);
+				edge.first.first->destructive_insert(edge.first.second, prg);
 				::goto_programt::targett pred(edge.first.second);
 				pred--;
 				m_inserted.push_back(::std::make_pair(edge.first.first, pred));
@@ -142,7 +142,7 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert(position_t
 						for (::goto_programt::instructiont::targetst::iterator t_iter((*iter)->targets.begin());
 								t_iter != (*iter)->targets.end(); ) {
 							if (*t_iter == edge.second.second) {
-								(*iter)->targets.insert(t_iter, tmp.instructions.begin());
+								(*iter)->targets.insert(t_iter, prg.instructions.begin());
 								::goto_programt::instructiont::targetst::iterator t_iter_bak(t_iter);
 								++t_iter;
 								(*iter)->targets.erase(t_iter_bak);
@@ -152,8 +152,8 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert(position_t
 						}
 					}
 				}
-				set_annotations(edge.second.second, tmp);
-				edge.second.first->destructive_insert(edge.second.second, tmp);
+				set_annotations(edge.second.second, prg);
+				edge.second.first->destructive_insert(edge.second.second, prg);
 				::goto_programt::targett pred(edge.second.second);
 				pred--;
 				m_inserted.push_back(::std::make_pair(edge.second.first, pred));

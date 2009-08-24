@@ -60,7 +60,7 @@ class GOTO_Transformation
 			::goto_program_instruction_typet const stmt_type, ::goto_programt const& prg);
 
 	inserted_t const& insert(position_t const pos, goto_edge_t const& edge,
-			::goto_programt const& prg);
+			::goto_programt & prg);
 
 	inserted_t & make_nondet_choice(::goto_programt & dest, int const num, ::contextt context);
 
