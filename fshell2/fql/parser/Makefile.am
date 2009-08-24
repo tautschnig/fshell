@@ -27,14 +27,17 @@ AM_LFLAGS = -o$(LEX_OUTPUT_ROOT).c
 
 EXTRA_DIST = grammar.hpp
 
-MAINTAINERCLEANFILES += grammar.hpp
+MAINTAINERCLEANFILES += grammar.hpp grammar.txt lexer.txt
 
 lexer.txt: lexer.ll
-	cat $^ | @GREP@ ^TOK | @SED@ 's/\\//g' | @EGREP@ -v '(TOK_C_IDENT|TOK_QUOTED_STRING|TOK_NAT_NUMBER)' > $@
+	@GREP@ ^TOK $^ | @SED@ 's/\\//g' | @EGREP@ -v '(TOK_C_IDENT|TOK_QUOTED_STRING|TOK_NAT_NUMBER)' > $@
 
-grammar.hpp: parser.yy lexer.txt
+grammar.txt: parser.yy lexer.txt
+	@AWK@ -f $(top_srcdir)/config/y2l -- -p -tlexer.txt $< > $@
+
+grammar.hpp: grammar.txt
 	echo "#define FQL_HELP \\" > $@
-	@AWK@ -f $(top_srcdir)/config/y2l -- -p -tlexer.txt $< | $(top_srcdir)/config/y2l-postproc.pl >> $@
+	$(top_srcdir)/config/y2l-postproc.pl < $< >> $@
 
 BUILT_SOURCES += grammar.hpp
 
