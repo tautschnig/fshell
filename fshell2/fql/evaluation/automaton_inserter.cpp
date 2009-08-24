@@ -181,6 +181,14 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 			node_to_filter_t::const_iterator entry(node_to_filter.find(i_iter));
 			if (node_to_filter.end() == entry) {
 				::goto_programt tmp;
+				if (map_tg) {
+					::goto_programt::targett call(tmp.add_instruction(FUNCTION_CALL));
+					::code_function_callt fct;
+					fct.function() = ::exprt("symbol");
+					fct.function().set("identifier", ::diagnostics::internal::to_string(
+								"c::tg_record$", suffix, "$", m_pm_eval.id_index()));
+					call->code = fct;
+				}
 				::goto_programt::targett call(tmp.add_instruction(FUNCTION_CALL));
 				::code_function_callt fct;
 				fct.function() = ::exprt("symbol");
@@ -208,7 +216,8 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 					} else {
 						++missing;
 					}
-					
+				
+					::goto_programt tg_record;
 					::goto_programt tmp;
 					::fshell2::instrumentation::GOTO_Transformation::inserted_t & targets(
 							m_inserter.make_nondet_choice(tmp, count + 1, m_context));
@@ -217,6 +226,14 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 					if (entry->second.end() != edge_map_iter) {
 						for (::std::set< int >::const_iterator f_iter(edge_map_iter->second.begin());
 								f_iter != edge_map_iter->second.end(); ++f_iter, ++t_iter) {
+							if (map_tg) {
+								::goto_programt::targett call(tg_record.add_instruction(FUNCTION_CALL));
+								::code_function_callt fct;
+								fct.function() = ::exprt("symbol");
+								fct.function().set("identifier", ::diagnostics::internal::to_string(
+											"c::tg_record$", suffix, "$", *f_iter));
+								call->code = fct;
+							}
 							t_iter->second->type = FUNCTION_CALL;
 							::code_function_callt fct;
 							fct.function() = ::exprt("symbol");
@@ -225,12 +242,22 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 							t_iter->second->code = fct;
 						}
 					}
+					if (map_tg) {
+						::goto_programt::targett call(tg_record.add_instruction(FUNCTION_CALL));
+						::code_function_callt fct;
+						fct.function() = ::exprt("symbol");
+						fct.function().set("identifier", ::diagnostics::internal::to_string(
+									"c::tg_record$", suffix, "$", m_pm_eval.id_index()));
+						call->code = fct;
+					}
 					t_iter->second->type = FUNCTION_CALL;
 					::code_function_callt fct;
 					fct.function() = ::exprt("symbol");
 					fct.function().set("identifier", ::diagnostics::internal::to_string(
 								"c::filter_trans$", suffix, "$", m_pm_eval.id_index()));
 					t_iter->second->code = fct;
+
+					tmp.destructive_insert(tmp.instructions.begin(), tg_record);
 
 					if (i_iter->is_goto()) {
 						// CBMC doesn't support non-det goto statements at the moment, but
@@ -290,7 +317,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 		for (::std::map< trace_automaton_t::state_type, ::std::set< trace_automaton_t::state_type > >::
 				const_iterator tr_iter(iter->second.begin()); tr_iter != iter->second.end();
 				++tr_iter) {
-			// code: if state == t_iter->first && non_det_expr state =
+			// code: if state == tr_iter->first && non_det_expr state =
 			// some t_iter->second
 			::goto_programt::targett if_stmt(body.add_instruction());
 
@@ -304,16 +331,6 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 				t_iter->second->type = ASSIGN;
 				t_iter->second->code = ::code_assignt(::symbol_expr(state_symb), ::from_integer(
 							*s_iter, state_symb.type));
-
-				if (map_tg) {
-					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 
-							reverse_state_map.end() != reverse_state_map.find(*s_iter));
-					trace_automaton_t::state_type const unmapped_state(
-							reverse_state_map.find(*s_iter)->second);
-					if (m_pm_eval.is_test_goal_state(unmapped_state)) {
-						m_tg_instrumentation_map[ unmapped_state ].push_back(*t_iter);
-					}
-				}
 			}
 
 			::goto_programt::targett goto_stmt(body.add_instruction());
@@ -333,6 +350,62 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 
 		body.add_instruction(END_FUNCTION);
 		body.update();
+	}
+
+	if (map_tg) {
+		for (transition_map_t::const_iterator iter(transitions.begin());
+				iter != transitions.end(); ++iter) {
+			::std::string const func_name(::diagnostics::internal::to_string("c::tg_record$", suffix, "$",
+						iter->first));
+			::std::pair< ::goto_functionst::function_mapt::iterator, bool > entry(
+					m_gf.function_map.insert(::std::make_pair(func_name, ::goto_functionst::goto_functiont())));
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, entry.second);
+			entry.first->second.body_available = true;
+			entry.first->second.type.return_type() = ::empty_typet();
+			::symbol_exprt func_expr(func_name, ::typet("code"));
+			::symbolt func_symb;
+			func_symb.from_irep(func_expr);
+			func_symb.value = ::code_blockt();
+			func_symb.mode = "C";
+			func_symb.name = func_name;
+			func_symb.base_name = func_name.substr(3, ::std::string::npos);
+			m_context.move(func_symb);
+			
+			::goto_programt & body(entry.first->second.body);
+
+			for (::std::map< trace_automaton_t::state_type, ::std::set< trace_automaton_t::state_type > >::
+					const_iterator tr_iter(iter->second.begin()); tr_iter != iter->second.end();
+					++tr_iter) {
+				bool may_do_tg(false);
+				::goto_programt do_tg_prg;
+				::goto_programt::targett do_tg(do_tg_prg.add_instruction(LOCATION));
+				for (::std::set< trace_automaton_t::state_type >::const_iterator s_iter(tr_iter->second.begin());
+						s_iter != tr_iter->second.end(); ++s_iter) {
+					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 
+							reverse_state_map.end() != reverse_state_map.find(*s_iter));
+					trace_automaton_t::state_type const unmapped_state(
+							reverse_state_map.find(*s_iter)->second);
+					if (m_pm_eval.is_test_goal_state(unmapped_state)) {
+						may_do_tg = true;
+						m_tg_instrumentation_map[ unmapped_state ].push_back(::std::make_pair(
+									&body, do_tg));
+					}
+				}
+
+				if (may_do_tg) {
+					::goto_programt::targett if_stmt(body.add_instruction());
+					body.destructive_append(do_tg_prg);
+					::goto_programt::targett others_target(body.add_instruction(SKIP));
+					if_stmt->make_goto(others_target);
+					if_stmt->guard = ::binary_relation_exprt(::symbol_expr(state_symb), "=",
+							::from_integer(tr_iter->first, state_symb.type));
+					if_stmt->guard.make_not();
+				}
+			}
+
+			body.add_instruction(END_FUNCTION);
+			body.update();
+		}
 	}
 	
 	// final assertion

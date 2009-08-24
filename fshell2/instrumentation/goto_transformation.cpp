@@ -73,6 +73,10 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert(::std::string
 			++next;
 			insert(pos, ::std::make_pair(::std::make_pair(&(entry->second.body), iter),
 						::std::make_pair(&(entry->second.body), next)), prg);
+			if (!m_inserted.empty()) {
+				iter = m_inserted.back().second;
+				if (BEFORE == pos) ++iter;
+			}
 			collector.insert(collector.end(), m_inserted.begin(), m_inserted.end());
 		}
 	}
@@ -91,23 +95,47 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert(position_t
 	switch (pos) {
 		case BEFORE:
 			copy_annotations(edge.first.second, tmp);
-			edge.first.first->destructive_insert(edge.first.second, tmp);
-			edge.first.first->update();
-			if (do_insert) {
-				::goto_programt::targett pred(edge.first.second);
-				pred--;
-				m_inserted.push_back(::std::make_pair(edge.first.first, pred));
+			if (edge.first.second->is_target()) {
+				::goto_programt::targett store(tmp.add_instruction(SKIP));
+				store->swap(*(edge.first.second));
+				::goto_programt::targett next(edge.first.second);
+				++next;
+				edge.first.first->destructive_insert(next, tmp);
+				if (do_insert) {
+					store--;
+					m_inserted.push_back(::std::make_pair(edge.first.first, store));
+				}
+			} else {
+				edge.first.first->destructive_insert(edge.first.second, tmp);
+				if (do_insert) {
+					::goto_programt::targett pred(edge.first.second);
+					pred--;
+					m_inserted.push_back(::std::make_pair(edge.first.first, pred));
+				}
 			}
+			edge.first.first->update();
 			break;
 		case AFTER:
 			copy_annotations(edge.second.second, tmp);
-			edge.second.first->destructive_insert(edge.second.second, tmp);
-			edge.second.first->update();
-			if (do_insert) {
-				::goto_programt::targett pred(edge.second.second);
-				pred--;
-				m_inserted.push_back(::std::make_pair(edge.second.first, pred));
+			if (edge.second.second->is_target()) {
+				::goto_programt::targett store(tmp.add_instruction(SKIP));
+				store->swap(*(edge.second.second));
+				::goto_programt::targett next(edge.second.second);
+				++next;
+				edge.second.first->destructive_insert(next, tmp);
+				if (do_insert) {
+					store--;
+					m_inserted.push_back(::std::make_pair(edge.second.first, store));
+				}
+			} else {
+				edge.second.first->destructive_insert(edge.second.second, tmp);
+				if (do_insert) {
+					::goto_programt::targett pred(edge.second.second);
+					pred--;
+					m_inserted.push_back(::std::make_pair(edge.second.first, pred));
+				}
 			}
+			edge.second.first->update();
 			break;
 	}
 

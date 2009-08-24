@@ -118,9 +118,7 @@ void Compute_Test_Goals::initialize() {
 		/*::goto_programt tmp;
 		tmp.output_instruction(this->ns, "", ::std::cerr, iter->source.pc);
 		iter->output(this->ns, ::std::cerr);*/
-		if (!iter->is_assignment()) continue;
-		// don't consider hidden assignments
-		if (iter->assignment_type == ::symex_targett::HIDDEN) continue;
+		if (!iter->is_location()) continue;
 		m_pc_to_guard[ iter->source.pc ][ most_recent_caller ].insert(iter->guard_literal);
 	}
 					
@@ -318,7 +316,7 @@ void Compute_Test_Goals::visit(Test_Goal_Sequence const* n) {
 
 		for (Automaton_Inserter::instrumentation_points_t::const_iterator n_iter(
 					subgoal_nodes.begin()); n_iter != subgoal_nodes.end(); ++n_iter) {
-			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, n_iter->second->is_assign());
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, n_iter->second->is_location());
 			pc_to_context_and_guards_t::const_iterator guards_entry(m_pc_to_guard.find(n_iter->second));
 
 			if (m_pc_to_guard.end() == guards_entry) {
