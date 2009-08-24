@@ -49,13 +49,13 @@ void Constraint_Strengthening::generate(::fshell2::fql::Query const& query,
 	::fshell2::fql::Strategy_Selection_Visitor::strategy_t s(strat.select(*ast));
 	*/
 
-	::fshell2::fql::Compute_Test_Goals::value_t const& goal_set(m_goals.compute(query));
+	::fshell2::fql::Compute_Test_Goals::test_goals_t const& goal_set(m_goals.compute(query));
 	::cnf_clause_list_assignmentt & cnf(m_goals.get_cnf());
 
 	::std::map< ::literalt, ::literalt > aux_var_map;
 
 	::bvt goal_cl;
-	for (::fshell2::fql::Compute_Test_Goals::value_t::const_iterator iter(goal_set.begin());
+	for (::fshell2::fql::Compute_Test_Goals::test_goals_t::const_iterator iter(goal_set.begin());
 			iter != goal_set.end(); ++iter) {
 		::literalt s(cnf.new_variable());
 		aux_var_map.insert(::std::make_pair(*iter, s));
@@ -76,7 +76,7 @@ void Constraint_Strengthening::generate(::fshell2::fql::Query const& query,
 	
 	cnf.copy_to(minisat);
 
-	::std::cerr << "#Test goals: " << aux_var_map.size() << ::std::endl;
+	::std::cerr << "#Possibly feasible test goals: " << aux_var_map.size() << ::std::endl;
 	::bvt goals_done;
 	while (!aux_var_map.empty()) {
 		minisat.set_assumptions(goals_done);

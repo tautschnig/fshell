@@ -31,9 +31,6 @@
 
 #include <fshell2/config/config.hpp>
 
-#include <fshell2/fql/ast/ast_visitor.hpp>
-#include <fshell2/fql/ast/standard_ast_visitor_aspect.hpp>
-
 #include <cbmc/src/cbmc/bmc.h>
 #include <cbmc/src/cbmc/bv_cbmc.h>
 #include <cbmc/src/solvers/sat/cnf_clause_list.h>
@@ -41,12 +38,13 @@
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
+class Query;
 class Evaluate_Path_Monitor;
 class Automaton_Inserter;
 
 /*! \brief TODO
 */
-class Compute_Test_Goals : public ::bmct, public Standard_AST_Visitor_Aspect<AST_Visitor> 
+class Compute_Test_Goals : public ::bmct
 {
 	/*! \copydoc doc_self
 	*/
@@ -54,8 +52,7 @@ class Compute_Test_Goals : public ::bmct, public Standard_AST_Visitor_Aspect<AST
 
 	public:
 	typedef ::literalt test_goal_t;
-	typedef ::std::set< test_goal_t > value_t;
-	typedef ::std::map< Test_Goal_Set const*, value_t > tgs_value_t;
+	typedef ::std::set< test_goal_t > test_goals_t;
 	
 	Compute_Test_Goals(::language_uit & manager, ::optionst const& opts,
 			::goto_functionst const& gf, Evaluate_Path_Monitor const& pm_eval,
@@ -63,7 +60,7 @@ class Compute_Test_Goals : public ::bmct, public Standard_AST_Visitor_Aspect<AST
 
 	virtual ~Compute_Test_Goals();
 
-	value_t const& compute(Query const& query);
+	test_goals_t const& compute(Query const& query);
 
 	inline ::cnf_clause_list_assignmentt & get_cnf();
 
@@ -76,69 +73,6 @@ class Compute_Test_Goals : public ::bmct, public Standard_AST_Visitor_Aspect<AST
 
 	void initialize();
 	
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Edgecov
-	 * \param  n Edgecov
-	 */
-	virtual void visit(Edgecov const* n);
-	/*! \} */
-	
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Pathcov
-	 * \param  n Pathcov
-	 */
-	virtual void visit(Pathcov const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Predicate
-	 * \param  n Predicate
-	 */
-	virtual void visit(Predicate const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Query
-	 * \param  n Query
-	 */
-	virtual void visit(Query const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Statecov
-	 * \param  n Statecov
-	 */
-	virtual void visit(Statecov const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::TGS_Intersection
-	 * \param  n TGS_Intersection
-	 */
-	virtual void visit(TGS_Intersection const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::TGS_Setminus
-	 * \param  n TGS_Setminus
-	 */
-	virtual void visit(TGS_Setminus const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::TGS_Union
-	 * \param  n TGS_Union
-	 */
-	virtual void visit(TGS_Union const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Test_Goal_Sequence
-	 * \param  n Test_Goal_Sequence
-	 */
-	virtual void visit(Test_Goal_Sequence const* n);
-	/*! \} */
-
 	bool m_is_initialized;
 	::goto_functionst const& m_gf;
 	Evaluate_Path_Monitor const& m_pm_eval;
@@ -146,15 +80,11 @@ class Compute_Test_Goals : public ::bmct, public Standard_AST_Visitor_Aspect<AST
 	::cnf_clause_list_assignmentt m_cnf;
 	::bv_cbmct m_bv;
 
-	/*typedef ::std::multimap< goto_programt::const_targett,
-			::std::pair< ::literalt, ::literalt > > pc_to_bool_var_t;
-	pc_to_bool_var_t m_pc_to_bool_var_and_guard;*/
 	typedef ::std::map< goto_programt::const_targett,
 				::std::map< goto_programt::const_targett, 
 					::std::set< ::literalt > > > pc_to_context_and_guards_t;
 	pc_to_context_and_guards_t m_pc_to_guard;
-
-	tgs_value_t m_tgs_map;
+	test_goals_t m_test_goals;
 
 	/*! \copydoc copy_constructor
 	*/

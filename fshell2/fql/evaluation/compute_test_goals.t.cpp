@@ -142,7 +142,7 @@ void test( Test_Data & data )
 	aut.insert();
 	
 	Compute_Test_Goals goals(l, options, gf, pm_eval, aut);
-	Compute_Test_Goals::value_t const& bb_goals(goals.compute(*q));
+	Compute_Test_Goals::test_goals_t const& bb_goals(goals.compute(*q));
 
 	// Huh - 5? TODO ...
 	TEST_ASSERT_RELATION(5, ==, bb_goals.size());
