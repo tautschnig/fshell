@@ -120,10 +120,11 @@ GOTO_Transformation::inserted_t & GOTO_Transformation::make_nondet_choice(::goto
 	m_inserted.clear();
 	// count up until n-1, each bit sequence determines a boolean
 	// combination, jump to end after call
-	// compute log2(num); can be done faster, but never mind
+	// compute round_up(log2(num)); can be done faster, but never mind
 	int log_2_rounded(0);
 	int num_options(num);
 	while (num_options >>= 1) ++log_2_rounded;
+	if (num > (1 << log_2_rounded)) ++log_2_rounded;
 
 	::goto_programt tmp_target;
 	::goto_programt::targett out_target(tmp_target.add_instruction(SKIP));
@@ -136,7 +137,7 @@ GOTO_Transformation::inserted_t & GOTO_Transformation::make_nondet_choice(::goto
 	for (int i(0); i < num - 1; ++i) {
 		int bv(i);
 		::exprt * full_cond(0);
-		for (int j(0); j <= log_2_rounded; ++j) {
+		for (int j(0); j < log_2_rounded; ++j) {
 			bool pos(bv & 0x1);
 			bv >>= 1;
 			::std::string const var_name(::diagnostics::internal::to_string("c::nondet_choice_var", m_nondet_var_count, "$", j));
@@ -190,7 +191,8 @@ GOTO_Transformation::inserted_t & GOTO_Transformation::make_nondet_choice(::goto
 	::goto_programt::targett insert_later(dest.add_instruction());
 	m_inserted.push_back(::std::make_pair(&dest, insert_later));
 
-	dest.destructive_append(tmp_target);
+	if (num > 1) dest.destructive_append(tmp_target);
+	
 	dest.update();
 
 	return m_inserted;

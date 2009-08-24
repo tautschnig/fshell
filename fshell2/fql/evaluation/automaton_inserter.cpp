@@ -30,6 +30,7 @@
 #include <fshell2/config/annotations.hpp>
 
 #include <diagnostics/basic_exceptions/violated_invariance.hpp>
+#include <diagnostics/basic_exceptions/not_implemented.hpp>
 
 #include <fshell2/instrumentation/goto_transformation.hpp>
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
@@ -383,7 +384,8 @@ void Automaton_Inserter::insert() {
 	}
 
 	// map edges to filter evaluations
-	typedef ::std::multimap< ::goto_programt::targett, ::std::pair< int, CFA::edge_t > > node_to_filter_t;
+	typedef ::std::map< ::goto_programt::targett, 
+			::std::map< CFA::edge_t, ::std::set< int > > > node_to_filter_t;
 	node_to_filter_t node_to_filter;
 
 	for (index_to_filter_t::const_iterator iter(index_to_filter.begin());
@@ -393,8 +395,7 @@ void Automaton_Inserter::insert() {
 		CFA target_graph(m_filter_eval.get(*(iter->second)));
 		for (CFA::edges_t::iterator e_iter(target_graph.get_edges().begin());
 				e_iter != target_graph.get_edges().end(); ++e_iter) {
-			node_to_filter.insert(::std::make_pair(e_iter->first.second,
-						::std::make_pair(iter->first, *e_iter)));
+			node_to_filter[ e_iter->first.second ][ *e_iter ].insert(iter->first);
 		}
 	}
 
@@ -404,50 +405,99 @@ void Automaton_Inserter::insert() {
 	for (::goto_functionst::function_mapt::iterator iter(m_gf.function_map.begin());
 			iter != m_gf.function_map.end(); ++iter) {
 		if (!iter->second.body_available) continue;
-		// skip CBMC main
-		if (iter->first == "main") continue;
-		for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
-				f_iter != iter->second.body.instructions.end(); ++f_iter) {
-			cfg_t::entriest::iterator cfg_node(cfg.entries.find(f_iter));
-			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != cfg.entries.end());
-			// maybe this function is never called, then there is no successor,
-			// we could have skipped this altogether
-			if (cfg_node->second.successors.empty() && f_iter->is_end_function()) continue;
+		::goto_programt::instructionst::iterator end_func_iter(iter->second.body.instructions.end());
+		--end_func_iter;
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, end_func_iter->is_end_function());
+		cfg_t::entriest::iterator cfg_node_for_end_func(cfg.entries.find(end_func_iter));
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node_for_end_func != cfg.entries.end());
+		// maybe this function is never called, then there is no successor,
+		// and we can skip this function altogether; thereby we also skip CBMC
+		// main
+		if (cfg_node_for_end_func->second.successors.empty()) continue;
+		
+		for (::goto_programt::instructionst::iterator i_iter(iter->second.body.instructions.begin());
+				i_iter != iter->second.body.instructions.end(); ++i_iter) {
+			cfg_t::entriest::iterator cfg_node(cfg.entries.find(i_iter));
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !cfg_node->second.successors.empty());
-			::std::pair< node_to_filter_t::const_iterator, node_to_filter_t::const_iterator >
-				nodes(node_to_filter.equal_range(f_iter));
-			// TODO: check consistency and add condition, where necessary
-			/*for (cfg_t::successorst::iterator s_iter(cfg_node->second.successors.begin());
-					s_iter != cfg_node->second.successors.end(); ++s_iter) {
-				initial.insert(::std::make_pair(&(iter->second.body), f_iter));
-				edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), *s_iter));
-			}*/
-			node_to_filter_t::const_iterator count_iter(nodes.first);
-			int num_options(1);
-			for (;count_iter != nodes.second; ++count_iter) ++num_options;
-			::goto_programt tmp;
-			::fshell2::instrumentation::GOTO_Transformation::inserted_t & targets(
-					m_inserter.make_nondet_choice(tmp, num_options, m_context));
-			::fshell2::instrumentation::GOTO_Transformation::inserted_t::iterator t_iter(
-					targets.begin());
-			for (; nodes.first != nodes.second; ++nodes.first, ++t_iter) {
-				t_iter->second->type = FUNCTION_CALL;
+			
+			node_to_filter_t::const_iterator entry(node_to_filter.find(i_iter));
+			if (node_to_filter.end() == entry) {
+				::goto_programt tmp;
+				::goto_programt::targett call(tmp.add_instruction(FUNCTION_CALL));
 				::code_function_callt fct;
 				fct.function() = ::exprt("symbol");
 				fct.function().set("identifier", ::diagnostics::internal::to_string(
-							"c::filter_trans$", nodes.first->second.first));
-				t_iter->second->code = fct;
+							"c::filter_trans$", m_pm_eval.id_index()));
+				call->code = fct;
+				m_inserter.insert(::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::std::make_pair(
+							::std::make_pair(&(iter->second.body), i_iter),
+							cfg_node->second.successors.front()), tmp);
+			} else {
+				FSHELL2_PROD_ASSERT(::diagnostics::Not_Implemented, (cfg_node->second.successors.size() == 1) ||
+						i_iter->is_goto());
+				// ensure that the symmetric difference between CFG successors
+				// and filter entries is the same is the missing entries in
+				// filter map
+				int missing(0);
+
+				for (cfg_t::successorst::iterator s_iter(cfg_node->second.successors.begin());
+						s_iter != cfg_node->second.successors.end(); ++s_iter) {
+					::std::map< CFA::edge_t, ::std::set< int > >::const_iterator edge_map_iter(
+							entry->second.find(::std::make_pair(::std::make_pair(&(iter->second.body), i_iter), *s_iter)));
+					::std::set< int >::size_type count(0);
+					if (entry->second.end() != edge_map_iter) {
+						count = edge_map_iter->second.size();
+					} else {
+						++missing;
+					}
+					
+					::goto_programt tmp;
+					::fshell2::instrumentation::GOTO_Transformation::inserted_t & targets(
+							m_inserter.make_nondet_choice(tmp, count + 1, m_context));
+					::fshell2::instrumentation::GOTO_Transformation::inserted_t::iterator t_iter(
+							targets.begin());
+					if (entry->second.end() != edge_map_iter) {
+						for (::std::set< int >::const_iterator f_iter(edge_map_iter->second.begin());
+								f_iter != edge_map_iter->second.end(); ++f_iter, ++t_iter) {
+							t_iter->second->type = FUNCTION_CALL;
+							::code_function_callt fct;
+							fct.function() = ::exprt("symbol");
+							fct.function().set("identifier", ::diagnostics::internal::to_string(
+										"c::filter_trans$", *f_iter));
+							t_iter->second->code = fct;
+						}
+					}
+					t_iter->second->type = FUNCTION_CALL;
+					::code_function_callt fct;
+					fct.function() = ::exprt("symbol");
+					fct.function().set("identifier", ::diagnostics::internal::to_string(
+								"c::filter_trans$", m_pm_eval.id_index()));
+					t_iter->second->code = fct;
+
+					if (i_iter->is_goto()) {
+						// CBMC doesn't support non-det goto statements at the moment, but
+						// just in case it ever does ...
+						FSHELL2_PROD_ASSERT(::diagnostics::Not_Implemented, (cfg_node->second.successors.size() == 1) ||
+								(cfg_node->second.successors.size() == 2));
+						FSHELL2_PROD_ASSERT(::diagnostics::Not_Implemented, 1 == i_iter->targets.size());
+
+						::goto_programt::targett out_target(tmp.add_instruction(SKIP));
+						::goto_programt if_prg;
+						::goto_programt::targett if_stmt(if_prg.add_instruction());
+						if_stmt->make_goto(out_target);
+						if_stmt->guard = i_iter->guard;
+						if (s_iter->second != i_iter->targets.front()) if_stmt->guard.make_not();
+
+						tmp.destructive_insert(tmp.instructions.begin(), if_prg);
+					}
+					
+					m_inserter.insert(::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::std::make_pair(
+								::std::make_pair(&(iter->second.body), i_iter), *s_iter), tmp);
+				}
+
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node->second.successors.size() - missing ==
+						entry->second.size());
 			}
-			t_iter->second->type = FUNCTION_CALL;
-			::code_function_callt fct;
-			fct.function() = ::exprt("symbol");
-			fct.function().set("identifier", ::diagnostics::internal::to_string(
-						"c::filter_trans$", m_pm_eval.id_index()));
-			t_iter->second->code = fct;
-			
-			m_inserter.insert(::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::std::make_pair(
-						::std::make_pair(&(iter->second.body), f_iter),
-						cfg_node->second.successors.front()), tmp);
 		}
 	}
 	
@@ -565,9 +615,8 @@ void Automaton_Inserter::insert() {
 			if_stmt->guard.make_not();
 		}
 
-		::goto_programt::targett else_target(body.add_instruction(ASSIGN));
-		else_target->code = ::code_assignt(::symbol_expr(p_symb), ::from_integer(0,
-					p_symb.type));
+		::goto_programt::targett else_target(body.add_instruction());
+		else_target->make_assumption(::false_exprt());
 		body.destructive_append(tmp_target);
 	}
 
@@ -613,8 +662,7 @@ void Automaton_Inserter::insert() {
 	
 	::goto_programt tmp;
 	::goto_programt::targett as(tmp.add_instruction(ASSERT));
-	as->code = ::code_assertt();
-	as->guard = ::and_exprt(*c_s_full_cond, *p_full_cond);
+	as->make_assertion(::and_exprt(*c_s_full_cond, *p_full_cond));
 	as->guard.make_not();
 	delete c_s_full_cond;
 	delete p_full_cond;
