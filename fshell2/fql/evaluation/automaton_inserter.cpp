@@ -165,7 +165,8 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, end_func_iter->is_end_function());
 		CFG::entries_t::iterator cfg_node_for_end_func(m_cfg.find(end_func_iter));
 		// function may have been added by earlier instrumentation
-		if (m_cfg.end() == cfg_node_for_end_func) continue;
+		if (::fshell2::instrumentation::GOTO_Transformation::is_instrumented(end_func_iter)) continue;
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_cfg.end() != cfg_node_for_end_func);
 		// maybe this function is never called, then there is no successor,
 		// and we can skip this function altogether; thereby we also skip CBMC
 		// main
@@ -175,7 +176,8 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 				i_iter != iter->second.body.instructions.end(); ++i_iter) {
 			CFG::entries_t::iterator cfg_node(m_cfg.find(i_iter));
 			// statement may have been added by earlier instrumentation
-			if (m_cfg.end() == cfg_node) continue;
+			if (::fshell2::instrumentation::GOTO_Transformation::is_instrumented(i_iter)) continue;
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_cfg.end() != cfg_node);
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !cfg_node->second.successors.empty());
 			
 			node_to_filter_t::const_iterator entry(node_to_filter.find(i_iter));
@@ -353,6 +355,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 		body.destructive_append(tmp_target);
 
 		body.add_instruction(END_FUNCTION);
+		::fshell2::instrumentation::GOTO_Transformation::mark_instrumented(body);
 		body.update();
 	}
 
@@ -408,6 +411,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 			}
 
 			body.add_instruction(END_FUNCTION);
+			::fshell2::instrumentation::GOTO_Transformation::mark_instrumented(body);
 			body.update();
 		}
 	}

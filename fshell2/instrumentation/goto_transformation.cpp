@@ -45,13 +45,28 @@ GOTO_Transformation::GOTO_Transformation(::goto_functionst & gf) :
 	m_goto(gf), m_nondet_var_count(-1) {
 }
 
-void GOTO_Transformation::copy_annotations(::goto_programt::const_targett src, ::goto_programt & target) {
+void GOTO_Transformation::set_annotations(::goto_programt::const_targett src, ::goto_programt & target) {
 	for (::goto_programt::targett iter(target.instructions.begin());
 			iter != target.instructions.end(); ++iter) {
 		iter->function = src->function;
 		iter->location = src->location;
 		iter->add_local_variables(src->local_variables);
 	}
+	mark_instrumented(target);
+}
+
+void GOTO_Transformation::mark_instrumented(::goto_programt::targett inst) {
+	inst->location.set_property("fshell2_instrumentation");
+}
+
+void GOTO_Transformation::mark_instrumented(::goto_programt & target) {
+	for (::goto_programt::targett iter(target.instructions.begin());
+			iter != target.instructions.end(); ++iter)
+		mark_instrumented(iter);
+}
+
+bool GOTO_Transformation::is_instrumented(::goto_programt::const_targett inst) {
+	return (inst->location.get_property() == "fshell2_instrumentation");
 }
 
 GOTO_Transformation::inserted_t const& GOTO_Transformation::insert(::std::string const& f,
@@ -111,7 +126,7 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert(position_t
 						}
 					}
 				}
-				copy_annotations(edge.first.second, tmp);
+				set_annotations(edge.first.second, tmp);
 				edge.first.first->destructive_insert(edge.first.second, tmp);
 				::goto_programt::targett pred(edge.first.second);
 				pred--;
@@ -137,7 +152,7 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert(position_t
 						}
 					}
 				}
-				copy_annotations(edge.second.second, tmp);
+				set_annotations(edge.second.second, tmp);
 				edge.second.first->destructive_insert(edge.second.second, tmp);
 				::goto_programt::targett pred(edge.second.second);
 				pred--;

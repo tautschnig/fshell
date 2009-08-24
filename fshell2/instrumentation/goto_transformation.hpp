@@ -64,12 +64,15 @@ class GOTO_Transformation
 
 	inserted_t & make_nondet_choice(::goto_programt & dest, int const num, ::contextt context);
 
+	static void set_annotations(::goto_programt::const_targett src, ::goto_programt & target);
+	static void mark_instrumented(::goto_programt & target);
+	static void mark_instrumented(::goto_programt::targett inst);
+	static bool is_instrumented(::goto_programt::const_targett inst);
+
 	private:
 	::goto_functionst & m_goto;
 	inserted_t m_inserted;
 	int m_nondet_var_count;
-
-	static void copy_annotations(::goto_programt::const_targett src, ::goto_programt & target);
 
 	/*! \copydoc copy_constructor
 	*/
