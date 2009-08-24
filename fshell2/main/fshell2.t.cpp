@@ -121,6 +121,60 @@ void test_interactive( Test_Data & data )
 	free(tempname);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * @test A test of FShell2
+ *
+ */
+void test_single2( Test_Data & data )
+{
+	char * tempname(::strdup("/tmp/srcXXXXXX"));
+	TEST_CHECK(-1 != ::mkstemp(tempname));
+	::std::string tempname_str(tempname);
+	tempname_str += ".c";
+	::std::ofstream of(tempname_str.c_str());
+	::unlink(tempname);
+	::free(tempname);
+	TEST_CHECK(of.is_open());
+of 
+  << "int main(int argc, char* argv[]) {" << ::std::endl
+  << "  int x=0;" << ::std::endl
+  << "  if (argc>2) {" << ::std::endl
+  << "    if (argc<27)" << ::std::endl
+  << "L1:   --x;" << ::std::endl
+  << "    else" << ::std::endl
+  << "	  ++x;" << ::std::endl
+  << "	}" << ::std::endl
+  << "L2:" << ::std::endl
+  << "  x--;" << ::std::endl
+  << "  x--;" << ::std::endl
+  << "  x--;" << ::std::endl
+  << "  x--;" << ::std::endl
+  << "  return 0;" << ::std::endl
+  << "}" << ::std::endl;
+	of.close();
+
+	::register_language(new_ansi_c_language);
+	::cmdlinet cmdline;
+	::config.set(cmdline);
+	::language_uit l(cmdline);
+	::optionst options;
+	::goto_functionst gf;
+	//::std::ostringstream os;
+
+	::fshell2::FShell2 fshell(options, gf);
+	
+	TEST_ASSERT(!fshell.process_line(l, ::std::cerr, ::diagnostics::internal::to_string(
+					"add sourcecode \"", tempname_str, "\"").c_str()));
+	::unlink(tempname_str.c_str());
+	TEST_ASSERT(!fshell.process_line(l, ::std::cerr, "cover edges(@basicblockentry)"));
+	TEST_ASSERT(!fshell.process_line(l, ::std::cerr, "cover edges(@basicblockentry) passing @func(main)*.@label(L1)->@label(L2).@func(main)*"));
+	TEST_ASSERT(!fshell.process_line(l, ::std::cerr, "cover edges(@basicblockentry) passing @func(main)*.@label(L2)->@label(L1).@func(main)*"));
+	TEST_ASSERT(!fshell.process_line(l, ::std::cerr, "cover edges(@conditionedge)->edges(@conditionedge)"));
+	TEST_ASSERT(!fshell.process_line(l, ::std::cerr, "cover edges(@basicblockentry)-[ @func(main)* ]>edges(@basicblockentry)"));
+	TEST_ASSERT(fshell.process_line(l, ::std::cerr, "QUIT"));
+}	
+
 /** @cond */
 TEST_COMPONENT_TEST_NAMESPACE_END;
 TEST_NAMESPACE_END;
@@ -131,6 +185,7 @@ FSHELL2_NAMESPACE_END;
 TEST_SUITE_BEGIN;
 TEST_NORMAL_CASE( &test_single, LEVEL_PROD );
 TEST_NORMAL_CASE( &test_interactive, LEVEL_PROD );
+TEST_NORMAL_CASE( &test_single2, LEVEL_PROD );
 TEST_SUITE_END;
 
 STREAM_TEST_SYSTEM_MAIN;
