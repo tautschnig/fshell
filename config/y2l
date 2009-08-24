@@ -223,14 +223,14 @@ function lex() {
 	    return BAD;
 	}
 
-    if (match($0, /^[_\.A-Za-z][_\.A-zA-z0-9]*/)) {
+    if (match($0, /^[_\.A-Za-z][_\.A-Za-z0-9]*/)) {
 	tok_str = substr($0, 1, RLENGTH);
 	$0 = substr($0, RLENGTH + 1);
 
 	return IDENT;
     }
 
-    if (match($0, /^<[_\.A-Za-z][_\.A-zA-z0-9]*>/)) {
+    if (match($0, /^<[_\.A-Za-z][_\.A-Za-z0-9]*>/)) {
 	tok_str = substr($0, 1, RLENGTH);
 	$0 = substr($0, RLENGTH + 1);
 
@@ -1123,7 +1123,7 @@ BEGIN {
 	else if (ARGV[i] ~ /^-p$/)		# non-LaTeX output
 	    _plain = 1;
 	else if (ARGV[i] ~ /^-t/)		# regexp or file for tokens
-	    if (ARGV[i] ~ /^-t(\/\^|\/)[_\.A-Za-z][_\.A-zA-z0-9]*(\/|\$\/)$/) {
+	    if (ARGV[i] ~ /^-t(\/\^|\/)[_\.A-Za-z][_\.A-Za-z0-9]*(\/|\$\/)$/) {
 		l = length(ARGV[i]);
 		_tkpat = substr(ARGV[i], 4, l - 4);
 	    } else if (exists(file = substr(ARGV[i], 3)))
