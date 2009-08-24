@@ -56,12 +56,12 @@ class Macro_Processing
 
 	private:
 	bool m_has_defines;
-	char * m_deffilename;
-	char * m_checkfilename;
+	::std::string m_deffilename;
+	::std::string m_checkfilename;
 	int m_file_index;
 	char ** m_cpp_argv;
 
-	int preprocess(char * filename, ::std::ostream & out) const;
+	int preprocess(::std::ostream & out) const;
 
 	/*! \copydoc copy_constructor
 	*/

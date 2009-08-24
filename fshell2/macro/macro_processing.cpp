@@ -31,6 +31,7 @@
 
 #include <diagnostics/basic_exceptions/violated_invariance.hpp>
 
+#include <cstring>
 #include <fstream>
 #include <cstdio>
 #include <sys/wait.h>
@@ -44,42 +45,40 @@ FSHELL2_MACRO_NAMESPACE_BEGIN;
 	
 Macro_Processing::Macro_Processing() :
 	m_has_defines(false),
-	m_deffilename(::strdup("/tmp/defsXXXXXX")),
-	m_checkfilename(::strdup("/tmp/checkXXXXXX")),
+	m_deffilename("/tmp/defsXXXXXX.c"), // pre-allocate sufficient space
+	m_checkfilename("/tmp/checkXXXXXX.c"),
 	m_file_index(0),
 	m_cpp_argv(0)
 {
 	int ret(0);
-	ret = ::mkstemp(m_deffilename);
+	char * def_temp_name(::strdup("/tmp/defsXXXXXX"));
+	ret = ::mkstemp(def_temp_name);
 	FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, ret != -1,
 			"Failed to create macro expansion file");
-	::std::string old_name(m_deffilename);
-	FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance,
-			0 != (m_deffilename = static_cast<char*>(::realloc(m_deffilename, ::strlen(m_deffilename) + 2))),
-			"Failed to allocate more mem");
-	::strcat(m_deffilename, ".c");
-	FSHELL2_AUDIT_TRACE("Defines are written to " + *m_deffilename);
-	::std::ofstream fs(m_deffilename);
+	m_deffilename = def_temp_name;
+	m_deffilename += ".c";
+	FSHELL2_AUDIT_TRACE("Defines are written to " + m_deffilename);
+	::std::ofstream fs(m_deffilename.c_str());
 	FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, fs.is_open(),
 			"Failed to open macro expansion file");
 	fs << "// FShell macro list" << ::std::endl;
 	fs.close();
-	::unlink(old_name.c_str());
+	::unlink(def_temp_name);
+	::free(def_temp_name);
 	
-	ret = ::mkstemp(m_checkfilename);
+	char * check_temp_name(::strdup("/tmp/checkXXXXXX"));
+	ret = ::mkstemp(check_temp_name);
 	FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, ret != -1,
 			"Failed to create macro syntax check file");
-	old_name = m_checkfilename;
-	FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance,
-			0 != (m_checkfilename = static_cast<char*>(::realloc(m_checkfilename, ::strlen(m_checkfilename) + 2))),
-			"Failed to allocate more mem");
-	::strcat(m_checkfilename, ".c");
-	::std::ofstream fs2(m_checkfilename);
+	m_checkfilename = check_temp_name;
+	m_checkfilename += ".c";
+	::std::ofstream fs2(m_checkfilename.c_str());
 	FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, fs2.is_open(),
 			"Failed to open macro expansion file");
 	fs2 << "// FShell macro test list" << ::std::endl;
 	fs2.close();
-	::unlink(old_name.c_str());
+	::unlink(check_temp_name);
+	::free(check_temp_name);
 
 	::std::vector< ::std::string > cpp_cmdline;
 	cpp_cmdline.push_back(::std::string());
@@ -105,18 +104,15 @@ Macro_Processing::Macro_Processing() :
 		m_cpp_argv[m_file_index] = ::strdup(iter->c_str());
 	}
 	// the real file index
-	m_cpp_argv[m_file_index] = 0;
+	m_cpp_argv[m_file_index] = ::strdup(m_checkfilename.c_str());
 	m_cpp_argv[m_file_index + 1] = 0;
 }
 
 Macro_Processing::~Macro_Processing() {
-	::unlink(m_deffilename);
-	::free(m_deffilename);
-	
-	::unlink(m_checkfilename);
-	::free(m_checkfilename);
+	::unlink(m_deffilename.c_str());
+	::unlink(m_checkfilename.c_str());
 
-	for (--m_file_index; m_file_index >= 0; --m_file_index)
+	for (; m_file_index >= 0; --m_file_index)
 		::free(m_cpp_argv[m_file_index]);
 	delete[] m_cpp_argv;
 }
@@ -154,7 +150,7 @@ Reopen_Fds::~Reopen_Fds() {
 	::close(m_stderr);
 }
 
-int Macro_Processing::preprocess(char * filename, ::std::ostream & os) const {
+int Macro_Processing::preprocess(::std::ostream & os) const {
 	Reopen_Fds backup_fds;
 	int channel[2], err_channel[2];
 	int ret(::pipe(channel));
@@ -192,7 +188,6 @@ int Macro_Processing::preprocess(char * filename, ::std::ostream & os) const {
 				"Child: failed to close useless writing side of err");
 
 		FSHELL2_AUDIT_TRACE("starting " CPP_CMD);
-		m_cpp_argv[m_file_index] = filename;
 		::execvp(m_cpp_argv[0], m_cpp_argv);
 		FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, false,
 				"Failed to start " CPP_CMD);
@@ -273,19 +268,19 @@ int Macro_Processing::preprocess(char * filename, ::std::ostream & os) const {
 				::std::isspace(*(cmd + 7))) {
 			// syntax check
 			char ch;
-			::std::ofstream fcheck(m_checkfilename, ::std::ios_base::trunc);
-			::std::ifstream in(m_deffilename);
+			::std::ofstream fcheck(m_checkfilename.c_str(), ::std::ios_base::trunc);
+			::std::ifstream in(m_deffilename.c_str());
 			while (!in.eof() && in.get(ch)) fcheck.put(ch);
 			in.close();
 			fcheck << "#define" << (cmd + 7) << ::std::endl;
 			fcheck.close();
 			::std::ostringstream os;
-			int cpp_ret(preprocess(m_checkfilename, os));
+			int cpp_ret(preprocess(os));
 			FSHELL2_PROD_CHECK1(::fshell2::Macro_Processing_Error, 0 == cpp_ret,
 					"Failed to process macro definition, " + os.str());
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, os.str().empty());
 
-			::std::ofstream fdef(m_deffilename, ::std::ios_base::out|::std::ios_base::app);
+			::std::ofstream fdef(m_deffilename.c_str(), ::std::ios_base::out|::std::ios_base::app);
 			fdef << "#define" << (cmd + 7) << ::std::endl;
 			fdef.close();
 
@@ -300,13 +295,13 @@ int Macro_Processing::preprocess(char * filename, ::std::ostream & os) const {
 	
 	if (!m_has_defines) return cmd;
 		
-	::std::ofstream fexpand(m_checkfilename, ::std::ios_base::trunc);
+	::std::ofstream fexpand(m_checkfilename.c_str(), ::std::ios_base::trunc);
 	fexpand << "#include \"" << m_deffilename << "\"" << ::std::endl;
 	fexpand << cmd << ::std::endl;
 	fexpand.close();
 		
 	::std::ostringstream os;
-	int cpp_ret(preprocess(m_checkfilename, os));
+	int cpp_ret(preprocess(os));
 	FSHELL2_PROD_CHECK1(::fshell2::Macro_Processing_Error, 0 == cpp_ret,
 			"Failed to expand command");
 	// drop the final newline for consistency
