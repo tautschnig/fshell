@@ -87,55 +87,63 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert(::std::string
 	
 GOTO_Transformation::inserted_t const& GOTO_Transformation::insert(position_t
 		const pos, goto_edge_t const& edge, ::goto_programt const& prg) {
+	m_inserted.clear();
+	if (prg.instructions.empty()) return m_inserted;
 	::goto_programt tmp;
 	tmp.copy_from(prg);
-	m_inserted.clear();
-	bool do_insert(!tmp.instructions.empty());
 	
 	switch (pos) {
 		case BEFORE:
-			copy_annotations(edge.first.second, tmp);
-			if (edge.first.second->is_target()) {
-				::goto_programt::targett store(tmp.add_instruction(SKIP));
-				store->swap(*(edge.first.second));
-				::goto_programt::targett next(edge.first.second);
-				++next;
-				edge.first.first->destructive_insert(next, tmp);
-				if (do_insert) {
-					store--;
-					m_inserted.push_back(::std::make_pair(edge.first.first, store));
+			{
+				if (edge.first.second->is_target()) {
+					for (::std::set< ::goto_programt::targett >::iterator iter(edge.first.second->incoming_edges.begin());
+							iter != edge.first.second->incoming_edges.end(); ++iter) {
+						for (::goto_programt::instructiont::targetst::iterator t_iter((*iter)->targets.begin());
+								t_iter != (*iter)->targets.end(); ) {
+							if (*t_iter == edge.first.second) {
+								(*iter)->targets.insert(t_iter, tmp.instructions.begin());
+								::goto_programt::instructiont::targetst::iterator t_iter_bak(t_iter);
+								++t_iter;
+								(*iter)->targets.erase(t_iter_bak);
+							} else {
+								++t_iter;
+							}
+						}
+					}
 				}
-			} else {
+				copy_annotations(edge.first.second, tmp);
 				edge.first.first->destructive_insert(edge.first.second, tmp);
-				if (do_insert) {
-					::goto_programt::targett pred(edge.first.second);
-					pred--;
-					m_inserted.push_back(::std::make_pair(edge.first.first, pred));
-				}
+				::goto_programt::targett pred(edge.first.second);
+				pred--;
+				m_inserted.push_back(::std::make_pair(edge.first.first, pred));
+				edge.first.first->update();
 			}
-			edge.first.first->update();
 			break;
 		case AFTER:
-			copy_annotations(edge.second.second, tmp);
-			if (edge.second.second->is_target()) {
-				::goto_programt::targett store(tmp.add_instruction(SKIP));
-				store->swap(*(edge.second.second));
-				::goto_programt::targett next(edge.second.second);
-				++next;
-				edge.second.first->destructive_insert(next, tmp);
-				if (do_insert) {
-					store--;
-					m_inserted.push_back(::std::make_pair(edge.second.first, store));
+			{
+				if (edge.second.second->is_target()) {
+					for (::std::set< ::goto_programt::targett >::iterator iter(edge.second.second->incoming_edges.begin());
+							iter != edge.second.second->incoming_edges.end(); ++iter) {
+						for (::goto_programt::instructiont::targetst::iterator t_iter((*iter)->targets.begin());
+								t_iter != (*iter)->targets.end(); ) {
+							if (*t_iter == edge.second.second) {
+								(*iter)->targets.insert(t_iter, tmp.instructions.begin());
+								::goto_programt::instructiont::targetst::iterator t_iter_bak(t_iter);
+								++t_iter;
+								(*iter)->targets.erase(t_iter_bak);
+							} else {
+								++t_iter;
+							}
+						}
+					}
 				}
-			} else {
+				copy_annotations(edge.second.second, tmp);
 				edge.second.first->destructive_insert(edge.second.second, tmp);
-				if (do_insert) {
-					::goto_programt::targett pred(edge.second.second);
-					pred--;
-					m_inserted.push_back(::std::make_pair(edge.second.first, pred));
-				}
+				::goto_programt::targett pred(edge.second.second);
+				pred--;
+				m_inserted.push_back(::std::make_pair(edge.second.first, pred));
+				edge.second.first->update();
 			}
-			edge.second.first->update();
 			break;
 	}
 
