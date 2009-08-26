@@ -118,7 +118,7 @@ void test( Test_Data & data )
 	Filter * bb(Filter_Function::Factory::get_instance().create<F_BASICBLOCKENTRY>());
 	bb->accept(&eval);
 	target_graph_t const& bb_entries(eval.get(*bb));
-	TEST_ASSERT_RELATION(4, ==, bb_entries.get_edges().size()); // main, edge after c::main and edges in c::main 
+	TEST_ASSERT_RELATION(3, ==, bb_entries.get_edges().size());
 	
 	Filter * cc(Filter_Function::Factory::get_instance().create<F_CONDITIONEDGE>());
 	cc->accept(&eval);

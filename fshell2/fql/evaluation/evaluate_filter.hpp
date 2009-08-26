@@ -215,6 +215,8 @@ class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	filter_value_t m_filter_map;
 	node_to_filters_t m_node_to_filters_map;
 
+	static bool skip_function(::goto_functionst::goto_functiont const& fct);
+
 	/*! \copydoc copy_constructor
 	*/
 	Evaluate_Filter( Self const& rhs );
