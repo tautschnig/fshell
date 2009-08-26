@@ -65,7 +65,7 @@ class Compute_Test_Goals : public ::bmct
 
 	test_goals_t const& compute(Query const& query);
 
-	test_goals_t const& get_satisfied_test_goals();
+	//test_goals_t const& get_satisfied_test_goals();
 
 	inline ::cnf_clause_list_assignmentt & get_cnf();
 
@@ -85,15 +85,15 @@ class Compute_Test_Goals : public ::bmct
 	Automaton_Inserter const& m_aut_insert;
 	::cnf_clause_list_assignmentt m_cnf;
 	::bv_cbmct m_bv;
-	typedef ::std::map< Evaluate_Path_Monitor::trace_automaton_t::state_type, 
+	/*typedef ::std::map< Evaluate_Path_Monitor::trace_automaton_t::state_type, 
 		::std::map< ::goto_programt::const_targett, test_goal_t > > state_context_tg_t;
-	state_context_tg_t m_state_context_tg_map;
+	state_context_tg_t m_state_context_tg_map;*/
 	typedef ::std::map< ::goto_programt::const_targett,
 				::std::map< ::goto_programt::const_targett, 
 					::std::set< ::literalt > > > pc_to_context_and_guards_t;
 	pc_to_context_and_guards_t m_pc_to_guard;
 	test_goals_t m_test_goals;
-	test_goals_t m_satisfied_goals;
+	//test_goals_t m_satisfied_goals;
 
 	/*! \copydoc copy_constructor
 	*/

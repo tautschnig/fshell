@@ -188,9 +188,10 @@ Compute_Test_Goals::test_goals_t const& Compute_Test_Goals::compute(Query const&
 			if (!set.empty()) {
 				::literalt tg(m_cnf.lor(set));
 				subgoals.insert(tg);
-				for (Evaluate_Path_Monitor::test_goal_states_t::const_iterator s_iter(
+				/*for (Evaluate_Path_Monitor::test_goal_states_t::const_iterator s_iter(
 							states.begin()); s_iter != states.end(); ++s_iter)
 					m_state_context_tg_map[ *s_iter ].insert(::std::make_pair(c_iter->first, tg));
+					*/
 			}
 		}
 		
@@ -209,6 +210,7 @@ Compute_Test_Goals::test_goals_t const& Compute_Test_Goals::compute(Query const&
 	return m_test_goals;
 }
 
+#if 0
 Compute_Test_Goals::test_goals_t const& Compute_Test_Goals::get_satisfied_test_goals() {
 	m_satisfied_goals.clear();
 	Evaluate_Path_Monitor::trace_automaton_t const& aut(m_pm_eval.get_cov_seq_aut());
@@ -314,6 +316,7 @@ Compute_Test_Goals::test_goals_t const& Compute_Test_Goals::get_satisfied_test_g
 
 	return m_satisfied_goals;
 }
+#endif
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
