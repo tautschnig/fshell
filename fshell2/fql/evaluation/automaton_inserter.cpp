@@ -107,8 +107,8 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 		while (num_states >>= 1) ++log_2_rounded;
 		::symbolt state_symb;
 		state_symb.mode = "C";
-		state_symb.base_name = ::diagnostics::internal::to_string("state$", suffix);
-		state_symb.name = ::diagnostics::internal::to_string("c::state$", suffix);
+		state_symb.base_name = ::diagnostics::internal::to_string("!fshell2!state$", suffix);
+		state_symb.name = ::diagnostics::internal::to_string("c::!fshell2!state$", suffix);
 		state_symb.static_lifetime = true;
 		state_symb.lvalue = true;
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, ::std::numeric_limits<
@@ -117,7 +117,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 		m_context.move(state_symb);
 	}
 	::symbolst::const_iterator state_symb_entry(m_context.symbols.find(
-				::diagnostics::internal::to_string("c::state$", suffix)));
+				::diagnostics::internal::to_string("c::!fshell2!state$", suffix)));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, state_symb_entry != m_context.symbols.end());
 	::symbolt const& state_symb(state_symb_entry->second);
 	::goto_programt::targett state_init(defs.add_instruction(ASSIGN));

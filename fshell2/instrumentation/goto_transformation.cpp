@@ -191,7 +191,7 @@ GOTO_Transformation::inserted_t & GOTO_Transformation::make_nondet_choice(::goto
 		for (int j(0); j < log_2_rounded; ++j) {
 			bool pos(bv & 0x1);
 			bv >>= 1;
-			::std::string const var_name(::diagnostics::internal::to_string("c::nondet_choice_var", m_nondet_var_count, "$", j));
+			::std::string const var_name(::diagnostics::internal::to_string("c::!fshell2!nd_choice", m_nondet_var_count, "$", j));
 			if (0 == i) {
 				::symbolt cond_symbol;
 				cond_symbol.mode = "C";
