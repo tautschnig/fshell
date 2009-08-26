@@ -33,6 +33,7 @@
 
 #include <fshell2/fql/evaluation/compute_test_goals.hpp>
 
+#include <cbmc/src/util/config.h>
 #include <cbmc/src/solvers/sat/satcheck_minisat.h>
 
 FSHELL2_NAMESPACE_BEGIN;
@@ -78,7 +79,12 @@ void Constraint_Strengthening::generate(::fshell2::fql::Query const& query,
 
 	::std::cerr << "#Possibly feasible test goals: " << aux_var_map.size() << ::std::endl;
 	::bvt goals_done;
+	bool max_tcs_reached(false);
 	while (!aux_var_map.empty()) {
+		if (::config.fshell.max_test_cases > 0 && tcs.size() == ::config.fshell.max_test_cases) {
+			max_tcs_reached = true;
+			break;
+		}
 		minisat.set_assumptions(goals_done);
 		if (::propt::P_UNSATISFIABLE == minisat.prop_solve()) break;
 		
@@ -144,7 +150,11 @@ void Constraint_Strengthening::generate(::fshell2::fql::Query const& query,
 		::std::cerr << "covers " << (size1 - aux_var_map.size()) << " test goals" << ::std::endl;
 	}
 	::std::cerr << "#Test cases: " << tcs.size() << ::std::endl;
-	::std::cerr << "#Infeasible test goals: " << aux_var_map.size() << ::std::endl;
+	if (max_tcs_reached) {
+		::std::cerr << "Stopped as requested" << ::std::endl;
+	} else {
+		::std::cerr << "#Infeasible test goals: " << aux_var_map.size() << ::std::endl;
+	}
 }
 
 FSHELL2_NAMESPACE_END;
