@@ -266,7 +266,9 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 						::goto_programt::targett if_stmt(if_prg.add_instruction());
 						if_stmt->make_goto(out_target);
 						if_stmt->guard = i_iter->guard;
-						if (s_iter->second != i_iter->targets.front()) if_stmt->guard.make_not();
+						::goto_programt::targett succ(i_iter);
+						++succ;
+						if (s_iter->second == succ) if_stmt->guard.make_not();
 
 						tmp.destructive_insert(tmp.instructions.begin(), if_prg);
 					}
