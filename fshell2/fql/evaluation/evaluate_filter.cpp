@@ -236,12 +236,46 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 			}
 			break;
 		case F_LINE:
-			n->get_int_arg<F_LINE>();
-			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+			{
+				::std::string const& arg(::diagnostics::internal::to_string(n->get_int_arg<F_LINE>()));
+				for (::goto_functionst::function_mapt::iterator iter(m_gf.function_map.begin());
+						iter != m_gf.function_map.end(); ++iter) {
+					if (skip_function(iter->second)) continue;
+					for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
+							f_iter != iter->second.body.instructions.end(); ++f_iter) {
+						if (f_iter->location.is_nil() ||
+								f_iter->location.get_line().empty() ||
+								f_iter->location.get_line() != arg) continue;
+						initial.insert(::std::make_pair(&(iter->second.body), f_iter));
+						CFG::entries_t::iterator cfg_node(m_cfg.find(f_iter));
+						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.end());
+						for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
+								s_iter != cfg_node->second.successors.end(); ++s_iter)
+							edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), *s_iter));
+					}
+				}
+			}
 			break;
 		case F_COLUMN:
-			n->get_int_arg<F_COLUMN>();
-			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+			{
+				::std::string const& arg(::diagnostics::internal::to_string(n->get_int_arg<F_COLUMN>()));
+				for (::goto_functionst::function_mapt::iterator iter(m_gf.function_map.begin());
+						iter != m_gf.function_map.end(); ++iter) {
+					if (skip_function(iter->second)) continue;
+					for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
+							f_iter != iter->second.body.instructions.end(); ++f_iter) {
+						if (f_iter->location.is_nil() ||
+								f_iter->location.get_column().empty() ||
+								f_iter->location.get_column() != arg) continue;
+						initial.insert(::std::make_pair(&(iter->second.body), f_iter));
+						CFG::entries_t::iterator cfg_node(m_cfg.find(f_iter));
+						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.end());
+						for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
+								s_iter != cfg_node->second.successors.end(); ++s_iter)
+							edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), *s_iter));
+					}
+				}
+			}
 			break;
 		case F_FUNC:
 			{
@@ -285,8 +319,25 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 			}
 			break;
 		case F_CALL:
-			n->get_string_arg<F_CALL>();
-			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+			{
+				::std::string const& arg(n->get_string_arg<F_CALL>());
+				for (::goto_functionst::function_mapt::iterator iter(m_gf.function_map.begin());
+						iter != m_gf.function_map.end(); ++iter) {
+					if (skip_function(iter->second)) continue;
+					for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
+							f_iter != iter->second.body.instructions.end(); ++f_iter) {
+						if (!f_iter->is_function_call()) continue;
+						if (::to_code_function_call(f_iter->code).function().get("identifier") != arg) continue;
+						CFG::entries_t::iterator cfg_node(m_cfg.find(f_iter));
+						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.end());
+						for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
+								s_iter != cfg_node->second.successors.end(); ++s_iter) {
+							initial.insert(::std::make_pair(&(iter->second.body), f_iter));
+							edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), *s_iter));
+						}
+					}
+				}
+			}
 			break;
 		case F_CALLS:
 			for (::goto_functionst::function_mapt::iterator iter(m_gf.function_map.begin());
