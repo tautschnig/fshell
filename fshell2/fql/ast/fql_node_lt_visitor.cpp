@@ -28,6 +28,10 @@
 
 #include <fshell2/fql/ast/fql_node_lt_visitor.hpp>
 
+#if AUTOMATA_DEBUG__LEVEL__ > -1
+#  include <diagnostics/basic_exceptions/not_implemented.hpp>
+#endif
+
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 

@@ -56,7 +56,6 @@
 #include <fshell2/fql/ast/tgs_union.hpp>
 
 #if AUTOMATA_DEBUG__LEVEL__ > -1
-#  include <diagnostics/basic_exceptions/not_implemented.hpp>
 #  include <diagnostics/basic_exceptions/violated_invariance.hpp>
 #endif
 
@@ -460,13 +459,13 @@ void FQL_Node_Lt_Visitor::visit( CL const* a ) \
 \
 void FQL_Node_Lt_Visitor::visit( CL const* a ) const \
 { \
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, false); \
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, false); \
 } \
 \
 template <typename T> \
 void FQL_Node_Lt_Visitor::Compare_To_Visitor<T>::visit( CL const* a ) const \
 { \
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, false); \
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, false); \
 } DUMMY_FUNC
 
 #define LT_VISIT_BUILDER_1( CL ) \
