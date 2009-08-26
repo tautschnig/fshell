@@ -85,7 +85,7 @@ void Constraint_Strengthening::generate(::fshell2::fql::Query const& query,
 		// solution has k paths!!!
 
 		// store the Boolean variable values
-		cnf.copy_assignment_from(minisat);
+		//cnf.copy_assignment_from(minisat);
 
 		// keep all test cases
 		tcs.push_back(::cnf_clause_list_assignmentt());
@@ -93,21 +93,54 @@ void Constraint_Strengthening::generate(::fshell2::fql::Query const& query,
 		tcs.back().copy_assignment_from(minisat);
 
 		// deactivate test goals
-		::fshell2::fql::Compute_Test_Goals::test_goals_t const& satisfied_tg(m_goals.get_satisfied_test_goals());
-		::std::cerr << "NOT IMPLEMENTED" << ::std::endl;
-
+		/*::fshell2::fql::Compute_Test_Goals::test_goals_t const& satisfied_tg(m_goals.get_satisfied_test_goals());
+		::std::cerr << "NOT IMPLEMENTED" << ::std::endl;*/
 		unsigned const size1(aux_var_map.size());
+		::bvt fixed_literals;
+		::boolbvt const& bv(m_goals.get_bv());
+		for (::boolbv_mapt::mappingt::const_iterator iter(bv.map.mapping.begin());
+			iter != bv.map.mapping.end(); ++iter) {
+			if (iter->first.as_string().substr(0, 12) == "c::!fshell2!") continue;
+			for (::boolbv_mapt::literal_mapt::const_iterator m_iter(iter->second.literal_map.begin());
+					m_iter != iter->second.literal_map.end(); ++m_iter)
+				if (!m_iter->l.is_constant()) fixed_literals.push_back(::literalt(m_iter->l.var_no(), 
+							m_iter->l.sign() ? !minisat.l_get(m_iter->l).is_false() : minisat.l_get(m_iter->l).is_false()));
+		}
+		fixed_literals.insert(fixed_literals.end(), goals_done.begin(), goals_done.end());
 		for (::std::map< ::literalt, ::literalt >::iterator iter(aux_var_map.begin());
 				iter != aux_var_map.end();) {
-			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cnf.l_get(iter->first).is_known());
-			if (cnf.l_get(iter->first).is_false()) {
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, minisat.l_get(iter->first).is_known());
+			if (minisat.l_get(iter->first).is_false()) {
 				++iter;
 				continue;
 			}
 			// test goal is done
 			goals_done.push_back(::neg(iter->second));
+			fixed_literals.push_back(::neg(iter->second));
 			aux_var_map.erase(iter++);
 		}
+		::satcheck_minisatt tmp_minisat;
+		tmp_minisat.set_message_handler(cnf.get_message_handler());
+		tmp_minisat.set_verbosity(cnf.get_verbosity());
+		cnf.copy_to(tmp_minisat);
+		while (!aux_var_map.empty()) {
+			tmp_minisat.set_assumptions(fixed_literals);
+			if (::propt::P_UNSATISFIABLE == tmp_minisat.prop_solve()) break;
+			
+			for (::std::map< ::literalt, ::literalt >::iterator iter(aux_var_map.begin());
+					iter != aux_var_map.end();) {
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, tmp_minisat.l_get(iter->first).is_known());
+				if (tmp_minisat.l_get(iter->first).is_false()) {
+					++iter;
+					continue;
+				}
+				// test goal is done
+				goals_done.push_back(::neg(iter->second));
+				fixed_literals.push_back(::neg(iter->second));
+				aux_var_map.erase(iter++);
+			}
+		}
+
 		::std::cerr << "covers " << (size1 - aux_var_map.size()) << " test goals" << ::std::endl;
 	}
 	::std::cerr << "#Test cases: " << tcs.size() << ::std::endl;
