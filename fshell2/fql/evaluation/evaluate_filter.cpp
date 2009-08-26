@@ -59,6 +59,8 @@
 #include <algorithm>
 #include <iterator>
 
+#include <cbmc/src/util/config.h>
+
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
@@ -106,21 +108,46 @@ void Evaluate_Filter::visit(Filter_Complement const* n) {
 	if (!entry.second) return;
 	
 	n->get_filter()->accept(this);
-	Filter_Function * id(Filter_Function::Factory::get_instance().create<F_IDENTITY>());
-	id->accept(this);
 
-	filter_value_t::const_iterator id_set(m_filter_map.find(id));
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, id_set != m_filter_map.end());
+	// the only point where we really evaluate F_IDENTITY
+	Filter_Function * id(Filter_Function::Factory::get_instance().create<F_IDENTITY>());
+	::std::pair< filter_value_t::iterator, bool > id_entry(m_filter_map.insert(
+				::std::make_pair(id, target_graph_t())));
+	if (id_entry.second) {
+		CFA::edges_t edges;
+		CFA::initial_states_t initial;
+
+		::std::string main_name("c::");
+		main_name += ::config.main;
+		for (::goto_functionst::function_mapt::iterator iter(m_gf.function_map.begin());
+				iter != m_gf.function_map.end(); ++iter) {
+			if (skip_function(iter->second)) continue;
+			if (iter->first == main_name)
+				initial.insert(::std::make_pair(&(iter->second.body), iter->second.body.instructions.begin()));
+			for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
+					f_iter != iter->second.body.instructions.end(); ++f_iter) {
+				::fshell2::instrumentation::CFG::entries_t::iterator cfg_node(m_cfg.find(f_iter));
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.end());
+				for (::fshell2::instrumentation::CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
+						s_iter != cfg_node->second.successors.end(); ++s_iter)
+					edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), *s_iter));
+			}
+		}
+
+		id_entry.first->second.set_edges(edges);
+		id_entry.first->second.set_initial_states(initial);
+	}
+
 	filter_value_t::const_iterator f_set(m_filter_map.find(n->get_filter()));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, f_set != m_filter_map.end());
 
 	CFA::edges_t edges;
-	::std::set_difference(id_set->second.get_edges().begin(), id_set->second.get_edges().end(),
+	::std::set_difference(id_entry.first->second.get_edges().begin(), id_entry.first->second.get_edges().end(),
 			f_set->second.get_edges().begin(), f_set->second.get_edges().end(),
 			::std::inserter(edges, edges.begin()));
 	entry.first->second.set_edges(edges);
 	CFA::initial_states_t initial;
-	::std::set_difference(id_set->second.get_initial_states().begin(), id_set->second.get_initial_states().end(),
+	::std::set_difference(id_entry.first->second.get_initial_states().begin(), id_entry.first->second.get_initial_states().end(),
 			f_set->second.get_initial_states().begin(), f_set->second.get_initial_states().end(),
 			::std::inserter(initial, initial.begin()));
 	entry.first->second.set_initial_states(initial);
@@ -184,7 +211,8 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 	
 	switch (n->get_filter_type()) {
 		case F_IDENTITY:
-			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+			// treated specially in all evaluations, only evaluated in
+			// Filter_Complement above
 			break;
 		case F_FILE:
 			{

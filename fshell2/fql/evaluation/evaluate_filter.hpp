@@ -66,6 +66,8 @@ class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 
 	virtual ~Evaluate_Filter();
 
+	static bool skip_function(::goto_functionst::goto_functiont const& fct);
+
 	target_graph_t const& get(Filter const& f) const;
 	edge_to_filters_t const& get(::goto_programt::const_targett const& n) const;
 
@@ -214,8 +216,6 @@ class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	::fshell2::instrumentation::CFG & m_cfg;
 	filter_value_t m_filter_map;
 	node_to_filters_t m_node_to_filters_map;
-
-	static bool skip_function(::goto_functionst::goto_functiont const& fct);
 
 	/*! \copydoc copy_constructor
 	*/

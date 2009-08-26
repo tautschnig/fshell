@@ -151,7 +151,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 
 	for (::goto_functionst::function_mapt::iterator iter(m_gf.function_map.begin());
 			iter != m_gf.function_map.end(); ++iter) {
-		if (!iter->second.body_available) continue;
+		if (Evaluate_Filter::skip_function(iter->second)) continue;
 		::goto_programt::instructionst::iterator end_func_iter(iter->second.body.instructions.end());
 		--end_func_iter;
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, end_func_iter->is_end_function());
@@ -160,8 +160,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 		if (::fshell2::instrumentation::GOTO_Transformation::is_instrumented(end_func_iter)) continue;
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_cfg.end() != cfg_node_for_end_func);
 		// maybe this function is never called, then there is no successor,
-		// and we can skip this function altogether; thereby we also skip CBMC
-		// main
+		// and we can skip this function altogether
 		if (cfg_node_for_end_func->second.successors.empty()) continue;
 		
 		for (::goto_programt::instructionst::iterator i_iter(iter->second.body.instructions.begin());
