@@ -70,6 +70,7 @@ class Compute_Test_Goals : public ::bmct
 	inline ::cnf_clause_list_assignmentt & get_cnf();
 
 	inline ::boolbvt const& get_bv() const;
+	inline ::symex_target_equationt::SSA_stepst const& get_equation() const;
 
 	inline ::namespacet const& get_ns() const;
 
@@ -110,6 +111,10 @@ inline ::cnf_clause_list_assignmentt & Compute_Test_Goals::get_cnf() {
 	
 inline ::boolbvt const& Compute_Test_Goals::get_bv() const {
 	return m_bv;
+}
+	
+inline ::symex_target_equationt::SSA_stepst const& Compute_Test_Goals::get_equation() const {
+	return _equation.SSA_steps;
 }
 
 inline ::namespacet const& Compute_Test_Goals::get_ns() const {

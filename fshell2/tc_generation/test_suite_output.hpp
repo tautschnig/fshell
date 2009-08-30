@@ -35,6 +35,12 @@
 
 #include <fshell2/tc_generation/constraint_strengthening.hpp>
 
+#include <cbmc/src/util/ui_message.h>
+
+class symbolt;
+class exprt;
+class locationt;
+
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
@@ -54,10 +60,21 @@ class Test_Suite_Output
 	explicit Test_Suite_Output(::fshell2::fql::Compute_Test_Goals & goals);
 	
 	::std::ostream & print_ts(Constraint_Strengthening::test_cases_t &
-			test_suite, ::std::ostream & os);
+			test_suite, ::std::ostream & os, ::ui_message_handlert::uit const ui);
 
 	private:
-	::std::ostream & print_test_case(::std::ostream & os) const;
+	typedef struct {
+		::exprt const * m_name;
+		::std::string m_pretty_name;
+		::exprt const * m_value;
+		::symbolt const * m_symbol;
+		::locationt const * m_location;
+	} program_variable_t;
+	typedef ::std::list< program_variable_t > test_case_t;
+
+	void get_test_case(test_case_t & tc) const;
+	::std::ostream & print_test_case_plain(::std::ostream & os, test_case_t const& tc) const;
+	::std::ostream & print_test_case_xml(::std::ostream & os, test_case_t const& tc) const;
 	
 	::fshell2::fql::Compute_Test_Goals & m_goals;
 	
