@@ -168,11 +168,11 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::test_case_t & tc) const
 				case FSHELL2_INTERNAL: // we don't care
 				case CBMC_DYNAMIC_MEMORY: // ignore in RHS
 					break;
-				case PARAMETER:
 				case CBMC_TMP_RETURN_VALUE:
 					// we must have seen these on the LHS first
 					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, false);
 					break;
+				case PARAMETER:
 				case LOCAL:
 				case GLOBAL:
 					tc.push_back(program_variable_t());
