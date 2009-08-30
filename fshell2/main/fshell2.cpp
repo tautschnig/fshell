@@ -144,6 +144,7 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 		::bmct bmc(manager.context, manager.ui_message_handler);
 		bmc.options = m_opts;
 		bmc.set_verbosity(manager.get_verbosity());
+		bmc.set_ui(manager.ui_message_handler.get_ui());
 		FSHELL2_PROD_CHECK1(::fshell2::FShell2_Error, !bmc.run(m_gf),
 				"Program has failing assertions, cannot proceed.");
 		m_first_run = false;
@@ -201,7 +202,7 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 
 	// output
 	::fshell2::Test_Suite_Output out(goals);
-	out.print_ts(test_suite, os);
+	out.print_ts(test_suite, os, manager.ui_message_handler.get_ui());
 }
 
 bool FShell2::process_line(::language_uit & manager, ::std::ostream & os, char const * line) {
@@ -211,11 +212,15 @@ bool FShell2::process_line(::language_uit & manager, ::std::ostream & os, char c
 		case Command_Processing::QUIT:
 			return true;
 		case Command_Processing::HELP:
-			Command_Processing::help(os);
-			os << ::std::endl;
-			::fshell2::macro::Macro_Processing::help(os);
-			os << ::std::endl;
-			::fshell2::fql::Query_Processing::help(os);
+			{
+				::std::ostringstream oss;
+				Command_Processing::help(oss);
+				oss << ::std::endl;
+				::fshell2::macro::Macro_Processing::help(oss);
+				oss << ::std::endl;
+				::fshell2::fql::Query_Processing::help(oss);
+				manager.print(oss.str());
+			}
 			return false;
 		case Command_Processing::DONE:
 			return false;
@@ -235,17 +240,17 @@ void FShell2::interactive(::language_uit & manager, ::std::ostream & os) {
 		try {
 			// process the input; returning true signals "quit"
 			if (process_line(manager, os, input.get())) {
-				os << "Bye." << ::std::endl;
+				manager.status("Bye.");
 				return;
 			}
 		} catch (::fshell2::Command_Processing_Error & e) {
-			os << e.what() << ::std::endl;
+			manager.error(e.what());
 		} catch (::fshell2::Macro_Processing_Error & e) {
-			os << e.what() << ::std::endl;
+			manager.error(e.what());
 		} catch (::fshell2::Query_Processing_Error & e) {
-			os << e.what() << ::std::endl;
+			manager.error(e.what());
 		} catch (::fshell2::FShell2_Error & e) {
-			os << e.what() << ::std::endl;
+			manager.error(e.what());
 		}
 	}
 }
