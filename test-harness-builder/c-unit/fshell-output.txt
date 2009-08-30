@@ -1,0 +1,91 @@
+file blubb.c: Parsing
+Converting
+Type-checking blubb
+Generating GOTO Program
+FShell2> [4h(reverse-i-se[4larch)`':(reverse-i-search)`': c': cover edges(id)[4ho[4l(reverse-i-search)`co': [4hv[4l(reverse-i-search)`cov': [16PFShell2>FShell2> FShell2> cFShell2> coFShell2> covFShell2> coveFShell2> coverFShell2> cover FShell2> cover eFShell2> cover edFShell2> cover edgFShell2> cover edgeFShell2> cover edgesFShell2> cover edges(FShell2> cover edges(iFShell2> cover edges(id[1P)[1P)@)b)a)s)i)c)b)l)o)c)k)e)n)t)r)y)
+Starting Bounded Model Checking
+**** WARNING: no body for function c::f
+size of program expression: 53 assignments
+simple slicing removed 0 assignments
+Generated 0 VCC(s), 0 remaining after simplification
+VERIFICATION SUCCESSFUL
+Starting Bounded Model Checking
+**** WARNING: no body for function c::f
+size of program expression: 924 assignments
+simple slicing removed 0 assignments
+Generated 1 VCC(s), 1 remaining after simplification
+Passing problem to propositional reduction
+2078 variables, 11382 clauses
+SAT checker: negated claim is SATISFIABLE, i.e., does not hold
+2078 variables, 11382 clauses
+SAT checker: negated claim is SATISFIABLE, i.e., does not hold
+2078 variables, 4571 clauses
+SAT checker: negated claim is SATISFIABLE, i.e., does not hold
+2078 variables, 4571 clauses
+SAT checker: negated claim is SATISFIABLE, i.e., does not hold
+2078 variables, 4571 clauses
+SAT checker: negated claim is SATISFIABLE, i.e., does not hold
+2078 variables, 4571 clauses
+SAT checker: negated claim is SATISFIABLE, i.e., does not hold
+2078 variables, 4571 clauses
+SAT checker: negated claim is UNSATISFIABLE, i.e., holds
+2078 variables, 4571 clauses
+SAT checker: negated claim is SATISFIABLE, i.e., does not hold
+2078 variables, 11382 clauses
+SAT checker: negated claim is SATISFIABLE, i.e., does not hold
+2078 variables, 4571 clauses
+SAT checker: negated claim is UNSATISFIABLE, i.e., holds
+2078 variables, 4571 clauses
+SAT checker: negated claim is SATISFIABLE, i.e., does not hold
+2078 variables, 11382 clauses
+SAT checker: negated claim is UNSATISFIABLE, i.e., holds
+2078 variables, 4571 clauses
+SAT checker: negated claim is SATISFIABLE, i.e., does not hold
+2078 variables, 11382 clauses
+SAT checker: negated claim is UNSATISFIABLE, i.e., holds
+2078 variables, 4571 clauses
+SAT checker: negated claim is SATISFIABLE, i.e., does not hold
+IN:
+  ENTRY main(argc,argv)@[file blubb.c line 19]
+  int argc@[file blubb.c line 19]=14
+  signed char * * argv@[file blubb.c line 19]=NULL
+  int f(int, int)@[file blubb.c line 15 function bla]=0
+  int f(int, int)@[file blubb.c line 26 function main]=0
+  int x@[file blubb.c line 20 function main]=0
+  int f(int, int)@[file blubb.c line 15 function bla]=0
+
+IN:
+  ENTRY main(argc,argv)@[file blubb.c line 19]
+  int argc@[file blubb.c line 19]=2
+  signed char * * argv@[file blubb.c line 19]=NULL
+  int f(int, int)@[file blubb.c line 15 function bla]=0
+  int f(int, int)@[file blubb.c line 26 function main]=2048
+  int f(int, int)@[file blubb.c line 15 function bla]=0
+
+IN:
+  ENTRY main(argc,argv)@[file blubb.c line 19]
+  int argc@[file blubb.c line 19]=38
+  signed char * * argv@[file blubb.c line 19]=NULL
+  int f(int, int)@[file blubb.c line 15 function bla]=0
+  int f(int, int)@[file blubb.c line 26 function main]=2
+  int f(int, int)@[file blubb.c line 15 function bla]=0
+
+IN:
+  ENTRY main(argc,argv)@[file blubb.c line 19]
+  int argc@[file blubb.c line 19]=2
+  signed char * * argv@[file blubb.c line 19]=NULL
+  int f(int, int)@[file blubb.c line 15 function bla]=0
+  int f(int, int)@[file blubb.c line 26 function main]=1048576
+  int f(int, int)@[file blubb.c line 15 function bla]=0
+
+IN:
+  ENTRY main(argc,argv)@[file blubb.c line 19]
+  int argc@[file blubb.c line 19]=2
+  signed char * * argv@[file blubb.c line 19]=NULL
+  int f(int, int)@[file blubb.c line 15 function bla]=0
+  int f(int, int)@[file blubb.c line 26 function main]=0
+  int x@[file blubb.c line 20 function main]=0
+  int f(int, int)@[file blubb.c line 15 function bla]=0
+
+FShell2> quit
+Bye.
