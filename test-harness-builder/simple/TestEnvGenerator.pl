@@ -148,6 +148,7 @@ foreach my $id (sort keys %test_suite) {
       my $new_name = $sym->{symbol} . "_" . $sym->{file} . "_" . $sym->{line};
       $new_name =~ s/[\/\\:]/__/g;
       $new_name =~ s/\./_/g;
+      push @{ $inserts{ $sym->{file} } }, "extern unsigned __fshell2__tc_selector;";
       $replaces{ $sym->{file} }{ $sym->{line} }{ $sym->{symbol} } =
         $sym->{symbol} . "=$new_name\[__fshell2__tc_selector][idx__$new_name++]";
       
@@ -204,7 +205,7 @@ print MAKEFILE "\ntester: tester.c ";
 print MAKEFILE join(".mod.c ", keys %replaces) .
   (scalar(keys %replaces)?".mod.c ":" ") . join(".mod.c ", keys %inserts) .
   (scalar(keys %inserts)?".mod.c\n":"\n");
-print MAKEFILE "\tgcc -o \$@ \$^\n\n";
+print MAKEFILE "\tgcc -o \$@ \$(BUILD_FLAGS) \$^\n\n";
 
 foreach my $f (keys %replaces) {
   print MAKEFILE "$f.mod.c: $f\n";
@@ -263,7 +264,7 @@ foreach my $id (sort keys %test_suite) {
   print TESTER "    case $id:\n";
   print TESTER "      __fshell2__tc_selector = $id;\n";
   print TESTER "      __orig__" . $test_suite{$id}{MAIN}{symbol} . "(";
-  print TESTER join(",", @{ $test_suite{$id}{MAIN}{arg_vals} }) . ");\n";
+  print TESTER (defined($test_suite{$id}{MAIN}{arg_vals})?join(",", @{ $test_suite{$id}{MAIN}{arg_vals} }):"") . ");\n";
   print TESTER "      break;\n";
 }
 
