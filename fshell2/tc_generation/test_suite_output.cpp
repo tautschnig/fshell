@@ -50,6 +50,7 @@ typedef enum {
 	CBMC_TMP_RETURN_VALUE,
 	FSHELL2_INTERNAL,
 	LOCAL,
+	LOCAL_STATIC,
 	GLOBAL,
 	GLOBAL_STATIC,
 	PARAMETER,
@@ -75,6 +76,9 @@ typedef enum {
 			break;
 		case LOCAL:
 			os << "LOCAL";
+			break;
+		case LOCAL_STATIC:
+			os << "LOCAL_STATIC";
 			break;
 		case GLOBAL:
 			os << "GLOBAL";
@@ -113,8 +117,11 @@ variable_type_t get_variable_type(::std::string const& v)
 	else if (::std::string::npos == v.find("::", v.find("::", 3) + 2)) return GLOBAL_STATIC;
 	// parameters have two more ::
 	else if (::std::string::npos == v.find("::", v.find("::", v.find("::", 3) + 2) + 2)) return PARAMETER;
-	// must have a frame, otherwise I have no idea...
-	else if (::std::string::npos != v.find('@')) return LOCAL;
+	// local static vars have more :: but no @ marking the frame
+	else if (::std::string::npos != v.find("::", v.find("::", v.find("::", 3) + 2) + 2)) {
+		if (::std::string::npos != v.rfind('@')) return LOCAL;
+		return LOCAL_STATIC;
+	}
 	
 	FSHELL2_PROD_CHECK1(::diagnostics::Not_Implemented, false,
 			::diagnostics::internal::to_string("Cannot determine variable type of ", v));
@@ -185,6 +192,7 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::test_case_t & tc) const
 					break;
 				case PARAMETER:
 				case LOCAL:
+				case LOCAL_STATIC:
 				case GLOBAL:
 				case GLOBAL_STATIC:
 					tc.push_back(program_variable_t());
@@ -232,6 +240,7 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::test_case_t & tc) const
 			case CBMC_DYNAMIC_MEMORY:
 			case CBMC_TMP_RETURN_VALUE:
 			case LOCAL:
+			case LOCAL_STATIC:
 			case GLOBAL:
 			case GLOBAL_STATIC:
 				if (iter->rhs.is_constant()) break;
@@ -324,11 +333,31 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::test_case_t & tc) const
 			os << " " << iter->m_symbol->base_name;
 		}
 		FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, !iter->m_location->is_nil());
-		os << "@[" << *(iter->m_location) << "]";
-		// obtain the value
-		::std::string const val(::from_expr(m_goals.get_ns(),
-					iter->m_name->get("identifier"), bv.get(*(iter->m_value))));
-		FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, !val.empty());
+		os << "@[" << *(iter->m_location) << "]=";
+		// obtain the value; if variable was used in pointer context, it will
+		// lack #0
+		//// ::std::cerr << "Fetching value for " << iter->m_value->pretty() << ::std::endl;
+		if (::std::string::npos == iter->m_value->get("identifier").as_string().rfind("#")) {
+			::exprt new_sym("symbol");
+			new_sym.set("identifier", ::diagnostics::internal::to_string(iter->m_value->get("identifier"), "#0"));
+			// not sure whether this is needed
+			if (bv.map.mapping.end() == bv.map.mapping.find(new_sym.get("identifier"))) {
+				new_sym.set("identifier", ::diagnostics::internal::to_string(iter->m_value->get("identifier"), "#1"));
+			}
+			FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, bv.map.mapping.end() !=
+					bv.map.mapping.find(new_sym.get("identifier")));
+			::std::string const val(::from_expr(m_goals.get_ns(),
+						iter->m_name->get("identifier"), bv.get(new_sym)));
+			FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, !val.empty());
+			os << val;
+		} else {
+			FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, bv.map.mapping.end() !=
+					bv.map.mapping.find(iter->m_value->get("identifier")));
+			::std::string const val(::from_expr(m_goals.get_ns(),
+						iter->m_name->get("identifier"), bv.get(*(iter->m_value))));
+			FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, !val.empty());
+			os << val;
+		}
 		/* // beautify dynamic_X_name
 		if(0 == val.find("&dynamic_")) {
 			::std::map< ::std::string, ::std::string >::const_iterator entry(
@@ -343,7 +372,7 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::test_case_t & tc) const
 			else val = entry->second;
 		}
 		*/
-		os << "=" << val << ::std::endl;
+		os << ::std::endl;
 	}
 
 	return os;
@@ -389,11 +418,29 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::test_case_t & tc) const
 		::xmlt xml_loc("location");
 		::convert(*(iter->m_location), xml_loc);
 		xml_obj.new_element().swap(xml_loc);
-		// obtain the value
-		::std::string const val(::from_expr(m_goals.get_ns(),
-					iter->m_name->get("identifier"), bv.get(*(iter->m_value))));
-		FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, !val.empty());
-		xml_obj.new_element("value").data = ::xmlt::escape(val);
+		// obtain the value; if variable was used in pointer context, it will
+		// lack #0
+		if (::std::string::npos == iter->m_value->get("identifier").as_string().rfind("#")) {
+			::exprt new_sym("symbol");
+			new_sym.set("identifier", ::diagnostics::internal::to_string(iter->m_value->get("identifier"), "#0"));
+			// not sure whether this is needed
+			if (bv.map.mapping.end() == bv.map.mapping.find(new_sym.get("identifier"))) {
+				new_sym.set("identifier", ::diagnostics::internal::to_string(iter->m_value->get("identifier"), "#1"));
+			}
+			FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, bv.map.mapping.end() !=
+					bv.map.mapping.find(new_sym.get("identifier")));
+			::std::string const val(::from_expr(m_goals.get_ns(),
+						iter->m_name->get("identifier"), bv.get(new_sym)));
+			FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, !val.empty());
+			xml_obj.new_element("value").data = ::xmlt::escape(val);
+		} else {
+			FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, bv.map.mapping.end() !=
+					bv.map.mapping.find(iter->m_value->get("identifier")));
+			::std::string const val(::from_expr(m_goals.get_ns(),
+						iter->m_name->get("identifier"), bv.get(*(iter->m_value))));
+			FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, !val.empty());
+			xml_obj.new_element("value").data = ::xmlt::escape(val);
+		}
 		xml_obj.new_element("type").data = ::xmlt::escape(::from_type(m_goals.get_ns(),
 					iter->m_name->get("identifier"), iter->m_symbol->type));
 		xml_tc.new_element().swap(xml_obj);

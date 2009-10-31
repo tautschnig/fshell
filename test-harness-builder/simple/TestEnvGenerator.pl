@@ -140,7 +140,7 @@ foreach my $id (sort keys %test_suite) {
           scalar(@{ $sym2->{vals} }) . "] = { " . join(",", (@{ $sym2->{vals} })) . " };";
         my $vals = "";
         $vals =~ s/^, //;
-        push @switch, "    case $id2: return retval$id2\[idx++];";
+        push @switch, "    case ".($id2-1).": return retval$id2\[idx++];";
         $sym2->{code_done} = 1;
       }
       push @{ $inserts{ $sym->{file} } }, @switch;
@@ -151,8 +151,13 @@ foreach my $id (sort keys %test_suite) {
       $new_name =~ s/[\/\\:]/__/g;
       $new_name =~ s/\./_/g;
       push @{ $inserts{ $sym->{file} } }, "extern unsigned __fshell2__tc_selector;";
-      $replaces{ $sym->{file} }{ $sym->{line} }{ $sym->{symbol} } =
-        $sym->{symbol} . "=$new_name\[__fshell2__tc_selector][idx__$new_name++]";
+      if ($sym->{type} =~ /\[\d+\]/) {
+        $replaces{ $sym->{file} }{ $sym->{line} }{ "\\[.*\\][[:space:]]*" . $sym->{symbol} } =
+          "*" . $sym->{symbol} . "=$new_name\[__fshell2__tc_selector][idx__$new_name++]";
+      } else {
+        $replaces{ $sym->{file} }{ $sym->{line} }{ "[[:space:]]" . $sym->{symbol} } =
+          $sym->{symbol} .  "=$new_name\[__fshell2__tc_selector][idx__$new_name++]";
+      }
       
       my $max_size = 0;
       foreach my $id2 (sort keys %test_suite) {
@@ -161,28 +166,35 @@ foreach my $id (sort keys %test_suite) {
         $max_size = scalar(@{ $sym2->{vals} }) if (scalar(@{ $sym2->{vals} }) > $max_size);
       }
       my @vals = ();
-      for (my $i = 0; $i < $max_size; $i++) {
-        push @vals, "0";
-      }
       foreach my $id2 (sort keys %test_suite) {
         if (!defined($test_suite{$id2}{$key})) {
-          for (my $i = 0; $i < $max_size; $i++) {
-            push @vals, "0";
-          }
+          my $val = "{";
+          for (my $i = 0; $i < $max_size; $i++) { $val .= "0,"; }
+          $val =~ s/,$//;
+          $val .= "}";
+          push @vals, $val;
           next;
         }
         my $sym2 = \%{ $test_suite{$id2}{$key} };
-        push @vals, @{ $sym2->{vals} };
-        for (my $i = scalar(@{ $sym2->{vals} }); $i < $max_size; $i++) {
-          push @vals, "0";
-        }
+        my $val = "{" . join(",", @{ $sym2->{vals} });
+        for (my $i = scalar(@{ $sym2->{vals} }); $i < $max_size; $i++) { $val .=",0"; }
+        $val .= "}";
+        push @vals, $val;
         $sym2->{code_done} = 1;
       }
       
       (defined($inserts{ $sym->{file} })) or $inserts{ $sym->{file} } = ();
       push @{ $inserts{ $sym->{file} } }, "unsigned idx__$new_name = 0;";
-      push @{ $inserts{ $sym->{file} } }, $sym->{type} . " $new_name\[" . scalar(@vals) .
-        "][$max_size] = { " . join(",", @vals) . " };";
+      if ($sym->{type} =~ /(\[\d+\])/) {
+        my $dim = $1;
+        my $type = $sym->{type};
+        $type =~ s/\Q$dim\E//;
+        push @{ $inserts{ $sym->{file} } }, $type . " $new_name\[" . scalar(@vals) .
+          "][$max_size]$dim = { " . join(",", @vals) . " };";
+      } else {
+        push @{ $inserts{ $sym->{file} } }, $sym->{type} . " $new_name\[" . scalar(@vals) .
+          "][$max_size] = { " . join(",", @vals) . " };";
+      }
     }
   }
 }
@@ -215,7 +227,7 @@ foreach my $f (keys %replaces) {
   foreach my $l (keys %{ $replaces{$f} }) {
     foreach my $s (keys %{ $replaces{$f}{$l} }) {
       print MAKEFILE "\tmv \$\@ \$\@_\n";
-      print MAKEFILE "\tsed '$l s/[[:space:]]$s/ $replaces{$f}{$l}{$s}/' \$\@_ > \$\@\n";
+      print MAKEFILE "\tsed '$l s/$s/ $replaces{$f}{$l}{$s}/' \$\@_ > \$\@\n";
       print MAKEFILE "\trm \$\@_\n";
     }
   }
@@ -245,7 +257,6 @@ EOF
 open (TESTER, ">tester.c");
 
 print TESTER <<EOF;
-#include <assert.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
@@ -254,17 +265,23 @@ unsigned __fshell2__tc_selector;
 
 int main(int argc, char* argv[]) {
   long tc = -1;
-  assert(argc == 2);
+  if(argc != 2) {
+    printf("Expected test case id as single argument\\n");
+    return 1;
+  }
   errno = 0;
   tc = strtol(argv[1], NULL, 10);
-  assert(errno == 0);
+  if(errno != 0) {
+    printf("Failed to parse test case id\\n");
+    return 2;
+  }
 
   switch(tc) {
 EOF
 
 foreach my $id (sort keys %test_suite) {
   print TESTER "    case $id:\n";
-  print TESTER "      __fshell2__tc_selector = $id;\n";
+  print TESTER "      __fshell2__tc_selector = " . ($id-1) . ";\n";
   print TESTER "      __orig__" . $test_suite{$id}{MAIN}{symbol} . "(";
   print TESTER (defined($test_suite{$id}{MAIN}{arg_vals})?join(",", @{ $test_suite{$id}{MAIN}{arg_vals} }):"") . ");\n";
   print TESTER "      break;\n";
@@ -273,7 +290,7 @@ foreach my $id (sort keys %test_suite) {
 print TESTER <<EOF;
     default:
       printf("No test case available for id %ld\\n", tc);
-      return 1;
+      return 3;
   }
 
   return 0;
