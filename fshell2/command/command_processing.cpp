@@ -60,6 +60,7 @@ extern int CMDparse(CMDFlexLexer *,
 "              | `SET' <Options>" << ::std::endl << \
 "<Options> ::= `ENTRY' <Identifier>" << ::std::endl << \
 "            | `LIMIT' `COUNT' <Number>" << ::std::endl << \
+"            | `NO_ZERO_INIT'" << ::std::endl << \
 "<File name> ::= <Quoted String>" << ::std::endl << \
 "<Defines> ::=" << ::std::endl << \
 "            | `-D' <Identifier> <Defines>" << ::std::endl << \
@@ -115,7 +116,8 @@ Cleanup::~Cleanup() {
 }
 
 Command_Processing::Command_Processing(::optionst const& opts, ::goto_functionst & gf) :
-	m_opts(opts), m_gf(gf), m_finalized(true) {
+	m_opts(opts), m_gf(gf), m_finalized(true),
+	m_remove_zero_init(false) {
 	if (::config.main.empty()) ::config.main = "main";
 }
 
@@ -262,6 +264,12 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 					"Limit must be greater than 0");
 			::config.fshell.max_test_cases = numeric_arg;
 			return DONE;
+		case CMD_SET_NO_ZERO_INIT:
+			m_remove_zero_init = true;	
+			if (m_finalized) manager.context.remove("main");
+			m_finalized = false;
+			finalize(manager, os);
+			return DONE;
 	}
 			
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, false);
@@ -292,7 +300,27 @@ bool Command_Processing::finalize(::language_uit & manager, ::std::ostream & os)
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 			main_iter != manager.context.symbols.end());
 
-    ::goto_convert_functionst converter(manager.context, m_opts, m_gf,
+	// remove 0-initialization of global variables, if requested by user
+	if (m_remove_zero_init) {
+		// check all operands
+		for (::exprt::operandst::iterator iter(main_iter->second.value.operands().begin());
+				iter != main_iter->second.value.operands().end();)
+		{
+			if (iter->get("statement") == "assign" &&
+					iter->location().get_file() != "<built-in>") {
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 2 == iter->operands().size());
+				if (iter->op1().get_bool("#zero_initializer")) {
+					iter = main_iter->second.value.operands().erase(iter);
+				} else {
+					++iter;
+				}
+			} else {
+				++iter;
+			}
+		}
+	}
+    
+	::goto_convert_functionst converter(manager.context, m_opts, m_gf,
 			manager.ui_message_handler);
     converter.convert_function(main_iter->first);
 

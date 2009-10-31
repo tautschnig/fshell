@@ -90,6 +90,7 @@ extern "C"
 %token TOK_ENTRY
 %token TOK_LIMIT
 %token TOK_COUNT
+%token TOK_NO_ZERO_INIT
 /* C identifier */
 %token <STRING> TOK_C_IDENT
 /* a quoted string (no newline) */
@@ -149,6 +150,10 @@ Options: TOK_ENTRY TOK_C_IDENT
 	   {
 	     cmd = ::fshell2::command::Command_Processing::CMD_SET_LIMIT_COUNT;
 		 *numeric_arg = $3;
+	   }
+	   | TOK_NO_ZERO_INIT
+	   {
+	     cmd = ::fshell2::command::Command_Processing::CMD_SET_NO_ZERO_INIT;
 	   }
        ;
 

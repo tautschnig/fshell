@@ -62,7 +62,8 @@ class Command_Processing
 		CMD_SHOW_SOURCECODE,
 		CMD_SHOW_SOURCECODE_ALL,
 		CMD_SET_ENTRY,
-		CMD_SET_LIMIT_COUNT
+		CMD_SET_LIMIT_COUNT,
+		CMD_SET_NO_ZERO_INIT
 	} parsed_command_t;
 	
 	typedef enum {
@@ -85,6 +86,7 @@ class Command_Processing
 	::goto_functionst & m_gf;
 	::std::map< ::std::string, time_t > m_parse_time;
 	bool m_finalized;
+	bool m_remove_zero_init;
 	
 	::std::ostream & print_file_contents(::std::ostream & os, char const * name) const;
 
