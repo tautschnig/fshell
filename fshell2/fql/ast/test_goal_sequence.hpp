@@ -33,7 +33,7 @@
 #include <fshell2/config/annotations.hpp>
 #include <fshell2/fql/ast/test_goal_set.hpp>
 
-#include <fshell2/fql/ast/path_monitor.hpp>
+#include <fshell2/fql/ast/path_monitor_expr.hpp>
 
 #include <diagnostics/basic_exceptions/violated_invariance.hpp>
 #include <list>
@@ -52,7 +52,7 @@ class Test_Goal_Sequence : public Test_Goal_Set
 	public:
 	typedef FQL_Node_Factory<Self> Factory;
 
-	typedef ::std::pair< Path_Monitor *, Test_Goal_Set * > seq_entry_t;
+	typedef ::std::pair< Path_Monitor_Expr *, Test_Goal_Set * > seq_entry_t;
 	typedef ::std::list< seq_entry_t > seq_t;
 
 	/*! \{
@@ -66,18 +66,18 @@ class Test_Goal_Sequence : public Test_Goal_Set
 	virtual bool destroy();
 
 	inline seq_t const& get_sequence() const;
-	inline Path_Monitor const * get_suffix_monitor() const;
+	inline Path_Monitor_Expr const * get_suffix_monitor() const;
 
 	private:
-	friend Self * FQL_Node_Factory<Self>::create(seq_t & seq, Path_Monitor * suffix_mon);
+	friend Self * FQL_Node_Factory<Self>::create(seq_t & seq, Path_Monitor_Expr * suffix_mon);
 	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
 
 	seq_t m_seq;
-	Path_Monitor * m_suffix_monitor;
+	Path_Monitor_Expr * m_suffix_monitor;
 
 	/*! Constructor
 	*/
-	Test_Goal_Sequence(seq_t const& seq, Path_Monitor * suffix_mon);
+	Test_Goal_Sequence(seq_t const& seq, Path_Monitor_Expr * suffix_mon);
 
 	/*! \copydoc copy_constructor
 	*/
@@ -96,13 +96,13 @@ inline Test_Goal_Sequence::seq_t const& Test_Goal_Sequence::get_sequence() const
 	return m_seq;
 }
 
-inline Path_Monitor const * Test_Goal_Sequence::get_suffix_monitor() const {
+inline Path_Monitor_Expr const * Test_Goal_Sequence::get_suffix_monitor() const {
 	return m_suffix_monitor;
 }
 
 template <>
 inline Test_Goal_Sequence * FQL_Node_Factory<Test_Goal_Sequence>::create(Test_Goal_Sequence::seq_t & seq,
-		Path_Monitor * suffix_mon) {
+		Path_Monitor_Expr * suffix_mon) {
 	if (m_available.empty()) {
 		m_available.push_back(new Test_Goal_Sequence(seq, suffix_mon));
 	} else {

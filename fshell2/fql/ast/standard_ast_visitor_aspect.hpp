@@ -36,7 +36,7 @@ FSHELL2_FQL_NAMESPACE_BEGIN;
 
 class Edgecov;
 class FQL_Node;
-class Filter;
+class Filter_Expr;
 class Filter_Complement;
 class Filter_Compose;
 class Filter_Enclosing_Scopes;
@@ -47,9 +47,8 @@ class Filter_Union;
 class PM_Alternative;
 class PM_Concat;
 class PM_Filter_Adapter;
-class PM_Next;
 class PM_Repeat;
-class Path_Monitor;
+class Path_Monitor_Expr;
 class Pathcov;
 class Predicate;
 class Query;
@@ -90,11 +89,11 @@ class Standard_AST_Visitor_Aspect : public INTERFACE
 		/*! \} */
 
 		/*! \{
-		 * \brief Visit a @ref fshell2::fql::Filter
-		 * \param  n Filter
+		 * \brief Visit a @ref fshell2::fql::Filter_Expr
+		 * \param  n Filter_Expr
 		 */
-		virtual void visit(Filter const* n);
-		virtual void visit(Filter const* n) const;
+		virtual void visit(Filter_Expr const* n);
+		virtual void visit(Filter_Expr const* n) const;
 		/*! \} */
 
 		/*! \{
@@ -178,14 +177,6 @@ class Standard_AST_Visitor_Aspect : public INTERFACE
 		/*! \} */
 
 		/*! \{
-		 * \brief Visit a @ref fshell2::fql::PM_Next
-		 * \param  n PM_Next
-		 */
-		virtual void visit(PM_Next const* n);
-		virtual void visit(PM_Next const* n) const;
-		/*! \} */
-
-		/*! \{
 		 * \brief Visit a @ref fshell2::fql::PM_Repeat
 		 * \param  n PM_Repeat
 		 */
@@ -194,11 +185,11 @@ class Standard_AST_Visitor_Aspect : public INTERFACE
 		/*! \} */
 
 		/*! \{
-		 * \brief Visit a @ref fshell2::fql::Path_Monitor
-		 * \param  n Path_Monitor
+		 * \brief Visit a @ref fshell2::fql::Path_Monitor_Expr
+		 * \param  n Path_Monitor_Expr
 		 */
-		virtual void visit(Path_Monitor const* n);
-		virtual void visit(Path_Monitor const* n) const;
+		virtual void visit(Path_Monitor_Expr const* n);
+		virtual void visit(Path_Monitor_Expr const* n) const;
 		/*! \} */
 
 		/*! \{
@@ -297,11 +288,11 @@ void Standard_AST_Visitor_Aspect<INTERFACE>::visit(FQL_Node const* n) const
 {}
 
 template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Filter const* n)
+void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Filter_Expr const* n)
 {}
 
 template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Filter const* n) const
+void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Filter_Expr const* n) const
 {}
 
 template <typename INTERFACE>
@@ -385,14 +376,6 @@ void Standard_AST_Visitor_Aspect<INTERFACE>::visit(PM_Filter_Adapter const* n) c
 {}
 
 template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(PM_Next const* n)
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(PM_Next const* n) const
-{}
-
-template <typename INTERFACE>
 void Standard_AST_Visitor_Aspect<INTERFACE>::visit(PM_Repeat const* n)
 {}
 
@@ -401,11 +384,11 @@ void Standard_AST_Visitor_Aspect<INTERFACE>::visit(PM_Repeat const* n) const
 {}
 
 template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Path_Monitor const* n)
+void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Path_Monitor_Expr const* n)
 {}
 
 template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Path_Monitor const* n) const
+void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Path_Monitor_Expr const* n) const
 {}
 
 template <typename INTERFACE>

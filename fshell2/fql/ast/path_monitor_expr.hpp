@@ -18,78 +18,69 @@
  * limitations under the License.
  *******************************************************************************/
 
-#ifndef FSHELL2__FQL__EVALUATION__CFA_HPP
-#define FSHELL2__FQL__EVALUATION__CFA_HPP
+#ifndef FSHELL2__FQL__AST__PATH_MONITOR_EXPR_HPP
+#define FSHELL2__FQL__AST__PATH_MONITOR_EXPR_HPP
 
-/*! \file fshell2/fql/evaluation/cfa.hpp
+/*! \file fshell2/fql/ast/path_monitor_expr.hpp
  * \brief TODO
  *
  * $Id$
  * \author Michael Tautschnig <tautschnig@forsyte.de>
- * \date   Tue Aug 11 08:28:13 CEST 2009 
+ * \date   Tue Apr 21 23:48:55 CEST 2009 
 */
 
 #include <fshell2/config/config.hpp>
-
-#include <set>
-
-#include <cbmc/src/goto-programs/goto_functions.h>
+#include <fshell2/fql/ast/fql_node.hpp>
+#include <fshell2/fql/ast/fql_node_factory.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
+   
+class Predicate;
 
 /*! \brief TODO
 */
-class CFA
+class Path_Monitor_Expr : public FQL_Node
 {
 	/*! \copydoc doc_self
 	*/
-	typedef CFA Self;
+	typedef Path_Monitor_Expr Self;
 
 	public:
-	typedef ::std::pair< ::goto_programt *, ::goto_programt::targett > node_t;
-	typedef ::std::pair< node_t, node_t > edge_t;
-	typedef ::std::set< edge_t > edges_t;
-	typedef ::std::set< node_t > initial_states_t;
+  	typedef FQL_Node_Factory<Self> Factory;
 
-	CFA();
+	/*! \{
+	 * \brief Accept a visitor 
+	 * \param  v Visitor
+	 */
+	virtual void accept(AST_Visitor * v) const = 0;
+	virtual void accept(AST_Visitor const * v) const = 0;
+	/*! \} */
 
-	/*! \copydoc copy_constructor
+	virtual bool destroy() = 0;
+
+	void add_precond(Predicate * pred);
+	void add_postcond(Predicate * pred);
+	
+	/*! Constructor
 	*/
-	CFA( Self const& rhs );
+	Path_Monitor_Expr();
 
-	inline edges_t const& get_edges() const;
-	inline void set_edges(edges_t & edges);
-
-	inline initial_states_t const& get_initial_states() const;
-	inline void set_initial_states(initial_states_t & initial);
+	/*! \brief Destructor
+	*/
+	virtual ~Path_Monitor_Expr();
 
 	private:
-	edges_t m_edges;
-	initial_states_t m_initial;
+	/*! \copydoc copy_constructor
+	*/
+	Path_Monitor_Expr( Self const& rhs );
 
 	/*! \copydoc assignment_op
-	 */
+	*/
 	Self& operator=( Self const& rhs );
 };
-	
-CFA::edges_t const& CFA::get_edges() const {
-	return m_edges;
-}
-
-void CFA::set_edges(edges_t & edges) {
-	m_edges.swap(edges);
-}
-
-CFA::initial_states_t const& CFA::get_initial_states() const {
-	return m_initial;
-}
-
-void CFA::set_initial_states(initial_states_t & initial) {
-	m_initial.swap(initial);
-}
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
 
-#endif /* FSHELL2__FQL__EVALUATION__CFA_HPP */
+#endif /* FSHELL2__FQL__AST__PATH_MONITOR_EXPR_HPP */

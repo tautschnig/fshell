@@ -36,9 +36,9 @@
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Pathcov::Pathcov(Filter * filter, int bound, Predicate::preds_t * predicates) :
-	m_filter(filter), m_bound(bound), m_predicates(predicates) {
-	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_filter);
+Pathcov::Pathcov(Filter_Expr * filter_expr, int bound, Predicate::preds_t * predicates) :
+	m_filter_expr(filter_expr), m_bound(bound), m_predicates(predicates) {
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_filter_expr);
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_bound > 0);
 }
 
@@ -53,8 +53,8 @@ void Pathcov::accept(AST_Visitor const * v) const {
 bool Pathcov::destroy() {
 	if (this->m_ref_count) return false;
 	Factory::get_instance().destroy(this);
-	m_filter->decr_ref_count();
-	m_filter->destroy();
+	m_filter_expr->decr_ref_count();
+	m_filter_expr->destroy();
 	if (m_predicates) {
 		for (Predicate::preds_t::iterator iter(m_predicates->begin());
 				iter != m_predicates->end(); ++iter) {

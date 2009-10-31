@@ -30,7 +30,7 @@
  */
 
 #include <fshell2/config/config.hpp>
-#include <fshell2/fql/ast/filter.hpp>
+#include <fshell2/fql/ast/filter_expr.hpp>
 #include <fshell2/fql/ast/fql_node_factory.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
@@ -38,7 +38,7 @@ FSHELL2_FQL_NAMESPACE_BEGIN;
 
 /*! \brief TODO
 */
-class Filter_Union : public Filter
+class Filter_Union : public Filter_Expr
 {
 	/*! \copydoc doc_self
 	*/
@@ -57,19 +57,19 @@ class Filter_Union : public Filter
 
 	virtual bool destroy();	
 
-	inline Filter const * get_filter_a() const;
-	inline Filter const * get_filter_b() const;
+	inline Filter_Expr const * get_filter_expr_a() const;
+	inline Filter_Expr const * get_filter_expr_b() const;
 
 	private:
-	friend Self * FQL_Node_Factory<Self>::create(Filter *, Filter *);
+	friend Self * FQL_Node_Factory<Self>::create(Filter_Expr *, Filter_Expr *);
 	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
 
-	Filter * m_filter_a;
-	Filter * m_filter_b;
+	Filter_Expr * m_filter_expr_a;
+	Filter_Expr * m_filter_expr_b;
 
 	/*! Constructor
 	*/
-	Filter_Union(Filter * a, Filter * b);
+	Filter_Union(Filter_Expr * a, Filter_Expr * b);
 
 	/*! \copydoc copy_constructor
 	*/
@@ -84,28 +84,28 @@ class Filter_Union : public Filter
 	virtual ~Filter_Union();
 };
 
-inline Filter const * Filter_Union::get_filter_a() const {
-	return m_filter_a;
+inline Filter_Expr const * Filter_Union::get_filter_expr_a() const {
+	return m_filter_expr_a;
 }
 
-inline Filter const * Filter_Union::get_filter_b() const {
-	return m_filter_b;
+inline Filter_Expr const * Filter_Union::get_filter_expr_b() const {
+	return m_filter_expr_b;
 }
 
 template <>
-inline Filter_Union * FQL_Node_Factory<Filter_Union>::create(Filter * filter_a, Filter * filter_b) {
+inline Filter_Union * FQL_Node_Factory<Filter_Union>::create(Filter_Expr * filter_expr_a, Filter_Expr * filter_expr_b) {
 	if (m_available.empty()) {
-		m_available.push_back(new Filter_Union(filter_a, filter_b));
+		m_available.push_back(new Filter_Union(filter_expr_a, filter_expr_b));
 	}
 
-	m_available.back()->m_filter_a = filter_a;
-	m_available.back()->m_filter_b = filter_b;
+	m_available.back()->m_filter_expr_a = filter_expr_a;
+	m_available.back()->m_filter_expr_b = filter_expr_b;
 	::std::pair< ::std::set<Filter_Union *, FQL_Node_Lt_Compare>::const_iterator, bool > inserted(
 			m_used.insert(m_available.back()));
 	if (inserted.second) {
 		m_available.pop_back();
-		filter_a->incr_ref_count();
-		filter_b->incr_ref_count();
+		filter_expr_a->incr_ref_count();
+		filter_expr_b->incr_ref_count();
 	}
 
 	return *(inserted.first);

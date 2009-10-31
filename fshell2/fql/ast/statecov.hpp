@@ -33,7 +33,7 @@
 #include <fshell2/fql/ast/test_goal_set.hpp>
 #include <fshell2/fql/ast/fql_node_factory.hpp>
 
-#include <fshell2/fql/ast/filter.hpp>
+#include <fshell2/fql/ast/filter_expr.hpp>
 #include <fshell2/fql/ast/predicate.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
@@ -60,19 +60,19 @@ class Statecov : public Test_Goal_Set
 
 	virtual bool destroy();
 
-	inline Filter const * get_filter() const;
+	inline Filter_Expr const * get_filter_expr() const;
 	inline Predicate::preds_t const * get_predicates() const;
 
 	private:
-	friend Self * FQL_Node_Factory<Self>::create(Filter * filter, Predicate::preds_t * predicates);
+	friend Self * FQL_Node_Factory<Self>::create(Filter_Expr * filter, Predicate::preds_t * predicates);
 	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
 
-	Filter * m_filter;
+	Filter_Expr * m_filter_expr;
 	Predicate::preds_t * m_predicates;
 
 	/*! Constructor
 	*/
-	Statecov(Filter * filter, Predicate::preds_t * predicates);
+	Statecov(Filter_Expr * filter_expr, Predicate::preds_t * predicates);
 
 	/*! \copydoc copy_constructor
 	*/
@@ -87,8 +87,8 @@ class Statecov : public Test_Goal_Set
 	virtual ~Statecov();
 };
 
-inline Filter const * Statecov::get_filter() const {
-	return m_filter;
+inline Filter_Expr const * Statecov::get_filter_expr() const {
+	return m_filter_expr;
 }
 
 inline Predicate::preds_t const * Statecov::get_predicates() const {
@@ -96,18 +96,18 @@ inline Predicate::preds_t const * Statecov::get_predicates() const {
 }
 
 template <>
-inline Statecov * FQL_Node_Factory<Statecov>::create(Filter * filter, Predicate::preds_t * predicates) {
+inline Statecov * FQL_Node_Factory<Statecov>::create(Filter_Expr * filter_expr, Predicate::preds_t * predicates) {
 	if (m_available.empty()) {
-		m_available.push_back(new Statecov(filter, predicates));
+		m_available.push_back(new Statecov(filter_expr, predicates));
 	}
 
-	m_available.back()->m_filter = filter;
+	m_available.back()->m_filter_expr = filter_expr;
 	m_available.back()->m_predicates = predicates;
 	::std::pair< ::std::set<Statecov *, FQL_Node_Lt_Compare>::const_iterator, bool > inserted(
 			m_used.insert(m_available.back()));
 	if (inserted.second) {
 		m_available.pop_back();
-		filter->incr_ref_count();
+		filter_expr->incr_ref_count();
 		if (predicates) {
 			for (Predicate::preds_t::iterator iter((*inserted.first)->m_predicates->begin());
 					iter != (*inserted.first)->m_predicates->end(); ++iter) {

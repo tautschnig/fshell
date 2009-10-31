@@ -23,5 +23,6 @@ libfshell2_la_LIBADD = main/libmain.la \
 											 fql/evaluation/libevaluation.la \
 											 fql/normalize/libnormalize.la \
 											 fql/parser/libparser.la \
+											 fql/concepts/libconcepts.la \
 											 fql/ast/libast.la
 libfshell2_la_LDFLAGS = -version-info 0:0:0

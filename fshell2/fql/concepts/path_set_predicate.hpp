@@ -18,51 +18,43 @@
  * limitations under the License.
  *******************************************************************************/
 
-/*! \file fshell2/fql/ast/pm_concat.cpp
+#ifndef FSHELL2__FQL__CONCEPTS__PATH_SET_PREDICATE_HPP
+#define FSHELL2__FQL__CONCEPTS__PATH_SET_PREDICATE_HPP
+
+/*! \file fshell2/fql/concepts/path_set_predicate.hpp
  * \brief TODO
  *
  * $Id$
  * \author Michael Tautschnig <tautschnig@forsyte.de>
- * \date   Sun Aug  2 19:01:36 CEST 2009 
+ * \date   Fri Oct 23 18:48:23 CEST 2009 
 */
 
-#include <fshell2/fql/ast/pm_concat.hpp>
-#include <fshell2/config/annotations.hpp>
-
-#include <diagnostics/basic_exceptions/invalid_argument.hpp>
-
-#include <fshell2/fql/ast/ast_visitor.hpp>
+#include <fshell2/config/config.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-PM_Concat::PM_Concat(Path_Monitor_Expr * a, Path_Monitor_Expr * b) :
-	m_path_monitor_expr_a(a), m_path_monitor_expr_b(b) {
-	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_path_monitor_expr_a);
-	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_path_monitor_expr_b);
-}
+/*! \brief TODO
+*/
+class Path_Set_Predicate
+{
+	/*! \copydoc doc_self
+	*/
+	typedef Path_Set_Predicate Self;
 
-void PM_Concat::accept(AST_Visitor * v) const {
-	v->visit(this);
-}
+	public:
 
-void PM_Concat::accept(AST_Visitor const * v) const {
-	v->visit(this);
-}
+	private:
+	/*! \copydoc copy_constructor
+	*/
+	Path_Set_Predicate( Self const& rhs );
 
-bool PM_Concat::destroy() {
-	if (this->m_ref_count) return false;
-	Factory::get_instance().destroy(this);
-	m_path_monitor_expr_a->decr_ref_count();
-	m_path_monitor_expr_a->destroy();
-	m_path_monitor_expr_b->decr_ref_count();
-	m_path_monitor_expr_b->destroy();
-	return true;
-}
-
-PM_Concat::~PM_Concat() {
-}
+	/*! \copydoc assignment_op
+	 */
+	Self& operator=( Self const& rhs );
+};
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
 
+#endif /* FSHELL2__FQL__CONCEPTS__PATH_SET_PREDICATE_HPP */

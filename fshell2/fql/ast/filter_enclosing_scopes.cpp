@@ -36,9 +36,9 @@
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Filter_Enclosing_Scopes::Filter_Enclosing_Scopes(Filter * filter) :
-	m_filter(filter) {
-	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_filter);
+Filter_Enclosing_Scopes::Filter_Enclosing_Scopes(Filter_Expr * filter_expr) :
+	m_filter_expr(filter_expr) {
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_filter_expr);
 }
 
 void Filter_Enclosing_Scopes::accept(AST_Visitor * v) const {
@@ -52,8 +52,8 @@ void Filter_Enclosing_Scopes::accept(AST_Visitor const * v) const {
 bool Filter_Enclosing_Scopes::destroy() {
 	if (this->m_ref_count) return false;
 	Factory::get_instance().destroy(this);
-	m_filter->decr_ref_count();
-	m_filter->destroy();
+	m_filter_expr->decr_ref_count();
+	m_filter_expr->destroy();
 	return true;
 }
 

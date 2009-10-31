@@ -18,33 +18,19 @@
  * limitations under the License.
  *******************************************************************************/
 
-/*! \file fshell2/fql/ast/path_monitor.cpp
+/*! \file fshell2/fql/concepts/path_predicate.cpp
  * \brief TODO
  *
  * $Id$
  * \author Michael Tautschnig <tautschnig@forsyte.de>
- * \date   Tue Apr 21 23:48:55 CEST 2009 
+ * \date   Fri Oct 23 18:48:11 CEST 2009 
 */
 
-#include <fshell2/fql/ast/path_monitor.hpp>
-
-#include <fshell2/fql/ast/ast_visitor.hpp>
+#include <fshell2/fql/concepts/path_predicate.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Path_Monitor::Path_Monitor() {
-}
-
-Path_Monitor::~Path_Monitor() {
-}
-	
-void Path_Monitor::add_precond(Predicate * pred) {
-}
-
-void Path_Monitor::add_postcond(Predicate * pred) {
-}
-	
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;

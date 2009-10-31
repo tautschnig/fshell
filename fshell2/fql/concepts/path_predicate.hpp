@@ -18,69 +18,43 @@
  * limitations under the License.
  *******************************************************************************/
 
-#ifndef FSHELL2__FQL__AST__PATH_MONITOR_HPP
-#define FSHELL2__FQL__AST__PATH_MONITOR_HPP
+#ifndef FSHELL2__FQL__CONCEPTS__PATH_PREDICATE_HPP
+#define FSHELL2__FQL__CONCEPTS__PATH_PREDICATE_HPP
 
-/*! \file fshell2/fql/ast/path_monitor.hpp
+/*! \file fshell2/fql/concepts/path_predicate.hpp
  * \brief TODO
  *
  * $Id$
  * \author Michael Tautschnig <tautschnig@forsyte.de>
- * \date   Tue Apr 21 23:48:55 CEST 2009 
+ * \date   Fri Oct 23 18:48:15 CEST 2009 
 */
 
 #include <fshell2/config/config.hpp>
-#include <fshell2/fql/ast/fql_node.hpp>
-#include <fshell2/fql/ast/fql_node_factory.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
-   
-class Predicate;
 
 /*! \brief TODO
 */
-class Path_Monitor : public FQL_Node
+class Path_Predicate
 {
 	/*! \copydoc doc_self
 	*/
-	typedef Path_Monitor Self;
+	typedef Path_Predicate Self;
 
 	public:
-  	typedef FQL_Node_Factory<Self> Factory;
-
-	/*! \{
-	 * \brief Accept a visitor 
-	 * \param  v Visitor
-	 */
-	virtual void accept(AST_Visitor * v) const = 0;
-	virtual void accept(AST_Visitor const * v) const = 0;
-	/*! \} */
-
-	virtual bool destroy() = 0;
-
-	void add_precond(Predicate * pred);
-	void add_postcond(Predicate * pred);
-	
-	/*! Constructor
-	*/
-	Path_Monitor();
-
-	/*! \brief Destructor
-	*/
-	virtual ~Path_Monitor();
 
 	private:
 	/*! \copydoc copy_constructor
 	*/
-	Path_Monitor( Self const& rhs );
+	Path_Predicate( Self const& rhs );
 
 	/*! \copydoc assignment_op
-	*/
+	 */
 	Self& operator=( Self const& rhs );
 };
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
 
-#endif /* FSHELL2__FQL__AST__PATH_MONITOR_HPP */
+#endif /* FSHELL2__FQL__CONCEPTS__PATH_PREDICATE_HPP */

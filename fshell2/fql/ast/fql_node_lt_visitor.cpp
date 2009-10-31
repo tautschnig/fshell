@@ -59,20 +59,20 @@ void FQL_Node_Lt_Visitor::Compare_To_Visitor<T>::visit(FQL_Node const* n)
 LT_VISIT_BUILDER_CPP_BASE(FQL_Node, FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, false));
 
 template <typename T>
-void FQL_Node_Lt_Visitor::Compare_To_Visitor<T>::visit(Filter const* n)
+void FQL_Node_Lt_Visitor::Compare_To_Visitor<T>::visit(Filter_Expr const* n)
 {
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, false);
 }
 
-LT_VISIT_BUILDER_CPP_BASE(Filter, FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, false));
+LT_VISIT_BUILDER_CPP_BASE(Filter_Expr, FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, false));
 
 template <typename T>
-void FQL_Node_Lt_Visitor::Compare_To_Visitor<T>::visit(Path_Monitor const* n)
+void FQL_Node_Lt_Visitor::Compare_To_Visitor<T>::visit(Path_Monitor_Expr const* n)
 {
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, false);
 }
 
-LT_VISIT_BUILDER_CPP_BASE(Path_Monitor, FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, false));
+LT_VISIT_BUILDER_CPP_BASE(Path_Monitor_Expr, FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, false));
 
 template <typename T>
 void FQL_Node_Lt_Visitor::Compare_To_Visitor<T>::visit(Test_Goal_Set const* n)
@@ -93,7 +93,6 @@ LT_VISIT_BUILDER_1(Filter_Union);
 LT_VISIT_BUILDER_1(PM_Alternative);
 LT_VISIT_BUILDER_1(PM_Concat);
 LT_VISIT_BUILDER_1(PM_Filter_Adapter);
-LT_VISIT_BUILDER_1(PM_Next);
 LT_VISIT_BUILDER_1(PM_Repeat);
 LT_VISIT_BUILDER_1(Pathcov);
 LT_VISIT_BUILDER_1(Predicate);

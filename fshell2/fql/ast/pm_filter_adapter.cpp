@@ -36,9 +36,9 @@
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-PM_Filter_Adapter::PM_Filter_Adapter(Filter * f) :
-	m_filter(f) {
-	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_filter);
+PM_Filter_Adapter::PM_Filter_Adapter(Filter_Expr * f) :
+	m_filter_expr(f) {
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_filter_expr);
 }
 
 void PM_Filter_Adapter::accept(AST_Visitor * v) const {
@@ -52,8 +52,8 @@ void PM_Filter_Adapter::accept(AST_Visitor const * v) const {
 bool PM_Filter_Adapter::destroy() {
 	if (this->m_ref_count) return false;
 	Factory::get_instance().destroy(this);
-	m_filter->decr_ref_count();
-	m_filter->destroy();
+	m_filter_expr->decr_ref_count();
+	m_filter_expr->destroy();
 	return true;
 }
 

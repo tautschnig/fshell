@@ -18,51 +18,65 @@
  * limitations under the License.
  *******************************************************************************/
 
-/*! \file fshell2/fql/ast/pm_next.cpp
+#ifndef FSHELL2__FQL__AST__FILTER_EXPR_HPP
+#define FSHELL2__FQL__AST__FILTER_EXPR_HPP
+
+/*! \file fshell2/fql/ast/filter_expr.hpp
  * \brief TODO
  *
  * $Id$
  * \author Michael Tautschnig <tautschnig@forsyte.de>
- * \date   Sun Aug  2 19:01:43 CEST 2009 
-*/
+ * \date   Tue Apr 21 23:48:55 CEST 2009 
+ */
 
-#include <fshell2/fql/ast/pm_next.hpp>
-#include <fshell2/config/annotations.hpp>
-
-#include <diagnostics/basic_exceptions/invalid_argument.hpp>
-
-#include <fshell2/fql/ast/ast_visitor.hpp>
+#include <fshell2/config/config.hpp>
+#include <fshell2/fql/ast/fql_node.hpp>
+#include <fshell2/fql/ast/fql_node_factory.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-PM_Next::PM_Next(Path_Monitor * a, Path_Monitor * b) :
-	m_path_monitor_a(a), m_path_monitor_b(b) {
-	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_path_monitor_a);
-	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_path_monitor_b);
-}
+/*! \brief TODO
+*/
+class Filter_Expr : public FQL_Node
+{
+	/*! \copydoc doc_self
+	*/
+	typedef Filter_Expr Self;
 
-void PM_Next::accept(AST_Visitor * v) const {
-	v->visit(this);
-}
+	public:
+	typedef FQL_Node_Factory<Self> Factory;
 
-void PM_Next::accept(AST_Visitor const * v) const {
-	v->visit(this);
-}
+	/*! \{
+	 * \brief Accept a visitor 
+	 * \param  v Visitor
+	 */
+	virtual void accept(AST_Visitor * v) const = 0;
+	virtual void accept(AST_Visitor const * v) const = 0;
+	/*! \} */
 
-bool PM_Next::destroy() {
-	if (this->m_ref_count) return false;
-	Factory::get_instance().destroy(this);
-	m_path_monitor_a->decr_ref_count();
-	m_path_monitor_a->destroy();
-	m_path_monitor_b->decr_ref_count();
-	m_path_monitor_b->destroy();
-	return true;
-}
+	virtual bool destroy() = 0;
 
-PM_Next::~PM_Next() {
-}
+	/*! Constructor
+	*/
+	Filter_Expr();
+
+	/*! \brief Destructor
+	*/
+	virtual ~Filter_Expr();
+
+	private:
+	/*! \copydoc copy_constructor
+	*/
+	Filter_Expr( Self const& rhs );
+
+	/*! \copydoc assignment_op
+	*/
+	Self& operator=( Self const& rhs );
+
+};
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
 
+#endif /* FSHELL2__FQL__AST__FILTER_EXPR_HPP */

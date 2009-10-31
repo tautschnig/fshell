@@ -18,65 +18,26 @@
  * limitations under the License.
  *******************************************************************************/
 
-#ifndef FSHELL2__FQL__AST__FILTER_HPP
-#define FSHELL2__FQL__AST__FILTER_HPP
-
-/*! \file fshell2/fql/ast/filter.hpp
+/*! \file fshell2/fql/concepts/cfa.cpp
  * \brief TODO
  *
  * $Id$
  * \author Michael Tautschnig <tautschnig@forsyte.de>
- * \date   Tue Apr 21 23:48:55 CEST 2009 
- */
+ * \date   Tue Aug 11 11:14:21 CEST 2009 
+*/
 
-#include <fshell2/config/config.hpp>
-#include <fshell2/fql/ast/fql_node.hpp>
-#include <fshell2/fql/ast/fql_node_factory.hpp>
+#include <fshell2/fql/concepts/cfa.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-/*! \brief TODO
-*/
-class Filter : public FQL_Node
-{
-	/*! \copydoc doc_self
-	*/
-	typedef Filter Self;
+CFA::CFA() {
+}
 
-	public:
-	typedef FQL_Node_Factory<Self> Factory;
-
-	/*! \{
-	 * \brief Accept a visitor 
-	 * \param  v Visitor
-	 */
-	virtual void accept(AST_Visitor * v) const = 0;
-	virtual void accept(AST_Visitor const * v) const = 0;
-	/*! \} */
-
-	virtual bool destroy() = 0;
-
-	/*! Constructor
-	*/
-	Filter();
-
-	/*! \brief Destructor
-	*/
-	virtual ~Filter();
-
-	private:
-	/*! \copydoc copy_constructor
-	*/
-	Filter( Self const& rhs );
-
-	/*! \copydoc assignment_op
-	*/
-	Self& operator=( Self const& rhs );
-
-};
+CFA::CFA(Self const& rhs) :
+	m_edges(rhs.m_edges), m_initial(rhs.m_initial) {
+}
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
 
-#endif /* FSHELL2__FQL__AST__FILTER_HPP */

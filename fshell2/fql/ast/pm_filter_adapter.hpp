@@ -30,17 +30,17 @@
 */
 
 #include <fshell2/config/config.hpp>
-#include <fshell2/fql/ast/path_monitor.hpp>
+#include <fshell2/fql/ast/path_monitor_expr.hpp>
 #include <fshell2/fql/ast/fql_node_factory.hpp>
 
-#include <fshell2/fql/ast/filter.hpp>
+#include <fshell2/fql/ast/filter_expr.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 /*! \brief TODO
 */
-class PM_Filter_Adapter : public Path_Monitor
+class PM_Filter_Adapter : public Path_Monitor_Expr
 {
 	/*! \copydoc doc_self
 	*/
@@ -59,17 +59,17 @@ class PM_Filter_Adapter : public Path_Monitor
 
 	virtual bool destroy();	
 
-	inline Filter const * get_filter() const;
+	inline Filter_Expr const * get_filter_expr() const;
 
 	private:
-	friend Self * FQL_Node_Factory<Self>::create(Filter *);
+	friend Self * FQL_Node_Factory<Self>::create(Filter_Expr *);
 	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
 
-	Filter * m_filter;
+	Filter_Expr * m_filter_expr;
 
 	/*! Constructor
 	*/
-	PM_Filter_Adapter(Filter * f);
+	PM_Filter_Adapter(Filter_Expr * f);
 
 	/*! \copydoc copy_constructor
 	*/
@@ -84,22 +84,22 @@ class PM_Filter_Adapter : public Path_Monitor
 	virtual ~PM_Filter_Adapter();
 };
 
-inline Filter const * PM_Filter_Adapter::get_filter() const {
-	return m_filter;
+inline Filter_Expr const * PM_Filter_Adapter::get_filter_expr() const {
+	return m_filter_expr;
 }
 
 template <>
-inline PM_Filter_Adapter * FQL_Node_Factory<PM_Filter_Adapter>::create(Filter * filter) {
+inline PM_Filter_Adapter * FQL_Node_Factory<PM_Filter_Adapter>::create(Filter_Expr * filter_expr) {
 	if (m_available.empty()) {
-		m_available.push_back(new PM_Filter_Adapter(filter));
+		m_available.push_back(new PM_Filter_Adapter(filter_expr));
 	}
 
-	m_available.back()->m_filter = filter;
+	m_available.back()->m_filter_expr = filter_expr;
 	::std::pair< ::std::set<PM_Filter_Adapter *, FQL_Node_Lt_Compare>::const_iterator, bool > inserted(
 			m_used.insert(m_available.back()));
 	if (inserted.second) {
 		m_available.pop_back();
-		filter->incr_ref_count();
+		filter_expr->incr_ref_count();
 	}
 
 	return *(inserted.first);

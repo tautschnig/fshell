@@ -18,50 +18,19 @@
  * limitations under the License.
  *******************************************************************************/
 
-/*! \file fshell2/fql/ast/pm_concat.cpp
+/*! \file fshell2/fql/concepts/state_predicate.cpp
  * \brief TODO
  *
  * $Id$
  * \author Michael Tautschnig <tautschnig@forsyte.de>
- * \date   Sun Aug  2 19:01:36 CEST 2009 
+ * \date   Fri Oct 23 18:48:02 CEST 2009 
 */
 
-#include <fshell2/fql/ast/pm_concat.hpp>
-#include <fshell2/config/annotations.hpp>
-
-#include <diagnostics/basic_exceptions/invalid_argument.hpp>
-
-#include <fshell2/fql/ast/ast_visitor.hpp>
+#include <fshell2/fql/concepts/state_predicate.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-PM_Concat::PM_Concat(Path_Monitor_Expr * a, Path_Monitor_Expr * b) :
-	m_path_monitor_expr_a(a), m_path_monitor_expr_b(b) {
-	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_path_monitor_expr_a);
-	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_path_monitor_expr_b);
-}
-
-void PM_Concat::accept(AST_Visitor * v) const {
-	v->visit(this);
-}
-
-void PM_Concat::accept(AST_Visitor const * v) const {
-	v->visit(this);
-}
-
-bool PM_Concat::destroy() {
-	if (this->m_ref_count) return false;
-	Factory::get_instance().destroy(this);
-	m_path_monitor_expr_a->decr_ref_count();
-	m_path_monitor_expr_a->destroy();
-	m_path_monitor_expr_b->decr_ref_count();
-	m_path_monitor_expr_b->destroy();
-	return true;
-}
-
-PM_Concat::~PM_Concat() {
-}
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;

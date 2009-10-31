@@ -30,7 +30,7 @@
  */
 
 #include <fshell2/config/config.hpp>
-#include <fshell2/fql/ast/filter.hpp>
+#include <fshell2/fql/ast/filter_expr.hpp>
 #include <fshell2/fql/ast/fql_node_factory.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
@@ -38,7 +38,7 @@ FSHELL2_FQL_NAMESPACE_BEGIN;
 
 /*! \brief TODO
 */
-class Filter_Complement : public Filter
+class Filter_Complement : public Filter_Expr
 {
 	/*! \copydoc doc_self
 	*/
@@ -57,17 +57,17 @@ class Filter_Complement : public Filter
 
 	virtual bool destroy();	
 
-	inline Filter const * get_filter() const;
+	inline Filter_Expr const * get_filter_expr() const;
 
 	private:
-	friend Self * FQL_Node_Factory<Self>::create(Filter * c);
+	friend Self * FQL_Node_Factory<Self>::create(Filter_Expr * c);
 	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
 
-	Filter * m_filter;
+	Filter_Expr * m_filter_expr;
 
 	/*! Constructor
 	*/
-	Filter_Complement(Filter * filter);
+	Filter_Complement(Filter_Expr * filter_expr);
 
 	/*! \copydoc copy_constructor
 	*/
@@ -82,22 +82,22 @@ class Filter_Complement : public Filter
 	virtual ~Filter_Complement();
 };
 
-inline Filter const * Filter_Complement::get_filter() const {
-	return m_filter;
+inline Filter_Expr const * Filter_Complement::get_filter_expr() const {
+	return m_filter_expr;
 }
 
 template <>
-inline Filter_Complement * FQL_Node_Factory<Filter_Complement>::create(Filter * filter) {
+inline Filter_Complement * FQL_Node_Factory<Filter_Complement>::create(Filter_Expr * filter_expr) {
 	if (m_available.empty()) {
-		m_available.push_back(new Filter_Complement(filter));
+		m_available.push_back(new Filter_Complement(filter_expr));
 	}
 
-	m_available.back()->m_filter = filter;
+	m_available.back()->m_filter_expr = filter_expr;
 	::std::pair< ::std::set<Filter_Complement *, FQL_Node_Lt_Compare>::const_iterator, bool > inserted(
 			m_used.insert(m_available.back()));
 	if (inserted.second) {
 		m_available.pop_back();
-		filter->incr_ref_count();
+		filter_expr->incr_ref_count();
 	}
 
 	return *(inserted.first);

@@ -45,7 +45,6 @@
 #include <fshell2/fql/ast/pm_alternative.hpp>
 #include <fshell2/fql/ast/pm_concat.hpp>
 #include <fshell2/fql/ast/pm_filter_adapter.hpp>
-#include <fshell2/fql/ast/pm_next.hpp>
 #include <fshell2/fql/ast/pm_repeat.hpp>
 #include <fshell2/fql/ast/predicate.hpp>
 #include <fshell2/fql/ast/query.hpp>
@@ -74,12 +73,12 @@ using namespace ::diagnostics::unittest;
  */
 void test( Test_Data & data )
 {
-	Filter * file(Filter_Function::Factory::get_instance().create<F_FILE>("bla.c"));
-	Filter * line(Filter_Function::Factory::get_instance().create<F_LINE>(42));
-	Filter * col(Filter_Function::Factory::get_instance().create<F_COLUMN>(13));
-	Filter * bb(Filter_Function::Factory::get_instance().create<F_BASICBLOCKENTRY>());
+	Filter_Expr * file(Filter_Function::Factory::get_instance().create<F_FILE>("bla.c"));
+	Filter_Expr * line(Filter_Function::Factory::get_instance().create<F_LINE>(42));
+	Filter_Expr * col(Filter_Function::Factory::get_instance().create<F_COLUMN>(13));
+	Filter_Expr * bb(Filter_Function::Factory::get_instance().create<F_BASICBLOCKENTRY>());
 
-	Filter * intersec1(Filter_Intersection::Factory::get_instance().create(
+	Filter_Expr * intersec1(Filter_Intersection::Factory::get_instance().create(
 				Filter_Intersection::Factory::get_instance().create(file,line),
 				Filter_Intersection::Factory::get_instance().create(col,bb)));
 
@@ -87,7 +86,7 @@ void test( Test_Data & data )
 				static_cast< Predicate::preds_t * >(0)));
 
 	Test_Goal_Sequence::seq_t seq_list;
-	seq_list.push_back(::std::make_pair<Path_Monitor *, Test_Goal_Set *>(0, e));
+	seq_list.push_back(::std::make_pair<Path_Monitor_Expr *, Test_Goal_Set *>(0, e));
 	Test_Goal_Sequence * s(Test_Goal_Sequence::Factory::get_instance().create(seq_list, 0));
 
 	Query * q(Query::Factory::get_instance().create(file, s, 0));
@@ -98,19 +97,32 @@ void test( Test_Data & data )
 	TEST_ASSERT(data.compare("printed_query_1", os.str()));
 	os.str("");
 
-	Filter * cg(Filter_Function::Factory::get_instance().create<F_CONDITIONGRAPH>());
+	Filter_Expr * cg(Filter_Function::Factory::get_instance().create<F_CONDITIONGRAPH>());
 	Pathcov * p(Pathcov::Factory::get_instance().create(cg, 1, 0));
 
 	Test_Goal_Set * union1(TGS_Union::Factory::get_instance().create(e, p));
 
 	Test_Goal_Sequence::seq_t seq_list2;
-	seq_list2.push_back(::std::make_pair<Path_Monitor *, Test_Goal_Set *>(0, union1));
+	seq_list2.push_back(::std::make_pair<Path_Monitor_Expr *, Test_Goal_Set *>(0, union1));
 	Test_Goal_Sequence * s2(Test_Goal_Sequence::Factory::get_instance().create(seq_list2, 0));
 
 	Query * q2(Query::Factory::get_instance().create(0, s2, 0));
 
 	os << *q2;
 	TEST_ASSERT(data.compare("printed_query_2", os.str()));
+	os.str("");
+
+	Filter_Expr * stt(Filter_Function::Factory::get_instance().create<F_STMTTYPE>(STT_IF | STT_CONDOP | STT_WHILE));
+	Edgecov * estt(Edgecov::Factory::get_instance().create(stt, static_cast< Predicate::preds_t * >(0)));
+
+	Test_Goal_Sequence::seq_t seq_list3;
+	seq_list3.push_back(::std::make_pair<Path_Monitor_Expr *, Test_Goal_Set *>(0, estt));
+	Test_Goal_Sequence * s3(Test_Goal_Sequence::Factory::get_instance().create(seq_list3, 0));
+
+	Query * q3(Query::Factory::get_instance().create(0, s3, 0));
+
+	os << *q3;
+	TEST_ASSERT(data.compare("printed_query_3", os.str()));
 	os.str("");
 }
 

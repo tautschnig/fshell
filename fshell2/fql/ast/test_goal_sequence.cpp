@@ -37,7 +37,7 @@ FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 Test_Goal_Sequence::Test_Goal_Sequence(Test_Goal_Sequence::seq_t const& seq,
-		Path_Monitor * suffix_mon) :
+		Path_Monitor_Expr * suffix_mon) :
 	m_seq(seq), m_suffix_monitor(suffix_mon) {
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, !m_seq.empty());
 }

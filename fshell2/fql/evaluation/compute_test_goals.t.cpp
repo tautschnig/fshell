@@ -50,7 +50,6 @@
 // #include <fshell2/fql/ast/pm_alternative.hpp>
 // #include <fshell2/fql/ast/pm_concat.hpp>
 // #include <fshell2/fql/ast/pm_filter_adapter.hpp>
-// #include <fshell2/fql/ast/pm_next.hpp>
 // #include <fshell2/fql/ast/pm_repeat.hpp>
 #include <fshell2/fql/ast/predicate.hpp>
 #include <fshell2/fql/ast/query.hpp>
@@ -124,11 +123,11 @@ void test( Test_Data & data )
 		
 	Evaluate_Filter eval(gf, cfg);
 	
-	Filter * bb(Filter_Function::Factory::get_instance().create<F_BASICBLOCKENTRY>());
+	Filter_Expr * bb(Filter_Function::Factory::get_instance().create<F_BASICBLOCKENTRY>());
 	Edgecov * e(Edgecov::Factory::get_instance().create(bb,
 				static_cast< Predicate::preds_t * >(0)));
 	Test_Goal_Sequence::seq_t seq_list;
-	seq_list.push_back(::std::make_pair<Path_Monitor *, Test_Goal_Set *>(0, e));
+	seq_list.push_back(::std::make_pair<Path_Monitor_Expr *, Test_Goal_Set *>(0, e));
 	Test_Goal_Sequence * s(Test_Goal_Sequence::Factory::get_instance().create(seq_list, 0));
 	Query * q(Query::Factory::get_instance().create(0, s, 0));
 	q->accept(&eval);

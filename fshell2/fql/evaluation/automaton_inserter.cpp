@@ -129,7 +129,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 	m_inserter.insert("main", ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::FUNCTION_CALL, defs);
 
 	// we only need a subset of the filters and we should better know which ones
-	typedef ::std::map< Filter const*, int > filter_to_int_t;
+	typedef ::std::map< Filter_Expr const*, int > filter_to_int_t;
 	filter_to_int_t local_filter_map;
 	typedef ::std::map< int, ::std::map< trace_automaton_t::state_type,
 			::std::set< trace_automaton_t::state_type > > > transition_map_t;
@@ -145,7 +145,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 					state_map.find(e_iter->second)->second);
 			
 			if (m_pm_eval.id_index() == e_iter->first) continue;
-			Filter const* flt(m_pm_eval.lookup_index(e_iter->first));
+			Filter_Expr const* flt(m_pm_eval.lookup_index(e_iter->first));
 			if (local_filter_map.end() == local_filter_map.find(flt))
 				local_filter_map[ flt ] = e_iter->first;
 		}
@@ -207,7 +207,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 							entry.find(::std::make_pair(::std::make_pair(&(iter->second.body), i_iter), *s_iter)));
 					::std::set< int > filters;
 					if (entry.end() != edge_map_iter) {
-						for (::std::set< Filter const* >::const_iterator f_iter(edge_map_iter->second.begin());
+						for (::std::set< Filter_Expr const* >::const_iterator f_iter(edge_map_iter->second.begin());
 							f_iter != edge_map_iter->second.end(); ++f_iter) {
 							filter_to_int_t::const_iterator int_entry(local_filter_map.find(*f_iter));
 							if (local_filter_map.end() == int_entry) continue;

@@ -18,51 +18,55 @@
  * limitations under the License.
  *******************************************************************************/
 
-/*! \file fshell2/fql/ast/pm_concat.cpp
+/*! \file fshell2/fql/concepts/cfa.t.cpp
  * \brief TODO
  *
  * $Id$
  * \author Michael Tautschnig <tautschnig@forsyte.de>
- * \date   Sun Aug  2 19:01:36 CEST 2009 
+ * \date   Tue Aug 11 11:14:19 CEST 2009 
 */
 
-#include <fshell2/fql/ast/pm_concat.hpp>
+
+#include <diagnostics/unittest.hpp>
+#include <fshell2/config/config.hpp>
 #include <fshell2/config/annotations.hpp>
 
-#include <diagnostics/basic_exceptions/invalid_argument.hpp>
+#include <fshell2/fql/concepts/cfa.hpp>
 
-#include <fshell2/fql/ast/ast_visitor.hpp>
+#define TEST_COMPONENT_NAME CFA
+#define TEST_COMPONENT_NAMESPACE fshell2::fql
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-PM_Concat::PM_Concat(Path_Monitor_Expr * a, Path_Monitor_Expr * b) :
-	m_path_monitor_expr_a(a), m_path_monitor_expr_b(b) {
-	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_path_monitor_expr_a);
-	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_path_monitor_expr_b);
+/** @cond */
+TEST_NAMESPACE_BEGIN;
+TEST_COMPONENT_TEST_NAMESPACE_BEGIN;
+/** @endcond */
+using namespace ::diagnostics::unittest;
+
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * @test A test of CFA
+ *
+ */
+void test( Test_Data & data )
+{
+	CFA cfa;
+	::std::set< CFA::edge_t > edges;
+	cfa.set_edges(edges);
 }
 
-void PM_Concat::accept(AST_Visitor * v) const {
-	v->visit(this);
-}
-
-void PM_Concat::accept(AST_Visitor const * v) const {
-	v->visit(this);
-}
-
-bool PM_Concat::destroy() {
-	if (this->m_ref_count) return false;
-	Factory::get_instance().destroy(this);
-	m_path_monitor_expr_a->decr_ref_count();
-	m_path_monitor_expr_a->destroy();
-	m_path_monitor_expr_b->decr_ref_count();
-	m_path_monitor_expr_b->destroy();
-	return true;
-}
-
-PM_Concat::~PM_Concat() {
-}
+/** @cond */
+TEST_COMPONENT_TEST_NAMESPACE_END;
+TEST_NAMESPACE_END;
+/** @endcond */
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
 
+TEST_SUITE_BEGIN;
+TEST_NORMAL_CASE( &test, LEVEL_PROD );
+TEST_SUITE_END;
+
+STREAM_TEST_SYSTEM_MAIN;

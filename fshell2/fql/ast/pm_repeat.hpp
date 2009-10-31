@@ -30,7 +30,7 @@
 */
 
 #include <fshell2/config/config.hpp>
-#include <fshell2/fql/ast/path_monitor.hpp>
+#include <fshell2/fql/ast/path_monitor_expr.hpp>
 #include <fshell2/fql/ast/fql_node_factory.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
@@ -38,7 +38,7 @@ FSHELL2_FQL_NAMESPACE_BEGIN;
 
 /*! \brief TODO
 */
-class PM_Repeat : public Path_Monitor
+class PM_Repeat : public Path_Monitor_Expr
 {
 	/*! \copydoc doc_self
 	*/
@@ -57,20 +57,20 @@ class PM_Repeat : public Path_Monitor
 
 	virtual bool destroy();	
 
-	inline Path_Monitor const * get_path_monitor() const;
+	inline Path_Monitor_Expr const * get_path_monitor_expr() const;
 	inline int const get_lower_bound() const;
 	inline int const get_upper_bound() const;
 
 	private:
-	friend Self * FQL_Node_Factory<Self>::create(Path_Monitor *, int, int);
+	friend Self * FQL_Node_Factory<Self>::create(Path_Monitor_Expr *, int, int);
 	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
 
-	Path_Monitor * m_path_monitor;
+	Path_Monitor_Expr * m_path_monitor_expr;
 	int m_lower_bound, m_upper_bound;
 
 	/*! Constructor
 	*/
-	PM_Repeat(Path_Monitor * pm, int lower, int upper);
+	PM_Repeat(Path_Monitor_Expr * pm, int lower, int upper);
 
 	/*! \copydoc copy_constructor
 	*/
@@ -85,8 +85,8 @@ class PM_Repeat : public Path_Monitor
 	virtual ~PM_Repeat();
 };
 
-inline Path_Monitor const * PM_Repeat::get_path_monitor() const {
-	return m_path_monitor;
+inline Path_Monitor_Expr const * PM_Repeat::get_path_monitor_expr() const {
+	return m_path_monitor_expr;
 }
 
 inline int const PM_Repeat::get_lower_bound() const {
@@ -98,12 +98,12 @@ inline int const PM_Repeat::get_upper_bound() const {
 }
 
 template <>
-inline PM_Repeat * FQL_Node_Factory<PM_Repeat>::create(Path_Monitor * pm, int lower, int upper) {
+inline PM_Repeat * FQL_Node_Factory<PM_Repeat>::create(Path_Monitor_Expr * pm, int lower, int upper) {
 	if (m_available.empty()) {
 		m_available.push_back(new PM_Repeat(pm, lower, upper));
 	}
 
-	m_available.back()->m_path_monitor = pm;
+	m_available.back()->m_path_monitor_expr = pm;
 	m_available.back()->m_lower_bound = lower;
 	m_available.back()->m_upper_bound = upper;
 	::std::pair< ::std::set<PM_Repeat *, FQL_Node_Lt_Compare>::const_iterator, bool > inserted(

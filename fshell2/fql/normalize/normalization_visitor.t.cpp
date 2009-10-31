@@ -45,7 +45,6 @@
 #include <fshell2/fql/ast/pm_alternative.hpp>
 #include <fshell2/fql/ast/pm_concat.hpp>
 #include <fshell2/fql/ast/pm_filter_adapter.hpp>
-#include <fshell2/fql/ast/pm_next.hpp>
 #include <fshell2/fql/ast/pm_repeat.hpp>
 #include <fshell2/fql/ast/predicate.hpp>
 #include <fshell2/fql/ast/query.hpp>
@@ -74,32 +73,32 @@ using namespace ::diagnostics::unittest;
  */
 void test( Test_Data & data )
 {
-	Filter * file(Filter_Function::Factory::get_instance().create<F_FILE>("bla.c"));
-	Filter * line(Filter_Function::Factory::get_instance().create<F_LINE>(42));
+	Filter_Expr * file(Filter_Function::Factory::get_instance().create<F_FILE>("bla.c"));
+	Filter_Expr * line(Filter_Function::Factory::get_instance().create<F_LINE>(42));
 	TEST_CHECK(FQL_Node_Lt_Compare()(file, line));
 
-	Filter * intersec1(Filter_Intersection::Factory::get_instance().create(line, file));
+	Filter_Expr * intersec1(Filter_Intersection::Factory::get_instance().create(line, file));
 	intersec1->incr_ref_count(); // re-used below, after normalize
 
 	Edgecov * e(Edgecov::Factory::get_instance().create(intersec1,
 				static_cast< Predicate::preds_t * >(0)));
 
 	Test_Goal_Sequence::seq_t seq_list;
-	seq_list.push_back(::std::make_pair<Path_Monitor *, Test_Goal_Set *>(0, e));
+	seq_list.push_back(::std::make_pair<Path_Monitor_Expr *, Test_Goal_Set *>(0, e));
 	Test_Goal_Sequence * s(Test_Goal_Sequence::Factory::get_instance().create(seq_list, 0));
 
 	Query * q(Query::Factory::get_instance().create(file, s, 0));
 	::std::ostringstream os1;
 	os1 << *q;
 	
-	Filter * intersec2(Filter_Intersection::Factory::get_instance().create(file, line));
+	Filter_Expr * intersec2(Filter_Intersection::Factory::get_instance().create(file, line));
 	intersec2->incr_ref_count(); // re-used below, after normalize
 
 	Edgecov * e2(Edgecov::Factory::get_instance().create(intersec2,
 				static_cast< Predicate::preds_t * >(0)));
 
 	Test_Goal_Sequence::seq_t seq_list2;
-	seq_list2.push_back(::std::make_pair<Path_Monitor *, Test_Goal_Set *>(0, e2));
+	seq_list2.push_back(::std::make_pair<Path_Monitor_Expr *, Test_Goal_Set *>(0, e2));
 	Test_Goal_Sequence * s2(Test_Goal_Sequence::Factory::get_instance().create(seq_list2, 0));
 
 	Query * q2(Query::Factory::get_instance().create(file, s2, 0));
@@ -115,13 +114,13 @@ void test( Test_Data & data )
 	
 	TEST_ASSERT_RELATION(os1.str(), ==, os2.str());
 	
-	Filter * union1(Filter_Union::Factory::get_instance().create(intersec1, intersec2));
+	Filter_Expr * union1(Filter_Union::Factory::get_instance().create(intersec1, intersec2));
 	
 	Edgecov * e3(Edgecov::Factory::get_instance().create(union1,
 				static_cast< Predicate::preds_t * >(0)));
 
 	Test_Goal_Sequence::seq_t seq_list3;
-	seq_list3.push_back(::std::make_pair<Path_Monitor *, Test_Goal_Set *>(0, e3));
+	seq_list3.push_back(::std::make_pair<Path_Monitor_Expr *, Test_Goal_Set *>(0, e3));
 	Test_Goal_Sequence * s3(Test_Goal_Sequence::Factory::get_instance().create(seq_list3, 0));
 
 	Query * q3(Query::Factory::get_instance().create(file, s3, 0));

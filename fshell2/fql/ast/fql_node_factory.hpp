@@ -43,8 +43,8 @@ class exprt;
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-class Filter;
-class Path_Monitor;
+class Filter_Expr;
+class Path_Monitor_Expr;
 class Predicate;
 class Test_Goal_Set;
 class Test_Goal_Sequence;
@@ -65,8 +65,20 @@ typedef enum {
 	F_BASICBLOCKENTRY = 12,
 	F_CONDITIONEDGE = 13,
 	F_DECISIONEDGE = 14,
-	F_CONDITIONGRAPH = 15
+	F_CONDITIONGRAPH = 15,
+	F_DEF = 16,
+	F_USE = 17,
+	F_STMTTYPE = 18
 } filter_function_t;
+
+typedef enum {
+	STT_IF = 1,
+	STT_FOR = (1 << 1),
+	STT_WHILE = (1 << 2),
+	STT_SWITCH = (1 << 3),
+	STT_CONDOP = (1 << 4),
+	STT_ASSERT = (1 << 5)
+} stmt_type_t;
 
 /*! \brief TODO
 */
@@ -81,11 +93,11 @@ class FQL_Node_Factory
 	static Self & get_instance();
 
 	// Edgecov, Statecov
-	Element * create(Filter * filter, ::std::set<Predicate *, FQL_Node_Lt_Compare> * predicates);
+	Element * create(Filter_Expr * filter_expr, ::std::set<Predicate *, FQL_Node_Lt_Compare> * predicates);
 	// Filter_Complement, Filter_Enclosing_Scopes, PM_Filter_Adapter
-	Element * create(Filter * filter);
+	Element * create(Filter_Expr * filter_expr);
 	// Filter_Compose, Filter_Intersection, Filter_Setminus, Filter_Union
-	Element * create(Filter * a, Filter * b);
+	Element * create(Filter_Expr * a, Filter_Expr * b);
 	// Filter_Function
 	template <filter_function_t Filter_Function>
 	Element * create();
@@ -94,19 +106,19 @@ class FQL_Node_Factory
 	template <filter_function_t Filter_Function>
 	Element * create(::std::string const& val);
 	// Pathcov
-	Element * create(Filter * filter, int bound, ::std::set<Predicate *, FQL_Node_Lt_Compare> * predicates);
+	Element * create(Filter_Expr * filter, int bound, ::std::set<Predicate *, FQL_Node_Lt_Compare> * predicates);
 	// PM_Alternative, PM_Concat, PM_Next
-	Element * create(Path_Monitor * a, Path_Monitor * b);
+	Element * create(Path_Monitor_Expr * a, Path_Monitor_Expr * b);
 	// PM_Repeat
-	Element * create(Path_Monitor * pm, int lower, int upper);
+	Element * create(Path_Monitor_Expr * pm, int lower, int upper);
 	// Predicate
 	Element * create(::exprt * expr);
 	// Query
-	Element * create(Filter * prefix, Test_Goal_Sequence * cover,
-			Path_Monitor * passing);
+	Element * create(Filter_Expr * prefix, Test_Goal_Sequence * cover,
+			Path_Monitor_Expr * passing);
 	// Test_Goal_Sequence
-	Element * create(::std::list< ::std::pair< Path_Monitor *, Test_Goal_Set * > > & seq,
-			Path_Monitor * suffix_aut);
+	Element * create(::std::list< ::std::pair< Path_Monitor_Expr *, Test_Goal_Set * > > & seq,
+			Path_Monitor_Expr * suffix_aut);
 	// TGS_Intersection, TGS_Setminus, TGS_Union
 	Element * create(Test_Goal_Set * a, Test_Goal_Set * b);
 	

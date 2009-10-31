@@ -130,13 +130,6 @@ class FQL_AST_Printer : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	/*! \} */
 
 	/*! \{
-	 * \brief Visit a @ref fshell2::fql::PM_Next
-	 * \param  n PM_Next
-	 */
-	virtual void visit(PM_Next const* n);
-	/*! \} */
-
-	/*! \{
 	 * \brief Visit a @ref fshell2::fql::PM_Repeat
 	 * \param  n PM_Repeat
 	 */

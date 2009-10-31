@@ -32,7 +32,7 @@
 #include <fshell2/config/config.hpp>
 
 #include <fshell2/instrumentation/goto_transformation.hpp>
-#include <fshell2/fql/evaluation/cfa.hpp>
+#include <fshell2/fql/concepts/cfa.hpp>
 #include <fshell2/fql/evaluation/evaluate_path_monitor.hpp>
 
 #include <list>

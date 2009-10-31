@@ -43,7 +43,6 @@
 #include <fshell2/fql/ast/pm_alternative.hpp>
 #include <fshell2/fql/ast/pm_concat.hpp>
 #include <fshell2/fql/ast/pm_filter_adapter.hpp>
-#include <fshell2/fql/ast/pm_next.hpp>
 #include <fshell2/fql/ast/pm_repeat.hpp>
 #include <fshell2/fql/ast/predicate.hpp>
 #include <fshell2/fql/ast/query.hpp>
@@ -67,7 +66,7 @@ FQL_AST_Printer::~FQL_AST_Printer() {
 
 void FQL_AST_Printer::visit(Edgecov const* n) {
 	m_os << "EDGES(";
-	n->get_filter()->accept(this);
+	n->get_filter_expr()->accept(this);
 	if (n->get_predicates()) {
 		for (Predicate::preds_t::const_iterator iter(n->get_predicates()->begin());
 				iter != n->get_predicates()->end(); ++iter) {
@@ -80,21 +79,21 @@ void FQL_AST_Printer::visit(Edgecov const* n) {
 
 void FQL_AST_Printer::visit(Filter_Complement const* n) {
 	m_os << "COMPLEMENT(";
-	n->get_filter()->accept(this);
+	n->get_filter_expr()->accept(this);
 	m_os << ")";
 }
 
 void FQL_AST_Printer::visit(Filter_Compose const* n) {
 	m_os << "COMPOSE(";
-	n->get_filter_a()->accept(this);
+	n->get_filter_expr_a()->accept(this);
 	m_os << ",";
-	n->get_filter_b()->accept(this);
+	n->get_filter_expr_b()->accept(this);
 	m_os << ")";
 }
 
 void FQL_AST_Printer::visit(Filter_Enclosing_Scopes const* n) {
 	m_os << "ENCLOSING_SCOPES(";
-	n->get_filter()->accept(this);
+	n->get_filter_expr()->accept(this);
 	m_os << ")";
 }
 
@@ -168,66 +167,107 @@ void FQL_AST_Printer::visit(Filter_Function const* n) {
 		case F_CONDITIONGRAPH:
             m_os << "@CONDITIONGRAPH";
             break;
+		case F_DEF:
+            m_os << "@DEF(\"";
+			m_os << n->get_string_arg<F_DEF>();
+			m_os << "\")";
+            break;
+		case F_USE:
+            m_os << "@USE(\"";
+			m_os << n->get_string_arg<F_USE>();
+			m_os << "\")";
+            break;
+		case F_STMTTYPE:
+			{
+            	m_os << "@STMTTYPE(\"";
+				int types(n->get_int_arg<F_STMTTYPE>());
+				bool not_first(false);
+				for (unsigned i(0); types && i < sizeof(int)*8; ++i) {
+					if (types & (1 << i)) {
+						switch (1 << i) {
+							case STT_IF:
+								if (not_first) m_os << ","; else not_first = true;
+								m_os << "IF";
+								break;
+							case STT_FOR:
+								if (not_first) m_os << ","; else not_first = true;
+								m_os << "FOR";
+								break;
+							case STT_WHILE:
+								if (not_first) m_os << ","; else not_first = true;
+								m_os << "WHILE";
+								break;
+							case STT_SWITCH:
+								if (not_first) m_os << ","; else not_first = true;
+								m_os << "SWITCH";
+								break;
+							case STT_CONDOP:
+								if (not_first) m_os << ","; else not_first = true;
+								m_os << "?:";
+								break;
+							case STT_ASSERT:
+								if (not_first) m_os << ","; else not_first = true;
+								m_os << "ASSERT";
+								break;
+						}
+						types &= ~(1 << i);
+					}
+				}
+				m_os << "\")";
+			}
+            break;
 	}
 }
 
 void FQL_AST_Printer::visit(Filter_Intersection const* n) {
 	m_os << "INTERSECT(";
-	n->get_filter_a()->accept(this);
+	n->get_filter_expr_a()->accept(this);
 	m_os << ",";
-	n->get_filter_b()->accept(this);
+	n->get_filter_expr_b()->accept(this);
 	m_os << ")";
 }
 
 void FQL_AST_Printer::visit(Filter_Setminus const* n) {
 	m_os << "SETMINUS(";
-	n->get_filter_a()->accept(this);
+	n->get_filter_expr_a()->accept(this);
 	m_os << ",";
-	n->get_filter_b()->accept(this);
+	n->get_filter_expr_b()->accept(this);
 	m_os << ")";
 }
 
 void FQL_AST_Printer::visit(Filter_Union const* n) {
 	m_os << "UNION(";
-	n->get_filter_a()->accept(this);
+	n->get_filter_expr_a()->accept(this);
 	m_os << ",";
-	n->get_filter_b()->accept(this);
+	n->get_filter_expr_b()->accept(this);
 	m_os << ")";
 }
 
 void FQL_AST_Printer::visit(PM_Alternative const* n) {
 	m_os << "(";
-	n->get_path_monitor_a()->accept(this);
+	n->get_path_monitor_expr_a()->accept(this);
 	m_os << "+";
-	n->get_path_monitor_b()->accept(this);
+	n->get_path_monitor_expr_b()->accept(this);
 	m_os << ")";
 }
 
 void FQL_AST_Printer::visit(PM_Concat const* n) {
 	m_os << "(";
-	n->get_path_monitor_a()->accept(this);
+	n->get_path_monitor_expr_a()->accept(this);
 	m_os << ".";
-	n->get_path_monitor_b()->accept(this);
+	n->get_path_monitor_expr_b()->accept(this);
 	m_os << ")";
 }
 
 void FQL_AST_Printer::visit(PM_Filter_Adapter const* n) {
-	n->get_filter()->accept(this);
-}
-
-void FQL_AST_Printer::visit(PM_Next const* n) {
-	m_os << "(";
-	n->get_path_monitor_a()->accept(this);
-	m_os << "->";
-	n->get_path_monitor_b()->accept(this);
-	m_os << ")";
+	n->get_filter_expr()->accept(this);
 }
 
 void FQL_AST_Printer::visit(PM_Repeat const* n) {
 	int const lb(n->get_lower_bound());
 	int const ub(n->get_upper_bound());
 	m_os << "(";
-	n->get_path_monitor()->accept(this);
+	n->get_path_monitor_expr()->accept(this);
 	if (-1 == ub) m_os << ">=" << lb;
 	else {
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 0 == lb);
@@ -238,7 +278,7 @@ void FQL_AST_Printer::visit(PM_Repeat const* n) {
 
 void FQL_AST_Printer::visit(Pathcov const* n) {
 	m_os << "PATHCOV(";
-	n->get_filter()->accept(this);
+	n->get_filter_expr()->accept(this);
 	m_os << "," << n->get_bound();
 	if (n->get_predicates()) {
 		for (Predicate::preds_t::const_iterator iter(n->get_predicates()->begin());
@@ -272,7 +312,7 @@ void FQL_AST_Printer::visit(Query const* n) {
 
 void FQL_AST_Printer::visit(Statecov const* n) {
 	m_os << "STATES(";
-	n->get_filter()->accept(this);
+	n->get_filter_expr()->accept(this);
 	if (n->get_predicates()) {
 		for (Predicate::preds_t::const_iterator iter(n->get_predicates()->begin());
 				iter != n->get_predicates()->end(); ++iter) {

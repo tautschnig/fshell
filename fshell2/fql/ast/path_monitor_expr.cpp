@@ -18,7 +18,7 @@
  * limitations under the License.
  *******************************************************************************/
 
-/*! \file fshell2/fql/ast/filter.cpp
+/*! \file fshell2/fql/ast/path_monitor_expr.cpp
  * \brief TODO
  *
  * $Id$
@@ -26,18 +26,23 @@
  * \date   Tue Apr 21 23:48:55 CEST 2009 
 */
 
-#include <fshell2/fql/ast/filter.hpp>
-
-#include <fshell2/fql/ast/ast_visitor.hpp>
+#include <fshell2/fql/ast/path_monitor_expr.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Filter::Filter() {
+Path_Monitor_Expr::Path_Monitor_Expr() {
 }
 
-Filter::~Filter() {
+Path_Monitor_Expr::~Path_Monitor_Expr() {
 }
+	
+void Path_Monitor_Expr::add_precond(Predicate * pred) {
+}
+
+void Path_Monitor_Expr::add_postcond(Predicate * pred) {
+}
+	
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;

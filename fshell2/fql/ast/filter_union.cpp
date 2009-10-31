@@ -36,10 +36,10 @@
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Filter_Union::Filter_Union(Filter * a, Filter * b) :
-	m_filter_a(a), m_filter_b(b) {
-	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_filter_a);
-	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_filter_b);
+Filter_Union::Filter_Union(Filter_Expr * a, Filter_Expr * b) :
+	m_filter_expr_a(a), m_filter_expr_b(b) {
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_filter_expr_a);
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_filter_expr_b);
 }
 
 void Filter_Union::accept(AST_Visitor * v) const {
@@ -53,10 +53,10 @@ void Filter_Union::accept(AST_Visitor const * v) const {
 bool Filter_Union::destroy() {
 	if (this->m_ref_count) return false;
 	Factory::get_instance().destroy(this);
-	m_filter_a->decr_ref_count();
-	m_filter_a->destroy();
-	m_filter_b->decr_ref_count();
-	m_filter_b->destroy();
+	m_filter_expr_a->decr_ref_count();
+	m_filter_expr_a->destroy();
+	m_filter_expr_b->decr_ref_count();
+	m_filter_expr_b->destroy();
 	return true;
 }
 

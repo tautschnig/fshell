@@ -36,10 +36,10 @@
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-PM_Alternative::PM_Alternative(Path_Monitor * a, Path_Monitor * b) :
-	m_path_monitor_a(a), m_path_monitor_b(b) {
-	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_path_monitor_a);
-	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_path_monitor_b);
+PM_Alternative::PM_Alternative(Path_Monitor_Expr * a, Path_Monitor_Expr * b) :
+	m_path_monitor_expr_a(a), m_path_monitor_expr_b(b) {
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_path_monitor_expr_a);
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_path_monitor_expr_b);
 }
 
 void PM_Alternative::accept(AST_Visitor * v) const {
@@ -53,10 +53,10 @@ void PM_Alternative::accept(AST_Visitor const * v) const {
 bool PM_Alternative::destroy() {
 	if (this->m_ref_count) return false;
 	Factory::get_instance().destroy(this);
-	m_path_monitor_a->decr_ref_count();
-	m_path_monitor_a->destroy();
-	m_path_monitor_b->decr_ref_count();
-	m_path_monitor_b->destroy();
+	m_path_monitor_expr_a->decr_ref_count();
+	m_path_monitor_expr_a->destroy();
+	m_path_monitor_expr_b->decr_ref_count();
+	m_path_monitor_expr_b->destroy();
 	return true;
 }
 

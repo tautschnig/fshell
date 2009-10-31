@@ -33,7 +33,7 @@
 
 #include <fshell2/fql/ast/ast_visitor.hpp>
 #include <fshell2/fql/ast/standard_ast_visitor_aspect.hpp>
-#include <fshell2/fql/evaluation/cfa.hpp>
+#include <fshell2/fql/concepts/cfa.hpp>
 
 #include <map>
 
@@ -57,8 +57,8 @@ class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	typedef Evaluate_Filter Self;
 
 	public:
-	typedef ::std::map< Filter const*, target_graph_t > filter_value_t;
-	typedef ::std::map< target_graph_t::edge_t, ::std::set< Filter const* > > edge_to_filters_t;
+	typedef ::std::map< Filter_Expr const*, target_graph_t > filter_value_t;
+	typedef ::std::map< target_graph_t::edge_t, ::std::set< Filter_Expr const* > > edge_to_filters_t;
 	typedef ::std::map< ::goto_programt::const_targett, edge_to_filters_t > node_to_filters_t; 
 
 	Evaluate_Filter(::goto_functionst & ts,
@@ -68,7 +68,7 @@ class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 
 	static bool skip_function(::goto_functionst::goto_functiont const& fct);
 
-	target_graph_t const& get(Filter const& f) const;
+	target_graph_t const& get(Filter_Expr const& f) const;
 	edge_to_filters_t const& get(::goto_programt::const_targett const& n) const;
 
 	/*! \{
@@ -146,13 +146,6 @@ class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	 * \param  n PM_Filter_Adapter
 	 */
 	virtual void visit(PM_Filter_Adapter const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::PM_Next
-	 * \param  n PM_Next
-	 */
-	virtual void visit(PM_Next const* n);
 	/*! \} */
 
 	/*! \{

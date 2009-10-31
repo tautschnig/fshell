@@ -39,7 +39,6 @@
 #include <fshell2/fql/ast/pm_alternative.hpp>
 #include <fshell2/fql/ast/pm_concat.hpp>
 #include <fshell2/fql/ast/pm_filter_adapter.hpp>
-#include <fshell2/fql/ast/pm_next.hpp>
 #include <fshell2/fql/ast/pm_repeat.hpp>
 #include <fshell2/fql/ast/pathcov.hpp>
 #include <fshell2/fql/ast/predicate.hpp>
@@ -61,8 +60,8 @@ Evaluate_Path_Monitor::Filter_Index::Filter_Index() :
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == m_next_index);
 }
 
-int Evaluate_Path_Monitor::Filter_Index::to_index(Filter const* f) {
-	::std::map< Filter const*, int >::iterator entry(m_filter_to_int.find(f));
+int Evaluate_Path_Monitor::Filter_Index::to_index(Filter_Expr const* f) {
+	::std::map< Filter_Expr const*, int >::iterator entry(m_filter_to_int.find(f));
 	if (m_filter_to_int.end() == entry) {
 		FSHELL2_PROD_CHECK(::diagnostics::Violated_Invariance,
 				m_next_index < ::std::numeric_limits<int>::max());
@@ -72,14 +71,14 @@ int Evaluate_Path_Monitor::Filter_Index::to_index(Filter const* f) {
 	return entry->second;
 }
 
-Filter const* Evaluate_Path_Monitor::Filter_Index::lookup_index(int index) const {
-	::std::map< int, Filter const* >::const_iterator entry(m_int_to_filter.find(index));
+Filter_Expr const* Evaluate_Path_Monitor::Filter_Index::lookup_index(int index) const {
+	::std::map< int, Filter_Expr const* >::const_iterator entry(m_int_to_filter.find(index));
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_int_to_filter.end() != entry);
 	return entry->second;
 }
 
-int Evaluate_Path_Monitor::Filter_Index::lookup_filter(Filter const* filter) const {
-	::std::map< Filter const*, int >::const_iterator entry(m_filter_to_int.find(filter));
+int Evaluate_Path_Monitor::Filter_Index::lookup_filter(Filter_Expr const* filter) const {
+	::std::map< Filter_Expr const*, int >::const_iterator entry(m_filter_to_int.find(filter));
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_filter_to_int.end() != entry);
 	return entry->second;
 }
@@ -116,7 +115,7 @@ void Evaluate_Path_Monitor::visit(Edgecov const* n) {
 	
 	m_current_initial = m_current_aut->new_state();
 	m_current_final = m_current_aut->new_state();
-	m_current_aut->set_trans(m_current_initial, m_filter_index.to_index(n->get_filter()),
+	m_current_aut->set_trans(m_current_initial, m_filter_index.to_index(n->get_filter_expr()),
 			m_current_final);
 	
 	m_test_goal_map_entry->second.insert(m_current_final);
@@ -124,10 +123,10 @@ void Evaluate_Path_Monitor::visit(Edgecov const* n) {
 }
 
 void Evaluate_Path_Monitor::visit(PM_Alternative const* n) {
-	n->get_path_monitor_a()->accept(this);
+	n->get_path_monitor_expr_a()->accept(this);
 	trace_automaton_t::state_type const a_in(m_current_initial);
 	trace_automaton_t::state_type const a_out(m_current_final);
-	n->get_path_monitor_b()->accept(this);
+	n->get_path_monitor_expr_b()->accept(this);
 	trace_automaton_t::state_type const b_in(m_current_initial);
 	trace_automaton_t::state_type const b_out(m_current_final);
 
@@ -140,10 +139,10 @@ void Evaluate_Path_Monitor::visit(PM_Alternative const* n) {
 }
 
 void Evaluate_Path_Monitor::visit(PM_Concat const* n) {
-	n->get_path_monitor_a()->accept(this);
+	n->get_path_monitor_expr_a()->accept(this);
 	trace_automaton_t::state_type const a_in(m_current_initial);
 	trace_automaton_t::state_type const a_out(m_current_final);
-	n->get_path_monitor_b()->accept(this);
+	n->get_path_monitor_expr_b()->accept(this);
 
 	m_current_aut->set_trans(a_out, -1, m_current_initial);
 	m_current_initial = a_in;
@@ -152,24 +151,12 @@ void Evaluate_Path_Monitor::visit(PM_Concat const* n) {
 void Evaluate_Path_Monitor::visit(PM_Filter_Adapter const* n) {
 	m_current_initial = m_current_aut->new_state();
 	m_current_final = m_current_aut->new_state();
-	m_current_aut->set_trans(m_current_initial, m_filter_index.to_index(n->get_filter()),
+	m_current_aut->set_trans(m_current_initial, m_filter_index.to_index(n->get_filter_expr()),
 			m_current_final);
 }
 
-void Evaluate_Path_Monitor::visit(PM_Next const* n) {
-	n->get_path_monitor_a()->accept(this);
-	trace_automaton_t::state_type const a_in(m_current_initial);
-	trace_automaton_t::state_type const a_out(m_current_final);
-	n->get_path_monitor_b()->accept(this);
-
-	m_current_aut->set_trans(a_out, m_filter_index.id_index(), m_current_initial);
-	m_current_aut->set_trans(a_out, -1, m_current_initial);
-	m_current_aut->set_trans(m_current_initial, -1, a_out);
-	m_current_initial = a_in;
-}
-
 void Evaluate_Path_Monitor::visit(PM_Repeat const* n) {
-	n->get_path_monitor()->accept(this);
+	n->get_path_monitor_expr()->accept(this);
 	int lb(n->get_lower_bound());
 	int ub(n->get_upper_bound());
 

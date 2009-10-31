@@ -45,6 +45,7 @@ fshell2_LDADD = libmain.la \
 								../fql/normalize/libnormalize.la \
 								../fql/parser/libparser.la \
 								../fql/ast/libast.la \
+								../fql/concepts/libconcepts.la \
 								../instrumentation/libinstrumentation.la \
 								../exception/libexception.la \
 								$(CBMC_OBJS)

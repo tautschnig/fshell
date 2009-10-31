@@ -41,7 +41,6 @@
 #include <fshell2/fql/ast/pm_alternative.hpp>
 #include <fshell2/fql/ast/pm_concat.hpp>
 #include <fshell2/fql/ast/pm_filter_adapter.hpp>
-#include <fshell2/fql/ast/pm_next.hpp>
 #include <fshell2/fql/ast/pm_repeat.hpp>
 #include <fshell2/fql/ast/predicate.hpp>
 #include <fshell2/fql/ast/query.hpp>
@@ -122,8 +121,8 @@ void Normalization_Visitor::normalize(Query ** query) {
 }
 	
 void Normalization_Visitor::visit(Edgecov const* n) {
-	n->get_filter()->accept(this);
-	Smart_FQL_Node_Ptr<Filter> filter(m_top_filter);
+	n->get_filter_expr()->accept(this);
+	Smart_FQL_Node_Ptr<Filter_Expr> filter(m_top_filter);
 
 	Predicate::preds_t * preds(0);
 	if (n->get_predicates()) {
@@ -145,21 +144,21 @@ void Normalization_Visitor::visit(Edgecov const* n) {
 }
 
 void Normalization_Visitor::visit(Filter_Complement const* n) {
-	n->get_filter()->accept(this);
+	n->get_filter_expr()->accept(this);
 	m_top_filter = Filter_Complement::Factory::get_instance().create(m_top_filter.get());
 }
 
 void Normalization_Visitor::visit(Filter_Compose const* n) {
-	n->get_filter_a()->accept(this);
-	Smart_FQL_Node_Ptr<Filter> filter_a(m_top_filter);
-	n->get_filter_b()->accept(this);
-	Smart_FQL_Node_Ptr<Filter> filter_b(m_top_filter);
+	n->get_filter_expr_a()->accept(this);
+	Smart_FQL_Node_Ptr<Filter_Expr> filter_a(m_top_filter);
+	n->get_filter_expr_b()->accept(this);
+	Smart_FQL_Node_Ptr<Filter_Expr> filter_b(m_top_filter);
 
 	m_top_filter = Filter_Compose::Factory::get_instance().create(filter_a.get(), filter_b.get());
 }
 
 void Normalization_Visitor::visit(Filter_Enclosing_Scopes const* n) {
-	n->get_filter()->accept(this);
+	n->get_filter_expr()->accept(this);
 	m_top_filter = Filter_Enclosing_Scopes::Factory::get_instance().create(m_top_filter.get());
 }
 
@@ -223,14 +222,26 @@ void Normalization_Visitor::visit(Filter_Function const* n) {
 		case F_CONDITIONGRAPH:
 			m_top_filter = Filter_Function::Factory::get_instance().create<F_CONDITIONGRAPH>();
 			break;
+		case F_DEF:
+			m_top_filter = Filter_Function::Factory::get_instance().create<F_DEF>(
+					n->get_string_arg<F_DEF>());
+			break;
+		case F_USE:
+			m_top_filter = Filter_Function::Factory::get_instance().create<F_USE>(
+					n->get_string_arg<F_USE>());
+			break;
+		case F_STMTTYPE:
+			m_top_filter = Filter_Function::Factory::get_instance().create<F_STMTTYPE>(
+					n->get_int_arg<F_STMTTYPE>());
+			break;
 	}
 }
 
 void Normalization_Visitor::visit(Filter_Intersection const* n) {
-	n->get_filter_a()->accept(this);
-	Smart_FQL_Node_Ptr<Filter> filter_a(m_top_filter);
-	n->get_filter_b()->accept(this);
-	Smart_FQL_Node_Ptr<Filter> filter_b(m_top_filter);
+	n->get_filter_expr_a()->accept(this);
+	Smart_FQL_Node_Ptr<Filter_Expr> filter_a(m_top_filter);
+	n->get_filter_expr_b()->accept(this);
+	Smart_FQL_Node_Ptr<Filter_Expr> filter_b(m_top_filter);
 	
 	if (FQL_Node_Lt_Compare()(filter_a.get(), filter_b.get())) {
 		m_top_filter = Filter_Intersection::Factory::get_instance().create(filter_a.get(), filter_b.get());
@@ -242,19 +253,19 @@ void Normalization_Visitor::visit(Filter_Intersection const* n) {
 }
 
 void Normalization_Visitor::visit(Filter_Setminus const* n) {
-	n->get_filter_a()->accept(this);
-	Smart_FQL_Node_Ptr<Filter> filter_a(m_top_filter);
-	n->get_filter_b()->accept(this);
-	Smart_FQL_Node_Ptr<Filter> filter_b(m_top_filter);
+	n->get_filter_expr_a()->accept(this);
+	Smart_FQL_Node_Ptr<Filter_Expr> filter_a(m_top_filter);
+	n->get_filter_expr_b()->accept(this);
+	Smart_FQL_Node_Ptr<Filter_Expr> filter_b(m_top_filter);
 
 	m_top_filter = Filter_Setminus::Factory::get_instance().create(filter_a.get(), filter_b.get());
 }
 
 void Normalization_Visitor::visit(Filter_Union const* n) {
-	n->get_filter_a()->accept(this);
-	Smart_FQL_Node_Ptr<Filter> filter_a(m_top_filter);
-	n->get_filter_b()->accept(this);
-	Smart_FQL_Node_Ptr<Filter> filter_b(m_top_filter);
+	n->get_filter_expr_a()->accept(this);
+	Smart_FQL_Node_Ptr<Filter_Expr> filter_a(m_top_filter);
+	n->get_filter_expr_b()->accept(this);
+	Smart_FQL_Node_Ptr<Filter_Expr> filter_b(m_top_filter);
 	
 	if (FQL_Node_Lt_Compare()(filter_a.get(), filter_b.get())) {
 		m_top_filter = Filter_Union::Factory::get_instance().create(filter_a.get(), filter_b.get());
@@ -266,10 +277,10 @@ void Normalization_Visitor::visit(Filter_Union const* n) {
 }
 
 void Normalization_Visitor::visit(PM_Alternative const* n) {
-	n->get_path_monitor_a()->accept(this);
-	Smart_FQL_Node_Ptr<Path_Monitor> path_monitor_a(m_top_mon);
-	n->get_path_monitor_b()->accept(this);
-	Smart_FQL_Node_Ptr<Path_Monitor> path_monitor_b(m_top_mon);
+	n->get_path_monitor_expr_a()->accept(this);
+	Smart_FQL_Node_Ptr<Path_Monitor_Expr> path_monitor_a(m_top_mon);
+	n->get_path_monitor_expr_b()->accept(this);
+	Smart_FQL_Node_Ptr<Path_Monitor_Expr> path_monitor_b(m_top_mon);
 	
 	if (FQL_Node_Lt_Compare()(path_monitor_a.get(), path_monitor_b.get())) {
 		m_top_mon = PM_Alternative::Factory::get_instance().create(path_monitor_a.get(), path_monitor_b.get());
@@ -281,37 +292,28 @@ void Normalization_Visitor::visit(PM_Alternative const* n) {
 }
 
 void Normalization_Visitor::visit(PM_Concat const* n) {
-	n->get_path_monitor_a()->accept(this);
-	Smart_FQL_Node_Ptr<Path_Monitor> path_monitor_a(m_top_mon);
-	n->get_path_monitor_b()->accept(this);
-	Smart_FQL_Node_Ptr<Path_Monitor> path_monitor_b(m_top_mon);
+	n->get_path_monitor_expr_a()->accept(this);
+	Smart_FQL_Node_Ptr<Path_Monitor_Expr> path_monitor_a(m_top_mon);
+	n->get_path_monitor_expr_b()->accept(this);
+	Smart_FQL_Node_Ptr<Path_Monitor_Expr> path_monitor_b(m_top_mon);
 
 	m_top_mon = PM_Concat::Factory::get_instance().create(path_monitor_a.get(), path_monitor_b.get());
 }
 
 void Normalization_Visitor::visit(PM_Filter_Adapter const* n) {
-	n->get_filter()->accept(this);
+	n->get_filter_expr()->accept(this);
 	m_top_mon = PM_Filter_Adapter::Factory::get_instance().create(m_top_filter.get());
 }
 
-void Normalization_Visitor::visit(PM_Next const* n) {
-	n->get_path_monitor_a()->accept(this);
-	Smart_FQL_Node_Ptr<Path_Monitor> path_monitor_a(m_top_mon);
-	n->get_path_monitor_b()->accept(this);
-	Smart_FQL_Node_Ptr<Path_Monitor> path_monitor_b(m_top_mon);
-
-	m_top_mon = PM_Next::Factory::get_instance().create(path_monitor_a.get(), path_monitor_b.get());
-}
-
 void Normalization_Visitor::visit(PM_Repeat const* n) {
-	n->get_path_monitor()->accept(this);
+	n->get_path_monitor_expr()->accept(this);
 	m_top_mon = PM_Repeat::Factory::get_instance().create(m_top_mon.get(), n->get_lower_bound(),
 			n->get_upper_bound());
 }
 
 void Normalization_Visitor::visit(Pathcov const* n) {
-	n->get_filter()->accept(this);
-	Smart_FQL_Node_Ptr<Filter> filter(m_top_filter);
+	n->get_filter_expr()->accept(this);
+	Smart_FQL_Node_Ptr<Filter_Expr> filter(m_top_filter);
 
 	Predicate::preds_t * preds(0);
 	if (n->get_predicates()) {
@@ -337,7 +339,7 @@ void Normalization_Visitor::visit(Predicate const* n) {
 }
 	
 void Normalization_Visitor::visit(Query const* n) {
-	Smart_FQL_Node_Ptr<Filter> prefix;
+	Smart_FQL_Node_Ptr<Filter_Expr> prefix;
 	if (n->get_prefix()) {
 		n->get_prefix()->accept(this);
 		prefix = m_top_filter;
@@ -346,7 +348,7 @@ void Normalization_Visitor::visit(Query const* n) {
 	n->get_cover()->accept(this);
 	Smart_FQL_Node_Ptr<Test_Goal_Sequence> cover(m_top_tgseq);
 
-	Smart_FQL_Node_Ptr<Path_Monitor> passing;
+	Smart_FQL_Node_Ptr<Path_Monitor_Expr> passing;
 	if (n->get_passing()) {
 		n->get_passing()->accept(this);
 		passing = m_top_mon;
@@ -359,8 +361,8 @@ void Normalization_Visitor::visit(Query const* n) {
 }
 
 void Normalization_Visitor::visit(Statecov const* n) {
-	n->get_filter()->accept(this);
-	Smart_FQL_Node_Ptr<Filter> filter(m_top_filter);
+	n->get_filter_expr()->accept(this);
+	Smart_FQL_Node_Ptr<Filter_Expr> filter(m_top_filter);
 
 	Predicate::preds_t * preds(0);
 	if (n->get_predicates()) {
@@ -424,7 +426,7 @@ void Normalization_Visitor::visit(Test_Goal_Sequence const* n) {
 	Test_Goal_Sequence::seq_t seq;
 	for (Test_Goal_Sequence::seq_t::const_iterator iter(n->get_sequence().begin());
 			iter != n->get_sequence().end(); ++iter) {
-		Smart_FQL_Node_Ptr<Path_Monitor> mon;
+		Smart_FQL_Node_Ptr<Path_Monitor_Expr> mon;
 		if (iter->first) {
 			iter->first->accept(this);
 			mon = m_top_mon;
@@ -435,7 +437,7 @@ void Normalization_Visitor::visit(Test_Goal_Sequence const* n) {
 		seq.push_back(::std::make_pair(mon.get(), m_top_tgset.get()));
 	}
 
-	Smart_FQL_Node_Ptr<Path_Monitor> mon;
+	Smart_FQL_Node_Ptr<Path_Monitor_Expr> mon;
 	if (n->get_suffix_monitor()) {
 		n->get_suffix_monitor()->accept(this);
 		mon = m_top_mon;

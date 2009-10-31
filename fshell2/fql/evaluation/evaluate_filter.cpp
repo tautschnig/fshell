@@ -47,7 +47,6 @@
 #include <fshell2/fql/ast/pm_alternative.hpp>
 #include <fshell2/fql/ast/pm_concat.hpp>
 #include <fshell2/fql/ast/pm_filter_adapter.hpp>
-#include <fshell2/fql/ast/pm_next.hpp>
 #include <fshell2/fql/ast/pm_repeat.hpp>
 #include <fshell2/fql/ast/query.hpp>
 #include <fshell2/fql/ast/statecov.hpp>
@@ -72,7 +71,7 @@ Evaluate_Filter::Evaluate_Filter(::goto_functionst & gf,
 Evaluate_Filter::~Evaluate_Filter() {
 }
 
-target_graph_t const& Evaluate_Filter::get(Filter const& f) const {
+target_graph_t const& Evaluate_Filter::get(Filter_Expr const& f) const {
 	filter_value_t::const_iterator entry(m_filter_map.find(&f));
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Protocol,
 			entry != m_filter_map.end());
@@ -99,7 +98,7 @@ bool Evaluate_Filter::skip_function(::goto_functionst::goto_functiont const& fct
 }
 
 void Evaluate_Filter::visit(Edgecov const* n) {
-	n->get_filter()->accept(this);
+	n->get_filter_expr()->accept(this);
 }
 
 void Evaluate_Filter::visit(Filter_Complement const* n) {
@@ -107,7 +106,7 @@ void Evaluate_Filter::visit(Filter_Complement const* n) {
 				::std::make_pair(n, target_graph_t())));
 	if (!entry.second) return;
 	
-	n->get_filter()->accept(this);
+	n->get_filter_expr()->accept(this);
 
 	// the only point where we really evaluate F_IDENTITY
 	Filter_Function * id(Filter_Function::Factory::get_instance().create<F_IDENTITY>());
@@ -138,7 +137,7 @@ void Evaluate_Filter::visit(Filter_Complement const* n) {
 		id_entry.first->second.set_initial_states(initial);
 	}
 
-	filter_value_t::const_iterator f_set(m_filter_map.find(n->get_filter()));
+	filter_value_t::const_iterator f_set(m_filter_map.find(n->get_filter_expr()));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, f_set != m_filter_map.end());
 
 	CFA::edges_t edges;
@@ -163,12 +162,12 @@ void Evaluate_Filter::visit(Filter_Compose const* n) {
 				::std::make_pair(n, target_graph_t())));
 	if (!entry.second) return;
 	
-	n->get_filter_a()->accept(this);
-	n->get_filter_b()->accept(this);
+	n->get_filter_expr_a()->accept(this);
+	n->get_filter_expr_b()->accept(this);
 
-	filter_value_t::const_iterator a_set(m_filter_map.find(n->get_filter_a()));
+	filter_value_t::const_iterator a_set(m_filter_map.find(n->get_filter_expr_a()));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, a_set != m_filter_map.end());
-	filter_value_t::const_iterator b_set(m_filter_map.find(n->get_filter_b()));
+	filter_value_t::const_iterator b_set(m_filter_map.find(n->get_filter_expr_b()));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, b_set != m_filter_map.end());
 
 	CFA::edges_t edges;
@@ -192,7 +191,7 @@ void Evaluate_Filter::visit(Filter_Enclosing_Scopes const* n) {
 				::std::make_pair(n, target_graph_t())));
 	if (!entry.second) return;
 	
-	n->get_filter()->accept(this);
+	n->get_filter_expr()->accept(this);
 
 	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
 }
@@ -465,6 +464,15 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 		case F_CONDITIONGRAPH:
 			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
 			break;
+		case F_DEF:
+			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+			break;
+		case F_USE:
+			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+			break;
+		case F_STMTTYPE:
+			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+			break;
 	}
 				
 	entry.first->second.set_edges(edges);
@@ -481,12 +489,12 @@ void Evaluate_Filter::visit(Filter_Intersection const* n) {
 				::std::make_pair(n, target_graph_t())));
 	if (!entry.second) return;
 	
-	n->get_filter_a()->accept(this);
-	n->get_filter_b()->accept(this);
+	n->get_filter_expr_a()->accept(this);
+	n->get_filter_expr_b()->accept(this);
 
-	filter_value_t::const_iterator a_set(m_filter_map.find(n->get_filter_a()));
+	filter_value_t::const_iterator a_set(m_filter_map.find(n->get_filter_expr_a()));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, a_set != m_filter_map.end());
-	filter_value_t::const_iterator b_set(m_filter_map.find(n->get_filter_b()));
+	filter_value_t::const_iterator b_set(m_filter_map.find(n->get_filter_expr_b()));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, b_set != m_filter_map.end());
 
 	CFA::edges_t edges;
@@ -511,12 +519,12 @@ void Evaluate_Filter::visit(Filter_Setminus const* n) {
 				::std::make_pair(n, target_graph_t())));
 	if (!entry.second) return;
 	
-	n->get_filter_a()->accept(this);
-	n->get_filter_b()->accept(this);
+	n->get_filter_expr_a()->accept(this);
+	n->get_filter_expr_b()->accept(this);
 
-	filter_value_t::const_iterator a_set(m_filter_map.find(n->get_filter_a()));
+	filter_value_t::const_iterator a_set(m_filter_map.find(n->get_filter_expr_a()));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, a_set != m_filter_map.end());
-	filter_value_t::const_iterator b_set(m_filter_map.find(n->get_filter_b()));
+	filter_value_t::const_iterator b_set(m_filter_map.find(n->get_filter_expr_b()));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, b_set != m_filter_map.end());
 
 	CFA::edges_t edges;
@@ -541,12 +549,12 @@ void Evaluate_Filter::visit(Filter_Union const* n) {
 				::std::make_pair(n, target_graph_t())));
 	if (!entry.second) return;
 	
-	n->get_filter_a()->accept(this);
-	n->get_filter_b()->accept(this);
+	n->get_filter_expr_a()->accept(this);
+	n->get_filter_expr_b()->accept(this);
 
-	filter_value_t::const_iterator a_set(m_filter_map.find(n->get_filter_a()));
+	filter_value_t::const_iterator a_set(m_filter_map.find(n->get_filter_expr_a()));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, a_set != m_filter_map.end());
-	filter_value_t::const_iterator b_set(m_filter_map.find(n->get_filter_b()));
+	filter_value_t::const_iterator b_set(m_filter_map.find(n->get_filter_expr_b()));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, b_set != m_filter_map.end());
 
 	CFA::edges_t edges;
@@ -567,30 +575,25 @@ void Evaluate_Filter::visit(Filter_Union const* n) {
 }
 
 void Evaluate_Filter::visit(PM_Alternative const* n) {
-	n->get_path_monitor_a()->accept(this);
-	n->get_path_monitor_b()->accept(this);
+	n->get_path_monitor_expr_a()->accept(this);
+	n->get_path_monitor_expr_b()->accept(this);
 }
 
 void Evaluate_Filter::visit(PM_Concat const* n) {
-	n->get_path_monitor_a()->accept(this);
-	n->get_path_monitor_b()->accept(this);
+	n->get_path_monitor_expr_a()->accept(this);
+	n->get_path_monitor_expr_b()->accept(this);
 }
 
 void Evaluate_Filter::visit(PM_Filter_Adapter const* n) {
-	n->get_filter()->accept(this);
-}
-
-void Evaluate_Filter::visit(PM_Next const* n) {
-	n->get_path_monitor_a()->accept(this);
-	n->get_path_monitor_b()->accept(this);
+	n->get_filter_expr()->accept(this);
 }
 
 void Evaluate_Filter::visit(PM_Repeat const* n) {
-	n->get_path_monitor()->accept(this);
+	n->get_path_monitor_expr()->accept(this);
 }
 
 void Evaluate_Filter::visit(Pathcov const* n) {
-	n->get_filter()->accept(this);
+	n->get_filter_expr()->accept(this);
 }
 
 void Evaluate_Filter::visit(Query const* n) {
@@ -607,7 +610,7 @@ void Evaluate_Filter::visit(Query const* n) {
 }
 
 void Evaluate_Filter::visit(Statecov const* n) {
-	n->get_filter()->accept(this);
+	n->get_filter_expr()->accept(this);
 }
 
 void Evaluate_Filter::visit(TGS_Intersection const* n) {

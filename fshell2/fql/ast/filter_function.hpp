@@ -30,7 +30,7 @@
  */
 
 #include <fshell2/config/config.hpp>
-#include <fshell2/fql/ast/filter.hpp>
+#include <fshell2/fql/ast/filter_expr.hpp>
 #include <fshell2/fql/ast/fql_node_factory.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
@@ -38,7 +38,7 @@ FSHELL2_FQL_NAMESPACE_BEGIN;
 
 /*! \brief TODO
 */
-class Filter_Function : public Filter
+class Filter_Function : public Filter_Expr
 {
 	/*! \copydoc doc_self
 	*/
@@ -180,6 +180,9 @@ FILTER_NO_ARG(F_BASICBLOCKENTRY);
 FILTER_NO_ARG(F_CONDITIONEDGE);
 FILTER_NO_ARG(F_DECISIONEDGE);
 FILTER_NO_ARG(F_CONDITIONGRAPH);
+FILTER_STRING_ARG(F_DEF);
+FILTER_STRING_ARG(F_USE);
+FILTER_INT_ARG(F_STMTTYPE);
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;

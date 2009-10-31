@@ -18,24 +18,23 @@
  * limitations under the License.
  *******************************************************************************/
 
-/*! \file fshell2/fql/evaluation/cfa.cpp
+/*! \file fshell2/fql/ast/filter_expr.cpp
  * \brief TODO
  *
  * $Id$
  * \author Michael Tautschnig <tautschnig@forsyte.de>
- * \date   Tue Aug 11 11:14:21 CEST 2009 
+ * \date   Tue Apr 21 23:48:55 CEST 2009 
 */
 
-#include <fshell2/fql/evaluation/cfa.hpp>
+#include <fshell2/fql/ast/filter_expr.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-CFA::CFA() {
+Filter_Expr::Filter_Expr() {
 }
 
-CFA::CFA(Self const& rhs) :
-	m_edges(rhs.m_edges), m_initial(rhs.m_initial) {
+Filter_Expr::~Filter_Expr() {
 }
 
 FSHELL2_FQL_NAMESPACE_END;

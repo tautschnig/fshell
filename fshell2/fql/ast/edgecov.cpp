@@ -36,9 +36,9 @@
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Edgecov::Edgecov(Filter * filter, Predicate::preds_t * predicates) :
-	m_filter(filter), m_predicates(predicates) {
-	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_filter);
+Edgecov::Edgecov(Filter_Expr * filter_expr, Predicate::preds_t * predicates) :
+	m_filter_expr(filter_expr), m_predicates(predicates) {
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_filter_expr);
 }
 
 void Edgecov::accept(AST_Visitor * v) const {
@@ -52,8 +52,8 @@ void Edgecov::accept(AST_Visitor const * v) const {
 bool Edgecov::destroy() {
 	if (this->m_ref_count) return false;
 	Factory::get_instance().destroy(this);
-	m_filter->decr_ref_count();
-	m_filter->destroy();
+	m_filter_expr->decr_ref_count();
+	m_filter_expr->destroy();
 	if (m_predicates) {
 		for (Predicate::preds_t::iterator iter(m_predicates->begin());
 				iter != m_predicates->end(); ++iter) {

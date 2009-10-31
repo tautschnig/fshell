@@ -36,7 +36,7 @@ FSHELL2_FQL_NAMESPACE_BEGIN;
 
 class Edgecov;
 class FQL_Node;
-class Filter;
+class Filter_Expr;
 class Filter_Complement;
 class Filter_Compose;
 class Filter_Enclosing_Scopes;
@@ -47,9 +47,8 @@ class Filter_Union;
 class PM_Alternative;
 class PM_Concat;
 class PM_Filter_Adapter;
-class PM_Next;
 class PM_Repeat;
-class Path_Monitor;
+class Path_Monitor_Expr;
 class Pathcov;
 class Predicate;
 class Query;
@@ -86,11 +85,11 @@ class AST_Visitor
 		/*! \} */
 
 		/*! \{
-		 * \brief Visit a @ref fshell2::fql::Filter
+		 * \brief Visit a @ref fshell2::fql::Filter_Expr
 		 * \param  n Filter
 		 */
-		virtual void visit(Filter const* n) = 0;
-		virtual void visit(Filter const* n) const = 0;
+		virtual void visit(Filter_Expr const* n) = 0;
+		virtual void visit(Filter_Expr const* n) const = 0;
 		/*! \} */
 
 		/*! \{
@@ -174,14 +173,6 @@ class AST_Visitor
 		/*! \} */
 
 		/*! \{
-		 * \brief Visit a @ref fshell2::fql::PM_Next
-		 * \param  n PM_Next
-		 */
-		virtual void visit(PM_Next const* n) = 0;
-		virtual void visit(PM_Next const* n) const = 0;
-		/*! \} */
-
-		/*! \{
 		 * \brief Visit a @ref fshell2::fql::PM_Repeat
 		 * \param  n PM_Repeat
 		 */
@@ -190,11 +181,11 @@ class AST_Visitor
 		/*! \} */
 
 		/*! \{
-		 * \brief Visit a @ref fshell2::fql::Path_Monitor
+		 * \brief Visit a @ref fshell2::fql::Path_Monitor_Expr
 		 * \param  n Path_Monitor
 		 */
-		virtual void visit(Path_Monitor const* n) = 0;
-		virtual void visit(Path_Monitor const* n) const = 0;
+		virtual void visit(Path_Monitor_Expr const* n) = 0;
+		virtual void visit(Path_Monitor_Expr const* n) const = 0;
 		/*! \} */
 
 		/*! \{

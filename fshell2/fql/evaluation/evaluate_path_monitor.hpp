@@ -60,7 +60,7 @@ class Evaluate_Path_Monitor : public Standard_AST_Visitor_Aspect<AST_Visitor>
 
 		Filter_Index();
 
-		int to_index(Filter const* f);
+		int to_index(Filter_Expr const* f);
 
 		static bool lt(const char_type x, const char_type y) {
 			return x < y;
@@ -70,12 +70,12 @@ class Evaluate_Path_Monitor : public Standard_AST_Visitor_Aspect<AST_Visitor>
 			return 0;
 		}
 	
-		int lookup_filter(Filter const* f) const;
-		Filter const* lookup_index(int index) const;
+		int lookup_filter(Filter_Expr const* f) const;
+		Filter_Expr const* lookup_index(int index) const;
 
 		private:
-		::std::map< Filter const*, int > m_filter_to_int;
-		::std::map< int, Filter const* > m_int_to_filter;
+		::std::map< Filter_Expr const*, int > m_filter_to_int;
+		::std::map< int, Filter_Expr const* > m_int_to_filter;
 		int m_next_index;
 
 		Filter_Index(Self const& rhs);
@@ -98,8 +98,8 @@ class Evaluate_Path_Monitor : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	test_goal_states_t const& get_test_goal_states(Test_Goal_Sequence::seq_entry_t const& s) const;
 	inline bool is_test_goal_state(trace_automaton_t::state_type const& state) const;
 
-	inline Filter const* lookup_index(int index) const;
-	inline int lookup_filter(Filter const* filter) const;
+	inline Filter_Expr const* lookup_index(int index) const;
+	inline int lookup_filter(Filter_Expr const* filter) const;
 	inline int id_index() const;
 
 	/*! \{
@@ -128,13 +128,6 @@ class Evaluate_Path_Monitor : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	 * \param  n PM_Filter_Adapter
 	 */
 	virtual void visit(PM_Filter_Adapter const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::PM_Next
-	 * \param  n PM_Next
-	 */
-	virtual void visit(PM_Next const* n);
 	/*! \} */
 
 	/*! \{
@@ -227,11 +220,11 @@ bool Evaluate_Path_Monitor::is_test_goal_state(trace_automaton_t::state_type con
 	return (m_reverse_test_goal_map.end() != m_reverse_test_goal_map.find(state));
 }
 
-Filter const* Evaluate_Path_Monitor::lookup_index(int index) const {
+Filter_Expr const* Evaluate_Path_Monitor::lookup_index(int index) const {
 	return m_filter_index.lookup_index(index);
 }
 	
-int Evaluate_Path_Monitor::lookup_filter(Filter const * filter) const {
+int Evaluate_Path_Monitor::lookup_filter(Filter_Expr const * filter) const {
 	return m_filter_index.lookup_filter(filter);
 }
 	

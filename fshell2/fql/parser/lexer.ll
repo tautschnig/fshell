@@ -35,6 +35,7 @@
 %start query_scope
 %start query_cover
 %start query_passing
+%x stmttype
 
 %{
 
@@ -68,9 +69,9 @@ does; this breaks compilation with -pedantic */
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-class Filter;
+class Filter_Expr;
 class Predicate;
-class Path_Monitor;
+class Path_Monitor_Expr;
 class Test_Goal_Sequence;
 class Test_Goal_Set;
 
@@ -88,6 +89,8 @@ class exprt;
 #include <diagnostics/basic_exceptions/parse_error.hpp>
 
 extern ::std::set< ::fshell2::fql::FQL_Node * > intermediates;
+
+yy_state_type backup_state;
 
 %}
 
@@ -118,6 +121,15 @@ TOK_BASICBLOCKENTRY     @BASICBLOCKENTRY
 TOK_CONDITIONEDGE       @CONDITIONEDGE
 TOK_DECISIONEDGE        @DECISIONEDGE
 TOK_CONDITIONGRAPH      @CONDITIONGRAPH
+TOK_DEF                 @DEF
+TOK_USE                 @USE
+TOK_STMTTYPE            @STMTTYPE
+TOK_STT_IF              IF
+TOK_STT_FOR             FOR
+TOK_STT_WHILE           WHILE
+TOK_STT_SWITCH          SWITCH
+TOK_STT_CONDOP          \?:
+TOK_STT_ASSERT          ASSERT
 /* operations on target graphs */
 TOK_COMPLEMENT          COMPLEMENT
 TOK_UNION               UNION
@@ -151,7 +163,9 @@ TOK_COVER               COVER
 TOK_PASSING             PASSING
 /* C identifier */
 TOK_C_IDENT             [_a-zA-Z][_a-zA-Z0-9]*
-/* a quoted string (no newline) */
+/* a quoted string (no newline); see
+ * http://dinosaur.compilertools.net/flex/flex_11.html for a more powerful
+ * quoted-string lexer including support for escape sequences */
 TOK_QUOTED_STRING       \"[^\"]*\"
 /* a natural number */
 TOK_NAT_NUMBER          [0-9]+
@@ -160,9 +174,10 @@ TOK_NAT_NUMBER          [0-9]+
 
 [ \t\n]                               /* NOOP */
 \/\/.*                                /* NOOP */
-{TOK_L_PARENTHESIS}   { return TOK_L_PARENTHESIS; }
+<*>{TOK_L_PARENTHESIS}   { return TOK_L_PARENTHESIS; }
 {TOK_R_PARENTHESIS}   { return TOK_R_PARENTHESIS; }
-{TOK_COMMA}   { return TOK_COMMA; }
+<stmttype>{TOK_R_PARENTHESIS}   { BEGIN backup_state; return TOK_R_PARENTHESIS; }
+<*>{TOK_COMMA}   { return TOK_COMMA; }
 
 <query_cover,query_passing>{TOK_IDENTITY}   { return TOK_IDENTITY; }
 <query_scope,query_cover,query_passing>{TOK_FILE}   { return TOK_FILE; }
@@ -188,6 +203,16 @@ TOK_NAT_NUMBER          [0-9]+
 <query_cover,query_passing>{TOK_CONDITIONEDGE}   { return TOK_CONDITIONEDGE; }
 <query_cover,query_passing>{TOK_DECISIONEDGE}   { return TOK_DECISIONEDGE; }
 <query_cover,query_passing>{TOK_CONDITIONGRAPH}   { return TOK_CONDITIONGRAPH; }
+<query_cover,query_passing>{TOK_DEF}   { return TOK_DEF; }
+<query_cover,query_passing>{TOK_USE}   { return TOK_USE; }
+<query_cover,query_passing>{TOK_STMTTYPE}   { backup_state = YY_START; BEGIN stmttype; return TOK_STMTTYPE; }
+
+<stmttype>{TOK_STT_IF}   { return TOK_STT_IF; }
+<stmttype>{TOK_STT_FOR}   { return TOK_STT_FOR; }
+<stmttype>{TOK_STT_WHILE}   { return TOK_STT_WHILE; }
+<stmttype>{TOK_STT_SWITCH}   { return TOK_STT_SWITCH; }
+<stmttype>{TOK_STT_CONDOP}   { return TOK_STT_CONDOP; }
+<stmttype>{TOK_STT_ASSERT}   { return TOK_STT_ASSERT; }
 
 <query_scope,query_cover,query_passing>{TOK_COMPLEMENT}   { return TOK_COMPLEMENT; }
 <query_scope,query_cover,query_passing>{TOK_UNION}   { return TOK_UNION; }
@@ -245,7 +270,7 @@ TOK_NAT_NUMBER          [0-9]+
                                         return TOK_NAT_NUMBER; 
                                       }
 
-.                                     {
+<*>.                                  {
 										for (::std::set< ::fshell2::fql::FQL_Node * >::iterator
 											iter(intermediates.begin()); iter != intermediates.end(); ++iter)
 										  if (*iter) (*iter)->destroy();

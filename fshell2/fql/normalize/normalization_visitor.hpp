@@ -131,13 +131,6 @@ class Normalization_Visitor : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	/*! \} */
 
 	/*! \{
-	 * \brief Visit a @ref fshell2::fql::PM_Next
-	 * \param  n PM_Next
-	 */
-	virtual void visit(PM_Next const* n);
-	/*! \} */
-
-	/*! \{
 	 * \brief Visit a @ref fshell2::fql::PM_Repeat
 	 * \param  n PM_Repeat
 	 */
@@ -215,9 +208,9 @@ class Normalization_Visitor : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	};
 
 	Smart_FQL_Node_Ptr<Query> m_top_query;
-	Smart_FQL_Node_Ptr<Filter> m_top_filter;
+	Smart_FQL_Node_Ptr<Filter_Expr> m_top_filter;
 	Smart_FQL_Node_Ptr<Test_Goal_Sequence> m_top_tgseq;
-	Smart_FQL_Node_Ptr<Path_Monitor> m_top_mon;
+	Smart_FQL_Node_Ptr<Path_Monitor_Expr> m_top_mon;
 	Smart_FQL_Node_Ptr<Test_Goal_Set> m_top_tgset;
 	Smart_FQL_Node_Ptr<Predicate> m_top_pred;
 

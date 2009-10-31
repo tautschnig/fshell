@@ -18,55 +18,43 @@
  * limitations under the License.
  *******************************************************************************/
 
-/*! \file fshell2/fql/evaluation/cfa.t.cpp
+#ifndef FSHELL2__FQL__CONCEPTS__STATE_PREDICATE_HPP
+#define FSHELL2__FQL__CONCEPTS__STATE_PREDICATE_HPP
+
+/*! \file fshell2/fql/concepts/state_predicate.hpp
  * \brief TODO
  *
  * $Id$
  * \author Michael Tautschnig <tautschnig@forsyte.de>
- * \date   Tue Aug 11 11:14:19 CEST 2009 
+ * \date   Fri Oct 23 18:47:59 CEST 2009 
 */
 
-
-#include <diagnostics/unittest.hpp>
 #include <fshell2/config/config.hpp>
-#include <fshell2/config/annotations.hpp>
-
-#include <fshell2/fql/evaluation/cfa.hpp>
-
-#define TEST_COMPONENT_NAME CFA
-#define TEST_COMPONENT_NAMESPACE fshell2::fql
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-/** @cond */
-TEST_NAMESPACE_BEGIN;
-TEST_COMPONENT_TEST_NAMESPACE_BEGIN;
-/** @endcond */
-using namespace ::diagnostics::unittest;
-
-////////////////////////////////////////////////////////////////////////////////
-/**
- * @test A test of CFA
- *
- */
-void test( Test_Data & data )
+/*! \brief TODO
+*/
+class State_Predicate
 {
-	CFA cfa;
-	::std::set< CFA::edge_t > edges;
-	cfa.set_edges(edges);
-}
+	/*! \copydoc doc_self
+	*/
+	typedef State_Predicate Self;
 
-/** @cond */
-TEST_COMPONENT_TEST_NAMESPACE_END;
-TEST_NAMESPACE_END;
-/** @endcond */
+	public:
+
+	private:
+	/*! \copydoc copy_constructor
+	*/
+	State_Predicate( Self const& rhs );
+
+	/*! \copydoc assignment_op
+	 */
+	Self& operator=( Self const& rhs );
+};
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
 
-TEST_SUITE_BEGIN;
-TEST_NORMAL_CASE( &test, LEVEL_PROD );
-TEST_SUITE_END;
-
-STREAM_TEST_SYSTEM_MAIN;
+#endif /* FSHELL2__FQL__CONCEPTS__STATE_PREDICATE_HPP */

@@ -46,7 +46,6 @@
 // #include <fshell2/fql/ast/pm_alternative.hpp>
 // #include <fshell2/fql/ast/pm_concat.hpp>
 // #include <fshell2/fql/ast/pm_filter_adapter.hpp>
-// #include <fshell2/fql/ast/pm_next.hpp>
 // #include <fshell2/fql/ast/pm_repeat.hpp>
 // #include <fshell2/fql/ast/predicate.hpp>
 // #include <fshell2/fql/ast/query.hpp>
@@ -115,17 +114,17 @@ void test( Test_Data & data )
 	cfg.compute_edges(gf);
 	Evaluate_Filter eval(gf, cfg);
 	
-	Filter * bb(Filter_Function::Factory::get_instance().create<F_BASICBLOCKENTRY>());
+	Filter_Expr * bb(Filter_Function::Factory::get_instance().create<F_BASICBLOCKENTRY>());
 	bb->accept(&eval);
 	target_graph_t const& bb_entries(eval.get(*bb));
 	TEST_ASSERT_RELATION(3, ==, bb_entries.get_edges().size());
 	
-	Filter * cc(Filter_Function::Factory::get_instance().create<F_CONDITIONEDGE>());
+	Filter_Expr * cc(Filter_Function::Factory::get_instance().create<F_CONDITIONEDGE>());
 	cc->accept(&eval);
 	target_graph_t const& cc_entries(eval.get(*cc));
 	TEST_ASSERT_RELATION(2, ==, cc_entries.get_edges().size());
 	
-	Filter * ff(Filter_Function::Factory::get_instance().create<F_FILE>(tempname_str));
+	Filter_Expr * ff(Filter_Function::Factory::get_instance().create<F_FILE>(tempname_str));
 	ff->accept(&eval);
 	target_graph_t const& ff_entries(eval.get(*ff));
 	TEST_ASSERT_RELATION(6, ==, ff_entries.get_edges().size());

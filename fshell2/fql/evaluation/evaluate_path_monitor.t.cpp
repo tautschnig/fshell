@@ -47,7 +47,6 @@
 // #include <fshell2/fql/ast/pm_alternative.hpp>
 #include <fshell2/fql/ast/pm_concat.hpp>
 #include <fshell2/fql/ast/pm_filter_adapter.hpp>
-// #include <fshell2/fql/ast/pm_next.hpp>
 #include <fshell2/fql/ast/pm_repeat.hpp>
 #include <fshell2/fql/ast/predicate.hpp>
 #include <fshell2/fql/ast/query.hpp>
@@ -120,17 +119,17 @@ void test( Test_Data & data )
 	cfg.compute_edges(gf);
 	Evaluate_Filter eval(gf, cfg);
 		
-	Filter * bb(Filter_Function::Factory::get_instance().create<F_BASICBLOCKENTRY>());
+	Filter_Expr * bb(Filter_Function::Factory::get_instance().create<F_BASICBLOCKENTRY>());
 	Edgecov * e(Edgecov::Factory::get_instance().create(bb,
 				static_cast< Predicate::preds_t * >(0)));
 	Test_Goal_Sequence::seq_t seq_list;
-	seq_list.push_back(::std::make_pair<Path_Monitor *, Test_Goal_Set *>(0, e));
+	seq_list.push_back(::std::make_pair<Path_Monitor_Expr *, Test_Goal_Set *>(0, e));
 	Test_Goal_Sequence * s(Test_Goal_Sequence::Factory::get_instance().create(seq_list, 0));
 
-	Path_Monitor * pm_f(PM_Filter_Adapter::Factory::get_instance().create(bb));
-	Path_Monitor * pm_id(PM_Filter_Adapter::Factory::get_instance().create(
+	Path_Monitor_Expr * pm_f(PM_Filter_Adapter::Factory::get_instance().create(bb));
+	Path_Monitor_Expr * pm_id(PM_Filter_Adapter::Factory::get_instance().create(
 				Filter_Function::Factory::get_instance().create<F_IDENTITY>()));
-	Path_Monitor * pm_id_kleene(PM_Repeat::Factory::get_instance().create(pm_id, 0, -1));
+	Path_Monitor_Expr * pm_id_kleene(PM_Repeat::Factory::get_instance().create(pm_id, 0, -1));
 
 	Query * q(Query::Factory::get_instance().create(0, s,
 				PM_Concat::Factory::get_instance().create(pm_id_kleene,

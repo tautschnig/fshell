@@ -56,7 +56,6 @@
 #include <fshell2/fql/ast/pm_alternative.hpp>
 #include <fshell2/fql/ast/pm_concat.hpp>
 #include <fshell2/fql/ast/pm_filter_adapter.hpp>
-#include <fshell2/fql/ast/pm_next.hpp>
 #include <fshell2/fql/ast/pm_repeat.hpp>
 #include <fshell2/fql/ast/predicate.hpp>
 #include <fshell2/fql/ast/query.hpp>
@@ -101,15 +100,15 @@ extern "C"
   int NUMBER;
   char* STRING;
   
-  ::fshell2::fql::Filter * FILTER;
+  ::fshell2::fql::Filter_Expr * FILTER_EXPR;
   ::fshell2::fql::Predicate * PREDICATE;
-  ::fshell2::fql::Path_Monitor * PATH_MONITOR;
+  ::fshell2::fql::Path_Monitor_Expr * PATH_MONITOR_EXPR;
   ::fshell2::fql::Test_Goal_Sequence * TEST_GOAL_SEQUENCE;
   ::fshell2::fql::Test_Goal_Set * TEST_GOAL_SET;
 
   ::std::set< ::fshell2::fql::Predicate *,
     ::fshell2::fql::FQL_Node_Lt_Compare > * PREDICATE_SET;
-  ::std::list< ::std::pair< ::fshell2::fql::Path_Monitor *,
+  ::std::list< ::std::pair< ::fshell2::fql::Path_Monitor_Expr *,
     ::fshell2::fql::Test_Goal_Set * > > * TGS_LIST;
 
   ::exprt * EXPRT;
@@ -137,6 +136,15 @@ extern "C"
 %token TOK_CONDITIONEDGE
 %token TOK_DECISIONEDGE
 %token TOK_CONDITIONGRAPH
+%token TOK_DEF
+%token TOK_USE
+%token TOK_STMTTYPE
+%token TOK_STT_IF
+%token TOK_STT_FOR
+%token TOK_STT_WHILE
+%token TOK_STT_SWITCH
+%token TOK_STT_CONDOP
+%token TOK_STT_ASSERT
 /* operations on target graphs */
 %token TOK_COMPLEMENT
 %token TOK_UNION
@@ -175,15 +183,16 @@ extern "C"
 /* a natural number */
 %token <NUMBER> TOK_NAT_NUMBER
 
-%type <FILTER> Scope Filter Filter_Function
+%type <FILTER_EXPR> Scope Filter Filter_Function
 %type <TEST_GOAL_SEQUENCE> Cover
-%type <PATH_MONITOR> Passing Path_Monitor Path_Monitor_Term Path_Monitor_Factor
-%type <PATH_MONITOR> Path_Monitor_Symbol
+%type <PATH_MONITOR_EXPR> Passing Path_Monitor Path_Monitor_Term Path_Monitor_Factor
+%type <PATH_MONITOR_EXPR> Path_Monitor_Symbol
 %type <TGS_LIST> Test_Goal_Sequence
 %type <TEST_GOAL_SET> Test_Goal_Set
 %type <PREDICATE_SET> Predicates Preconditions
 %type <PREDICATE> Predicate
 %type <EXPRT> Comparison c_LHS
+%type <NUMBER> Stmttype Stmttypes
 
 %%
 
@@ -225,7 +234,7 @@ Passing: /* empty */
 Test_Goal_Sequence: Test_Goal_Set
 				  {
 					$$ = new ::fshell2::fql::Test_Goal_Sequence::seq_t;
-					$$->push_back(::std::make_pair< ::fshell2::fql::Path_Monitor *,
+					$$->push_back(::std::make_pair< ::fshell2::fql::Path_Monitor_Expr *,
 					  ::fshell2::fql::Test_Goal_Set * >(0, $1));
 				  }
 				  | Test_Goal_Sequence TOK_L_SEQ Path_Monitor TOK_R_SEQ Test_Goal_Set
@@ -236,7 +245,7 @@ Test_Goal_Sequence: Test_Goal_Set
 				  | Test_Goal_Sequence TOK_NEXT Test_Goal_Set
 				  {
 				    $$ = $1;
-					$1->push_back(::std::make_pair< ::fshell2::fql::Path_Monitor *,
+					$1->push_back(::std::make_pair< ::fshell2::fql::Path_Monitor_Expr *,
 					  ::fshell2::fql::Test_Goal_Set * >(0, $3));
 				  }
 				  ;
@@ -267,7 +276,12 @@ Path_Monitor_Term: Path_Monitor_Factor
 				 }
 				 | Path_Monitor_Term TOK_NEXT Path_Monitor_Factor
 				 {
-		      	   $$ = ::fshell2::fql::PM_Next::Factory::get_instance().create($1, $3);
+		      	   $$ = ::fshell2::fql::PM_Concat::Factory::get_instance().create(
+		      	     ::fshell2::fql::PM_Concat::Factory::get_instance().create($1,
+					   ::fshell2::fql::PM_Repeat::Factory::get_instance().create(
+				         ::fshell2::fql::PM_Filter_Adapter::Factory::get_instance().create(
+			               ::fshell2::fql::Filter_Function::Factory::get_instance().create<
+						     ::fshell2::fql::F_IDENTITY>()), 0, -1)),$3);
 				   intermediates.erase($1);
 				   intermediates.erase($3);
 			       intermediates.insert($$);
@@ -718,7 +732,61 @@ Filter_Function: TOK_IDENTITY
                    ::fshell2::fql::F_CONDITIONGRAPH>();
 	    	     intermediates.insert($$);
 			   }
+			   | TOK_DEF TOK_L_PARENTHESIS TOK_C_IDENT TOK_R_PARENTHESIS
+			   {
+			     $$ = ::fshell2::fql::Filter_Function::Factory::get_instance().create<
+                   ::fshell2::fql::F_DEF>($3);
+	    	     intermediates.insert($$);
+			   }
+			   | TOK_USE TOK_L_PARENTHESIS TOK_C_IDENT TOK_R_PARENTHESIS
+			   {
+			     $$ = ::fshell2::fql::Filter_Function::Factory::get_instance().create<
+                   ::fshell2::fql::F_USE>($3);
+	    	     intermediates.insert($$);
+			   }
+			   | TOK_STMTTYPE TOK_L_PARENTHESIS Stmttypes TOK_R_PARENTHESIS
+			   {
+			     $$ = ::fshell2::fql::Filter_Function::Factory::get_instance().create<
+                   ::fshell2::fql::F_STMTTYPE>($3);
+	    	     intermediates.insert($$);
+			   }
 			   ;
+
+Stmttype: TOK_STT_IF
+		{
+		  $$ = ::fshell2::fql::STT_IF;
+		}
+		| TOK_STT_FOR
+		{
+		  $$ = ::fshell2::fql::STT_FOR;
+		}
+		| TOK_STT_WHILE
+		{
+		  $$ = ::fshell2::fql::STT_WHILE;
+		}
+		| TOK_STT_SWITCH
+		{
+		  $$ = ::fshell2::fql::STT_SWITCH;
+		}
+		| TOK_STT_CONDOP
+		{
+		  $$ = ::fshell2::fql::STT_CONDOP;
+		}
+		| TOK_STT_ASSERT
+		{
+		  $$ = ::fshell2::fql::STT_ASSERT;
+		}
+		;
+
+Stmttypes: Stmttype
+		 {
+		   $$ = $1;
+		 }
+		 | Stmttypes TOK_COMMA Stmttype
+		 {
+		   $$ = $1 | $3;
+		 }
+		 ;
 
 %%
 

@@ -30,21 +30,21 @@ $(CBMC_OBJS):
 	-$(MAKE) -C $(top_builddir)/cbmc/src
 
 noinst_LTLIBRARIES = libevaluation.la
-libevaluation_la_SOURCES = cfa.cpp evaluate_filter.cpp evaluate_path_monitor.cpp automaton_inserter.cpp compute_test_goals.cpp
+libevaluation_la_SOURCES =  evaluate_filter.cpp evaluate_path_monitor.cpp automaton_inserter.cpp compute_test_goals.cpp
 include_fshell2_fql_evaluationdir = $(includedir)/fshell2/fql/evaluation
-include_fshell2_fql_evaluation_HEADERS = cfa.hpp evaluate_filter.hpp evaluate_path_monitor.hpp automaton_inserter.hpp compute_test_goals.hpp
-check_PROGRAMS = cfa evaluate_filter evaluate_path_monitor automaton_inserter compute_test_goals
+include_fshell2_fql_evaluation_HEADERS =  evaluate_filter.hpp evaluate_path_monitor.hpp automaton_inserter.hpp compute_test_goals.hpp
+check_PROGRAMS =  evaluate_filter evaluate_path_monitor automaton_inserter compute_test_goals
 evaluate_filter_SOURCES = evaluate_filter.t.cpp
 # add additional objects required to build evaluate_filter here, like
 # evaluate_filter_LDADD = ../base/libbase.la libbla.la
-evaluate_filter_LDADD = libevaluation.la ../ast/libast.la ../../instrumentation/libinstrumentation.la ../../exception/libexception.la $(CBMC_OBJS)
+evaluate_filter_LDADD = libevaluation.la ../ast/libast.la ../concepts/libconcepts.la ../../instrumentation/libinstrumentation.la ../../exception/libexception.la $(CBMC_OBJS)
 # note that this entry (evaluate_filter_SOURCES, evaluate_filter_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually
 compute_test_goals_SOURCES = compute_test_goals.t.cpp
 # add additional objects required to build compute_test_goals here, like
 # compute_test_goals_LDADD = ../base/libbase.la libbla.la
-compute_test_goals_LDADD = libevaluation.la ../ast/libast.la ../../instrumentation/libinstrumentation.la ../../exception/libexception.la $(CBMC_OBJS)
+compute_test_goals_LDADD = libevaluation.la ../ast/libast.la ../concepts/libconcepts.la ../../instrumentation/libinstrumentation.la ../../exception/libexception.la $(CBMC_OBJS)
 # note that this entry (compute_test_goals_SOURCES, compute_test_goals_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually
@@ -58,14 +58,7 @@ automaton_inserter_LDADD =
 evaluate_path_monitor_SOURCES = evaluate_path_monitor.t.cpp
 # add additional objects required to build evaluate_path_monitor here, like
 # evaluate_path_monitor_LDADD = ../base/libbase.la libbla.la
-evaluate_path_monitor_LDADD = libevaluation.la ../ast/libast.la ../../instrumentation/libinstrumentation.la ../../exception/libexception.la $(CBMC_OBJS)
+evaluate_path_monitor_LDADD = libevaluation.la ../ast/libast.la ../concepts/libconcepts.la ../../instrumentation/libinstrumentation.la ../../exception/libexception.la $(CBMC_OBJS)
 # note that this entry (target_graph_SOURCES, target_graph_LDADD) will not be removed
-# by update-makefiles.pl, if the sources files are removed;
-# it must then be removed manually
-cfa_SOURCES = cfa.t.cpp
-# add additional objects required to build cfa here, like
-# cfa_LDADD = ../base/libbase.la libbla.la
-cfa_LDADD = libevaluation.la
-# note that this entry (cfa_SOURCES, cfa_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually

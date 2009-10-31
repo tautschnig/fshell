@@ -36,9 +36,9 @@
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-PM_Repeat::PM_Repeat(Path_Monitor * a, int lower, int upper) :
-	m_path_monitor(a), m_lower_bound(lower), m_upper_bound(upper) {
-	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_path_monitor);
+PM_Repeat::PM_Repeat(Path_Monitor_Expr * a, int lower, int upper) :
+	m_path_monitor_expr(a), m_lower_bound(lower), m_upper_bound(upper) {
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_path_monitor_expr);
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_lower_bound >= 0);
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_upper_bound >= -1);
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, -1 == m_upper_bound || m_upper_bound >= m_lower_bound);
@@ -55,8 +55,8 @@ void PM_Repeat::accept(AST_Visitor const * v) const {
 bool PM_Repeat::destroy() {
 	if (this->m_ref_count) return false;
 	Factory::get_instance().destroy(this);
-	m_path_monitor->decr_ref_count();
-	m_path_monitor->destroy();
+	m_path_monitor_expr->decr_ref_count();
+	m_path_monitor_expr->destroy();
 	return true;
 }
 
