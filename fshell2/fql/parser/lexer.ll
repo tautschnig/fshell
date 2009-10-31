@@ -205,6 +205,7 @@ TOK_NAT_NUMBER          [0-9]+
 <query_cover,query_passing>{TOK_LESS}   { return TOK_LESS; }
 <query_cover,query_passing>{TOK_NEQ}   { return TOK_NEQ; }
 
+<query_cover>{TOK_STATECOV}   { return TOK_STATECOV; }
 <query_cover>{TOK_EDGECOV}   { return TOK_EDGECOV; }
 <query_cover>{TOK_PATHCOV}   { return TOK_PATHCOV; }
 <query_cover>{TOK_L_SEQ}   { return TOK_L_SEQ; }
