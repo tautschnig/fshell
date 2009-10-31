@@ -51,6 +51,7 @@ typedef enum {
 	FSHELL2_INTERNAL,
 	LOCAL,
 	GLOBAL,
+	GLOBAL_STATIC,
 	PARAMETER,
 	UNKNOWN
 } variable_type_t;
@@ -77,6 +78,9 @@ typedef enum {
 			break;
 		case GLOBAL:
 			os << "GLOBAL";
+			break;
+		case GLOBAL_STATIC:
+			os << "GLOBAL_STATIC";
 			break;
 		case PARAMETER:
 			os << "PARAMETER";
@@ -105,6 +109,8 @@ variable_type_t get_variable_type(::std::string const& v)
 	else if (0 == v.find("c::!fshell2!")) return FSHELL2_INTERNAL;
 	// global variables only have c:: and not other ::
 	else if (::std::string::npos == v.find("::", 3)) return GLOBAL;
+	// global static variables have one more ::
+	else if (::std::string::npos == v.find("::", v.find("::", 3) + 2)) return GLOBAL_STATIC;
 	// parameters have two more ::
 	else if (::std::string::npos == v.find("::", v.find("::", v.find("::", 3) + 2) + 2)) return PARAMETER;
 	// must have a frame, otherwise I have no idea...
@@ -175,6 +181,7 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::test_case_t & tc) const
 				case PARAMETER:
 				case LOCAL:
 				case GLOBAL:
+				case GLOBAL_STATIC:
 					tc.push_back(program_variable_t());
 					tc.back().m_name = *v_iter;
 					tc.back().m_pretty_name = var_name.substr(0, var_name.rfind('#')).substr(0, var_name.rfind('@')); // @ comes before #
@@ -216,6 +223,7 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::test_case_t & tc) const
 			case CBMC_TMP_RETURN_VALUE:
 			case LOCAL:
 			case GLOBAL:
+			case GLOBAL_STATIC:
 				if (iter->rhs.is_constant()) break;
 				if (iter->source.pc->is_function_call()) {
 					::code_function_callt const& fct(::to_code_function_call(iter->source.pc->code));
