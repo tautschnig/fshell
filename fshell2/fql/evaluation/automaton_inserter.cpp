@@ -196,7 +196,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 				for (::goto_programt::const_targett tmp_iter(tmp.instructions.begin());
 						tmp_iter != tmp.instructions.end(); ++tmp_iter)
 					m_target_edge_map.insert(::std::make_pair(tmp_iter, edge)); 
-				
+			
 				m_inserter.insert(::fshell2::instrumentation::GOTO_Transformation::BEFORE, edge, tmp);
 			} else {
 				FSHELL2_PROD_ASSERT(::diagnostics::Not_Implemented, (cfg_node->second.successors.size() == 1) ||
@@ -320,8 +320,13 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 			// some t_iter->second
 			::goto_programt::targett if_stmt(body.add_instruction());
 
+			// compute_target_numbers (called by update in make_nondet_choice)
+			// doesn't like inconsistent goto which happens because out_target
+			// is not yet in body
+			::goto_programt tmp_nd;
 			::fshell2::instrumentation::GOTO_Transformation::inserted_t & targets(
-					m_inserter.make_nondet_choice(body, tr_iter->second.size(), m_context));
+					m_inserter.make_nondet_choice(tmp_nd, tr_iter->second.size(), m_context));
+			body.destructive_append(tmp_nd);
 			::fshell2::instrumentation::GOTO_Transformation::inserted_t::iterator t_iter(
 					targets.begin());
 
