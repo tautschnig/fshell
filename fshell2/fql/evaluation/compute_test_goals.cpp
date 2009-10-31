@@ -171,17 +171,17 @@ Compute_Test_Goals::test_goals_t const& Compute_Test_Goals::compute(Query const&
 				for (::std::set< ::literalt >::const_iterator l_iter(
 							inner_guards_entry->second.begin()); l_iter != inner_guards_entry->second.end();
 						++l_iter) {
-					// I think this does not even happen
-					if (l_iter->is_false()) continue;
+					if (l_iter->is_false() || l_iter->var_no() == ::literalt::unused_var_no()) continue;
 					// we will always take this edge, a trivial goal
 					if (l_iter->is_true()) {
 						set.clear();
 						// just make sure we have a single entry in there to get at
 						// least one test case
+						// ::std::cerr << "Adding true guard " << l_iter->var_no() << ::std::endl;
 						set.push_back(*l_iter);
 						break;
 					}
-					// ::std::cerr << "Adding non-trivial guard " << guards.first->second.first.dimacs() << ::std::endl;
+					// ::std::cerr << "Adding guard " << l_iter->var_no() << ::std::endl;
 					set.push_back(*l_iter);
 				}
 			}

@@ -140,7 +140,7 @@ void test( Test_Data & data )
 	q->accept(&pm_eval);
 	
 	TEST_ASSERT_RELATION(3, ==, pm_eval.get_cov_seq_aut().state_count());
-	TEST_ASSERT_RELATION(3, ==, pm_eval.get_passing_aut().state_count());
+	TEST_ASSERT_RELATION(4, ==, pm_eval.get_passing_aut().state_count());
 }
 
 /** @cond */

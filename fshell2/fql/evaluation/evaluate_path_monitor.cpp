@@ -145,7 +145,7 @@ void Evaluate_Path_Monitor::visit(PM_Concat const* n) {
 	trace_automaton_t::state_type const a_out(m_current_final);
 	n->get_path_monitor_b()->accept(this);
 
-	m_current_aut->set_trans(a_out, -1, m_current_final);
+	m_current_aut->set_trans(a_out, -1, m_current_initial);
 	m_current_initial = a_in;
 }
 
@@ -298,6 +298,20 @@ void Evaluate_Path_Monitor::visit(Test_Goal_Sequence const* n) {
 }
 
 void Evaluate_Path_Monitor::simplify(trace_automaton_t & aut) {
+	/*
+	::std::cerr << "Input AUT:" << ::std::endl;
+	for (trace_automaton_t::const_iterator iter(aut.begin()); iter != aut.end(); ++iter) {
+		trace_automaton_t::edges_type out_edges(aut.delta2(*iter));
+		for (trace_automaton_t::edges_type::const_iterator o_iter(out_edges.begin());
+				o_iter != out_edges.end(); ++o_iter) {
+			if (aut.initial().end() != aut.initial().find(*iter)) ::std::cerr << ".";
+			::std::cerr << *iter << " -[ " << o_iter->first << " ]-> " << o_iter->second;
+			if (aut.final(o_iter->second)) ::std::cerr << ".";
+			::std::cerr << ::std::endl;
+		}
+	}
+	*/
+
 	for (trace_automaton_t::const_iterator iter(aut.begin()); iter != aut.end(); ++iter) {
 		trace_automaton_t::edges_type in_edges(aut.delta2_backwards(*iter));
 		trace_automaton_t::edges_type out_edges(aut.delta2(*iter));
@@ -365,6 +379,20 @@ void Evaluate_Path_Monitor::simplify(trace_automaton_t & aut) {
 			aut.del_state(state);
 		}
 	}
+	
+	/*
+	::std::cerr << "Simplified AUT:" << ::std::endl;
+	for (trace_automaton_t::const_iterator iter(aut.begin()); iter != aut.end(); ++iter) {
+		trace_automaton_t::edges_type out_edges(aut.delta2(*iter));
+		for (trace_automaton_t::edges_type::const_iterator o_iter(out_edges.begin());
+				o_iter != out_edges.end(); ++o_iter) {
+			if (aut.initial().end() != aut.initial().find(*iter)) ::std::cerr << ".";
+			::std::cerr << *iter << " -[ " << o_iter->first << " ]-> " << o_iter->second;
+			if (aut.final(o_iter->second)) ::std::cerr << ".";
+			::std::cerr << ::std::endl;
+		}
+	}
+	*/
 }
 
 FSHELL2_FQL_NAMESPACE_END;
