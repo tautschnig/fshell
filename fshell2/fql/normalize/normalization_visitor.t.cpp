@@ -71,7 +71,7 @@ using namespace ::diagnostics::unittest;
  * @test A test of Normalization_Visitor
  *
  */
-void test( Test_Data & data )
+void test_union_intersect( Test_Data & data )
 {
 	Filter_Expr * file(Filter_Function::Factory::get_instance().create<F_FILE>("bla.c"));
 	Filter_Expr * line(Filter_Function::Factory::get_instance().create<F_LINE>(42));
@@ -87,7 +87,7 @@ void test( Test_Data & data )
 	seq_list.push_back(::std::make_pair<Path_Monitor_Expr *, Test_Goal_Set *>(0, e));
 	Test_Goal_Sequence * s(Test_Goal_Sequence::Factory::get_instance().create(seq_list, 0));
 
-	Query * q(Query::Factory::get_instance().create(file, s, 0));
+	Query * q(Query::Factory::get_instance().create(0, s, 0));
 	::std::ostringstream os1;
 	os1 << *q;
 	
@@ -101,7 +101,7 @@ void test( Test_Data & data )
 	seq_list2.push_back(::std::make_pair<Path_Monitor_Expr *, Test_Goal_Set *>(0, e2));
 	Test_Goal_Sequence * s2(Test_Goal_Sequence::Factory::get_instance().create(seq_list2, 0));
 
-	Query * q2(Query::Factory::get_instance().create(file, s2, 0));
+	Query * q2(Query::Factory::get_instance().create(0, s2, 0));
 	::std::ostringstream os2;
 	os2 << *q2;
 	
@@ -123,7 +123,7 @@ void test( Test_Data & data )
 	seq_list3.push_back(::std::make_pair<Path_Monitor_Expr *, Test_Goal_Set *>(0, e3));
 	Test_Goal_Sequence * s3(Test_Goal_Sequence::Factory::get_instance().create(seq_list3, 0));
 
-	Query * q3(Query::Factory::get_instance().create(file, s3, 0));
+	Query * q3(Query::Factory::get_instance().create(0, s3, 0));
 	os1.str("");
 	os1 << *q3;
 	TEST_CHECK(os1.str().find("UNION(") != ::std::string::npos);
@@ -131,6 +131,50 @@ void test( Test_Data & data )
 	os1.str("");
 	os1 << *q3;
 	TEST_CHECK(::std::string::npos == os1.str().find("UNION("));
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * @test A test of Normalization_Visitor
+ *
+ */
+void test_prefix( Test_Data & data )
+{
+	Filter_Expr * file(Filter_Function::Factory::get_instance().create<F_FILE>("bla.c"));
+	Filter_Expr * line(Filter_Function::Factory::get_instance().create<F_LINE>(42));
+
+	Edgecov * e(Edgecov::Factory::get_instance().create(line,
+				static_cast< Predicate::preds_t * >(0)));
+
+	Test_Goal_Sequence::seq_t seq_list;
+	seq_list.push_back(::std::make_pair<Path_Monitor_Expr *, Test_Goal_Set *>(0, e));
+	Test_Goal_Sequence * s(Test_Goal_Sequence::Factory::get_instance().create(seq_list, 0));
+
+	Query * q(Query::Factory::get_instance().create(file, s, 0));
+	::std::ostringstream os1;
+	os1 << *q;
+	
+	Filter_Expr * compose(Filter_Compose::Factory::get_instance().create(line, file));
+
+	Edgecov * e2(Edgecov::Factory::get_instance().create(compose,
+				static_cast< Predicate::preds_t * >(0)));
+
+	Test_Goal_Sequence::seq_t seq_list2;
+	seq_list2.push_back(::std::make_pair<Path_Monitor_Expr *, Test_Goal_Set *>(0, e2));
+	Test_Goal_Sequence * s2(Test_Goal_Sequence::Factory::get_instance().create(seq_list2, 0));
+
+	Query * q2(Query::Factory::get_instance().create(0, s2, 0));
+	::std::ostringstream os2;
+	os2 << *q2;
+	
+	TEST_ASSERT_RELATION(os1.str(), !=, os2.str());
+
+	Normalization_Visitor norm;
+	norm.normalize(&q);
+	os1.str("");
+	os1 << *q;
+	
+	TEST_ASSERT_RELATION(os1.str(), ==, os2.str());
 }
 
 /** @cond */
@@ -142,7 +186,8 @@ FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
 
 TEST_SUITE_BEGIN;
-TEST_NORMAL_CASE( &test, LEVEL_PROD );
+TEST_NORMAL_CASE( &test_union_intersect, LEVEL_PROD );
+TEST_NORMAL_CASE( &test_prefix, LEVEL_PROD );
 TEST_SUITE_END;
 
 STREAM_TEST_SYSTEM_MAIN;

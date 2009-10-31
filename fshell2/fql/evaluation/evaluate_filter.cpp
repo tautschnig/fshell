@@ -32,6 +32,7 @@
 
 #include <diagnostics/basic_exceptions/violated_invariance.hpp>
 #include <diagnostics/basic_exceptions/invalid_protocol.hpp>
+#include <diagnostics/basic_exceptions/invalid_argument.hpp>
 #include <diagnostics/basic_exceptions/not_implemented.hpp>
 
 #include <fshell2/instrumentation/cfg.hpp>
@@ -107,46 +108,21 @@ void Evaluate_Filter::visit(Filter_Complement const* n) {
 	if (!entry.second) return;
 	
 	n->get_filter_expr()->accept(this);
-
-	// the only point where we really evaluate F_IDENTITY
 	Filter_Function * id(Filter_Function::Factory::get_instance().create<F_IDENTITY>());
-	::std::pair< filter_value_t::iterator, bool > id_entry(m_filter_map.insert(
-				::std::make_pair(id, target_graph_t())));
-	if (id_entry.second) {
-		CFA::edges_t edges;
-		CFA::initial_states_t initial;
+	id->accept(this);
 
-		::std::string main_name("c::");
-		main_name += ::config.main;
-		for (::goto_functionst::function_mapt::iterator iter(m_gf.function_map.begin());
-				iter != m_gf.function_map.end(); ++iter) {
-			if (skip_function(iter->second)) continue;
-			if (iter->first == main_name)
-				initial.insert(::std::make_pair(&(iter->second.body), iter->second.body.instructions.begin()));
-			for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
-					f_iter != iter->second.body.instructions.end(); ++f_iter) {
-				::fshell2::instrumentation::CFG::entries_t::iterator cfg_node(m_cfg.find(f_iter));
-				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.end());
-				for (::fshell2::instrumentation::CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
-						s_iter != cfg_node->second.successors.end(); ++s_iter)
-					edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), *s_iter));
-			}
-		}
-
-		id_entry.first->second.set_edges(edges);
-		id_entry.first->second.set_initial_states(initial);
-	}
-
+	filter_value_t::const_iterator id_set(m_filter_map.find(id));
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, id_set != m_filter_map.end());
 	filter_value_t::const_iterator f_set(m_filter_map.find(n->get_filter_expr()));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, f_set != m_filter_map.end());
 
 	CFA::edges_t edges;
-	::std::set_difference(id_entry.first->second.get_edges().begin(), id_entry.first->second.get_edges().end(),
+	::std::set_difference(id_set->second.get_edges().begin(), id_set->second.get_edges().end(),
 			f_set->second.get_edges().begin(), f_set->second.get_edges().end(),
 			::std::inserter(edges, edges.begin()));
 	entry.first->second.set_edges(edges);
 	CFA::initial_states_t initial;
-	::std::set_difference(id_entry.first->second.get_initial_states().begin(), id_entry.first->second.get_initial_states().end(),
+	::std::set_difference(id_set->second.get_initial_states().begin(), id_set->second.get_initial_states().end(),
 			f_set->second.get_initial_states().begin(), f_set->second.get_initial_states().end(),
 			::std::inserter(initial, initial.begin()));
 	entry.first->second.set_initial_states(initial);
@@ -210,8 +186,20 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 	
 	switch (n->get_filter_type()) {
 		case F_IDENTITY:
-			// treated specially in all evaluations, only evaluated in
-			// Filter_Complement above
+			for (::goto_functionst::function_mapt::iterator iter(m_gf.function_map.begin());
+					iter != m_gf.function_map.end(); ++iter) {
+				if (skip_function(iter->second)) continue;
+				if (iter->first == (prefix + ::config.main))
+					initial.insert(::std::make_pair(&(iter->second.body), iter->second.body.instructions.begin()));
+				for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
+						f_iter != iter->second.body.instructions.end(); ++f_iter) {
+					::fshell2::instrumentation::CFG::entries_t::iterator cfg_node(m_cfg.find(f_iter));
+					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.end());
+					for (::fshell2::instrumentation::CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
+							s_iter != cfg_node->second.successors.end(); ++s_iter)
+						edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), *s_iter));
+				}
+			}
 			break;
 		case F_FILE:
 			{
@@ -245,12 +233,13 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 						if (f_iter->location.is_nil() ||
 								f_iter->location.get_line().empty() ||
 								f_iter->location.get_line() != arg) continue;
-						initial.insert(::std::make_pair(&(iter->second.body), f_iter));
 						CFG::entries_t::iterator cfg_node(m_cfg.find(f_iter));
 						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.end());
 						for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
-								s_iter != cfg_node->second.successors.end(); ++s_iter)
+								s_iter != cfg_node->second.successors.end(); ++s_iter) {
+							initial.insert(::std::make_pair(&(iter->second.body), f_iter));
 							edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), *s_iter));
+						}
 					}
 				}
 			}
@@ -266,12 +255,13 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 						if (f_iter->location.is_nil() ||
 								f_iter->location.get_column().empty() ||
 								f_iter->location.get_column() != arg) continue;
-						initial.insert(::std::make_pair(&(iter->second.body), f_iter));
 						CFG::entries_t::iterator cfg_node(m_cfg.find(f_iter));
 						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.end());
 						for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
-								s_iter != cfg_node->second.successors.end(); ++s_iter)
+								s_iter != cfg_node->second.successors.end(); ++s_iter) {
+							initial.insert(::std::make_pair(&(iter->second.body), f_iter));
 							edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), *s_iter));
+						}
 					}
 				}
 			}
@@ -597,10 +587,7 @@ void Evaluate_Filter::visit(Pathcov const* n) {
 }
 
 void Evaluate_Filter::visit(Query const* n) {
-	if (n->get_prefix()) {
-		FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
-		n->get_prefix()->accept(this);
-	}
+	FSHELL2_DEBUG_ASSERT1(::diagnostics::Invalid_Argument, !n->get_prefix(), "Query not normalized");
 
 	n->get_cover()->accept(this);
 	

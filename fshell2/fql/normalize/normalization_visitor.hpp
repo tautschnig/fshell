@@ -213,6 +213,7 @@ class Normalization_Visitor : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	Smart_FQL_Node_Ptr<Path_Monitor_Expr> m_top_mon;
 	Smart_FQL_Node_Ptr<Test_Goal_Set> m_top_tgset;
 	Smart_FQL_Node_Ptr<Predicate> m_top_pred;
+	Smart_FQL_Node_Ptr<Filter_Expr> m_prefix;
 
 	/*! \copydoc copy_constructor
 	*/

@@ -139,7 +139,10 @@ void Normalization_Visitor::visit(Edgecov const* n) {
 		m_top_pred = 0;
 	}
 	
-	m_top_tgset = Edgecov::Factory::get_instance().create(filter.get(), preds);
+	m_top_tgset = Edgecov::Factory::get_instance().create(
+			m_prefix.get() ?
+				Filter_Compose::Factory::get_instance().create(filter.get(), m_prefix.get()) :
+				filter.get(), preds);
 	m_top_filter = 0;
 }
 
@@ -302,7 +305,10 @@ void Normalization_Visitor::visit(PM_Concat const* n) {
 
 void Normalization_Visitor::visit(PM_Filter_Adapter const* n) {
 	n->get_filter_expr()->accept(this);
-	m_top_mon = PM_Filter_Adapter::Factory::get_instance().create(m_top_filter.get());
+	m_top_mon = PM_Filter_Adapter::Factory::get_instance().create(
+			m_prefix.get() ?
+				Filter_Compose::Factory::get_instance().create(m_top_filter.get(), m_prefix.get()) :
+				m_top_filter.get());
 }
 
 void Normalization_Visitor::visit(PM_Repeat const* n) {
@@ -330,7 +336,10 @@ void Normalization_Visitor::visit(Pathcov const* n) {
 		m_top_pred = 0;
 	}
 	
-	m_top_tgset = Pathcov::Factory::get_instance().create(filter.get(), n->get_bound(), preds);
+	m_top_tgset = Pathcov::Factory::get_instance().create(
+			m_prefix.get() ?
+				Filter_Compose::Factory::get_instance().create(filter.get(), m_prefix.get()) :
+				filter.get(), n->get_bound(), preds);
 	m_top_filter = 0;
 }
 
@@ -339,10 +348,9 @@ void Normalization_Visitor::visit(Predicate const* n) {
 }
 	
 void Normalization_Visitor::visit(Query const* n) {
-	Smart_FQL_Node_Ptr<Filter_Expr> prefix;
 	if (n->get_prefix()) {
 		n->get_prefix()->accept(this);
-		prefix = m_top_filter;
+		m_prefix = m_top_filter;
 	}
 
 	n->get_cover()->accept(this);
@@ -354,10 +362,11 @@ void Normalization_Visitor::visit(Query const* n) {
 		passing = m_top_mon;
 	}
 
-	m_top_query = Query::Factory::get_instance().create(prefix.get(), cover.get(), passing.get());
+	m_top_query = Query::Factory::get_instance().create(0, cover.get(), passing.get());
 	m_top_filter = 0;
 	m_top_tgseq = 0;
 	m_top_mon = 0;
+	m_prefix = 0;
 }
 
 void Normalization_Visitor::visit(Statecov const* n) {
@@ -379,7 +388,10 @@ void Normalization_Visitor::visit(Statecov const* n) {
 		m_top_pred = 0;
 	}
 	
-	m_top_tgset = Statecov::Factory::get_instance().create(filter.get(), preds);
+	m_top_tgset = Statecov::Factory::get_instance().create(
+			m_prefix.get() ?
+				Filter_Compose::Factory::get_instance().create(filter.get(), m_prefix.get()) :
+				filter.get(), preds);
 	m_top_filter = 0;
 }
 	
