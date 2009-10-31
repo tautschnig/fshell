@@ -165,10 +165,15 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::test_case_t & tc) const
 				v_iter != stmt_vars.end(); ++v_iter) {
 			// keep the name for further manipulation
 			::std::string const& var_name((*v_iter)->get("identifier").as_string());
-			//// ::std::cerr << "Checking " << var_name << ::std::endl;
-			if (!vars.insert(var_name.substr(0, var_name.rfind('#'))).second) continue;
-			//// ::std::cerr << "Added var " << var_name << ::std::endl;
-			switch (get_variable_type(var_name)) {
+			// ::std::cerr << "Checking (RHS)" << var_name << ::std::endl;
+			variable_type_t const vt(get_variable_type(var_name));
+			if (CBMC_TMP_RETURN_VALUE == vt) {
+				if (!vars.insert(var_name).second) continue;
+			} else {
+				if (!vars.insert(var_name.substr(0, var_name.rfind('#'))).second) continue;
+			}
+			// ::std::cerr << "Added var " << var_name << " [" << vt << "]" << ::std::endl;
+			switch (vt) {
 				case CBMC_INTERNAL: // we don't care
 				case CBMC_GUARD: // we don't care
 				case FSHELL2_INTERNAL: // we don't care
@@ -199,10 +204,15 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::test_case_t & tc) const
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, iter->lhs.id() == "symbol");
 		// keep the name for further manipulation
 		::std::string const& var_name(iter->lhs.get("identifier").as_string());
-		//// ::std::cerr << "Checking " << var_name << ::std::endl;
-		if (!vars.insert(var_name.substr(0, var_name.rfind('#'))).second) continue;
-		//// ::std::cerr << "Added var " << var_name << ::std::endl;
-		switch (get_variable_type(var_name)) {
+		// ::std::cerr << "Checking (LHS)" << var_name << ::std::endl;
+		variable_type_t const vt(get_variable_type(var_name));
+		if (CBMC_TMP_RETURN_VALUE == vt && ::symex_targett::HIDDEN != iter->assignment_type) {
+			if (!vars.insert(var_name).second) continue;
+		} else {
+			if (!vars.insert(var_name.substr(0, var_name.rfind('#'))).second) continue;
+		}
+		// ::std::cerr << "Added var " << var_name << " [" << vt << "]" << ::std::endl;
+		switch (vt) {
 			case CBMC_INTERNAL: // we don't care
 			case CBMC_GUARD: // we don't care
 			case FSHELL2_INTERNAL: // we don't care
