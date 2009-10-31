@@ -37,7 +37,9 @@
 #include <fshell2/instrumentation/cfg.hpp>
 #include <fshell2/fql/normalize/normalization_visitor.hpp>
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
+#include <fshell2/fql/evaluation/predicate_instrumentation.hpp>
 #include <fshell2/fql/evaluation/evaluate_path_monitor.hpp>
+#include <fshell2/fql/evaluation/build_test_goal_automaton.hpp>
 #include <fshell2/fql/evaluation/automaton_inserter.hpp>
 #include <fshell2/fql/evaluation/compute_test_goals.hpp>
 #include <fshell2/fql/ast/query.hpp>
@@ -198,21 +200,21 @@ void FShell2::try_query(::language_uit & manager, char const * line) {
 	// evaluate all filters before modifying the CFG
 	query_ast->accept(&filter_eval);
 
+	// create a predicated CFA, if necessary, and add predicate edges
+	::fshell2::fql::Predicate_Instrumentation pred_inst(gf_copy);
+	query_ast->accept(&pred_inst);
+
 	// build automata from path monitor expressions
 	::fshell2::fql::Evaluate_Path_Monitor pm_eval(filter_eval);
 	query_ast->accept(&pm_eval);
-	
+	// create a test goal automaton from the coverage sequence
+	::fshell2::fql::Build_Test_Goal_Automaton tg_builder(filter_eval, pm_eval, cfg);
+	query_ast->accept(&tg_builder);
+
 	// do automaton instrumentation
 	Context_Backup context_backup(manager);
-	::fshell2::fql::Automaton_Inserter aut(pm_eval, filter_eval, gf_copy, cfg, manager.context);
+	::fshell2::fql::Automaton_Inserter aut(pm_eval, tg_builder, gf_copy, cfg, manager.context);
 	aut.insert(*query_ast);
-
-	/*
-	// build CFGs with abstraction
-	::fshell2::instrumentation::Abstract_CFG_Builder abst(instrumented_cfg, *ast);
-	::std::map< ::fshell2::fql::Abstraction const*, ::goto_functionst const > abst_map;
-	abst.build(abst_map);
-	*/
 
 	if (m_opts.get_bool_option("show-goto-functions")) {
 		::namespacet const ns(manager.context);
@@ -221,7 +223,7 @@ void FShell2::try_query(::language_uit & manager, char const * line) {
 	}
 	
 	// compute test goals
-	::fshell2::fql::Compute_Test_Goals goals(manager, m_opts, gf_copy, filter_eval, pm_eval, aut);
+	::fshell2::fql::Compute_Test_Goals goals(manager, m_opts, gf_copy, tg_builder, aut);
 
 	// do the enumeration
 	::fshell2::Constraint_Strengthening cs(goals);

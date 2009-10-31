@@ -36,6 +36,7 @@
 #include <fshell2/instrumentation/cfg.hpp>
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
 #include <fshell2/fql/evaluation/evaluate_path_monitor.hpp>
+#include <fshell2/fql/evaluation/build_test_goal_automaton.hpp>
 #include <fshell2/fql/evaluation/automaton_inserter.hpp>
 
 #include <fshell2/fql/ast/edgecov.hpp>
@@ -136,11 +137,13 @@ void test( Test_Data & data )
 
 	::fshell2::fql::Evaluate_Path_Monitor pm_eval(eval);
 	q->accept(&pm_eval);
+	::fshell2::fql::Build_Test_Goal_Automaton tg_builder(eval, pm_eval, cfg);
+	q->accept(&tg_builder);
 
-	::fshell2::fql::Automaton_Inserter aut(pm_eval, eval, gf, cfg, l.context);
+	::fshell2::fql::Automaton_Inserter aut(pm_eval, tg_builder, gf, cfg, l.context);
 	aut.insert(*q);
 	
-	Compute_Test_Goals goals(l, options, gf, eval, pm_eval, aut);
+	Compute_Test_Goals goals(l, options, gf, tg_builder, aut);
 	Compute_Test_Goals::test_goals_t const& bb_goals(goals.compute(*q));
 
 	TEST_ASSERT_RELATION(6, ==, bb_goals.size());

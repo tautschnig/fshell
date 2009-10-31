@@ -35,15 +35,10 @@
 
 #include <fshell2/instrumentation/cfg.hpp>
 #include <fshell2/instrumentation/goto_transformation.hpp>
+#include <fshell2/fql/ast/query.hpp>
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
 #include <fshell2/fql/evaluation/evaluate_path_monitor.hpp>
-#include <fshell2/fql/ast/edgecov.hpp>
-#include <fshell2/fql/ast/pathcov.hpp>
-#include <fshell2/fql/ast/query.hpp>
-#include <fshell2/fql/ast/statecov.hpp>
-#include <fshell2/fql/ast/tgs_intersection.hpp>
-#include <fshell2/fql/ast/tgs_setminus.hpp>
-#include <fshell2/fql/ast/tgs_union.hpp>
+#include <fshell2/fql/evaluation/build_test_goal_automaton.hpp>
 
 #include <limits>
 
@@ -55,25 +50,17 @@
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Automaton_Inserter::Automaton_Inserter(Evaluate_Path_Monitor & pm_eval,
-			Evaluate_Filter const& filter_eval, ::goto_functionst & gf,
+Automaton_Inserter::Automaton_Inserter(Evaluate_Path_Monitor const& pm_eval,
+			Build_Test_Goal_Automaton const& build_tg_aut, ::goto_functionst & gf,
 			::fshell2::instrumentation::CFG & cfg,
 			::contextt & context) :
-	m_pm_eval(pm_eval), m_filter_eval(filter_eval), m_gf(gf),
+	m_pm_eval(pm_eval), m_build_tg_aut(build_tg_aut), m_gf(gf),
 	m_context(context),
 	m_cfg(cfg),
-	m_inserter(m_gf),
-	m_test_goal_map_entry(m_test_goal_map.end()) {
+	m_inserter(m_gf)
+{
 }
 
-Automaton_Inserter::test_goal_states_t const& Automaton_Inserter::get_test_goal_states(
-		Test_Goal_Sequence::seq_entry_t const& s) const {
-	test_goal_map_t::const_iterator entry(m_test_goal_map.find(&s));
-	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Protocol,
-			entry != m_test_goal_map.end());
-	return entry->second;
-}
-			
 Automaton_Inserter::instrumentation_points_t const& Automaton_Inserter::get_test_goal_instrumentation(
 			ta_state_t const& state) const {
 	instrumentation_map_t::const_iterator entry(m_tg_instrumentation_map.find(state));
@@ -88,200 +75,6 @@ CFA::edge_t const& Automaton_Inserter::get_target_graph_edge(::goto_programt::co
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Protocol,
 			entry != m_target_edge_map.end());
 	return entry->second;
-}
-
-void Automaton_Inserter::visit(Edgecov const* n) {
-	if (n->get_predicates()) {
-		FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
-	}
-
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == m_current_final.size());
-
-	ta_state_set_t prev_final;
-	prev_final.swap(m_current_final);
-	m_current_final.insert(m_cov_seq_aut.new_state());
-
-	for (ta_state_set_t::const_iterator iter(prev_final.begin());
-			iter != prev_final.end(); ++iter)
-		m_cov_seq_aut.set_trans(*iter, m_pm_eval.to_index(m_filter_eval.get(*(n->get_filter_expr()))),
-				*m_current_final.begin());
-	
-	m_test_goal_map_entry->second.insert(*m_current_final.begin());
-	m_reverse_test_goal_map.insert(::std::make_pair(*m_current_final.begin(), m_test_goal_map_entry));
-}
-			
-void Automaton_Inserter::dfs_build(ta_state_t const& state, target_graph_t::node_t const& root, int const bound,
-		node_counts_t const& nc, target_graph_t const& tgg) {
-	::fshell2::instrumentation::CFG::entries_t::iterator cfg_node(m_cfg.find(root.second));
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.end());
-	// the end? that's ok as well
-	if (cfg_node->second.successors.empty()) {
-		m_current_final.insert(state);
-		return;
-	}
-
-	for (::fshell2::instrumentation::CFG::successors_t::iterator s_iter(
-				cfg_node->second.successors.begin());
-			s_iter != cfg_node->second.successors.end(); ++s_iter) {
-		// maybe the root statement is to be ignored, then just keep going but
-		// don't add anything
-		if (Evaluate_Filter::ignore_instruction(*(root.second))) {
-			// maybe this is the end, maybe we'll find some more; if we do,
-			// we'll pass this state anyway, but just be sure we have something.
-			m_current_final.insert(state);
-			dfs_build(state, s_iter->first, bound, nc, tgg);
-			continue;
-		}
-		node_counts_t::const_iterator nc_iter(nc.find(s_iter->first));
-		// test the bound
-		if (nc.end() != nc_iter && nc_iter->second == bound) {
-			m_current_final.insert(state);
-			continue;
-		}
-		target_graph_t::edge_t new_edge(::std::make_pair(root, s_iter->first));
-		// check target graph
-		if (tgg.get_edges().end() == tgg.get_edges().find(new_edge)) {
-			m_current_final.insert(state);
-			continue;
-		}
-		// keep going, we're within the limits
-		// create a new target graph
-		m_more_target_graphs.push_back(target_graph_t());
-		target_graph_t::edges_t e;
-		e.insert(new_edge);
-		m_more_target_graphs.back().set_edges(e);
-		// make new node count map
-		node_counts_t nc_next(nc);
-		if (nc.end() == nc_iter)
-			nc_next[ s_iter->first ] = 1;
-		else
-			++(nc_next[ s_iter->first ]);
-		// next automaton state
-		ta_state_t const new_state(m_cov_seq_aut.new_state());
-		m_cov_seq_aut.set_trans(state, m_pm_eval.to_index(m_more_target_graphs.back()), new_state);
-		// DFS recursion
-		dfs_build(new_state, s_iter->first, bound, nc_next, tgg);
-	}
-}
-
-void Automaton_Inserter::visit(Pathcov const* n) {
-	if (n->get_predicates()) {
-		FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
-	}
-
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == m_current_final.size());
-
-	ta_state_set_t prev_final;
-	prev_final.swap(m_current_final);
-
-	// for each initial state to a depth-first traversal of the CFG as long as
-	// the edge remains within the given target graph; each edge yields a new
-	// target graph that only has a single edge; set reverse lookups (move into
-	// this class, do after collecting relevant tggs)
-
-	int const bound(n->get_bound());
-	target_graph_t const& tgg(m_filter_eval.get(*(n->get_filter_expr())));
-	target_graph_t::initial_states_t const& i_states(tgg.get_initial_states());
-	
-	for (ta_state_set_t::const_iterator iter(prev_final.begin());
-			iter != prev_final.end(); ++iter) {
-		for (target_graph_t::initial_states_t::const_iterator i_iter(i_states.begin());
-				i_iter != i_states.end(); ++i_iter) {
-			ta_state_t const i_state(m_cov_seq_aut.new_state());
-			m_cov_seq_aut.set_trans(*iter, m_pm_eval.epsilon_index(), i_state);
-			node_counts_t node_counts;
-			node_counts[ *i_iter ] = 1;
-			dfs_build(i_state, *i_iter, bound, node_counts, tgg);
-		}
-		// we currently don't properly deal with empty path sets
-		FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented,
-				m_current_final.end() == m_current_final.find(*iter));
-	}
-
-	for (ta_state_set_t::const_iterator iter(m_current_final.begin());
-			iter != m_current_final.end(); ++iter) {
-		m_test_goal_map_entry->second.insert(*iter);
-		m_reverse_test_goal_map.insert(::std::make_pair(*iter, m_test_goal_map_entry));
-	}
-}
-
-void Automaton_Inserter::visit(Query const* n) {
-	m_current_final.insert(m_cov_seq_aut.new_state());
-	m_cov_seq_aut.initial().insert(*m_current_final.begin());
-	
-	n->get_cover()->accept(this);
-
-	for (ta_state_set_t::const_iterator iter(m_current_final.begin());
-			iter != m_current_final.end(); ++iter)
-		m_cov_seq_aut.final(*iter) = 1;
-
-	simplify_automaton(m_cov_seq_aut, false);
-}
-
-void Automaton_Inserter::visit(Statecov const* n) {
-	if (n->get_predicates()) {
-		FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
-	}
-
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == m_current_final.size());
-	
-	FSHELL2_PROD_ASSERT(::diagnostics::Not_Implemented, false);
-}
-
-void Automaton_Inserter::visit(TGS_Intersection const* n) {
-	FSHELL2_PROD_ASSERT(::diagnostics::Not_Implemented, false);
-
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == m_current_final.size());
-}
-
-void Automaton_Inserter::visit(TGS_Setminus const* n) {
-	FSHELL2_PROD_ASSERT(::diagnostics::Not_Implemented, false);
-
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == m_current_final.size());
-}
-
-void Automaton_Inserter::visit(TGS_Union const* n) {
-	FSHELL2_PROD_ASSERT(::diagnostics::Not_Implemented, false);
-
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == m_current_final.size());
-}
-
-void Automaton_Inserter::visit(Test_Goal_Sequence const* n) {
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !m_current_final.empty());
-	
-	for (Test_Goal_Sequence::seq_t::const_iterator iter(n->get_sequence().begin());
-			iter != n->get_sequence().end(); ++iter) {
-		::std::pair< ta_state_set_t, ta_state_set_t > pm_init_final(
-				copy_automaton(m_pm_eval.get(iter->first), m_cov_seq_aut));
-		for (ta_state_set_t::const_iterator iter1(m_current_final.begin());
-				iter1 != m_current_final.end(); ++iter1)
-			for (ta_state_set_t::const_iterator iter2(pm_init_final.first.begin());
-					iter2 != pm_init_final.first.end(); ++iter2)
-				m_cov_seq_aut.set_trans(*iter1, m_pm_eval.epsilon_index(), *iter2);
-		m_current_final.swap(pm_init_final.second);
-
-		if (m_current_final.size() > 1) {
-			ta_state_t new_final(m_cov_seq_aut.new_state());
-			for (ta_state_set_t::const_iterator iter1(m_current_final.begin());
-					iter1 != m_current_final.end(); ++iter1)
-				m_cov_seq_aut.set_trans(*iter1, m_pm_eval.epsilon_index(), new_final);
-			m_current_final.clear();
-			m_current_final.insert(new_final);
-		}
-
-		m_test_goal_map_entry = m_test_goal_map.insert(::std::make_pair(
-					&(*iter), test_goal_states_t())).first;
-		iter->second->accept(this);
-	}
-		
-	::std::pair< ta_state_set_t, ta_state_set_t > pm_init_final(
-			copy_automaton(m_pm_eval.get(n->get_suffix_monitor()), m_cov_seq_aut));
-	for (ta_state_set_t::const_iterator iter1(m_current_final.begin());
-			iter1 != m_current_final.end(); ++iter1)
-		for (ta_state_set_t::const_iterator iter2(pm_init_final.first.begin());
-				iter2 != pm_init_final.first.end(); ++iter2)
-			m_cov_seq_aut.set_trans(*iter1, m_pm_eval.epsilon_index(), *iter2);
-	m_current_final.swap(pm_init_final.second);
 }
 
 void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& aut,
@@ -557,7 +350,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 								reverse_state_map.end() != reverse_state_map.find(*s_iter));
 						ta_state_t const unmapped_state(
 								reverse_state_map.find(*s_iter)->second);
-						if (is_test_goal_state(unmapped_state)) {
+						if (m_build_tg_aut.is_test_goal_state(unmapped_state)) {
 							m_tg_instrumentation_map[ unmapped_state ].push_back(*t_iter);
 						}
 					}
@@ -658,14 +451,13 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 }
 
 void Automaton_Inserter::insert(Query const& query) {
-	::exprt c_s_final_cond, p_final_cond;
-	query.accept(this);
-	insert("c_s", m_cov_seq_aut, c_s_final_cond, true);
-	insert("p", m_pm_eval.get(query.get_passing()), p_final_cond, false);
+	::exprt t_g_final_cond, obs_final_cond;
+	insert("t_g", m_build_tg_aut.get(), t_g_final_cond, true);
+	insert("obs", m_pm_eval.get(query.get_passing()), obs_final_cond, false);
 	
 	::goto_programt tmp;
 	::goto_programt::targett as(tmp.add_instruction(ASSERT));
-	as->make_assertion(::and_exprt(c_s_final_cond, p_final_cond));
+	as->make_assertion(::and_exprt(t_g_final_cond, obs_final_cond));
 	as->guard.make_not();
 	
 	m_inserter.insert("main", ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::END_FUNCTION, tmp);

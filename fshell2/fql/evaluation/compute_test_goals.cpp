@@ -30,12 +30,10 @@
 #include <fshell2/config/annotations.hpp>
 
 #include <diagnostics/basic_exceptions/violated_invariance.hpp>
-#include <diagnostics/basic_exceptions/not_implemented.hpp>
 
 #include <fshell2/exception/fshell2_error.hpp>
 
-#include <fshell2/fql/evaluation/evaluate_filter.hpp>
-#include <fshell2/fql/evaluation/evaluate_path_monitor.hpp>
+#include <fshell2/fql/evaluation/build_test_goal_automaton.hpp>
 #include <fshell2/fql/evaluation/automaton_inserter.hpp>
 
 #include <fshell2/fql/ast/query.hpp>
@@ -54,11 +52,11 @@ FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 Compute_Test_Goals::Compute_Test_Goals(::language_uit & manager, ::optionst const& opts,
-		::goto_functionst const& gf, Evaluate_Filter const& filter_eval,
-		Evaluate_Path_Monitor const& pm_eval, Automaton_Inserter const& a_i) :
+		::goto_functionst const& gf, Build_Test_Goal_Automaton const& build_tg_aut,
+		Automaton_Inserter const& a_i) :
 	::bmct(manager.context, manager.ui_message_handler),
-	m_is_initialized(false), m_gf(gf), m_filter_eval(filter_eval), m_pm_eval(pm_eval),
-	m_aut_insert(a_i), m_cnf(), m_bv(m_cnf) {
+	m_is_initialized(false), m_gf(gf),
+	m_build_tg_aut(build_tg_aut), m_aut_insert(a_i), m_cnf(), m_bv(m_cnf) {
 	this->options = opts;
 	this->options.set_option("dimacs", false);
 	this->options.set_option("cvc", false);
@@ -131,9 +129,9 @@ Compute_Test_Goals::test_goals_t const& Compute_Test_Goals::compute(Query const&
 			iter != query.get_cover()->get_sequence().end(); ++iter) {
 
 		context_to_pcs_t context_to_pcs;
-		Automaton_Inserter::test_goal_states_t const& states(
-				m_aut_insert.get_test_goal_states(*iter));
-		for (Automaton_Inserter::test_goal_states_t::const_iterator s_iter(
+		Build_Test_Goal_Automaton::test_goal_states_t const& states(
+				m_build_tg_aut.get_test_goal_states(*iter));
+		for (Build_Test_Goal_Automaton::test_goal_states_t::const_iterator s_iter(
 					states.begin()); s_iter != states.end(); ++s_iter) {
 			Automaton_Inserter::instrumentation_points_t const& nodes(
 					m_aut_insert.get_test_goal_instrumentation(*s_iter));
@@ -234,7 +232,7 @@ Compute_Test_Goals::test_goals_t const& Compute_Test_Goals::get_satisfied_test_g
 		if (iter->is_assignment() && iter->assignment_type == ::symex_targett::HIDDEN) continue;
 		if (::fshell2::instrumentation::GOTO_Transformation::is_instrumented(iter->source.pc)) continue;
 		path.push_back(iter->source.pc);
-		Evaluate_Filter::edge_to_filters_t const& edge_map(m_filter_eval.get(iter->source.pc));
+		Evaluate_Filter::edge_to_filters_t const& edge_map(m_eval_filter.get(iter->source.pc));
 		for (::std::list< ::std::list< state_t > >::iterator s_iter(exec_sequences.begin());
 				s_iter != exec_sequences.end();) {
 			Evaluate_Path_Monitor::trace_automaton_t::edges_type const out_edges(aut.delta2(s_iter->back()));

@@ -31,8 +31,6 @@
 
 #include <fshell2/config/config.hpp>
 
-#include <fshell2/fql/evaluation/evaluate_path_monitor.hpp>
-
 #include <cbmc/src/cbmc/bmc.h>
 #include <cbmc/src/cbmc/bv_cbmc.h>
 #include <cbmc/src/solvers/sat/cnf_clause_list.h>
@@ -41,7 +39,7 @@ FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 class Query;
-class Evaluate_Filter;
+class Build_Test_Goal_Automaton;
 class Automaton_Inserter;
 
 /*! \brief TODO
@@ -57,8 +55,8 @@ class Compute_Test_Goals : public ::bmct
 	typedef ::std::set< test_goal_t > test_goals_t;
 	
 	Compute_Test_Goals(::language_uit & manager, ::optionst const& opts,
-			::goto_functionst const& gf, Evaluate_Filter const& filter_eval,
-			Evaluate_Path_Monitor const& pm_eval,
+			::goto_functionst const& gf,
+			Build_Test_Goal_Automaton const& build_tg_aut,
 			Automaton_Inserter const& a_i);
 
 	virtual ~Compute_Test_Goals();
@@ -81,8 +79,7 @@ class Compute_Test_Goals : public ::bmct
 	
 	bool m_is_initialized;
 	::goto_functionst const& m_gf;
-	Evaluate_Filter const& m_filter_eval;
-	Evaluate_Path_Monitor const& m_pm_eval;
+	Build_Test_Goal_Automaton const& m_build_tg_aut;
 	Automaton_Inserter const& m_aut_insert;
 	::cnf_clause_list_assignmentt m_cnf;
 	::bv_cbmct m_bv;
