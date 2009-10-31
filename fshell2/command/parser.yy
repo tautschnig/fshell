@@ -33,6 +33,8 @@
 
 %{
 #include <iostream>
+#include <cstring>
+
 #undef yyFlexLexer
 #define yyFlexLexer CMDFlexLexer
 #include <FlexLexer.h>

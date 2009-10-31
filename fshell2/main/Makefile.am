@@ -38,15 +38,15 @@ fshell2_SOURCES = fshell2.t.cpp
 # add additional objects required to build fshell2 here, like
 # fshell2_LDADD = ../base/libbase.la libbla.la
 fshell2_LDADD = libmain.la \
-								../exception/libexception.la \
 								../command/libcommand.la \
 								../macro/libmacro.la \
 								../tc_generation/libtc_generation.la \
-								../instrumentation/libinstrumentation.la \
 								../fql/evaluation/libevaluation.la \
 								../fql/normalize/libnormalize.la \
 								../fql/parser/libparser.la \
 								../fql/ast/libast.la \
+								../instrumentation/libinstrumentation.la \
+								../exception/libexception.la \
 								$(CBMC_OBJS)
 # note that this entry (fshell2_SOURCES, fshell2_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;

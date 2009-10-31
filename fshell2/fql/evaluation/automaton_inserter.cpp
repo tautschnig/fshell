@@ -39,6 +39,8 @@
 #include <fshell2/fql/evaluation/evaluate_path_monitor.hpp>
 #include <fshell2/fql/ast/query.hpp>
 
+#include <limits>
+
 #include <cbmc/src/util/std_code.h>
 #include <cbmc/src/util/std_expr.h>
 #include <cbmc/src/util/arith_tools.h>

@@ -37,6 +37,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <vector>
+#include <cstdlib>
 
 #include <fshell2/exception/macro_processing_error.hpp>
 
