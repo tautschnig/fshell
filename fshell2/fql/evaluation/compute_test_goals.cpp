@@ -67,9 +67,9 @@ Compute_Test_Goals::Compute_Test_Goals(::language_uit & manager, ::optionst cons
 	this->options.set_option("cvc", false);
 	this->set_verbosity(manager.get_verbosity());
 
-	m_cnf.set_message_handler(this->message_handler);
+	m_cnf.set_message_handler(*(this->message_handler));
 	m_cnf.set_verbosity(this->get_verbosity());
-	m_bv.set_message_handler(this->message_handler);
+	m_bv.set_message_handler(*(this->message_handler));
 	m_bv.set_verbosity(this->get_verbosity());
 }
 

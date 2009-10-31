@@ -108,7 +108,7 @@ void test( Test_Data & data )
 	::register_language(new_ansi_c_language);
 	::cmdlinet cmdline;
 	::config.set(cmdline);
-	::language_uit l(cmdline);
+	::language_uit l("FShell2", cmdline);
 	::optionst options;
 	options.set_option("assertions", true);
 	::goto_functionst gf;

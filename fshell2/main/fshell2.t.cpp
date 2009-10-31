@@ -63,7 +63,7 @@ void test_single( Test_Data & data )
 	::register_language(new_ansi_c_language);
 	::cmdlinet cmdline;
 	::config.set(cmdline);
-	::language_uit l(cmdline);
+	::language_uit l("FShell2", cmdline);
 	::optionst options;
 	::goto_functionst cfg;
 	::std::ostringstream os;
@@ -83,7 +83,7 @@ void test_interactive( Test_Data & data )
 	::register_language(new_ansi_c_language);
 	::cmdlinet cmdline;
 	::config.set(cmdline);
-	::language_uit l(cmdline);
+	::language_uit l("FShell2", cmdline);
 	::optionst options;
 	::goto_functionst cfg;
 	::std::ostringstream os;
@@ -157,7 +157,7 @@ of
 	::register_language(new_ansi_c_language);
 	::cmdlinet cmdline;
 	::config.set(cmdline);
-	::language_uit l(cmdline);
+	::language_uit l("FShell2", cmdline);
 	::optionst options;
 	::goto_functionst gf;
 	//::std::ostringstream os;

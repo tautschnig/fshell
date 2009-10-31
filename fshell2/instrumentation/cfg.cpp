@@ -101,15 +101,25 @@ void CFG::compute_edges(
         goto_programt::targett e_it=
           f_it->second.body.instructions.end();
 
+        goto_programt::targett last_it=e_it; last_it--;
+        
         if(i_it!=e_it)
+        {
+          // nonempty function
           entry.successors.push_back(::std::make_pair(&(f_it->second.body), i_it));
 
-        // add the last instruction as predecessor of the return location
-        if(next_PC!=goto_program.instructions.end())
+          // add the last instruction as predecessor of the return location
+          if(next_PC!=goto_program.instructions.end())
+          {
+            m_entries[last_it].successors.push_back(::std::make_pair(&goto_program, next_PC));
+            m_entries[next_PC].predecessors.push_back(::std::make_pair(&(f_it->second.body), last_it));
+          }
+		}
+        else if(next_PC!=goto_program.instructions.end())
         {
-          m_entries[--e_it].successors.push_back(::std::make_pair(&goto_program, next_PC));
-          m_entries[next_PC].predecessors.push_back(::std::make_pair(&(f_it->second.body), --e_it));
-        }
+          // empty function
+          entry.successors.push_back(::std::make_pair(&goto_program, next_PC));
+        }        
       }
       else if(next_PC!=goto_program.instructions.end())
         entry.successors.push_back(::std::make_pair(&goto_program, next_PC));

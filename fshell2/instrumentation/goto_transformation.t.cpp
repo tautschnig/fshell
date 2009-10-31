@@ -98,7 +98,7 @@ void test_use_case( Test_Data & data )
 	::register_language(new_ansi_c_language);
 	::cmdlinet cmdline;
 	::config.set(cmdline);
-	::language_uit l(cmdline);
+	::language_uit l("FShell2", cmdline);
 	::optionst options;
 	::goto_functionst cfg;
 
@@ -130,7 +130,7 @@ void test_use_case2( Test_Data & data )
 	::register_language(new_ansi_c_language);
 	::cmdlinet cmdline;
 	::config.set(cmdline);
-	::language_uit l(cmdline);
+	::language_uit l("FShell2", cmdline);
 	::optionst options;
   
 	::languaget *languagep=get_language_from_filename("bla.c");

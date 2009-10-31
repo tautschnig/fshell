@@ -50,7 +50,6 @@ void GOTO_Transformation::set_annotations(::goto_programt::const_targett src, ::
 			iter != target.instructions.end(); ++iter) {
 		iter->function = src->function;
 		iter->location = src->location;
-		iter->add_local_variables(src->local_variables);
 	}
 	mark_instrumented(target);
 }
@@ -208,8 +207,7 @@ GOTO_Transformation::inserted_t & GOTO_Transformation::make_nondet_choice(::goto
 			if (0 == i) {
 				::goto_programt::targett decl(dest.add_instruction());
 				decl->make_other();
-				decl->code = ::code_declt();
-				decl->code.copy_to_operands(::symbol_expr(cond_symbol));
+				decl->code = ::code_declt(::symbol_expr(cond_symbol));
 			}
 			::exprt cond(::symbol_expr(cond_symbol));
 			if (!pos) cond.make_not();

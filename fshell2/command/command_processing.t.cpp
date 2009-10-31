@@ -63,7 +63,7 @@ void test_basic( Test_Data & data )
 	::register_language(new_ansi_c_language);
 	::cmdlinet cmdline;
 	::config.set(cmdline);
-	::language_uit l(cmdline);
+	::language_uit l("FShell2", cmdline);
 	::optionst options;
 	::goto_functionst cfg;
 	::std::ostringstream os;
@@ -88,7 +88,7 @@ void test_help( Test_Data & data )
 	::register_language(new_ansi_c_language);
 	::cmdlinet cmdline;
 	::config.set(cmdline);
-	::language_uit l(cmdline);
+	::language_uit l("FShell2", cmdline);
 	::optionst options;
 	::goto_functionst cfg;
 	::std::ostringstream os;
@@ -113,7 +113,7 @@ void test_invalid( Test_Data & data )
 	::register_language(new_ansi_c_language);
 	::cmdlinet cmdline;
 	::config.set(cmdline);
-	::language_uit l(cmdline);
+	::language_uit l("FShell2", cmdline);
 	::optionst options;
 	::goto_functionst cfg;
 	::std::ostringstream os;
@@ -141,7 +141,7 @@ void test_use_case( Test_Data & data )
 	::register_language(new_ansi_c_language);
 	::cmdlinet cmdline;
 	::config.set(cmdline);
-	::language_uit l(cmdline);
+	::language_uit l("FShell2", cmdline);
 	::optionst options;
 	::goto_functionst cfg;
 	::std::ostringstream os;
@@ -201,7 +201,7 @@ void test_use_case_extended_invariants( Test_Data & data )
 	::register_language(new_ansi_c_language);
 	::cmdlinet cmdline;
 	::config.set(cmdline);
-	::language_uit l(cmdline);
+	::language_uit l("FShell2", cmdline);
 	::optionst options;
 	::goto_functionst cfg;
 	::std::ostringstream os;
