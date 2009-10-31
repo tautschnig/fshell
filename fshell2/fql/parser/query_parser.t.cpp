@@ -18,7 +18,7 @@
  * limitations under the License.
  *******************************************************************************/
 
-/*! \file fshell2/fql/parser/query_processing.t.cpp
+/*! \file fshell2/fql/parser/query_parser.t.cpp
  * \brief TODO
  *
  * $Id$
@@ -31,12 +31,12 @@
 #include <fshell2/config/config.hpp>
 #include <fshell2/config/annotations.hpp>
 
-#include <fshell2/fql/parser/query_processing.hpp>
+#include <fshell2/fql/parser/query_parser.hpp>
 #include <fshell2/exception/query_processing_error.hpp>
 
 #include <fshell2/fql/ast/query.hpp>
 
-#define TEST_COMPONENT_NAME Query_Processing
+#define TEST_COMPONENT_NAME Query_Parser
 #define TEST_COMPONENT_NAMESPACE fshell2::fql
 
 FSHELL2_NAMESPACE_BEGIN;
@@ -52,14 +52,14 @@ using namespace ::diagnostics::unittest;
 
 ////////////////////////////////////////////////////////////////////////////////
 /**
- * @test A test of Query_Processing
+ * @test A test of Query_Parser
  *
  */
 void test_basic( Test_Data & data )
 {
 	::std::ostringstream os;
 	::fshell2::fql::Query * q(0);
-	Query_Processing qp;
+	Query_Parser qp;
 
 	qp.parse(os, "cover edges(@file(\"bla.c\"))", &q);
 	TEST_ASSERT(q != 0);
@@ -72,28 +72,28 @@ void test_basic( Test_Data & data )
 
 ////////////////////////////////////////////////////////////////////////////////
 /**
- * @test A test of Query_Processing
+ * @test A test of Query_Parser
  *
  */
 void test_help( Test_Data & data )
 {
 	::std::ostringstream os;
 
-	::fshell2::fql::Query_Processing::help(os);
+	::fshell2::fql::Query_Parser::help(os);
 	TEST_ASSERT(data.compare("query_help", os.str()));
 	os.str("");
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 /**
- * @test A test of Query_Processing
+ * @test A test of Query_Parser
  *
  */
 void test_invalid( Test_Data & data )
 {
 	::std::ostringstream os;
 	::fshell2::fql::Query * q(0);
-	Query_Processing qp;
+	Query_Parser qp;
 
 	TEST_THROWING_BLOCK_ENTER;
 	qp.parse(os, "bla bla bla", &q);
@@ -108,14 +108,14 @@ void test_invalid( Test_Data & data )
 
 ////////////////////////////////////////////////////////////////////////////////
 /**
- * @test A test of Query_Processing
+ * @test A test of Query_Parser
  *
  */
 void test_use_case( Test_Data & data )
 {
 	::std::ostringstream os;
 	::fshell2::fql::Query * q(0);
-	Query_Processing qp;
+	Query_Parser qp;
 	
 	qp.parse(os, "cover edges(@file(\"bla.c\"))", &q);
 	TEST_ASSERT(q != 0);

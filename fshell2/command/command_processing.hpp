@@ -79,7 +79,7 @@ class Command_Processing
 
 	static ::std::ostream & help(::std::ostream & os);
 
-	bool finalize(::language_uit & manager, ::std::ostream & os);
+	bool finalize(::language_uit & manager);
 	
 	private:
 	::optionst const& m_opts;

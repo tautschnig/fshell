@@ -127,7 +127,7 @@ void test_invalid( Test_Data & data )
 	TEST_THROWING_BLOCK_EXIT1(::fshell2::Command_Processing_Error, "Failed to parse no_such_file.c");
 	
 	TEST_THROWING_BLOCK_ENTER;
-	cmd.finalize(l, os);
+	cmd.finalize(l);
 	TEST_THROWING_BLOCK_EXIT1(::fshell2::Command_Processing_Error, "No source files loaded!");
 }
 
@@ -265,11 +265,11 @@ void test_use_case_extended_invariants( Test_Data & data )
 		::unlink(tempname_str.c_str());
 	}
 
-	TEST_ASSERT(cmd.finalize(l, os));
+	TEST_ASSERT(cmd.finalize(l));
 	TEST_CHECK(cfg.function_map.end() != cfg.function_map.find("c::foo"));
 	TEST_CHECK(cfg.function_map.find("c::foo")->second.body_available);
 	// should be a no-op
-	TEST_ASSERT(!cmd.finalize(l, os));
+	TEST_ASSERT(!cmd.finalize(l));
 }
 
 /** @cond */

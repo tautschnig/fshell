@@ -255,7 +255,7 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 				::config.main = arg;
 				if (m_finalized) manager.context.remove("main");
 				m_finalized = false;
-				finalize(manager, os);
+				finalize(manager);
 			}
 			return DONE;
 		case CMD_SET_LIMIT_COUNT:
@@ -268,7 +268,7 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 			m_remove_zero_init = true;	
 			if (m_finalized) manager.context.remove("main");
 			m_finalized = false;
-			finalize(manager, os);
+			finalize(manager);
 			return DONE;
 	}
 			
@@ -276,7 +276,7 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 	return NO_CONTROL_COMMAND;
 }
 
-bool Command_Processing::finalize(::language_uit & manager, ::std::ostream & os) {
+bool Command_Processing::finalize(::language_uit & manager) {
 	FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,
 			!manager.context.symbols.empty(),
 			"No source files loaded!");

@@ -43,13 +43,13 @@ BUILT_SOURCES += grammar.hpp
 
 include_fshell2_fql_parserdir = $(includedir)/fshell2/fql/parser
 noinst_LTLIBRARIES = libparser.la
-libparser_la_SOURCES = lexer.ll parser.yy query_processing.cpp
-include_fshell2_fql_parser_HEADERS =   query_processing.hpp
-check_PROGRAMS = query_processing
-query_processing_SOURCES = query_processing.t.cpp
-# add additional objects required to build query_processing here, like
-# query_processing_LDADD = ../base/libbase.la libbla.la
-query_processing_LDADD = libparser.la ../ast/libast.la ../../exception/libexception.la $(CBMC_OBJS)
-# note that this entry (query_processing_SOURCES, query_processing_LDADD) will not be removed
+libparser_la_SOURCES = lexer.ll parser.yy  query_parser.cpp
+include_fshell2_fql_parser_HEADERS =    query_parser.hpp
+check_PROGRAMS =  query_parser
+query_parser_SOURCES = query_parser.t.cpp
+# add additional objects required to build query_parser here, like
+# query_parser_LDADD = ../base/libbase.la libbla.la
+query_parser_LDADD = libparser.la ../ast/libast.la ../../exception/libexception.la $(CBMC_OBJS)
+# note that this entry (query_parser_SOURCES, query_parser_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually

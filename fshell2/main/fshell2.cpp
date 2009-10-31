@@ -124,18 +124,49 @@ Context_Backup::~Context_Backup() {
 	m_manager.context.swap(m_context);
 }
 
-void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char const * line) {
+class Smart_Printer {
+	public:
+		Smart_Printer(::language_uit & manager);
+		~Smart_Printer();
+		void print_now();
+		::std::ostream & get_ostream();
+	private:
+		::language_uit & m_manager;
+		::std::ostringstream m_oss;
+};
+
+Smart_Printer::Smart_Printer(::language_uit & manager) :
+	m_manager(manager) {
+}
+
+Smart_Printer::~Smart_Printer() {
+	if (!m_oss.str().empty()) m_manager.print(m_oss.str());
+}
+
+void Smart_Printer::print_now() {
+	if (!m_oss.str().empty()) m_manager.print(m_oss.str());
+	m_oss.str("");
+}
+
+::std::ostream & Smart_Printer::get_ostream() {
+	return m_oss;
+}
+
+void FShell2::try_query(::language_uit & manager, char const * line) {
 	::std::string query(m_macro.expand(line));
 	if (query.empty()) return;
 
 	// there is some query string left, try to parse it
 	::fshell2::fql::Query * query_ast(0);
-	m_fql_parser.parse(os, query.c_str(), &query_ast);
+	{
+		Smart_Printer smp(manager);
+		m_fql_parser.parse(smp.get_ostream(), query.c_str(), &query_ast);
+	}
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, query_ast != 0);
 	Query_Cleanup cleanup(query_ast);
 	
 	// parse succeeded, make sure the CFG is prepared
-	bool mod(m_cmd.finalize(manager, os));
+	bool mod(m_cmd.finalize(manager));
 	
 	if (mod || m_first_run) {
 		// code may have changed, check for failing assertions
@@ -185,7 +216,8 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 
 	if (m_opts.get_bool_option("show-goto-functions")) {
 		::namespacet const ns(manager.context);
-		gf_copy.output(ns, os);
+		Smart_Printer smp(manager);
+		gf_copy.output(ns, smp.get_ostream());
 	}
 	
 	// compute test goals
@@ -202,44 +234,42 @@ void FShell2::try_query(::language_uit & manager, ::std::ostream & os, char cons
 
 	// output
 	::fshell2::Test_Suite_Output out(goals);
-	out.print_ts(test_suite, os, manager.ui_message_handler.get_ui());
+	out.print_ts(test_suite, ::std::cout, manager.ui_message_handler.get_ui());
 }
 
-bool FShell2::process_line(::language_uit & manager, ::std::ostream & os, char const * line) {
+bool FShell2::process_line(::language_uit & manager, char const * line) {
 	using ::fshell2::command::Command_Processing;
 
-	switch (m_cmd.process(manager, os, line)) {
+	Smart_Printer smp(manager);
+	switch (m_cmd.process(manager, smp.get_ostream(), line)) {
 		case Command_Processing::QUIT:
 			return true;
 		case Command_Processing::HELP:
-			{
-				::std::ostringstream oss;
-				Command_Processing::help(oss);
-				oss << ::std::endl;
-				::fshell2::macro::Macro_Processing::help(oss);
-				oss << ::std::endl;
-				::fshell2::fql::Query_Processing::help(oss);
-				manager.print(oss.str());
-			}
+			Command_Processing::help(smp.get_ostream());
+			smp.get_ostream() << ::std::endl;
+			::fshell2::macro::Macro_Processing::help(smp.get_ostream());
+			smp.get_ostream() << ::std::endl;
+			::fshell2::fql::Query_Parser::help(smp.get_ostream());
 			return false;
 		case Command_Processing::DONE:
 			return false;
 		case Command_Processing::NO_CONTROL_COMMAND:
-			try_query(manager, os, line);
+			smp.print_now();
+			try_query(manager, line);
 			return false;
 	}
 
 	return true;
 }
 
-void FShell2::interactive(::language_uit & manager, ::std::ostream & os) {
+void FShell2::interactive(::language_uit & manager) {
 	while (true) {
 		// obtain the input from readline
 		::std::auto_ptr<char> input(::readline("FShell2> "));
 		::add_history(input.get());
 		try {
 			// process the input; returning true signals "quit"
-			if (process_line(manager, os, input.get())) {
+			if (process_line(manager, input.get())) {
 				manager.status("Bye.");
 				return;
 			}

@@ -18,10 +18,10 @@
  * limitations under the License.
  *******************************************************************************/
 
-#ifndef FSHELL2__FQL__PARSER__QUERY_PROCESSING_HPP
-#define FSHELL2__FQL__PARSER__QUERY_PROCESSING_HPP
+#ifndef FSHELL2__FQL__PARSER__QUERY_PARSER_HPP
+#define FSHELL2__FQL__PARSER__QUERY_PARSER_HPP
 
-/*! \file fshell2/fql/parser/query_processing.hpp
+/*! \file fshell2/fql/parser/query_parser.hpp
  * \brief TODO
  *
  * $Id$
@@ -40,14 +40,14 @@ class Query;
 
 /*! \brief TODO
 */
-class Query_Processing
+class Query_Parser
 {
 	/*! \copydoc doc_self
 	*/
-	typedef Query_Processing Self;
+	typedef Query_Parser Self;
 
 	public:
-	Query_Processing();
+	Query_Parser();
 
 	void parse(::std::ostream & os, char const * query, Query ** query_ast);
 
@@ -56,7 +56,7 @@ class Query_Processing
 	private:
 	/*! \copydoc copy_constructor
 	*/
-	Query_Processing( Self const& rhs );
+	Query_Parser( Self const& rhs );
 
 	/*! \copydoc assignment_op
 	 */
@@ -66,4 +66,4 @@ class Query_Processing
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
 
-#endif /* FSHELL2__FQL__PARSER__QUERY_PROCESSING_HPP */
+#endif /* FSHELL2__FQL__PARSER__QUERY_PARSER_HPP */

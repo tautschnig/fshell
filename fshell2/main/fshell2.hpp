@@ -35,7 +35,7 @@
 
 #include <fshell2/command/command_processing.hpp>
 #include <fshell2/macro/macro_processing.hpp>
-#include <fshell2/fql/parser/query_processing.hpp>
+#include <fshell2/fql/parser/query_parser.hpp>
 
 #include <cbmc/src/goto-programs/goto_functions.h>
 
@@ -55,9 +55,9 @@ class FShell2
 	public:
 	FShell2(::optionst const& opts, ::goto_functionst & gf);
 
-	bool process_line(::language_uit & manager, ::std::ostream & os, char const * line);
+	bool process_line(::language_uit & manager, char const * line);
 
-	void interactive(::language_uit & manager, ::std::ostream & os);
+	void interactive(::language_uit & manager);
 
 	~FShell2();
 
@@ -66,10 +66,10 @@ class FShell2
 	::goto_functionst & m_gf;
 	::fshell2::command::Command_Processing m_cmd;
 	::fshell2::macro::Macro_Processing m_macro;
-	::fshell2::fql::Query_Processing m_fql_parser;
+	::fshell2::fql::Query_Parser m_fql_parser;
 	bool m_first_run;
 
-	void try_query(::language_uit & manager, ::std::ostream & os, char const * line);
+	void try_query(::language_uit & manager, char const * line);
 
 	/*! \copydoc copy_constructor
 	*/

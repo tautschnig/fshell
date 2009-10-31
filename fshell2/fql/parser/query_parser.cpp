@@ -18,7 +18,7 @@
  * limitations under the License.
  *******************************************************************************/
 
-/*! \file fshell2/fql/parser/query_processing.cpp
+/*! \file fshell2/fql/parser/query_parser.cpp
  * \brief TODO
  *
  * $Id$
@@ -26,7 +26,7 @@
  * \date   Thu Apr  2 17:29:47 CEST 2009 
 */
 
-#include <fshell2/fql/parser/query_processing.hpp>
+#include <fshell2/fql/parser/query_parser.hpp>
 #include <fshell2/config/annotations.hpp>
 #include <fshell2/exception/query_processing_error.hpp>
 
@@ -48,15 +48,15 @@ extern int FQLparse(FQLFlexLexer *, ::std::ostream *, ::fshell2::fql::Query **);
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Query_Processing::Query_Processing() {
+Query_Parser::Query_Parser() {
 }
 
-::std::ostream & Query_Processing::help(::std::ostream & os) {
+::std::ostream & Query_Parser::help(::std::ostream & os) {
 	os << "FQL:" << ::std::endl << FQL_HELP << ::std::endl;
 	return os;
 }
 	
-void Query_Processing::parse(::std::ostream & os, char const * query, Query ** query_ast) {
+void Query_Parser::parse(::std::ostream & os, char const * query, Query ** query_ast) {
 	// new lexer
 	FQLFlexLexer lexer;
 	// put the input into a stream
