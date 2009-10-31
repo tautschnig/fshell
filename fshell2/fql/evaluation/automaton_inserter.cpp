@@ -123,13 +123,22 @@ void Automaton_Inserter::dfs_build(ta_state_t const& state, target_graph_t::node
 	for (::fshell2::instrumentation::CFG::successors_t::iterator s_iter(
 				cfg_node->second.successors.begin());
 			s_iter != cfg_node->second.successors.end(); ++s_iter) {
-		node_counts_t::const_iterator nc_iter(nc.find(*s_iter));
+		// maybe the root statement is to be ignored, then just keep going but
+		// don't add anything
+		if (Evaluate_Filter::ignore_instruction(*(root.second))) {
+			// maybe this is the end, maybe we'll find some more; if we do,
+			// we'll pass this state anyway, but just be sure we have something.
+			m_current_final.insert(state);
+			dfs_build(state, s_iter->first, bound, nc, tgg);
+			continue;
+		}
+		node_counts_t::const_iterator nc_iter(nc.find(s_iter->first));
 		// test the bound
 		if (nc.end() != nc_iter && nc_iter->second == bound) {
 			m_current_final.insert(state);
 			continue;
 		}
-		target_graph_t::edge_t new_edge(::std::make_pair(root, *s_iter));
+		target_graph_t::edge_t new_edge(::std::make_pair(root, s_iter->first));
 		// check target graph
 		if (tgg.get_edges().end() == tgg.get_edges().find(new_edge)) {
 			m_current_final.insert(state);
@@ -144,14 +153,14 @@ void Automaton_Inserter::dfs_build(ta_state_t const& state, target_graph_t::node
 		// make new node count map
 		node_counts_t nc_next(nc);
 		if (nc.end() == nc_iter)
-			nc_next[ *s_iter ] = 1;
+			nc_next[ s_iter->first ] = 1;
 		else
-			++(nc_next[ *s_iter ]);
+			++(nc_next[ s_iter->first ]);
 		// next automaton state
 		ta_state_t const new_state(m_cov_seq_aut.new_state());
 		m_cov_seq_aut.set_trans(state, m_pm_eval.to_index(m_more_target_graphs.back()), new_state);
 		// DFS recursion
-		dfs_build(new_state, *s_iter, bound, nc_next, tgg);
+		dfs_build(new_state, s_iter->first, bound, nc_next, tgg);
 	}
 }
 
@@ -395,7 +404,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 				call->code = fct;
 				
 				CFA::edge_t edge(::std::make_pair(&(iter->second.body), i_iter),
-							cfg_node->second.successors.front());
+							cfg_node->second.successors.front().first);
 				for (::goto_programt::const_targett tmp_iter(tmp.instructions.begin());
 						tmp_iter != tmp.instructions.end(); ++tmp_iter)
 					m_target_edge_map.insert(::std::make_pair(tmp_iter, edge)); 
@@ -408,7 +417,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 				for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
 						s_iter != cfg_node->second.successors.end(); ++s_iter) {
 					edge_to_target_graphs_t::const_iterator edge_map_iter(
-							entry.find(::std::make_pair(::std::make_pair(&(iter->second.body), i_iter), *s_iter)));
+							entry.find(::std::make_pair(::std::make_pair(&(iter->second.body), i_iter), s_iter->first)));
 					::std::set< int > target_graphs;
 					if (entry.end() != edge_map_iter) {
 						for (::std::set< target_graph_t const* >::const_iterator f_iter(edge_map_iter->second.begin());
@@ -471,14 +480,16 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 						::goto_programt::targett if_stmt(if_prg.add_instruction());
 						if_stmt->make_goto(out_target);
 						if_stmt->guard = i_iter->guard;
-						::goto_programt::targett succ(i_iter);
-						++succ;
-						if (s_iter->second == succ) if_stmt->guard.make_not();
+						// s_iter->second is true for the effective goto-edge;
+						// then invert the guard because we want tmp to be
+						// executed if we take the goto edge (and therefore must
+						// not jump here)
+						if (s_iter->second) if_stmt->guard.make_not();
 
 						tmp.destructive_insert(tmp.instructions.begin(), if_prg);
 					}
 					
-					CFA::edge_t edge(::std::make_pair(&(iter->second.body), i_iter), *s_iter);
+					CFA::edge_t edge(::std::make_pair(&(iter->second.body), i_iter), s_iter->first);
 					for (::goto_programt::const_targett tmp_iter(tmp.instructions.begin());
 							tmp_iter != tmp.instructions.end(); ++tmp_iter)
 						m_target_edge_map.insert(::std::make_pair(tmp_iter, edge));

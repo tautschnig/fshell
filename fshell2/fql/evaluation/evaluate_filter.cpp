@@ -217,7 +217,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.end());
 					for (::fshell2::instrumentation::CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
 							s_iter != cfg_node->second.successors.end(); ++s_iter)
-						edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), *s_iter));
+						edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), s_iter->first));
 				}
 			}
 			break;
@@ -242,7 +242,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.end());
 						for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
 								s_iter != cfg_node->second.successors.end(); ++s_iter)
-							edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), *s_iter));
+							edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), s_iter->first));
 					}
 				}
 			}
@@ -264,7 +264,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 						for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
 								s_iter != cfg_node->second.successors.end(); ++s_iter) {
 							initial.insert(::std::make_pair(&(iter->second.body), f_iter));
-							edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), *s_iter));
+							edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), s_iter->first));
 						}
 					}
 				}
@@ -287,7 +287,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 						for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
 								s_iter != cfg_node->second.successors.end(); ++s_iter) {
 							initial.insert(::std::make_pair(&(iter->second.body), f_iter));
-							edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), *s_iter));
+							edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), s_iter->first));
 						}
 					}
 				}
@@ -314,7 +314,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 							s_iter != cfg_node->second.successors.end(); ++s_iter) {
 						// cover edges leaving the function? yes.
 						// if (s_iter->first != &(fct->second.body)) continue;
-						edges.insert(::std::make_pair(::std::make_pair(&(fct->second.body), f_iter), *s_iter));
+						edges.insert(::std::make_pair(::std::make_pair(&(fct->second.body), f_iter), s_iter->first));
 					}
 				}
 			}
@@ -334,7 +334,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 						for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
 								s_iter != cfg_node->second.successors.end(); ++s_iter) {
 							initial.insert(::std::make_pair(&(iter->second.body), f_iter));
-							edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), *s_iter));
+							edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), s_iter->first));
 						}
 					}
 				}
@@ -356,7 +356,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 						for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
 								s_iter != cfg_node->second.successors.end(); ++s_iter) {
 							initial.insert(::std::make_pair(&(iter->second.body), f_iter));
-							edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), *s_iter));
+							edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), s_iter->first));
 						}
 					}
 				}
@@ -375,7 +375,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 					for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
 							s_iter != cfg_node->second.successors.end(); ++s_iter) {
 						initial.insert(::std::make_pair(&(iter->second.body), f_iter));
-						edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), *s_iter));
+						edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), s_iter->first));
 					}
 				}
 			}
@@ -395,7 +395,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 					for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
 							s_iter != cfg_node->second.successors.end(); ++s_iter) {
 						initial.insert(::std::make_pair(&(fct->second.body), f_iter));
-						edges.insert(::std::make_pair(::std::make_pair(&(fct->second.body), f_iter), *s_iter));
+						edges.insert(::std::make_pair(::std::make_pair(&(fct->second.body), f_iter), s_iter->first));
 					}
 					// a single match suffices
 					break;
@@ -418,7 +418,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 					for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
 							s_iter != cfg_node->second.successors.end(); ++s_iter) {
 						initial.insert(::std::make_pair(&(fct->second.body), f_iter));
-						edges.insert(::std::make_pair(::std::make_pair(&(fct->second.body), f_iter), *s_iter));
+						edges.insert(::std::make_pair(::std::make_pair(&(fct->second.body), f_iter), s_iter->first));
 					}
 				}
 			}
@@ -447,7 +447,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 						for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
 								s_iter != cfg_node->second.successors.end(); ++s_iter) {
 							initial.insert(::std::make_pair(&(iter->second.body), f_iter));
-							edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), *s_iter));
+							edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), s_iter->first));
 						}
 					}
 				}
@@ -466,7 +466,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 					for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
 							s_iter != cfg_node->second.successors.end(); ++s_iter) {
 						initial.insert(::std::make_pair(&(iter->second.body), f_iter));
-						edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), *s_iter));
+						edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), s_iter->first));
 					}
 				}
 			}

@@ -50,7 +50,7 @@ class CFG
 	typedef CFG Self;
 
 	public:
-	typedef ::std::list< ::std::pair< goto_programt*, goto_programt::targett > > successors_t;
+	typedef ::std::list< ::std::pair< ::std::pair< goto_programt*, goto_programt::targett >, bool > > successors_t;
 	typedef ::std::list< ::std::pair< goto_programt*, goto_programt::targett > > predecessors_t;
 
 	struct entry_t {

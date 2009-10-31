@@ -51,7 +51,8 @@ void CFG::compute_edges(
   {
     if(next_PC!=goto_program.instructions.end() &&
        !instruction.guard.is_true())
-      entry.successors.push_back(::std::make_pair(&goto_program, next_PC));
+      entry.successors.push_back(::std::make_pair(
+				  ::std::make_pair(&goto_program, next_PC), false));
 
     for(goto_programt::instructiont::targetst::iterator
         t_it=instruction.targets.begin();
@@ -60,13 +61,15 @@ void CFG::compute_edges(
     {
       goto_programt::targett t=*t_it;
       if(t!=goto_program.instructions.end())
-        entry.successors.push_back(::std::make_pair(&goto_program, t));
+        entry.successors.push_back(::std::make_pair(
+					::std::make_pair(&goto_program, t), true));
     }
   }
   else if(instruction.is_start_thread())
   {
     if(next_PC!=goto_program.instructions.end())
-      entry.successors.push_back(::std::make_pair(&goto_program, PC));
+      entry.successors.push_back(::std::make_pair(
+				  ::std::make_pair(&goto_program, PC), false));
       
     for(goto_programt::instructiont::targetst::iterator
         t_it=instruction.targets.begin();
@@ -75,7 +78,8 @@ void CFG::compute_edges(
     {
       goto_programt::targett t=*t_it;
       if(t!=goto_program.instructions.end())
-        entry.successors.push_back(::std::make_pair(&goto_program, t));
+        entry.successors.push_back(::std::make_pair(
+					::std::make_pair(&goto_program, t), true));
     }
   }
   else if(instruction.is_function_call())
@@ -106,29 +110,34 @@ void CFG::compute_edges(
         if(i_it!=e_it)
         {
           // nonempty function
-          entry.successors.push_back(::std::make_pair(&(f_it->second.body), i_it));
+          entry.successors.push_back(::std::make_pair(
+					  ::std::make_pair(&(f_it->second.body), i_it), false));
 
           // add the last instruction as predecessor of the return location
           if(next_PC!=goto_program.instructions.end())
           {
-            m_entries[last_it].successors.push_back(::std::make_pair(&goto_program, next_PC));
+            m_entries[last_it].successors.push_back(::std::make_pair(
+						::std::make_pair(&goto_program, next_PC), false));
             m_entries[next_PC].predecessors.push_back(::std::make_pair(&(f_it->second.body), last_it));
           }
 		}
         else if(next_PC!=goto_program.instructions.end())
         {
           // empty function
-          entry.successors.push_back(::std::make_pair(&goto_program, next_PC));
+          entry.successors.push_back(::std::make_pair(
+					  ::std::make_pair(&goto_program, next_PC), false));
         }        
       }
       else if(next_PC!=goto_program.instructions.end())
-        entry.successors.push_back(::std::make_pair(&goto_program, next_PC));
+        entry.successors.push_back(::std::make_pair(
+					::std::make_pair(&goto_program, next_PC), false));
     }
   }
   else
   {
     if(next_PC!=goto_program.instructions.end())
-      entry.successors.push_back(::std::make_pair(&goto_program, next_PC));
+      entry.successors.push_back(::std::make_pair(
+				  ::std::make_pair(&goto_program, next_PC), false));
   }
 
   // now do backward edges
@@ -137,7 +146,7 @@ void CFG::compute_edges(
       s_it!=entry.successors.end();
       s_it++)
   {
-    m_entries[s_it->second].predecessors.push_back(::std::make_pair(&goto_program, PC));
+    m_entries[s_it->first.second].predecessors.push_back(::std::make_pair(&goto_program, PC));
   }
 }
 

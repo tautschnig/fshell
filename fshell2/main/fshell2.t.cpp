@@ -171,6 +171,7 @@ of
 	TEST_ASSERT(!fshell.process_line(l, "cover edges(@basicblockentry) passing @func(main)*.@label(L2)->@label(L1).@func(main)*"));
 	TEST_ASSERT(!fshell.process_line(l, "cover edges(@conditionedge)->edges(@conditionedge)"));
 	TEST_ASSERT(!fshell.process_line(l, "cover edges(@basicblockentry)-[ @func(main)* ]>edges(@basicblockentry)"));
+	TEST_ASSERT(!fshell.process_line(l, "cover paths(id,1)"));
 	TEST_ASSERT(fshell.process_line(l, "QUIT"));
 }	
 
