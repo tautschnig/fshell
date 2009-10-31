@@ -119,12 +119,14 @@ foreach my $id (sort keys %test_suite) {
       (defined($inserts{ $sym->{file} })) or $inserts{ $sym->{file} } = ();
       push @{ $inserts{ $sym->{file} } }, "extern unsigned __fshell2__tc_selector;";
       my $decl = $sym->{symbol};
-      $decl =~ s/,/ ###,/g;
-      $decl =~ s/\)/ ###)/;
-      my $i = 0;
-      while ($decl =~ / ###/) {
-        $decl =~ s/ ###/ _$i/;
-        $i++;
+      if ($decl =~ /,/) {
+        $decl =~ s/,/ ###,/g;
+        $decl =~ s/\)/ ###)/;
+        my $i = 0;
+        while ($decl =~ / ###/) {
+          $decl =~ s/ ###/ _$i/;
+          $i++;
+        }
       }
       push @{ $inserts{ $sym->{file} } }, "$decl\{";
       push @{ $inserts{ $sym->{file} } }, "  static unsigned idx = 0;";

@@ -125,12 +125,14 @@ foreach my $id (sort keys %test_suite) {
       push @{ $inserts{ $sym->{file} } }, "extern unsigned $idx_name;";
       push @idx_vars, $idx_name;
       my $decl = $sym->{symbol};
-      $decl =~ s/,/ ###,/g;
-      $decl =~ s/\)/ ###)/;
-      my $i = 0;
-      while ($decl =~ / ###/) {
-        $decl =~ s/ ###/ _$i/;
-        $i++;
+      if ($decl =~ /,/) {
+        $decl =~ s/,/ ###,/g;
+        $decl =~ s/\)/ ###)/;
+        my $i = 0;
+        while ($decl =~ / ###/) {
+          $decl =~ s/ ###/ _$i/;
+          $i++;
+        }
       }
       push @{ $inserts{ $sym->{file} } }, "$decl\{";
       
