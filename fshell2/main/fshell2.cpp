@@ -199,13 +199,13 @@ void FShell2::try_query(::language_uit & manager, char const * line) {
 	query_ast->accept(&filter_eval);
 
 	// build automata from path monitor expressions
-	::fshell2::fql::Evaluate_Path_Monitor pm_eval;
+	::fshell2::fql::Evaluate_Path_Monitor pm_eval(filter_eval);
 	query_ast->accept(&pm_eval);
 	
 	// do automaton instrumentation
 	Context_Backup context_backup(manager);
 	::fshell2::fql::Automaton_Inserter aut(pm_eval, filter_eval, gf_copy, cfg, manager.context);
-	aut.insert();
+	aut.insert(*query_ast);
 
 	/*
 	// build CFGs with abstraction

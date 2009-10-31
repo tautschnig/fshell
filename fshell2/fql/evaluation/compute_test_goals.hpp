@@ -86,7 +86,7 @@ class Compute_Test_Goals : public ::bmct
 	Automaton_Inserter const& m_aut_insert;
 	::cnf_clause_list_assignmentt m_cnf;
 	::bv_cbmct m_bv;
-	/*typedef ::std::map< Evaluate_Path_Monitor::trace_automaton_t::state_type, 
+	/*typedef ::std::map< ta_state_t, 
 		::std::map< ::goto_programt::const_targett, test_goal_t > > state_context_tg_t;
 	state_context_tg_t m_state_context_tg_map;*/
 	typedef ::std::map< ::goto_programt::const_targett,

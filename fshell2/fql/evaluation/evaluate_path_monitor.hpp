@@ -33,15 +33,14 @@
 
 #include <fshell2/fql/ast/ast_visitor.hpp>
 #include <fshell2/fql/ast/standard_ast_visitor_aspect.hpp>
-#include <fshell2/fql/ast/test_goal_sequence.hpp>
+#include <fshell2/fql/concepts/trace_automaton.hpp>
 
 #include <map>
-
-#include <astl/include/nfa_mmap_backedge.h>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
+class Evaluate_Filter;
 
 /*! \brief TODO
 */
@@ -53,62 +52,20 @@ class Evaluate_Path_Monitor : public Standard_AST_Visitor_Aspect<AST_Visitor>
 
 	public:
 
-	class Filter_Index {
-		typedef Filter_Index Self;
-		public:
-		typedef int char_type;
+	typedef ::std::map< Path_Monitor_Expr const*, trace_automaton_t > pm_value_t;
 
-		Filter_Index();
-
-		int to_index(Filter_Expr const* f);
-
-		static bool lt(const char_type x, const char_type y) {
-			return x < y;
-		}
-
-		int id_index() const {
-			return 0;
-		}
-	
-		int lookup_filter(Filter_Expr const* f) const;
-		Filter_Expr const* lookup_index(int index) const;
-
-		private:
-		::std::map< Filter_Expr const*, int > m_filter_to_int;
-		::std::map< int, Filter_Expr const* > m_int_to_filter;
-		int m_next_index;
-
-		Filter_Index(Self const& rhs);
-		Self& operator=(Self const& rhs);
-	};
-
-	typedef ::astl::NFA_mmap_backedge< Filter_Index > trace_automaton_t;
-	typedef ::std::set< trace_automaton_t::state_type > test_goal_states_t;
-	typedef ::std::map< Test_Goal_Sequence::seq_entry_t const* const,
-			test_goal_states_t > test_goal_map_t;
-	typedef ::std::map< trace_automaton_t::state_type, test_goal_map_t::iterator >
-		test_goal_reverse_map_t;
-
-	Evaluate_Path_Monitor();
+	explicit Evaluate_Path_Monitor(Evaluate_Filter const& filter_eval);
 
 	virtual ~Evaluate_Path_Monitor();
 
-	trace_automaton_t const& get_cov_seq_aut() const;
-	trace_automaton_t const& get_passing_aut() const;
-	test_goal_states_t const& get_test_goal_states(Test_Goal_Sequence::seq_entry_t const& s) const;
-	inline bool is_test_goal_state(trace_automaton_t::state_type const& state) const;
+	trace_automaton_t const& get(Path_Monitor_Expr const* pm) const;
 
-	inline Filter_Expr const* lookup_index(int index) const;
-	inline int lookup_filter(Filter_Expr const* filter) const;
+	inline target_graph_t const& lookup_index(int index) const;
+	inline int lookup_target_graph(target_graph_t const& tgg) const;
+	inline int to_index(target_graph_t const& tgg);
 	inline int id_index() const;
+	inline int epsilon_index() const;
 
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Edgecov
-	 * \param  n Edgecov
-	 */
-	virtual void visit(Edgecov const* n);
-	/*! \} */
-	
 	/*! \{
 	 * \brief Visit a @ref fshell2::fql::PM_Alternative
 	 * \param  n PM_Alternative
@@ -138,13 +95,6 @@ class Evaluate_Path_Monitor : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	/*! \} */
 
 	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Pathcov
-	 * \param  n Pathcov
-	 */
-	virtual void visit(Pathcov const* n);
-	/*! \} */
-
-	/*! \{
 	 * \brief Visit a @ref fshell2::fql::Query
 	 * \param  n Query
 	 */
@@ -159,34 +109,6 @@ class Evaluate_Path_Monitor : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	/*! \} */
 
 	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Statecov
-	 * \param  n Statecov
-	 */
-	virtual void visit(Statecov const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::TGS_Intersection
-	 * \param  n TGS_Intersection
-	 */
-	virtual void visit(TGS_Intersection const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::TGS_Setminus
-	 * \param  n TGS_Setminus
-	 */
-	virtual void visit(TGS_Setminus const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::TGS_Union
-	 * \param  n TGS_Union
-	 */
-	virtual void visit(TGS_Union const* n);
-	/*! \} */
-
-	/*! \{
 	 * \brief Visit a @ref fshell2::fql::Test_Goal_Sequence
 	 * \param  n Test_Goal_Sequence
 	 */
@@ -194,18 +116,10 @@ class Evaluate_Path_Monitor : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	/*! \} */
 
 	private:
-	Filter_Index m_filter_index;
-	trace_automaton_t m_cov_seq_aut;
-	trace_automaton_t m_passing_aut;
-
-	trace_automaton_t * m_current_aut;
-	trace_automaton_t::state_type m_current_initial;
-	trace_automaton_t::state_type m_current_final;
-	test_goal_map_t m_test_goal_map;
-	test_goal_map_t::iterator m_test_goal_map_entry;
-	test_goal_reverse_map_t m_reverse_test_goal_map;
-
-	void simplify(trace_automaton_t & aut);
+	Evaluate_Filter const& m_eval_filter;
+	Target_Graph_Index m_target_graph_index;
+	pm_value_t m_pm_map;
+	::std::pair< pm_value_t::iterator, bool > m_entry;
 
 	/*! \copydoc copy_constructor
 	*/
@@ -216,20 +130,24 @@ class Evaluate_Path_Monitor : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	Self& operator=( Self const& rhs );
 };
 	
-bool Evaluate_Path_Monitor::is_test_goal_state(trace_automaton_t::state_type const& state) const {
-	return (m_reverse_test_goal_map.end() != m_reverse_test_goal_map.find(state));
-}
-
-Filter_Expr const* Evaluate_Path_Monitor::lookup_index(int index) const {
-	return m_filter_index.lookup_index(index);
+target_graph_t const& Evaluate_Path_Monitor::lookup_index(int index) const {
+	return *(m_target_graph_index.lookup_index(index));
 }
 	
-int Evaluate_Path_Monitor::lookup_filter(Filter_Expr const * filter) const {
-	return m_filter_index.lookup_filter(filter);
+int Evaluate_Path_Monitor::lookup_target_graph(target_graph_t const& tgg) const {
+	return m_target_graph_index.lookup_target_graph(&tgg);
+}
+	
+int Evaluate_Path_Monitor::to_index(target_graph_t const& tgg) {
+	return m_target_graph_index.to_index(&tgg);
 }
 	
 int Evaluate_Path_Monitor::id_index() const {
-	return m_filter_index.id_index();
+	return m_target_graph_index.id_index();
+}
+
+int Evaluate_Path_Monitor::epsilon_index() const {
+	return m_target_graph_index.epsilon_index();
 }
 
 FSHELL2_FQL_NAMESPACE_END;

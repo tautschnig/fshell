@@ -134,11 +134,11 @@ void test( Test_Data & data )
 	target_graph_t const& bb_entries(eval.get(*bb));
 	TEST_CHECK_RELATION(6, ==, bb_entries.get_edges().size());
 
-	::fshell2::fql::Evaluate_Path_Monitor pm_eval;
+	::fshell2::fql::Evaluate_Path_Monitor pm_eval(eval);
 	q->accept(&pm_eval);
 
 	::fshell2::fql::Automaton_Inserter aut(pm_eval, eval, gf, cfg, l.context);
-	aut.insert();
+	aut.insert(*q);
 	
 	Compute_Test_Goals goals(l, options, gf, eval, pm_eval, aut);
 	Compute_Test_Goals::test_goals_t const& bb_goals(goals.compute(*q));

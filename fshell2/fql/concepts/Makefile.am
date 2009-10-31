@@ -9,9 +9,9 @@ include $(top_srcdir)/model.am
 SUBDIRS =
 
 noinst_LTLIBRARIES = libconcepts.la
-libconcepts_la_SOURCES = cfa.cpp path_predicate.cpp path_set_predicate.cpp state_predicate.cpp
+libconcepts_la_SOURCES = cfa.cpp path_predicate.cpp path_set_predicate.cpp state_predicate.cpp trace_automaton.cpp
 include_fshell2_fql_conceptsdir = $(includedir)/fshell2/fql/concepts
-include_fshell2_fql_concepts_HEADERS = path_set_predicate.hpp cfa.hpp state_predicate.hpp path_predicate.hpp
+include_fshell2_fql_concepts_HEADERS = path_set_predicate.hpp cfa.hpp state_predicate.hpp path_predicate.hpp target_graph.hpp trace_automaton.hpp
 check_PROGRAMS = cfa
 cfa_SOURCES = cfa.t.cpp
 # add additional objects required to build cfa here, like

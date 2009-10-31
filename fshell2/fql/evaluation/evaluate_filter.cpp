@@ -67,6 +67,8 @@ FSHELL2_FQL_NAMESPACE_BEGIN;
 Evaluate_Filter::Evaluate_Filter(::goto_functionst & gf,
 		::fshell2::instrumentation::CFG & cfg) :
 	m_gf(gf), m_cfg(cfg) {
+	// we should always have the target graph for ID
+	Filter_Function::Factory::get_instance().create<F_IDENTITY>()->accept(this);
 }
 
 Evaluate_Filter::~Evaluate_Filter() {
@@ -79,10 +81,10 @@ target_graph_t const& Evaluate_Filter::get(Filter_Expr const& f) const {
 	return entry->second;
 }
 	
-Evaluate_Filter::edge_to_filters_t const& Evaluate_Filter::get(::goto_programt::const_targett const& n) const {
-	static edge_to_filters_t no_entry;
-	node_to_filters_t::const_iterator entry(m_node_to_filters_map.find(n));
-	if (entry != m_node_to_filters_map.end()) return entry->second;
+Evaluate_Filter::edge_to_target_graphs_t const& Evaluate_Filter::get(::goto_programt::const_targett const& n) const {
+	static edge_to_target_graphs_t no_entry;
+	node_to_target_graphs_t::const_iterator entry(m_node_to_target_graphs_map.find(n));
+	if (entry != m_node_to_target_graphs_map.end()) return entry->second;
 	return no_entry;
 }
 
@@ -129,7 +131,7 @@ void Evaluate_Filter::visit(Filter_Complement const* n) {
 
 	for (target_graph_t::edges_t::const_iterator e_iter(entry.first->second.get_edges().begin());
 			e_iter != entry.first->second.get_edges().end(); ++e_iter) {
-		m_node_to_filters_map[ e_iter->first.second ][ *e_iter ].insert(n);
+		m_node_to_target_graphs_map[ e_iter->first.second ][ *e_iter ].insert(&(entry.first->second));
 	}
 }
 
@@ -158,7 +160,7 @@ void Evaluate_Filter::visit(Filter_Compose const* n) {
 
 	for (target_graph_t::edges_t::const_iterator e_iter(entry.first->second.get_edges().begin());
 			e_iter != entry.first->second.get_edges().end(); ++e_iter) {
-		m_node_to_filters_map[ e_iter->first.second ][ *e_iter ].insert(n);
+		m_node_to_target_graphs_map[ e_iter->first.second ][ *e_iter ].insert(&(entry.first->second));
 	}
 }
 
@@ -470,7 +472,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 
 	for (target_graph_t::edges_t::const_iterator e_iter(entry.first->second.get_edges().begin());
 			e_iter != entry.first->second.get_edges().end(); ++e_iter) {
-		m_node_to_filters_map[ e_iter->first.second ][ *e_iter ].insert(n);
+		m_node_to_target_graphs_map[ e_iter->first.second ][ *e_iter ].insert(&(entry.first->second));
 	}
 }
 
@@ -500,7 +502,7 @@ void Evaluate_Filter::visit(Filter_Intersection const* n) {
 
 	for (target_graph_t::edges_t::const_iterator e_iter(entry.first->second.get_edges().begin());
 			e_iter != entry.first->second.get_edges().end(); ++e_iter) {
-		m_node_to_filters_map[ e_iter->first.second ][ *e_iter ].insert(n);
+		m_node_to_target_graphs_map[ e_iter->first.second ][ *e_iter ].insert(&(entry.first->second));
 	}
 }
 
@@ -530,7 +532,7 @@ void Evaluate_Filter::visit(Filter_Setminus const* n) {
 
 	for (target_graph_t::edges_t::const_iterator e_iter(entry.first->second.get_edges().begin());
 			e_iter != entry.first->second.get_edges().end(); ++e_iter) {
-		m_node_to_filters_map[ e_iter->first.second ][ *e_iter ].insert(n);
+		m_node_to_target_graphs_map[ e_iter->first.second ][ *e_iter ].insert(&(entry.first->second));
 	}
 }
 
@@ -560,7 +562,7 @@ void Evaluate_Filter::visit(Filter_Union const* n) {
 
 	for (target_graph_t::edges_t::const_iterator e_iter(entry.first->second.get_edges().begin());
 			e_iter != entry.first->second.get_edges().end(); ++e_iter) {
-		m_node_to_filters_map[ e_iter->first.second ][ *e_iter ].insert(n);
+		m_node_to_target_graphs_map[ e_iter->first.second ][ *e_iter ].insert(&(entry.first->second));
 	}
 }
 

@@ -37,7 +37,13 @@
 #include <fshell2/instrumentation/goto_transformation.hpp>
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
 #include <fshell2/fql/evaluation/evaluate_path_monitor.hpp>
+#include <fshell2/fql/ast/edgecov.hpp>
+#include <fshell2/fql/ast/pathcov.hpp>
 #include <fshell2/fql/ast/query.hpp>
+#include <fshell2/fql/ast/statecov.hpp>
+#include <fshell2/fql/ast/tgs_intersection.hpp>
+#include <fshell2/fql/ast/tgs_setminus.hpp>
+#include <fshell2/fql/ast/tgs_union.hpp>
 
 #include <limits>
 
@@ -48,19 +54,28 @@
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
-			
-Automaton_Inserter::Automaton_Inserter(Evaluate_Path_Monitor const& pm_eval,
+
+Automaton_Inserter::Automaton_Inserter(Evaluate_Path_Monitor & pm_eval,
 			Evaluate_Filter const& filter_eval, ::goto_functionst & gf,
 			::fshell2::instrumentation::CFG & cfg,
 			::contextt & context) :
 	m_pm_eval(pm_eval), m_filter_eval(filter_eval), m_gf(gf),
 	m_context(context),
 	m_cfg(cfg),
-	m_inserter(m_gf) {
+	m_inserter(m_gf),
+	m_test_goal_map_entry(m_test_goal_map.end()) {
 }
 
+Automaton_Inserter::test_goal_states_t const& Automaton_Inserter::get_test_goal_states(
+		Test_Goal_Sequence::seq_entry_t const& s) const {
+	test_goal_map_t::const_iterator entry(m_test_goal_map.find(&s));
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Protocol,
+			entry != m_test_goal_map.end());
+	return entry->second;
+}
+			
 Automaton_Inserter::instrumentation_points_t const& Automaton_Inserter::get_test_goal_instrumentation(
-			Evaluate_Path_Monitor::trace_automaton_t::state_type const& state) const {
+			ta_state_t const& state) const {
 	instrumentation_map_t::const_iterator entry(m_tg_instrumentation_map.find(state));
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Protocol,
 			entry != m_tg_instrumentation_map.end());
@@ -75,31 +90,129 @@ CFA::edge_t const& Automaton_Inserter::get_target_graph_edge(::goto_programt::co
 	return entry->second;
 }
 
-typedef Evaluate_Path_Monitor::trace_automaton_t trace_automaton_t;
+void Automaton_Inserter::visit(Edgecov const* n) {
+	if (n->get_predicates()) {
+		FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+	}
+
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !m_current_final.empty());
+
+	ta_state_set_t prev_final;
+	prev_final.swap(m_current_final);
+	m_current_final.insert(m_cov_seq_aut.new_state());
+
+	for (ta_state_set_t::const_iterator iter(prev_final.begin());
+			iter != prev_final.end(); ++iter)
+		m_cov_seq_aut.set_trans(*iter, m_pm_eval.to_index(m_filter_eval.get(*(n->get_filter_expr()))),
+				*m_current_final.begin());
+	
+	m_test_goal_map_entry->second.insert(*m_current_final.begin());
+	m_reverse_test_goal_map.insert(::std::make_pair(*m_current_final.begin(), m_test_goal_map_entry));
+}
+
+void Automaton_Inserter::visit(Pathcov const* n) {
+	if (n->get_predicates()) {
+		FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+	}
+
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !m_current_final.empty());
+	
+	FSHELL2_PROD_ASSERT(::diagnostics::Not_Implemented, false);
+}
+
+void Automaton_Inserter::visit(Query const* n) {
+	m_current_final.insert(m_cov_seq_aut.new_state());
+	m_cov_seq_aut.initial().insert(*m_current_final.begin());
+	
+	n->get_cover()->accept(this);
+
+	for (ta_state_set_t::const_iterator iter(m_current_final.begin());
+			iter != m_current_final.end(); ++iter)
+		m_cov_seq_aut.final(*iter) = 1;
+
+	simplify_automaton(m_cov_seq_aut, false);
+}
+
+void Automaton_Inserter::visit(Statecov const* n) {
+	if (n->get_predicates()) {
+		FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+	}
+
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !m_current_final.empty());
+	
+	FSHELL2_PROD_ASSERT(::diagnostics::Not_Implemented, false);
+}
+
+void Automaton_Inserter::visit(TGS_Intersection const* n) {
+	FSHELL2_PROD_ASSERT(::diagnostics::Not_Implemented, false);
+
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !m_current_final.empty());
+}
+
+void Automaton_Inserter::visit(TGS_Setminus const* n) {
+	FSHELL2_PROD_ASSERT(::diagnostics::Not_Implemented, false);
+
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !m_current_final.empty());
+}
+
+void Automaton_Inserter::visit(TGS_Union const* n) {
+	FSHELL2_PROD_ASSERT(::diagnostics::Not_Implemented, false);
+
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !m_current_final.empty());
+}
+
+void Automaton_Inserter::visit(Test_Goal_Sequence const* n) {
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !m_current_final.empty());
+	
+	for (Test_Goal_Sequence::seq_t::const_iterator iter(n->get_sequence().begin());
+			iter != n->get_sequence().end(); ++iter) {
+		::std::pair< ta_state_set_t, ta_state_set_t > pm_init_final(
+				copy_automaton(m_pm_eval.get(iter->first), m_cov_seq_aut));
+		for (ta_state_set_t::const_iterator iter1(m_current_final.begin());
+				iter1 != m_current_final.end(); ++iter1)
+			for (ta_state_set_t::const_iterator iter2(pm_init_final.first.begin());
+					iter2 != pm_init_final.first.end(); ++iter2)
+				m_cov_seq_aut.set_trans(*iter1, m_pm_eval.epsilon_index(), *iter2);
+		m_current_final.swap(pm_init_final.second);
+
+		m_test_goal_map_entry = m_test_goal_map.insert(::std::make_pair(
+					&(*iter), test_goal_states_t())).first;
+		iter->second->accept(this);
+	}
+		
+	::std::pair< ta_state_set_t, ta_state_set_t > pm_init_final(
+			copy_automaton(m_pm_eval.get(n->get_suffix_monitor()), m_cov_seq_aut));
+	for (ta_state_set_t::const_iterator iter1(m_current_final.begin());
+			iter1 != m_current_final.end(); ++iter1)
+		for (ta_state_set_t::const_iterator iter2(pm_init_final.first.begin());
+				iter2 != pm_init_final.first.end(); ++iter2)
+			m_cov_seq_aut.set_trans(*iter1, m_pm_eval.epsilon_index(), *iter2);
+	m_current_final.swap(pm_init_final.second);
+}
 
 void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& aut,
 		::exprt & final_cond, bool map_tg) {
 	using ::fshell2::instrumentation::CFG;
 
-	// traverse the automaton and collect relevant filters; for each filter build
-	// a map< state_t, set< state_t > >
+	// traverse the automaton and collect relevant target graphs; for each
+	// target graph build a map< state_t, set< state_t > >
 	// add a map from states to new indices for efficiency
 	// store accepting state for passing and cov_seq
 
-	::std::map< trace_automaton_t::state_type, trace_automaton_t::state_type > state_map;
-	::std::map< trace_automaton_t::state_type, trace_automaton_t::state_type > reverse_state_map;
-	::std::set< trace_automaton_t::state_type > final;
+	::std::map< ta_state_t, ta_state_t > state_map;
+	::std::map< ta_state_t, ta_state_t > reverse_state_map;
+	ta_state_set_t final;
 
-	trace_automaton_t::state_type idx(0);
+	ta_state_t idx(0);
 	for (trace_automaton_t::const_iterator iter(aut.begin());
 			iter != aut.end(); ++iter) {
-		trace_automaton_t::state_type const cur_idx(idx++);
+		ta_state_t const cur_idx(idx++);
 		state_map.insert(::std::make_pair(*iter, cur_idx));
 		reverse_state_map.insert(::std::make_pair(cur_idx, *iter));
 		if (aut.final(*iter)) final.insert(cur_idx);
 	}
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !aut.initial().empty());
-	trace_automaton_t::state_type initial(state_map.find(*(aut.initial().begin()))->second);
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == aut.initial().size());
+	ta_state_t initial(state_map.find(*(aut.initial().begin()))->second);
 
 	::goto_programt defs;
 
@@ -113,8 +226,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 		state_symb.name = ::diagnostics::internal::to_string("c::!fshell2!state$", suffix);
 		state_symb.static_lifetime = true;
 		state_symb.lvalue = true;
-		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, ::std::numeric_limits<
-				trace_automaton_t::state_type >::min() >= 0);
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, ::std::numeric_limits< ta_state_t >::min() >= 0);
 		state_symb.type = ::unsignedbv_typet(log_2_rounded);
 		m_context.move(state_symb);
 	}
@@ -128,16 +240,15 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 
 	m_inserter.insert("main", ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::FUNCTION_CALL, defs);
 
-	// we only need a subset of the filters and we should better know which ones
-	typedef ::std::map< Filter_Expr const*, int > filter_to_int_t;
-	filter_to_int_t local_filter_map;
-	typedef ::std::map< int, ::std::map< trace_automaton_t::state_type,
-			::std::set< trace_automaton_t::state_type > > > transition_map_t;
+	// we only need a subset of the target graphs and we should better know which ones
+	typedef ::std::map< target_graph_t const*, int > target_graph_to_int_t;
+	target_graph_to_int_t local_target_graph_map;
+	typedef ::std::map< int, ::std::map< ta_state_t, ta_state_set_t > > transition_map_t;
 	transition_map_t transitions;
 
 	for (trace_automaton_t::const_iterator iter(aut.begin());
 			iter != aut.end(); ++iter) {
-		trace_automaton_t::state_type const mapped_state(state_map.find(*iter)->second);
+		ta_state_t const mapped_state(state_map.find(*iter)->second);
 		trace_automaton_t::edges_type const out_edges(aut.delta2(*iter));
 		for (trace_automaton_t::edges_type::const_iterator e_iter(out_edges.begin());
 				e_iter != out_edges.end(); ++e_iter) {
@@ -145,9 +256,9 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 					state_map.find(e_iter->second)->second);
 			
 			if (m_pm_eval.id_index() == e_iter->first) continue;
-			Filter_Expr const* flt(m_pm_eval.lookup_index(e_iter->first));
-			if (local_filter_map.end() == local_filter_map.find(flt))
-				local_filter_map[ flt ] = e_iter->first;
+			target_graph_t const* tgg(&(m_pm_eval.lookup_index(e_iter->first)));
+			if (local_target_graph_map.end() == local_target_graph_map.find(tgg))
+				local_target_graph_map[ tgg ] = e_iter->first;
 		}
 	}
 
@@ -173,7 +284,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_cfg.end() != cfg_node);
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !cfg_node->second.successors.empty());
 			
-			Evaluate_Filter::edge_to_filters_t const& entry(m_filter_eval.get(i_iter));
+			Evaluate_Filter::edge_to_target_graphs_t const& entry(m_filter_eval.get(i_iter));
 			if (entry.empty()) {
 				::goto_programt tmp;
 				/*if (map_tg) {
@@ -203,25 +314,25 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 						i_iter->is_goto());
 				for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
 						s_iter != cfg_node->second.successors.end(); ++s_iter) {
-					Evaluate_Filter::edge_to_filters_t::const_iterator edge_map_iter(
+					Evaluate_Filter::edge_to_target_graphs_t::const_iterator edge_map_iter(
 							entry.find(::std::make_pair(::std::make_pair(&(iter->second.body), i_iter), *s_iter)));
-					::std::set< int > filters;
+					::std::set< int > target_graphs;
 					if (entry.end() != edge_map_iter) {
-						for (::std::set< Filter_Expr const* >::const_iterator f_iter(edge_map_iter->second.begin());
+						for (::std::set< target_graph_t const* >::const_iterator f_iter(edge_map_iter->second.begin());
 							f_iter != edge_map_iter->second.end(); ++f_iter) {
-							filter_to_int_t::const_iterator int_entry(local_filter_map.find(*f_iter));
-							if (local_filter_map.end() == int_entry) continue;
-							filters.insert(int_entry->second);
+							target_graph_to_int_t::const_iterator int_entry(local_target_graph_map.find(*f_iter));
+							if (local_target_graph_map.end() == int_entry) continue;
+							target_graphs.insert(int_entry->second);
 						}
 					}
 				
 					//::goto_programt tg_record;
 					::goto_programt tmp;
 					::fshell2::instrumentation::GOTO_Transformation::inserted_t & targets(
-							m_inserter.make_nondet_choice(tmp, filters.size() + 1, m_context));
+							m_inserter.make_nondet_choice(tmp, target_graphs.size() + 1, m_context));
 					::fshell2::instrumentation::GOTO_Transformation::inserted_t::iterator t_iter(
 							targets.begin());
-					for (::std::set< int >::const_iterator f_iter(filters.begin()); f_iter != filters.end(); 
+					for (::std::set< int >::const_iterator f_iter(target_graphs.begin()); f_iter != target_graphs.end(); 
 							++f_iter, ++t_iter) {
 						/*if (map_tg) {
 							::goto_programt::targett call(tg_record.add_instruction(FUNCTION_CALL));
@@ -289,8 +400,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 	// transitions, some non-det as induced by map; add else assume(false)
 	// make sure transitions has an entry for ID
 	transitions.insert(::std::make_pair(m_pm_eval.id_index(),
-				::std::map< trace_automaton_t::state_type,
-				::std::set< trace_automaton_t::state_type > >()));
+				::std::map< ta_state_t, ta_state_set_t >()));
 	for (transition_map_t::const_iterator iter(transitions.begin());
 			iter != transitions.end(); ++iter) {
 		::std::string const func_name(::diagnostics::internal::to_string("c::filter_trans$", suffix, "$",
@@ -313,7 +423,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 		::goto_programt tmp_target;
 		::goto_programt::targett out_target(tmp_target.add_instruction(SKIP));
 
-		for (::std::map< trace_automaton_t::state_type, ::std::set< trace_automaton_t::state_type > >::
+		for (::std::map< ta_state_t, ta_state_set_t >::
 				const_iterator tr_iter(iter->second.begin()); tr_iter != iter->second.end();
 				++tr_iter) {
 			// code: if state == tr_iter->first && non_det_expr state =
@@ -330,7 +440,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 			::fshell2::instrumentation::GOTO_Transformation::inserted_t::iterator t_iter(
 					targets.begin());
 
-			for (::std::set< trace_automaton_t::state_type >::const_iterator s_iter(tr_iter->second.begin());
+			for (ta_state_set_t::const_iterator s_iter(tr_iter->second.begin());
 					s_iter != tr_iter->second.end(); ++s_iter, ++t_iter) {
 				if (tr_iter->first == *s_iter) {
 					t_iter->second->type = SKIP;
@@ -341,9 +451,9 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 					if (map_tg) {
 						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 
 								reverse_state_map.end() != reverse_state_map.find(*s_iter));
-						trace_automaton_t::state_type const unmapped_state(
+						ta_state_t const unmapped_state(
 								reverse_state_map.find(*s_iter)->second);
-						if (m_pm_eval.is_test_goal_state(unmapped_state)) {
+						if (is_test_goal_state(unmapped_state)) {
 							m_tg_instrumentation_map[ unmapped_state ].push_back(*t_iter);
 						}
 					}
@@ -392,17 +502,17 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 			
 			::goto_programt & body(entry.first->second.body);
 
-			for (::std::map< trace_automaton_t::state_type, ::std::set< trace_automaton_t::state_type > >::
+			for (::std::map< ta_state_t, ta_state_set_t >::
 					const_iterator tr_iter(iter->second.begin()); tr_iter != iter->second.end();
 					++tr_iter) {
 				bool may_do_tg(false);
 				::goto_programt do_tg_prg;
 				::goto_programt::targett do_tg(do_tg_prg.add_instruction(LOCATION));
-				for (::std::set< trace_automaton_t::state_type >::const_iterator s_iter(tr_iter->second.begin());
+				for (ta_state_set_t::const_iterator s_iter(tr_iter->second.begin());
 						s_iter != tr_iter->second.end(); ++s_iter) {
 					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 
 							reverse_state_map.end() != reverse_state_map.find(*s_iter));
-					trace_automaton_t::state_type const unmapped_state(
+					ta_state_t const unmapped_state(
 							reverse_state_map.find(*s_iter)->second);
 					if (m_pm_eval.is_test_goal_state(unmapped_state)) {
 						may_do_tg = true;
@@ -431,7 +541,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 	
 	// final assertion
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !final.empty());
-	for (::std::set< trace_automaton_t::state_type >::const_iterator iter(final.begin());
+	for (ta_state_set_t::const_iterator iter(final.begin());
 			iter != final.end(); ++iter) {
 		if (final.begin() == iter) {
 			final_cond = ::binary_relation_exprt(::symbol_expr(state_symb), "=",
@@ -443,10 +553,11 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 	}
 }
 
-void Automaton_Inserter::insert() {
+void Automaton_Inserter::insert(Query const& query) {
 	::exprt c_s_final_cond, p_final_cond;
-	insert("c_s", m_pm_eval.get_cov_seq_aut(), c_s_final_cond, true);
-	insert("p", m_pm_eval.get_passing_aut(), p_final_cond, false);
+	query.accept(this);
+	insert("c_s", m_cov_seq_aut, c_s_final_cond, true);
+	insert("p", m_pm_eval.get(query.get_passing()), p_final_cond, false);
 	
 	::goto_programt tmp;
 	::goto_programt::targett as(tmp.add_instruction(ASSERT));

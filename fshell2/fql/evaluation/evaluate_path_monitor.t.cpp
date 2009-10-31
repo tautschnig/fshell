@@ -130,16 +130,16 @@ void test( Test_Data & data )
 	Path_Monitor_Expr * pm_id(PM_Filter_Adapter::Factory::get_instance().create(
 				Filter_Function::Factory::get_instance().create<F_IDENTITY>()));
 	Path_Monitor_Expr * pm_id_kleene(PM_Repeat::Factory::get_instance().create(pm_id, 0, -1));
+	Path_Monitor_Expr * pm(PM_Concat::Factory::get_instance().create(pm_id_kleene,
+					PM_Concat::Factory::get_instance().create(pm_f, pm_id_kleene)));
 
-	Query * q(Query::Factory::get_instance().create(0, s,
-				PM_Concat::Factory::get_instance().create(pm_id_kleene,
-					PM_Concat::Factory::get_instance().create(pm_f, pm_id_kleene))));
+	Query * q(Query::Factory::get_instance().create(0, s, pm));
 
-	::fshell2::fql::Evaluate_Path_Monitor pm_eval;
+	q->accept(&eval);
+	::fshell2::fql::Evaluate_Path_Monitor pm_eval(eval);
 	q->accept(&pm_eval);
 	
-	TEST_ASSERT_RELATION(3, ==, pm_eval.get_cov_seq_aut().state_count());
-	TEST_ASSERT_RELATION(4, ==, pm_eval.get_passing_aut().state_count());
+	TEST_ASSERT_RELATION(4, ==, pm_eval.get(pm).state_count());
 }
 
 /** @cond */

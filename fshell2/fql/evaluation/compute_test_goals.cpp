@@ -131,9 +131,9 @@ Compute_Test_Goals::test_goals_t const& Compute_Test_Goals::compute(Query const&
 			iter != query.get_cover()->get_sequence().end(); ++iter) {
 
 		context_to_pcs_t context_to_pcs;
-		Evaluate_Path_Monitor::test_goal_states_t const& states(
-				m_pm_eval.get_test_goal_states(*iter));
-		for (Evaluate_Path_Monitor::test_goal_states_t::const_iterator s_iter(
+		Automaton_Inserter::test_goal_states_t const& states(
+				m_aut_insert.get_test_goal_states(*iter));
+		for (Automaton_Inserter::test_goal_states_t::const_iterator s_iter(
 					states.begin()); s_iter != states.end(); ++s_iter) {
 			Automaton_Inserter::instrumentation_points_t const& nodes(
 					m_aut_insert.get_test_goal_instrumentation(*s_iter));
