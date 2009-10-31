@@ -65,10 +65,15 @@ class Automaton_Inserter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	public:
 	typedef ::std::list< ::fshell2::instrumentation::GOTO_Transformation::goto_node_t > instrumentation_points_t;
 	typedef ::std::map< ta_state_t, instrumentation_points_t > instrumentation_map_t;
+
+	typedef ::std::map< target_graph_t::node_t, int > node_counts_t;
 	
 	typedef ta_state_set_t test_goal_states_t;
 	typedef ::std::map< Test_Goal_Sequence::seq_entry_t const* const, test_goal_states_t > test_goal_map_t;
 	typedef ::std::map< ta_state_t, test_goal_map_t::iterator > test_goal_reverse_map_t;
+	
+	typedef ::std::map< target_graph_t::edge_t, ::std::set< target_graph_t const* > > edge_to_target_graphs_t;
+	typedef ::std::map< ::goto_programt::const_targett, edge_to_target_graphs_t > node_to_target_graphs_t; 
 	
 	test_goal_states_t const& get_test_goal_states(Test_Goal_Sequence::seq_entry_t const& s) const;
 	inline bool is_test_goal_state(ta_state_t const& state) const;
@@ -94,11 +99,16 @@ class Automaton_Inserter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	::fshell2::instrumentation::GOTO_Transformation m_inserter;
 	instrumentation_map_t m_tg_instrumentation_map;
 	::std::map< ::goto_programt::const_targett, CFA::edge_t > m_target_edge_map;
+	::std::list< target_graph_t > m_more_target_graphs;
 	test_goal_map_t m_test_goal_map;
 	test_goal_map_t::iterator m_test_goal_map_entry;
 	test_goal_reverse_map_t m_reverse_test_goal_map;
+	node_to_target_graphs_t m_node_to_target_graphs_map;
 
 	void insert(char const * suffix, trace_automaton_t const& aut, ::exprt & final_cond, bool map_tg);
+
+	void dfs_build(ta_state_t const& state, target_graph_t::node_t const& root, int const bound,
+		node_counts_t const& nc, target_graph_t const& tgg);
 	
 	/*! \{
 	 * \brief Visit a @ref fshell2::fql::Edgecov

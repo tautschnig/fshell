@@ -127,7 +127,7 @@ void test( Test_Data & data )
 	Filter_Expr * ff(Filter_Function::Factory::get_instance().create<F_FILE>(tempname_str));
 	ff->accept(&eval);
 	target_graph_t const& ff_entries(eval.get(*ff));
-	TEST_ASSERT_RELATION(6, ==, ff_entries.get_edges().size());
+	TEST_ASSERT_RELATION(5, ==, ff_entries.get_edges().size());
 }
 
 /** @cond */

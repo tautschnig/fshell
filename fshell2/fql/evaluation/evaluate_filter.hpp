@@ -56,18 +56,16 @@ class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 
 	public:
 	typedef ::std::map< Filter_Expr const*, target_graph_t > filter_value_t;
-	typedef ::std::map< target_graph_t::edge_t, ::std::set< target_graph_t const* > > edge_to_target_graphs_t;
-	typedef ::std::map< ::goto_programt::const_targett, edge_to_target_graphs_t > node_to_target_graphs_t; 
 
 	Evaluate_Filter(::goto_functionst & ts,
 			::fshell2::instrumentation::CFG & cfg);
 
 	virtual ~Evaluate_Filter();
 
-	static bool skip_function(::goto_functionst::goto_functiont const& fct);
+	static bool ignore_function(::goto_functionst::goto_functiont const& fct);
+	static bool ignore_instruction(::goto_programt::instructiont const& e);
 
 	target_graph_t const& get(Filter_Expr const& f) const;
-	edge_to_target_graphs_t const& get(::goto_programt::const_targett const& n) const;
 
 	/*! \{
 	 * \brief Visit a @ref fshell2::fql::Edgecov
@@ -206,7 +204,6 @@ class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	::goto_functionst & m_gf;
 	::fshell2::instrumentation::CFG & m_cfg;
 	filter_value_t m_filter_map;
-	node_to_target_graphs_t m_node_to_target_graphs_map;
 
 	/*! \copydoc copy_constructor
 	*/
