@@ -48,11 +48,15 @@
 #include <fshell2/fql/ast/pm_alternative.hpp>
 #include <fshell2/fql/ast/pm_concat.hpp>
 #include <fshell2/fql/ast/pm_filter_adapter.hpp>
+#include <fshell2/fql/ast/pm_postcondition.hpp>
+#include <fshell2/fql/ast/pm_precondition.hpp>
 #include <fshell2/fql/ast/pm_repeat.hpp>
 #include <fshell2/fql/ast/query.hpp>
 #include <fshell2/fql/ast/statecov.hpp>
 #include <fshell2/fql/ast/test_goal_sequence.hpp>
 #include <fshell2/fql/ast/tgs_intersection.hpp>
+#include <fshell2/fql/ast/tgs_postcondition.hpp>
+#include <fshell2/fql/ast/tgs_precondition.hpp>
 #include <fshell2/fql/ast/tgs_setminus.hpp>
 #include <fshell2/fql/ast/tgs_union.hpp>
 
@@ -581,6 +585,14 @@ void Evaluate_Filter::visit(PM_Filter_Adapter const* n) {
 	n->get_filter_expr()->accept(this);
 }
 
+void Evaluate_Filter::visit(PM_Postcondition const* n) {
+	n->get_path_monitor_expr()->accept(this);
+}
+
+void Evaluate_Filter::visit(PM_Precondition const* n) {
+	n->get_path_monitor_expr()->accept(this);
+}
+
 void Evaluate_Filter::visit(PM_Repeat const* n) {
 	n->get_path_monitor_expr()->accept(this);
 }
@@ -606,6 +618,14 @@ void Evaluate_Filter::visit(Statecov const* n) {
 void Evaluate_Filter::visit(TGS_Intersection const* n) {
 	n->get_tgs_a()->accept(this);
 	n->get_tgs_b()->accept(this);
+}
+
+void Evaluate_Filter::visit(TGS_Postcondition const* n) {
+	n->get_tgs()->accept(this);
+}
+
+void Evaluate_Filter::visit(TGS_Precondition const* n) {
+	n->get_tgs()->accept(this);
 }
 
 void Evaluate_Filter::visit(TGS_Setminus const* n) {

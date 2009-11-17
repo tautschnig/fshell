@@ -29,6 +29,8 @@
 #include <fshell2/fql/normalize/normalization_visitor.hpp>
 #include <fshell2/config/annotations.hpp>
 
+#include <diagnostics/basic_exceptions/violated_invariance.hpp>
+
 #include <fshell2/fql/ast/edgecov.hpp>
 #include <fshell2/fql/ast/filter_complement.hpp>
 #include <fshell2/fql/ast/filter_compose.hpp>
@@ -41,12 +43,16 @@
 #include <fshell2/fql/ast/pm_alternative.hpp>
 #include <fshell2/fql/ast/pm_concat.hpp>
 #include <fshell2/fql/ast/pm_filter_adapter.hpp>
+#include <fshell2/fql/ast/pm_postcondition.hpp>
+#include <fshell2/fql/ast/pm_precondition.hpp>
 #include <fshell2/fql/ast/pm_repeat.hpp>
 #include <fshell2/fql/ast/predicate.hpp>
 #include <fshell2/fql/ast/query.hpp>
 #include <fshell2/fql/ast/statecov.hpp>
 #include <fshell2/fql/ast/test_goal_sequence.hpp>
 #include <fshell2/fql/ast/tgs_intersection.hpp>
+#include <fshell2/fql/ast/tgs_postcondition.hpp>
+#include <fshell2/fql/ast/tgs_precondition.hpp>
 #include <fshell2/fql/ast/tgs_setminus.hpp>
 #include <fshell2/fql/ast/tgs_union.hpp>
 
@@ -118,6 +124,9 @@ void Normalization_Visitor::normalize(Query ** query) {
 	(*query)->incr_ref_count();
 	m_top_query = 0;
 	(*query)->decr_ref_count();
+
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !(*query)->get_prefix());
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, (*query)->get_cover());
 }
 	
 void Normalization_Visitor::visit(Edgecov const* n) {
@@ -311,6 +320,18 @@ void Normalization_Visitor::visit(PM_Filter_Adapter const* n) {
 				m_top_filter.get());
 }
 
+void Normalization_Visitor::visit(PM_Postcondition const* n) {
+	n->get_path_monitor_expr()->accept(this);
+	n->get_predicate()->accept(this);
+	m_top_mon = PM_Postcondition::Factory::get_instance().create(m_top_mon.get(), m_top_pred.get());
+}
+
+void Normalization_Visitor::visit(PM_Precondition const* n) {
+	n->get_predicate()->accept(this);
+	n->get_path_monitor_expr()->accept(this);
+	m_top_mon = PM_Precondition::Factory::get_instance().create(m_top_mon.get(), m_top_pred.get());
+}
+
 void Normalization_Visitor::visit(PM_Repeat const* n) {
 	n->get_path_monitor_expr()->accept(this);
 	m_top_mon = PM_Repeat::Factory::get_instance().create(m_top_mon.get(), n->get_lower_bound(),
@@ -408,6 +429,18 @@ void Normalization_Visitor::visit(TGS_Intersection const* n) {
 	} else {
 		m_top_tgset = tgs_a;
 	}
+}
+
+void Normalization_Visitor::visit(TGS_Postcondition const* n) {
+	n->get_tgs()->accept(this);
+	n->get_predicate()->accept(this);
+	m_top_tgset = TGS_Postcondition::Factory::get_instance().create(m_top_tgset.get(), m_top_pred.get());
+}
+
+void Normalization_Visitor::visit(TGS_Precondition const* n) {
+	n->get_predicate()->accept(this);
+	n->get_tgs()->accept(this);
+	m_top_tgset = TGS_Precondition::Factory::get_instance().create(m_top_tgset.get(), m_top_pred.get());
 }
 
 void Normalization_Visitor::visit(TGS_Setminus const* n) {

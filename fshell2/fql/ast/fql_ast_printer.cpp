@@ -43,12 +43,16 @@
 #include <fshell2/fql/ast/pm_alternative.hpp>
 #include <fshell2/fql/ast/pm_concat.hpp>
 #include <fshell2/fql/ast/pm_filter_adapter.hpp>
+#include <fshell2/fql/ast/pm_postcondition.hpp>
+#include <fshell2/fql/ast/pm_precondition.hpp>
 #include <fshell2/fql/ast/pm_repeat.hpp>
 #include <fshell2/fql/ast/predicate.hpp>
 #include <fshell2/fql/ast/query.hpp>
 #include <fshell2/fql/ast/statecov.hpp>
 #include <fshell2/fql/ast/test_goal_sequence.hpp>
 #include <fshell2/fql/ast/tgs_intersection.hpp>
+#include <fshell2/fql/ast/tgs_postcondition.hpp>
+#include <fshell2/fql/ast/tgs_precondition.hpp>
 #include <fshell2/fql/ast/tgs_setminus.hpp>
 #include <fshell2/fql/ast/tgs_union.hpp>
 
@@ -263,6 +267,16 @@ void FQL_AST_Printer::visit(PM_Filter_Adapter const* n) {
 	n->get_filter_expr()->accept(this);
 }
 
+void FQL_AST_Printer::visit(PM_Postcondition const* n) {
+	n->get_path_monitor_expr()->accept(this);
+	n->get_predicate()->accept(this);
+}
+
+void FQL_AST_Printer::visit(PM_Precondition const* n) {
+	n->get_predicate()->accept(this);
+	n->get_path_monitor_expr()->accept(this);
+}
+
 void FQL_AST_Printer::visit(PM_Repeat const* n) {
 	int const lb(n->get_lower_bound());
 	int const ub(n->get_upper_bound());
@@ -293,7 +307,11 @@ void FQL_AST_Printer::visit(Pathcov const* n) {
 void FQL_AST_Printer::visit(Predicate const* n) {
 	::contextt ctx;
 	::namespacet ns(ctx);
-	::expr2c(*(n->get_expr()), ns);
+	::std::string c_expr(::expr2c(*(n->get_expr()), ns));
+	::std::string::size_type no_ws_start(0);
+	while (::std::isspace(c_expr.at(no_ws_start))) ++no_ws_start;
+	c_expr = c_expr.substr(no_ws_start);
+	m_os << "{\"" << c_expr.substr(0, c_expr.rfind(";\n")) << "\"}";
 }
 
 void FQL_AST_Printer::visit(Query const* n) {
@@ -330,6 +348,16 @@ void FQL_AST_Printer::visit(TGS_Intersection const* n) {
 	m_os << ",";
 	n->get_tgs_b()->accept(this);
 	m_os << ")";
+}
+
+void FQL_AST_Printer::visit(TGS_Postcondition const* n) {
+	n->get_tgs()->accept(this);
+	n->get_predicate()->accept(this);
+}
+
+void FQL_AST_Printer::visit(TGS_Precondition const* n) {
+	n->get_predicate()->accept(this);
+	n->get_tgs()->accept(this);
 }
 
 void FQL_AST_Printer::visit(TGS_Setminus const* n) {

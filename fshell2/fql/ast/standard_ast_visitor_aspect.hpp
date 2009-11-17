@@ -47,6 +47,8 @@ class Filter_Union;
 class PM_Alternative;
 class PM_Concat;
 class PM_Filter_Adapter;
+class PM_Postcondition;
+class PM_Precondition;
 class PM_Repeat;
 class Path_Monitor_Expr;
 class Pathcov;
@@ -54,6 +56,8 @@ class Predicate;
 class Query;
 class Statecov;
 class TGS_Intersection;
+class TGS_Postcondition;
+class TGS_Precondition;
 class TGS_Setminus;
 class TGS_Union;
 class Test_Goal_Sequence;
@@ -177,6 +181,22 @@ class Standard_AST_Visitor_Aspect : public INTERFACE
 		/*! \} */
 
 		/*! \{
+		 * \brief Visit a @ref fshell2::fql::PM_Postcondition
+		 * \param  n PM_Postcondition
+		 */
+		virtual void visit(PM_Postcondition const* n);
+		virtual void visit(PM_Postcondition const* n) const;
+		/*! \} */
+
+		/*! \{
+		 * \brief Visit a @ref fshell2::fql::PM_Precondition
+		 * \param  n PM_Precondition
+		 */
+		virtual void visit(PM_Precondition const* n);
+		virtual void visit(PM_Precondition const* n) const;
+		/*! \} */
+
+		/*! \{
 		 * \brief Visit a @ref fshell2::fql::PM_Repeat
 		 * \param  n PM_Repeat
 		 */
@@ -233,6 +253,22 @@ class Standard_AST_Visitor_Aspect : public INTERFACE
 		/*! \} */
 
 		/*! \{
+		 * \brief Visit a @ref fshell2::fql::TGS_Postcondition
+		 * \param  n TGS_Postcondition
+		 */
+		virtual void visit(TGS_Postcondition const* n);
+		virtual void visit(TGS_Postcondition const* n) const;
+		/*! \} */
+
+		/*! \{
+		 * \brief Visit a @ref fshell2::fql::TGS_Precondition
+		 * \param  n TGS_Precondition
+		 */
+		virtual void visit(TGS_Precondition const* n);
+		virtual void visit(TGS_Precondition const* n) const;
+		/*! \} */
+
+		/*! \{
 		 * \brief Visit a @ref fshell2::fql::TGS_Setminus
 		 * \param  n TGS_Setminus
 		 */
@@ -271,197 +307,44 @@ Standard_AST_Visitor_Aspect<INTERFACE>::~Standard_AST_Visitor_Aspect()
 {
 }
 
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Edgecov const* n)
-{}
+#define NOOP_VISIT( CL ) \
+template <typename INTERFACE> \
+void Standard_AST_Visitor_Aspect<INTERFACE>::visit(CL const* n) \
+{} \
+\
+template <typename INTERFACE> \
+void Standard_AST_Visitor_Aspect<INTERFACE>::visit(CL const* n) const\
+{} \
+DUMMY_FUNC
 
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Edgecov const* n) const
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(FQL_Node const* n)
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(FQL_Node const* n) const
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Filter_Expr const* n)
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Filter_Expr const* n) const
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Filter_Complement const* n)
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Filter_Complement const* n) const
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Filter_Compose const* n)
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Filter_Compose const* n) const
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Filter_Enclosing_Scopes const* n)
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Filter_Enclosing_Scopes const* n) const
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Filter_Function const* n)
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Filter_Function const* n) const
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Filter_Intersection const* n)
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Filter_Intersection const* n) const
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Filter_Setminus const* n)
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Filter_Setminus const* n) const
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Filter_Union const* n)
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Filter_Union const* n) const
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(PM_Alternative const* n)
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(PM_Alternative const* n) const
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(PM_Concat const* n)
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(PM_Concat const* n) const
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(PM_Filter_Adapter const* n)
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(PM_Filter_Adapter const* n) const
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(PM_Repeat const* n)
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(PM_Repeat const* n) const
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Path_Monitor_Expr const* n)
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Path_Monitor_Expr const* n) const
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Pathcov const* n)
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Pathcov const* n) const
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Predicate const* n)
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Predicate const* n) const
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Query const* n)
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Query const* n) const
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Statecov const* n)
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Statecov const* n) const
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(TGS_Intersection const* n)
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(TGS_Intersection const* n) const
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(TGS_Setminus const* n)
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(TGS_Setminus const* n) const
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(TGS_Union const* n)
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(TGS_Union const* n) const
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Test_Goal_Sequence const* n)
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Test_Goal_Sequence const* n) const
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Test_Goal_Set const* n)
-{}
-
-template <typename INTERFACE>
-void Standard_AST_Visitor_Aspect<INTERFACE>::visit(Test_Goal_Set const* n) const
-{}
+NOOP_VISIT(Edgecov);
+NOOP_VISIT(FQL_Node);
+NOOP_VISIT(Filter_Expr);
+NOOP_VISIT(Filter_Complement);
+NOOP_VISIT(Filter_Compose);
+NOOP_VISIT(Filter_Enclosing_Scopes);
+NOOP_VISIT(Filter_Function);
+NOOP_VISIT(Filter_Intersection);
+NOOP_VISIT(Filter_Setminus);
+NOOP_VISIT(Filter_Union);
+NOOP_VISIT(PM_Alternative);
+NOOP_VISIT(PM_Concat);
+NOOP_VISIT(PM_Filter_Adapter);
+NOOP_VISIT(PM_Postcondition);
+NOOP_VISIT(PM_Precondition);
+NOOP_VISIT(PM_Repeat);
+NOOP_VISIT(Path_Monitor_Expr);
+NOOP_VISIT(Pathcov);
+NOOP_VISIT(Predicate);
+NOOP_VISIT(Query);
+NOOP_VISIT(Statecov);
+NOOP_VISIT(TGS_Intersection);
+NOOP_VISIT(TGS_Postcondition);
+NOOP_VISIT(TGS_Precondition);
+NOOP_VISIT(TGS_Setminus);
+NOOP_VISIT(TGS_Union);
+NOOP_VISIT(Test_Goal_Sequence);
+NOOP_VISIT(Test_Goal_Set);
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;

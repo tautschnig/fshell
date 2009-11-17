@@ -144,6 +144,13 @@ void test_use_case( Test_Data & data )
 	os << *q;
 	TEST_ASSERT(data.compare("parsed_use_case_query_4", os.str()));
 	q->destroy();
+	
+	qp.parse(os, "cover {x<5}{\"is_empty()\"}edges(@BASICBLOCKENTRY){\"x>5\"}{x>5} passing @func(main)*.{x==6}@func(other).id{x==7}*", &q);
+	TEST_ASSERT(q != 0);
+	os.str("");
+	os << *q;
+	TEST_ASSERT(data.compare("parsed_use_case_query_5", os.str()));
+	q->destroy();
 }
 
 /** @cond */

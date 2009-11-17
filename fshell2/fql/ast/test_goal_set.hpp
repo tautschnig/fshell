@@ -36,8 +36,6 @@
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-class Predicate;
-
 /*! \brief TODO
 */
 class Test_Goal_Set : public FQL_Node
@@ -66,9 +64,6 @@ class Test_Goal_Set : public FQL_Node
 	/*! \} */
 
 	virtual bool destroy() = 0;
-
-	void add_precond(Predicate * pred);
-	void add_postcond(Predicate * pred);
 
 	private:
 	/*! \copydoc copy_constructor

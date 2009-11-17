@@ -36,13 +36,6 @@ Path_Monitor_Expr::Path_Monitor_Expr() {
 
 Path_Monitor_Expr::~Path_Monitor_Expr() {
 }
-	
-void Path_Monitor_Expr::add_precond(Predicate * pred) {
-}
-
-void Path_Monitor_Expr::add_postcond(Predicate * pred) {
-}
-	
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;

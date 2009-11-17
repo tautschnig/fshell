@@ -18,64 +18,51 @@
  * limitations under the License.
  *******************************************************************************/
 
-#ifndef FSHELL2__FQL__AST__PATH_MONITOR_EXPR_HPP
-#define FSHELL2__FQL__AST__PATH_MONITOR_EXPR_HPP
-
-/*! \file fshell2/fql/ast/path_monitor_expr.hpp
+/*! \file fshell2/fql/ast/pm_postcondition.cpp
  * \brief TODO
  *
  * $Id$
  * \author Michael Tautschnig <tautschnig@forsyte.de>
- * \date   Tue Apr 21 23:48:55 CEST 2009 
+ * \date   Sun Aug  2 19:02:19 CEST 2009 
 */
 
-#include <fshell2/config/config.hpp>
-#include <fshell2/fql/ast/fql_node.hpp>
-#include <fshell2/fql/ast/fql_node_factory.hpp>
+#include <fshell2/fql/ast/pm_postcondition.hpp>
+#include <fshell2/config/annotations.hpp>
+
+#include <diagnostics/basic_exceptions/invalid_argument.hpp>
+
+#include <fshell2/fql/ast/ast_visitor.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-/*! \brief TODO
-*/
-class Path_Monitor_Expr : public FQL_Node
-{
-	/*! \copydoc doc_self
-	*/
-	typedef Path_Monitor_Expr Self;
+PM_Postcondition::PM_Postcondition(Path_Monitor_Expr * a, Predicate * pred) :
+	m_path_monitor_expr(a), m_predicate(pred) {
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_path_monitor_expr);
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_predicate);
+}
 
-	public:
-  	typedef FQL_Node_Factory<Self> Factory;
+void PM_Postcondition::accept(AST_Visitor * v) const {
+	v->visit(this);
+}
 
-	/*! \{
-	 * \brief Accept a visitor 
-	 * \param  v Visitor
-	 */
-	virtual void accept(AST_Visitor * v) const = 0;
-	virtual void accept(AST_Visitor const * v) const = 0;
-	/*! \} */
+void PM_Postcondition::accept(AST_Visitor const * v) const {
+	v->visit(this);
+}
 
-	virtual bool destroy() = 0;
-	
-	/*! Constructor
-	*/
-	Path_Monitor_Expr();
+bool PM_Postcondition::destroy() {
+	if (this->m_ref_count) return false;
+	Factory::get_instance().destroy(this);
+	m_path_monitor_expr->decr_ref_count();
+	m_path_monitor_expr->destroy();
+	m_predicate->decr_ref_count();
+	m_predicate->destroy();
+	return true;
+}
 
-	/*! \brief Destructor
-	*/
-	virtual ~Path_Monitor_Expr();
-
-	private:
-	/*! \copydoc copy_constructor
-	*/
-	Path_Monitor_Expr( Self const& rhs );
-
-	/*! \copydoc assignment_op
-	*/
-	Self& operator=( Self const& rhs );
-};
+PM_Postcondition::~PM_Postcondition() {
+}
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
 
-#endif /* FSHELL2__FQL__AST__PATH_MONITOR_EXPR_HPP */

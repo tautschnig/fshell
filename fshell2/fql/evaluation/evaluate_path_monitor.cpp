@@ -37,6 +37,8 @@
 #include <fshell2/fql/ast/pm_alternative.hpp>
 #include <fshell2/fql/ast/pm_concat.hpp>
 #include <fshell2/fql/ast/pm_filter_adapter.hpp>
+#include <fshell2/fql/ast/pm_postcondition.hpp>
+#include <fshell2/fql/ast/pm_precondition.hpp>
 #include <fshell2/fql/ast/pm_repeat.hpp>
 #include <fshell2/fql/ast/predicate.hpp>
 #include <fshell2/fql/ast/query.hpp>
@@ -148,6 +150,16 @@ void Evaluate_Path_Monitor::visit(PM_Filter_Adapter const* n) {
 	current_aut.set_trans(current_initial,
 			m_target_graph_index.to_index(&(m_eval_filter.get(*(n->get_filter_expr())))),
 			current_final);
+}
+
+void Evaluate_Path_Monitor::visit(PM_Postcondition const* n) {
+	// filter-like automaton for edge with proper assume(.)
+	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+}
+
+void Evaluate_Path_Monitor::visit(PM_Precondition const* n) {
+	// filter-like automaton for edge with proper assume(.)
+	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
 }
 
 void Evaluate_Path_Monitor::visit(PM_Repeat const* n) {

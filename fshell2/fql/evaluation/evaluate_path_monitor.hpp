@@ -88,6 +88,20 @@ class Evaluate_Path_Monitor : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	/*! \} */
 
 	/*! \{
+	 * \brief Visit a @ref fshell2::fql::PM_Postcondition
+	 * \param  n PM_Postcondition
+	 */
+	virtual void visit(PM_Postcondition const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::PM_Precondition
+	 * \param  n PM_Precondition
+	 */
+	virtual void visit(PM_Precondition const* n);
+	/*! \} */
+
+	/*! \{
 	 * \brief Visit a @ref fshell2::fql::PM_Repeat
 	 * \param  n PM_Repeat
 	 */
@@ -95,17 +109,17 @@ class Evaluate_Path_Monitor : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	/*! \} */
 
 	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Query
-	 * \param  n Query
-	 */
-	virtual void visit(Query const* n);
-	/*! \} */
-
-	/*! \{
 	 * \brief Visit a @ref fshell2::fql::Predicate
 	 * \param  n Predicate
 	 */
 	virtual void visit(Predicate const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Query
+	 * \param  n Query
+	 */
+	virtual void visit(Query const* n);
 	/*! \} */
 
 	/*! \{

@@ -56,12 +56,16 @@
 #include <fshell2/fql/ast/pm_alternative.hpp>
 #include <fshell2/fql/ast/pm_concat.hpp>
 #include <fshell2/fql/ast/pm_filter_adapter.hpp>
+#include <fshell2/fql/ast/pm_postcondition.hpp>
+#include <fshell2/fql/ast/pm_precondition.hpp>
 #include <fshell2/fql/ast/pm_repeat.hpp>
 #include <fshell2/fql/ast/predicate.hpp>
 #include <fshell2/fql/ast/query.hpp>
 #include <fshell2/fql/ast/statecov.hpp>
 #include <fshell2/fql/ast/test_goal_sequence.hpp>
 #include <fshell2/fql/ast/tgs_intersection.hpp>
+#include <fshell2/fql/ast/tgs_postcondition.hpp>
+#include <fshell2/fql/ast/tgs_precondition.hpp>
 #include <fshell2/fql/ast/tgs_setminus.hpp>
 #include <fshell2/fql/ast/tgs_union.hpp>
 
@@ -293,8 +297,12 @@ Path_Monitor_Factor: Preconditions Path_Monitor_Symbol
 				     $$ = $2;
 					 if ($1 != 0) {
 					   for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
-					     iter != $1->end(); ++iter)
-						 $$->add_precond(*iter);
+					     iter != $1->end(); ++iter) {
+						 intermediates.erase($$);
+						 $$ = ::fshell2::fql::PM_Precondition::Factory::get_instance().create($$, *iter);
+						 intermediates.erase(*iter);
+						 intermediates.insert($$);
+					   }
 					   delete $1;
 					 }
 				   }
@@ -303,15 +311,21 @@ Path_Monitor_Factor: Preconditions Path_Monitor_Symbol
 				     $$ = $3;
 					 if ($1 != 0) {
 					   for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
-					     iter != $1->end(); ++iter)
-						 $$->add_precond(*iter);
+					     iter != $1->end(); ++iter) {
+						 intermediates.erase($$);
+						 $$ = ::fshell2::fql::PM_Precondition::Factory::get_instance().create($$, *iter);
+						 intermediates.erase(*iter);
+						 intermediates.insert($$);
+					   }
 					   delete $1;
 					 }
 				   }
 				   | Path_Monitor_Factor Predicate
 				   {
-				     $$ = $1;
-					 $$->add_postcond($2);
+				     $$ = ::fshell2::fql::PM_Postcondition::Factory::get_instance().create($1, $2);
+				     intermediates.erase($1);
+				     intermediates.erase($2);
+			   		 intermediates.insert($$);
 				   }
 				   | Path_Monitor_Factor TOK_KLEENE
 				   {
@@ -346,128 +360,171 @@ Test_Goal_Set: Preconditions TOK_L_PARENTHESIS Test_Goal_Set TOK_R_PARENTHESIS
 			   $$ = $3;
 			   if ($1 != 0) {
 			     for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
-			       iter != $1->end(); ++iter)
-			       $$->add_precond(*iter);
+			       iter != $1->end(); ++iter) {
+				   intermediates.erase($$);
+				   $$ = ::fshell2::fql::TGS_Precondition::Factory::get_instance().create($$, *iter);
+				   intermediates.erase(*iter);
+				   intermediates.insert($$);
+				 }
 			     delete $1;
 			   }
 			 }
 			 | Test_Goal_Set Predicate
 			 {
-			   $$ = $1;
-			   $$->add_postcond($2);
+			   $$ = ::fshell2::fql::TGS_Postcondition::Factory::get_instance().create($1, $2);
+			   intermediates.erase($1);
+			   intermediates.erase($2);
+			   intermediates.insert($$);
 			 }
 			 | Preconditions TOK_UNION TOK_L_PARENTHESIS Test_Goal_Set TOK_COMMA Test_Goal_Set TOK_R_PARENTHESIS
 			 {
 			   $$ = ::fshell2::fql::TGS_Union::Factory::get_instance().create($4, $6);
-			   if ($1 != 0) {
-			     for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
-			       iter != $1->end(); ++iter)
-			       $$->add_precond(*iter);
-			     delete $1;
-			   }
 			   intermediates.erase($4);
 			   intermediates.erase($6);
 			   intermediates.insert($$);
+			   if ($1 != 0) {
+			     for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
+			       iter != $1->end(); ++iter) {
+				   intermediates.erase($$);
+				   $$ = ::fshell2::fql::TGS_Precondition::Factory::get_instance().create($$, *iter);
+				   intermediates.erase(*iter);
+				   intermediates.insert($$);
+				 }
+			     delete $1;
+			   }
 			 }
 			 | Preconditions TOK_INTERSECT TOK_L_PARENTHESIS Test_Goal_Set TOK_COMMA Test_Goal_Set TOK_R_PARENTHESIS
 			 {
 			   $$ = ::fshell2::fql::TGS_Intersection::Factory::get_instance().create($4, $6);
-			   if ($1 != 0) {
-			     for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
-			       iter != $1->end(); ++iter)
-			       $$->add_precond(*iter);
-			     delete $1;
-			   }
 			   intermediates.erase($4);
 			   intermediates.erase($6);
 			   intermediates.insert($$);
+			   if ($1 != 0) {
+			     for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
+			       iter != $1->end(); ++iter) {
+				   intermediates.erase($$);
+				   $$ = ::fshell2::fql::TGS_Precondition::Factory::get_instance().create($$, *iter);
+				   intermediates.erase(*iter);
+				   intermediates.insert($$);
+				 }
+			     delete $1;
+			   }
 			 }
 			 | Preconditions TOK_SETMINUS TOK_L_PARENTHESIS Test_Goal_Set TOK_COMMA Test_Goal_Set TOK_R_PARENTHESIS
 			 {
 			   $$ = ::fshell2::fql::TGS_Setminus::Factory::get_instance().create($4, $6);
-			   if ($1 != 0) {
-			     for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
-			       iter != $1->end(); ++iter)
-			       $$->add_precond(*iter);
-			     delete $1;
-			   }
 			   intermediates.erase($4);
 			   intermediates.erase($6);
 			   intermediates.insert($$);
+			   if ($1 != 0) {
+			     for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
+			       iter != $1->end(); ++iter) {
+				   intermediates.erase($$);
+				   $$ = ::fshell2::fql::TGS_Precondition::Factory::get_instance().create($$, *iter);
+				   intermediates.erase(*iter);
+				   intermediates.insert($$);
+				 }
+			     delete $1;
+			   }
 			 }
 			 | Preconditions TOK_STATECOV TOK_L_PARENTHESIS Filter TOK_R_PARENTHESIS
 			 {
 			   $$ = ::fshell2::fql::Statecov::Factory::get_instance().create($4,
 			     static_cast< ::fshell2::fql::Predicate::preds_t * >(0));
-			   if ($1 != 0) {
-			     for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
-			       iter != $1->end(); ++iter)
-			       $$->add_precond(*iter);
-			     delete $1;
-			   }
 			   intermediates.erase($4);
 			   intermediates.insert($$);
+			   if ($1 != 0) {
+			     for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
+			       iter != $1->end(); ++iter) {
+				   intermediates.erase($$);
+				   $$ = ::fshell2::fql::TGS_Precondition::Factory::get_instance().create($$, *iter);
+				   intermediates.erase(*iter);
+				   intermediates.insert($$);
+				 }
+			     delete $1;
+			   }
 			 }
 			 | Preconditions TOK_STATECOV TOK_L_PARENTHESIS Filter TOK_COMMA Predicates TOK_R_PARENTHESIS
 			 {
 			   $$ = ::fshell2::fql::Statecov::Factory::get_instance().create($4, $6);
-			   if ($1 != 0) {
-			     for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
-			       iter != $1->end(); ++iter)
-			       $$->add_precond(*iter);
-			     delete $1;
-			   }
 			   intermediates.erase($4);
 			   intermediates.insert($$);
+			   if ($1 != 0) {
+			     for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
+			       iter != $1->end(); ++iter) {
+				   intermediates.erase($$);
+				   $$ = ::fshell2::fql::TGS_Precondition::Factory::get_instance().create($$, *iter);
+				   intermediates.erase(*iter);
+				   intermediates.insert($$);
+				 }
+			     delete $1;
+			   }
 			 }
 			 | Preconditions TOK_EDGECOV TOK_L_PARENTHESIS Filter TOK_R_PARENTHESIS
 			 {
 			   $$ = ::fshell2::fql::Edgecov::Factory::get_instance().create($4,
 			     static_cast< ::fshell2::fql::Predicate::preds_t * >(0));
-			   if ($1 != 0) {
-			     for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
-			       iter != $1->end(); ++iter)
-			       $$->add_precond(*iter);
-			     delete $1;
-			   }
 			   intermediates.erase($4);
 			   intermediates.insert($$);
+			   if ($1 != 0) {
+			     for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
+			       iter != $1->end(); ++iter) {
+				   intermediates.erase($$);
+				   $$ = ::fshell2::fql::TGS_Precondition::Factory::get_instance().create($$, *iter);
+				   intermediates.erase(*iter);
+				   intermediates.insert($$);
+				 }
+			     delete $1;
+			   }
 			 }
 			 | Preconditions TOK_EDGECOV TOK_L_PARENTHESIS Filter TOK_COMMA Predicates TOK_R_PARENTHESIS
 			 {
 			   $$ = ::fshell2::fql::Edgecov::Factory::get_instance().create($4, $6);
-			   if ($1 != 0) {
-			     for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
-			       iter != $1->end(); ++iter)
-			       $$->add_precond(*iter);
-			     delete $1;
-			   }
 			   intermediates.erase($4);
 			   intermediates.insert($$);
+			   if ($1 != 0) {
+			     for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
+			       iter != $1->end(); ++iter) {
+				   intermediates.erase($$);
+				   $$ = ::fshell2::fql::TGS_Precondition::Factory::get_instance().create($$, *iter);
+				   intermediates.erase(*iter);
+				   intermediates.insert($$);
+				 }
+			     delete $1;
+			   }
 			 }
 			 | Preconditions TOK_PATHCOV TOK_L_PARENTHESIS Filter TOK_COMMA TOK_NAT_NUMBER TOK_R_PARENTHESIS
 			 {
-			   $$ = ::fshell2::fql::Pathcov::Factory::get_instance().create($4, $6, 0);
-			   if ($1 != 0) {
-			     for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
-			       iter != $1->end(); ++iter)
-			       $$->add_precond(*iter);
-			     delete $1;
-			   }
+			   $$ = ::fshell2::fql::Pathcov::Factory::get_instance().create($4, $6,
+			     static_cast< ::fshell2::fql::Predicate::preds_t * >(0));
 			   intermediates.erase($4);
 			   intermediates.insert($$);
+			   if ($1 != 0) {
+			     for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
+			       iter != $1->end(); ++iter) {
+				   intermediates.erase($$);
+				   $$ = ::fshell2::fql::TGS_Precondition::Factory::get_instance().create($$, *iter);
+				   intermediates.erase(*iter);
+				   intermediates.insert($$);
+				 }
+			     delete $1;
+			   }
 			 }
 			 | Preconditions TOK_PATHCOV TOK_L_PARENTHESIS Filter TOK_COMMA TOK_NAT_NUMBER TOK_COMMA Predicates TOK_R_PARENTHESIS
 			 {
 			   $$ = ::fshell2::fql::Pathcov::Factory::get_instance().create($4, $6, $8);
-			   if ($1 != 0) {
-			     for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
-			       iter != $1->end(); ++iter)
-			       $$->add_precond(*iter);
-			     delete $1;
-			   }
 			   intermediates.erase($4);
 			   intermediates.insert($$);
+			   if ($1 != 0) {
+			     for (::fshell2::fql::Predicate::preds_t::const_iterator iter($1->begin());
+			       iter != $1->end(); ++iter) {
+				   intermediates.erase($$);
+				   $$ = ::fshell2::fql::TGS_Precondition::Factory::get_instance().create($$, *iter);
+				   intermediates.erase(*iter);
+				   intermediates.insert($$);
+				 }
+			     delete $1;
+			   }
 			 }
 			 ;
 
@@ -542,8 +599,8 @@ Predicate: TOK_L_BRACE c_LHS Comparison c_LHS TOK_R_BRACE
 c_LHS: TOK_C_IDENT
 	 {
 	   $$ = new ::exprt("symbol");
-	   $$->set("#base_name", $1);
-	   $$->set("#identifier", $1);
+	   $$->set("base_name", $1);
+	   $$->set("identifier", $1);
 	 }
 	 | TOK_NAT_NUMBER
 	 {

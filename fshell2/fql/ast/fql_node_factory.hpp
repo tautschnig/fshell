@@ -109,6 +109,8 @@ class FQL_Node_Factory
 	Element * create(Filter_Expr * filter, int bound, ::std::set<Predicate *, FQL_Node_Lt_Compare> * predicates);
 	// PM_Alternative, PM_Concat, PM_Next
 	Element * create(Path_Monitor_Expr * a, Path_Monitor_Expr * b);
+	// PM_Precondition, PM_Postcondition
+	Element * create(Path_Monitor_Expr * pm, Predicate * pred);
 	// PM_Repeat
 	Element * create(Path_Monitor_Expr * pm, int lower, int upper);
 	// Predicate
@@ -121,6 +123,8 @@ class FQL_Node_Factory
 			Path_Monitor_Expr * suffix_aut);
 	// TGS_Intersection, TGS_Setminus, TGS_Union
 	Element * create(Test_Goal_Set * a, Test_Goal_Set * b);
+	// TGS_Precondition, TGS_Postcondition
+	Element * create(Test_Goal_Set * tgs, Predicate * pred);
 	
 	void destroy(Element * e);
 

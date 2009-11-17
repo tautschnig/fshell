@@ -47,6 +47,8 @@ class Filter_Union;
 class PM_Alternative;
 class PM_Concat;
 class PM_Filter_Adapter;
+class PM_Postcondition;
+class PM_Precondition;
 class PM_Repeat;
 class Path_Monitor_Expr;
 class Pathcov;
@@ -54,6 +56,8 @@ class Predicate;
 class Query;
 class Statecov;
 class TGS_Intersection;
+class TGS_Postcondition;
+class TGS_Precondition;
 class TGS_Setminus;
 class TGS_Union;
 class Test_Goal_Sequence;
@@ -173,6 +177,22 @@ class AST_Visitor
 		/*! \} */
 
 		/*! \{
+		 * \brief Visit a @ref fshell2::fql::PM_Postcondition
+		 * \param  n PM_Postcondition
+		 */
+		virtual void visit(PM_Postcondition const* n) = 0;
+		virtual void visit(PM_Postcondition const* n) const = 0;
+		/*! \} */
+
+		/*! \{
+		 * \brief Visit a @ref fshell2::fql::PM_Precondition
+		 * \param  n PM_Precondition
+		 */
+		virtual void visit(PM_Precondition const* n) = 0;
+		virtual void visit(PM_Precondition const* n) const = 0;
+		/*! \} */
+
+		/*! \{
 		 * \brief Visit a @ref fshell2::fql::PM_Repeat
 		 * \param  n PM_Repeat
 		 */
@@ -226,6 +246,22 @@ class AST_Visitor
 		 */
 		virtual void visit(TGS_Intersection const* n) = 0;
 		virtual void visit(TGS_Intersection const* n) const = 0;
+		/*! \} */
+
+		/*! \{
+		 * \brief Visit a @ref fshell2::fql::TGS_Postcondition
+		 * \param  n TGS_Postcondition
+		 */
+		virtual void visit(TGS_Postcondition const* n) = 0;
+		virtual void visit(TGS_Postcondition const* n) const = 0;
+		/*! \} */
+
+		/*! \{
+		 * \brief Visit a @ref fshell2::fql::TGS_Precondition
+		 * \param  n TGS_Precondition
+		 */
+		virtual void visit(TGS_Precondition const* n) = 0;
+		virtual void visit(TGS_Precondition const* n) const = 0;
 		/*! \} */
 
 		/*! \{

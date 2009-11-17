@@ -145,6 +145,20 @@ class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	/*! \} */
 
 	/*! \{
+	 * \brief Visit a @ref fshell2::fql::PM_Postcondition
+	 * \param  n PM_Postcondition
+	 */
+	virtual void visit(PM_Postcondition const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::PM_Precondition
+	 * \param  n PM_Precondition
+	 */
+	virtual void visit(PM_Precondition const* n);
+	/*! \} */
+
+	/*! \{
 	 * \brief Visit a @ref fshell2::fql::PM_Repeat
 	 * \param  n PM_Repeat
 	 */
@@ -177,6 +191,20 @@ class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	 * \param  n TGS_Intersection
 	 */
 	virtual void visit(TGS_Intersection const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::TGS_Postcondition
+	 * \param  n TGS_Postcondition
+	 */
+	virtual void visit(TGS_Postcondition const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::TGS_Precondition
+	 * \param  n TGS_Precondition
+	 */
+	virtual void visit(TGS_Precondition const* n);
 	/*! \} */
 
 	/*! \{

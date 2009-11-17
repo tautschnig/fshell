@@ -39,6 +39,8 @@
 #include <fshell2/fql/ast/query.hpp>
 #include <fshell2/fql/ast/statecov.hpp>
 #include <fshell2/fql/ast/tgs_intersection.hpp>
+#include <fshell2/fql/ast/tgs_postcondition.hpp>
+#include <fshell2/fql/ast/tgs_precondition.hpp>
 #include <fshell2/fql/ast/tgs_setminus.hpp>
 #include <fshell2/fql/ast/tgs_union.hpp>
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
@@ -210,6 +212,18 @@ void Build_Test_Goal_Automaton::visit(Statecov const* n) {
 }
 
 void Build_Test_Goal_Automaton::visit(TGS_Intersection const* n) {
+	FSHELL2_PROD_ASSERT(::diagnostics::Not_Implemented, false);
+
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == m_current_final.size());
+}
+
+void Build_Test_Goal_Automaton::visit(TGS_Postcondition const* n) {
+	FSHELL2_PROD_ASSERT(::diagnostics::Not_Implemented, false);
+
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == m_current_final.size());
+}
+
+void Build_Test_Goal_Automaton::visit(TGS_Precondition const* n) {
 	FSHELL2_PROD_ASSERT(::diagnostics::Not_Implemented, false);
 
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == m_current_final.size());
