@@ -36,6 +36,7 @@
 #include <diagnostics/basic_exceptions/not_implemented.hpp>
 
 #include <fshell2/instrumentation/cfg.hpp>
+#include <fshell2/instrumentation/goto_utils.hpp>
 #include <fshell2/fql/ast/edgecov.hpp>
 #include <fshell2/fql/ast/filter_complement.hpp>
 #include <fshell2/fql/ast/filter_compose.hpp>
@@ -93,6 +94,8 @@ bool Evaluate_Filter::ignore_function(::goto_functionst::goto_functiont const& f
 			!fct.body.instructions.front().location.is_nil() &&
 			((fct.body.instructions.front().location.get_file() == "<builtin-library>") ||
 			(fct.body.instructions.front().location.get_file() == "<built-in>"))) return true;
+	if (!fct.body.instructions.empty() &&
+			fct.body.instructions.front().function == "main") return true;
 
 	return false;
 }
@@ -482,13 +485,98 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
 			break;
 		case F_DEF:
-			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+			{
+				::std::string const& base_name(n->get_string_arg<F_DEF>());
+				for (::goto_functionst::function_mapt::iterator iter(m_gf.function_map.begin());
+						iter != m_gf.function_map.end(); ++iter) {
+					if (ignore_function(iter->second)) continue;
+					for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
+							f_iter != iter->second.body.instructions.end(); ++f_iter) {
+						if (ignore_instruction(*f_iter)) continue;
+						if (!f_iter->is_assign()) continue;
+						::std::list< ::exprt const* > symbols;
+						::fshell2::instrumentation::find_symbols(::to_code_assign(f_iter->code).lhs(), symbols);
+						bool use_stmt(false);
+						for (::std::list< ::exprt const* >::const_iterator n_iter(symbols.begin());
+								n_iter != symbols.end(); ++n_iter) {
+							::std::string const& n((*n_iter)->get("identifier").as_string());
+							::std::string::size_type delim(n.rfind("::"));
+							if (base_name == n.substr(::std::string::npos == delim?0:delim+2)) {
+								use_stmt = true;
+								break;
+							}
+						}
+						if (!use_stmt) continue;
+						CFG::entries_t::iterator cfg_node(m_cfg.find(f_iter));
+						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.end());
+						for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
+								s_iter != cfg_node->second.successors.end(); ++s_iter) {
+							initial.insert(::std::make_pair(&(iter->second.body), f_iter));
+							edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), s_iter->first));
+						}
+					}
+				}
+			}
 			break;
 		case F_USE:
-			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+			{
+				::std::string const& base_name(n->get_string_arg<F_USE>());
+				for (::goto_functionst::function_mapt::iterator iter(m_gf.function_map.begin());
+						iter != m_gf.function_map.end(); ++iter) {
+					if (ignore_function(iter->second)) continue;
+					for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
+							f_iter != iter->second.body.instructions.end(); ++f_iter) {
+						if (ignore_instruction(*f_iter)) continue;
+						if (!f_iter->is_assign()) continue;
+						::std::list< ::exprt const* > symbols;
+						::fshell2::instrumentation::find_symbols(::to_code_assign(f_iter->code).rhs(), symbols);
+						bool use_stmt(false);
+						for (::std::list< ::exprt const* >::const_iterator n_iter(symbols.begin());
+								n_iter != symbols.end(); ++n_iter) {
+							::std::string const& n((*n_iter)->get("identifier").as_string());
+							::std::string::size_type delim(n.rfind("::"));
+							if (base_name == n.substr(::std::string::npos == delim?0:delim+2)) {
+								use_stmt = true;
+								break;
+							}
+						}
+						if (!use_stmt) continue;
+						CFG::entries_t::iterator cfg_node(m_cfg.find(f_iter));
+						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.end());
+						for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
+								s_iter != cfg_node->second.successors.end(); ++s_iter) {
+							initial.insert(::std::make_pair(&(iter->second.body), f_iter));
+							edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), s_iter->first));
+						}
+					}
+				}
+			}
 			break;
 		case F_STMTTYPE:
-			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+			{
+				int types(n->get_int_arg<F_STMTTYPE>());
+				for (::goto_functionst::function_mapt::iterator iter(m_gf.function_map.begin());
+						iter != m_gf.function_map.end(); ++iter) {
+					if (ignore_function(iter->second)) continue;
+					for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
+							f_iter != iter->second.body.instructions.end(); ++f_iter) {
+						if (ignore_instruction(*f_iter)) continue;
+						if (types & (STT_IF | STT_FOR | STT_WHILE | STT_SWITCH))
+							if (!f_iter->is_goto() || f_iter->guard.is_true() || f_iter->guard.is_false()) continue;
+						if (types & (STT_CONDOP))
+							if (!f_iter->is_assign() || ::to_code_assign(f_iter->code).rhs().id() != "if") continue;
+						if (types & (STT_ASSERT))
+							if (!f_iter->is_assert()) continue;
+						CFG::entries_t::iterator cfg_node(m_cfg.find(f_iter));
+						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.end());
+						for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
+								s_iter != cfg_node->second.successors.end(); ++s_iter) {
+							initial.insert(::std::make_pair(&(iter->second.body), f_iter));
+							edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), s_iter->first));
+						}
+					}
+				}
+			}
 			break;
 	}
 				
