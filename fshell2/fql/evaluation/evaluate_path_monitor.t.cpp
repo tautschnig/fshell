@@ -137,7 +137,7 @@ void test( Test_Data & data )
 
 	Evaluate_Filter eval(gf, cfg);
 	q->accept(&eval);
-	Predicate_Instrumentation pred_inst(eval, gf, l.context);
+	Predicate_Instrumentation pred_inst(eval, gf, l);
 	q->accept(&pred_inst);
 	Evaluate_Path_Monitor pm_eval(eval, pred_inst);
 	q->accept(&pm_eval);

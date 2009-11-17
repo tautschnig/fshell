@@ -46,6 +46,7 @@
 #include <cbmc/src/util/std_expr.h>
 #include <cbmc/src/util/arith_tools.h>
 #include <cbmc/src/util/expr_util.h>
+#include <cbmc/src/langapi/language_ui.h>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
@@ -53,11 +54,11 @@ FSHELL2_FQL_NAMESPACE_BEGIN;
 Automaton_Inserter::Automaton_Inserter(Evaluate_Path_Monitor const& pm_eval,
 			Build_Test_Goal_Automaton const& build_tg_aut, ::goto_functionst & gf,
 			::fshell2::instrumentation::CFG & cfg,
-			::contextt & context) :
+			::language_uit & manager) :
 	m_pm_eval(pm_eval), m_build_tg_aut(build_tg_aut), m_gf(gf),
-	m_context(context),
+	m_manager(manager),
 	m_cfg(cfg),
-	m_inserter(m_gf)
+	m_inserter(m_manager, m_gf)
 {
 }
 
@@ -117,11 +118,11 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 		state_symb.lvalue = true;
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, ::std::numeric_limits< ta_state_t >::min() >= 0);
 		state_symb.type = ::unsignedbv_typet(log_2_rounded);
-		m_context.move(state_symb);
+		m_manager.context.move(state_symb);
 	}
-	::symbolst::const_iterator state_symb_entry(m_context.symbols.find(
+	::symbolst::const_iterator state_symb_entry(m_manager.context.symbols.find(
 				::diagnostics::internal::to_string("c::!fshell2!state$", suffix)));
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, state_symb_entry != m_context.symbols.end());
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, state_symb_entry != m_manager.context.symbols.end());
 	::symbolt const& state_symb(state_symb_entry->second);
 	::goto_programt::targett state_init(defs.add_instruction(ASSIGN));
 	state_init->code = ::code_assignt(::symbol_expr(state_symb), ::from_integer(
@@ -234,7 +235,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 			
 				::goto_programt tmp;
 				::fshell2::instrumentation::GOTO_Transformation::inserted_t & targets(
-						m_inserter.make_nondet_choice(tmp, target_graphs.size() + 1, m_context));
+						m_inserter.make_nondet_choice(tmp, target_graphs.size() + 1));
 				::fshell2::instrumentation::GOTO_Transformation::inserted_t::iterator t_iter(
 						targets.begin());
 				for (::std::set< int >::const_iterator f_iter(target_graphs.begin()); f_iter != target_graphs.end(); 
@@ -281,7 +282,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 					//::goto_programt tg_record;
 					::goto_programt tmp;
 					::fshell2::instrumentation::GOTO_Transformation::inserted_t & targets(
-							m_inserter.make_nondet_choice(tmp, target_graphs.size() + 1, m_context));
+							m_inserter.make_nondet_choice(tmp, target_graphs.size() + 1));
 					::fshell2::instrumentation::GOTO_Transformation::inserted_t::iterator t_iter(
 							targets.begin());
 					for (::std::set< int >::const_iterator f_iter(target_graphs.begin()); f_iter != target_graphs.end(); 
@@ -372,7 +373,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 		func_symb.mode = "C";
 		func_symb.name = func_name;
 		func_symb.base_name = func_name.substr(3, ::std::string::npos);
-		m_context.move(func_symb);
+		m_manager.context.move(func_symb);
 		
 		::goto_programt & body(entry.first->second.body);
 		::goto_programt tmp_target;
@@ -390,7 +391,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 			// is not yet in body
 			::goto_programt tmp_nd;
 			::fshell2::instrumentation::GOTO_Transformation::inserted_t & targets(
-					m_inserter.make_nondet_choice(tmp_nd, tr_iter->second.size(), m_context));
+					m_inserter.make_nondet_choice(tmp_nd, tr_iter->second.size()));
 			body.destructive_append(tmp_nd);
 			::fshell2::instrumentation::GOTO_Transformation::inserted_t::iterator t_iter(
 					targets.begin());
@@ -453,7 +454,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 			func_symb.mode = "C";
 			func_symb.name = func_name;
 			func_symb.base_name = func_name.substr(3, ::std::string::npos);
-			m_context.move(func_symb);
+			m_manager.context.move(func_symb);
 			
 			::goto_programt & body(entry.first->second.body);
 

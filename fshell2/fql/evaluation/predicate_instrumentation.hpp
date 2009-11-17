@@ -41,6 +41,8 @@
 #include <map>
 #include <set>
 
+class language_uit;
+
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
@@ -58,7 +60,7 @@ class Predicate_Instrumentation : public Standard_AST_Visitor_Aspect<AST_Visitor
 	typedef ::std::map< Predicate const*, target_graph_t::edge_t > pred_instrumentation_map_t;
 	typedef ::std::map< target_graph_t::node_t, pred_instrumentation_map_t > node_to_pred_instrumentation_map_t;
 
-	Predicate_Instrumentation(Evaluate_Filter const& eval_filter, ::goto_functionst & gf, ::contextt & context);
+	Predicate_Instrumentation(Evaluate_Filter const& eval_filter, ::goto_functionst & gf, ::language_uit & manager);
 
 	virtual ~Predicate_Instrumentation();
 
@@ -179,7 +181,7 @@ class Predicate_Instrumentation : public Standard_AST_Visitor_Aspect<AST_Visitor
 	private:
 	Evaluate_Filter const& m_eval_filter;
 	::goto_functionst & m_gf;
-	::contextt & m_context;
+	::language_uit & m_manager;
 	::fshell2::instrumentation::GOTO_Transformation m_inserter;
 	::std::set< target_graph_t::node_t > m_current_node_set;
 	node_to_pred_instrumentation_map_t m_node_to_pred_instr;

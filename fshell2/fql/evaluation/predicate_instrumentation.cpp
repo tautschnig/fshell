@@ -52,15 +52,17 @@
 #include <fshell2/fql/ast/tgs_union.hpp>
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
 
+#include <cbmc/src/langapi/language_ui.h>
+
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 Predicate_Instrumentation::Predicate_Instrumentation(Evaluate_Filter const& eval_filter,
-		::goto_functionst & gf, ::contextt & context) :
+		::goto_functionst & gf, ::language_uit & manager) :
 	m_eval_filter(eval_filter),
 	m_gf(gf),
-	m_context(context),
-	m_inserter(m_gf)
+	m_manager(manager),
+	m_inserter(m_manager, m_gf)
 {
 }
 
@@ -86,7 +88,7 @@ void Predicate_Instrumentation::insert_predicate(Predicate const* pred) {
 		if (m_node_to_pred_instr[ *n_iter ].end() ==
 				m_node_to_pred_instr[ *n_iter ].find(pred)) {
 			GOTO_Transformation::inserted_t const & res(m_inserter.insert_predicate_at(
-						*n_iter, pred->get_expr(), m_context));
+						*n_iter, pred->get_expr()));
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == res.size());
 			goto_programt::targett next(res.front().second);
 			++next;

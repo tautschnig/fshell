@@ -207,7 +207,7 @@ void FShell2::try_query(::language_uit & manager, char const * line) {
 
 	// create a predicated CFA and add pre/post-condition edges
 	Context_Backup context_backup(manager);
-	::fshell2::fql::Predicate_Instrumentation pred_inst(filter_eval, gf_copy, manager.context);
+	::fshell2::fql::Predicate_Instrumentation pred_inst(filter_eval, gf_copy, manager);
 	query_ast->accept(&pred_inst);
 
 	// build automata from path monitor expressions
@@ -218,7 +218,7 @@ void FShell2::try_query(::language_uit & manager, char const * line) {
 	query_ast->accept(&tg_builder);
 
 	// do automaton instrumentation
-	::fshell2::fql::Automaton_Inserter aut(pm_eval, tg_builder, gf_copy, cfg, manager.context);
+	::fshell2::fql::Automaton_Inserter aut(pm_eval, tg_builder, gf_copy, cfg, manager);
 	aut.insert(*query_ast);
 
 	if (m_opts.get_bool_option("show-goto-functions")) {

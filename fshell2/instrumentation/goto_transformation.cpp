@@ -37,6 +37,7 @@
 
 #include <cbmc/src/util/std_expr.h>
 #include <cbmc/src/util/expr_util.h>
+#include <cbmc/src/langapi/language_ui.h>
 #include <cbmc/src/ansi-c/ansi_c_typecheck.h>
 #include <cbmc/src/ansi-c/expr2c.h>
 
@@ -44,8 +45,8 @@ FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_INSTRUMENTATION_NAMESPACE_BEGIN;
 
 	
-GOTO_Transformation::GOTO_Transformation(::goto_functionst & gf) :
-	m_goto(gf), m_nondet_var_count(-1) {
+GOTO_Transformation::GOTO_Transformation(::language_uit & manager, ::goto_functionst & gf) :
+	m_manager(manager), m_goto(gf), m_nondet_var_count(-1) {
 }
 
 void GOTO_Transformation::set_annotations(::goto_programt::const_targett src, ::goto_programt & target) {
@@ -146,10 +147,10 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_at(
 }
 	
 GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
-		goto_node_t const& node, ::exprt const* pred, ::contextt & context) {
+		goto_node_t const& node, ::exprt const* pred) {
 	m_inserted.clear();
 
-	::namespacet const ns(context);
+	::namespacet const ns(m_manager.context);
 	::exprt pred_copy(*pred);
 	::std::list< ::exprt * > symbols;
 	find_symbols(pred_copy, symbols);
@@ -219,10 +220,10 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 			cond_symbol.type = ::typet("bool");
 			cond_symbol.lvalue = true;
 			cond_symbol.static_lifetime = false;
-			context.move(cond_symbol);
+			m_manager.context.move(cond_symbol);
 		}
-		::symbolst::const_iterator symb_entry(context.symbols.find(var_name));
-		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, symb_entry != context.symbols.end());
+		::symbolst::const_iterator symb_entry(m_manager.context.symbols.find(var_name));
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, symb_entry != m_manager.context.symbols.end());
 		::symbolt const& cond_symbol(symb_entry->second);
 		::goto_programt::targett decl(tmp.add_instruction());
 		decl->make_other();
@@ -231,8 +232,7 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 	} else {
 		FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Trying to typecheck: ", pred_copy.pretty()));
 		::ansi_c_parse_treet ansi_c_parse_tree;
-		::stream_message_handlert mh(::std::cerr);
-		::ansi_c_typecheckt ct(ansi_c_parse_tree, context, "", mh);
+		::ansi_c_typecheckt ct(ansi_c_parse_tree, m_manager.context, "", m_manager.get_message_handler());
 		ct.typecheck_expr(pred_copy);
 		FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Typecheck completed: ", pred_copy.pretty()));
 		if (pred_copy.type().id() == "code" && 1 == pred_copy.operands().size()) {
@@ -257,8 +257,7 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 	return m_inserted;
 }
 	
-GOTO_Transformation::inserted_t & GOTO_Transformation::make_nondet_choice(::goto_programt & dest, int const num,
-		::contextt & context) {
+GOTO_Transformation::inserted_t & GOTO_Transformation::make_nondet_choice(::goto_programt & dest, int const num) {
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, num >= 1);
 	m_inserted.clear();
 	// count up until n-1, each bit sequence determines a boolean
@@ -292,10 +291,10 @@ GOTO_Transformation::inserted_t & GOTO_Transformation::make_nondet_choice(::goto
 				cond_symbol.type = ::typet("bool");
 				cond_symbol.lvalue = true;
 				cond_symbol.static_lifetime = false;
-				context.move(cond_symbol);
+				m_manager.context.move(cond_symbol);
 			}
-			::symbolst::const_iterator symb_entry(context.symbols.find(var_name));
-			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, symb_entry != context.symbols.end());
+			::symbolst::const_iterator symb_entry(m_manager.context.symbols.find(var_name));
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, symb_entry != m_manager.context.symbols.end());
 			::symbolt const& cond_symbol(symb_entry->second);
 			if (0 == i) {
 				::goto_programt::targett decl(dest.add_instruction());

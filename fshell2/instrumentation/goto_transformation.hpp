@@ -33,6 +33,8 @@
 
 #include <cbmc/src/goto-programs/goto_functions.h>
 
+class language_uit;
+
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_INSTRUMENTATION_NAMESPACE_BEGIN;
 
@@ -54,16 +56,16 @@ class GOTO_Transformation
 	typedef ::std::list< goto_node_t > inserted_t;
 	typedef ::std::pair< goto_node_t, goto_node_t > goto_edge_t;
 
-	GOTO_Transformation(::goto_functionst & gf);
+	GOTO_Transformation(::language_uit & manager, ::goto_functionst & gf);
 
 	inserted_t const& insert(::std::string const& f, position_t const pos,
 			::goto_program_instruction_typet const stmt_type, ::goto_programt const& prg);
 
 	inserted_t const& insert_at(goto_node_t const& edge, ::goto_programt & prg);
 
-	inserted_t const& insert_predicate_at(goto_node_t const& node, ::exprt const* pred, ::contextt & context);
+	inserted_t const& insert_predicate_at(goto_node_t const& node, ::exprt const* pred);
 
-	inserted_t & make_nondet_choice(::goto_programt & dest, int const num, ::contextt & context);
+	inserted_t & make_nondet_choice(::goto_programt & dest, int const num);
 
 	static void set_annotations(::goto_programt::const_targett src, ::goto_programt & target);
 	static void mark_instrumented(::goto_programt & target);
@@ -71,6 +73,7 @@ class GOTO_Transformation
 	static bool is_instrumented(::goto_programt::const_targett inst);
 
 	private:
+	::language_uit & m_manager;
 	::goto_functionst & m_goto;
 	inserted_t m_inserted;
 	int m_nondet_var_count;

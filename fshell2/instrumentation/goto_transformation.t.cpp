@@ -65,8 +65,11 @@ using namespace ::diagnostics::unittest;
  */
 void test_invalid( Test_Data & data )
 {
+	::cmdlinet cmdline;
+	::config.set(cmdline);
+	::language_uit l("FShell2", cmdline);
 	::goto_functionst gf;
-	GOTO_Transformation t(gf);
+	GOTO_Transformation t(l, gf);
 	::goto_programt prg;
 
 	TEST_THROWING_BLOCK_ENTER;
@@ -117,7 +120,7 @@ void test_use_case( Test_Data & data )
 	zero.set("value", "false");
 	as->guard = zero;
 
-	::fshell2::instrumentation::GOTO_Transformation inserter(cfg);
+	::fshell2::instrumentation::GOTO_Transformation inserter(l, cfg);
 	TEST_ASSERT_RELATION(1, ==, inserter.insert("main", ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::END_FUNCTION, tmp).size());
 }
 
@@ -146,7 +149,7 @@ void test_use_case2( Test_Data & data )
   	lf.language=languagep;
 
 	::goto_functionst cfg;
-	::fshell2::instrumentation::GOTO_Transformation inserter(cfg);
+	::fshell2::instrumentation::GOTO_Transformation inserter(l, cfg);
 	
 	cfg.function_map["c::tmp_func"].body_available = true;
 	cfg.function_map["c::tmp_func"].type.return_type() = ::empty_typet(); 
@@ -166,7 +169,7 @@ void test_use_case2( Test_Data & data )
     converter.convert_function(main_iter->first);
 		
 	::fshell2::instrumentation::GOTO_Transformation::inserted_t & targets(
-			inserter.make_nondet_choice(cfg.function_map["c::tmp_func"].body, 3, l.context));
+			inserter.make_nondet_choice(cfg.function_map["c::tmp_func"].body, 3));
 	TEST_ASSERT_RELATION(3, ==, targets.size());
 	TEST_ASSERT_RELATION(12, ==, cfg.function_map["c::tmp_func"].body.instructions.size());
 	cfg.function_map["c::tmp_func"].body.add_instruction(END_FUNCTION);
@@ -213,7 +216,7 @@ void test_use_case2( Test_Data & data )
 
 	{
 		// invalidates targets
-		inserter.insert_predicate_at(ndchoice3, &f, l.context);
+		inserter.insert_predicate_at(ndchoice3, &f);
 		::goto_programt::targett loc(ndchoice3.second);
 		--(--loc);
 		TEST_ASSERT(loc->type == LOCATION);
@@ -232,7 +235,7 @@ void test_use_case2( Test_Data & data )
 		x.set("base_name", "x");
 		::binary_relation_exprt inv(x, "<", ::from_integer(1, ::typet("integer")));
 		// invalidates targets
-		inserter.insert_predicate_at(ndchoice3, &inv, l.context);
+		inserter.insert_predicate_at(ndchoice3, &inv);
 		::goto_programt::targett loc(ndchoice3.second);
 		--(--loc);
 		TEST_ASSERT(loc->type == LOCATION);

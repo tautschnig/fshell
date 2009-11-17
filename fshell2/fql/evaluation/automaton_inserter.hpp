@@ -39,6 +39,8 @@
 
 #include <cbmc/src/goto-programs/goto_functions.h>
 
+class language_uit;
+
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_INSTRUMENTATION_NAMESPACE_BEGIN;
 
@@ -70,7 +72,7 @@ class Automaton_Inserter
 	Automaton_Inserter(Evaluate_Path_Monitor const& pm_eval,
 			Build_Test_Goal_Automaton const& build_tg_aut,
 			::goto_functionst & gf,
-			::fshell2::instrumentation::CFG & cfg, ::contextt & context);
+			::fshell2::instrumentation::CFG & cfg, ::language_uit & manager);
 
 	void insert(Query const& query);
 
@@ -81,7 +83,7 @@ class Automaton_Inserter
 	Evaluate_Path_Monitor const& m_pm_eval;
 	Build_Test_Goal_Automaton const& m_build_tg_aut;
 	::goto_functionst & m_gf;
-	::contextt & m_context;
+	::language_uit & m_manager;
 	::fshell2::instrumentation::CFG & m_cfg;
 	::fshell2::instrumentation::GOTO_Transformation m_inserter;
 	instrumentation_map_t m_tg_instrumentation_map;
