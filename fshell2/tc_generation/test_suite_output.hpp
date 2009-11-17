@@ -44,7 +44,7 @@ class locationt;
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-class Compute_Test_Goals;
+class Compute_Test_Goals_From_Instrumentation;
 
 FSHELL2_FQL_NAMESPACE_END;
 
@@ -57,7 +57,7 @@ class Test_Suite_Output
 	typedef Test_Suite_Output Self;
 
 	public:
-	explicit Test_Suite_Output(::fshell2::fql::Compute_Test_Goals & goals);
+	explicit Test_Suite_Output(::fshell2::fql::Compute_Test_Goals_From_Instrumentation & goals);
 	
 	::std::ostream & print_ts(Constraint_Strengthening::test_cases_t &
 			test_suite, ::std::ostream & os, ::ui_message_handlert::uit const ui);
@@ -76,7 +76,7 @@ class Test_Suite_Output
 	::std::ostream & print_test_case_plain(::std::ostream & os, test_case_t const& tc) const;
 	::std::ostream & print_test_case_xml(::std::ostream & os, test_case_t const& tc) const;
 	
-	::fshell2::fql::Compute_Test_Goals & m_goals;
+	::fshell2::fql::Compute_Test_Goals_From_Instrumentation & m_goals;
 	
 	/*! \copydoc copy_constructor
 	*/

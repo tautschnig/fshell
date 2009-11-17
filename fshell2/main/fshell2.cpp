@@ -223,7 +223,7 @@ void FShell2::try_query(::language_uit & manager, char const * line) {
 	}
 	
 	// compute test goals
-	::fshell2::fql::Compute_Test_Goals goals(manager, m_opts, gf_copy, tg_builder, aut);
+	::fshell2::fql::Compute_Test_Goals_From_Instrumentation goals(manager, m_opts, gf_copy, tg_builder, aut);
 
 	// do the enumeration
 	::fshell2::Constraint_Strengthening cs(goals);

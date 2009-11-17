@@ -38,7 +38,7 @@
 
 FSHELL2_NAMESPACE_BEGIN;
 
-Constraint_Strengthening::Constraint_Strengthening(::fshell2::fql::Compute_Test_Goals & goals) :
+Constraint_Strengthening::Constraint_Strengthening(::fshell2::fql::Compute_Test_Goals_From_Instrumentation & goals) :
 	m_goals(goals) {
 }
 
@@ -50,13 +50,13 @@ void Constraint_Strengthening::generate(::fshell2::fql::Query const& query,
 	::fshell2::fql::Strategy_Selection_Visitor::strategy_t s(strat.select(*ast));
 	*/
 
-	::fshell2::fql::Compute_Test_Goals::test_goals_t const& goal_set(m_goals.compute(query));
+	::fshell2::fql::Compute_Test_Goals_From_Instrumentation::test_goals_t const& goal_set(m_goals.compute(query));
 	::cnf_clause_list_assignmentt & cnf(m_goals.get_cnf());
 
 	::std::map< ::literalt, ::literalt > aux_var_map;
 
 	::bvt goal_cl;
-	for (::fshell2::fql::Compute_Test_Goals::test_goals_t::const_iterator iter(goal_set.begin());
+	for (::fshell2::fql::Compute_Test_Goals_From_Instrumentation::test_goals_t::const_iterator iter(goal_set.begin());
 			iter != goal_set.end(); ++iter) {
 		::literalt s(cnf.new_variable());
 		aux_var_map.insert(::std::make_pair(*iter, s));
@@ -99,7 +99,7 @@ void Constraint_Strengthening::generate(::fshell2::fql::Query const& query,
 		tcs.back().copy_assignment_from(minisat);
 
 		// deactivate test goals
-		/*::fshell2::fql::Compute_Test_Goals::test_goals_t const& satisfied_tg(m_goals.get_satisfied_test_goals());
+		/*::fshell2::fql::Compute_Test_Goals_From_Instrumentation::test_goals_t const& satisfied_tg(m_goals.get_satisfied_test_goals());
 		::std::cerr << "NOT IMPLEMENTED" << ::std::endl;*/
 		unsigned const size1(aux_var_map.size());
 		::bvt fixed_literals;

@@ -44,22 +44,22 @@ class Automaton_Inserter;
 
 /*! \brief TODO
 */
-class Compute_Test_Goals : public ::bmct
+class Compute_Test_Goals_From_Instrumentation : public ::bmct
 {
 	/*! \copydoc doc_self
 	*/
-	typedef Compute_Test_Goals Self;
+	typedef Compute_Test_Goals_From_Instrumentation Self;
 
 	public:
 	typedef ::literalt test_goal_t;
 	typedef ::std::set< test_goal_t > test_goals_t;
 	
-	Compute_Test_Goals(::language_uit & manager, ::optionst const& opts,
+	Compute_Test_Goals_From_Instrumentation(::language_uit & manager, ::optionst const& opts,
 			::goto_functionst const& gf,
 			Build_Test_Goal_Automaton const& build_tg_aut,
 			Automaton_Inserter const& a_i);
 
-	virtual ~Compute_Test_Goals();
+	virtual ~Compute_Test_Goals_From_Instrumentation();
 
 	test_goals_t const& compute(Query const& query);
 
@@ -95,26 +95,100 @@ class Compute_Test_Goals : public ::bmct
 
 	/*! \copydoc copy_constructor
 	*/
-	Compute_Test_Goals( Self const& rhs );
+	Compute_Test_Goals_From_Instrumentation( Self const& rhs );
 
 	/*! \copydoc assignment_op
 	 */
 	Self& operator=( Self const& rhs );
 };
 	
-inline ::cnf_clause_list_assignmentt & Compute_Test_Goals::get_cnf() {
+inline ::cnf_clause_list_assignmentt & Compute_Test_Goals_From_Instrumentation::get_cnf() {
 	return m_cnf;
 }
 	
-inline ::boolbvt const& Compute_Test_Goals::get_bv() const {
+inline ::boolbvt const& Compute_Test_Goals_From_Instrumentation::get_bv() const {
 	return m_bv;
 }
 	
-inline ::symex_target_equationt::SSA_stepst const& Compute_Test_Goals::get_equation() const {
+inline ::symex_target_equationt::SSA_stepst const& Compute_Test_Goals_From_Instrumentation::get_equation() const {
 	return _equation.SSA_steps;
 }
 
-inline ::namespacet const& Compute_Test_Goals::get_ns() const {
+inline ::namespacet const& Compute_Test_Goals_From_Instrumentation::get_ns() const {
+	return this->ns;
+}
+
+/*! \brief TODO
+*/
+class Compute_Test_Goals_Boolean : public ::bmct
+{
+	/*! \copydoc doc_self
+	*/
+	typedef Compute_Test_Goals_Boolean Self;
+
+	public:
+	typedef ::literalt test_goal_t;
+	typedef ::std::set< test_goal_t > test_goals_t;
+	
+	Compute_Test_Goals_Boolean(::language_uit & manager, ::optionst const& opts,
+			::goto_functionst const& gf,
+			Build_Test_Goal_Automaton const& build_tg_aut);
+
+	virtual ~Compute_Test_Goals_Boolean();
+
+	test_goals_t const& compute(Query const& query);
+
+	//test_goals_t const& get_satisfied_test_goals();
+
+	inline ::cnf_clause_list_assignmentt & get_cnf();
+
+	inline ::boolbvt const& get_bv() const;
+	inline ::symex_target_equationt::SSA_stepst const& get_equation() const;
+
+	inline ::namespacet const& get_ns() const;
+
+	private:
+	virtual bool decide_default();
+
+	void initialize();
+	
+	bool m_is_initialized;
+	::goto_functionst const& m_gf;
+	Build_Test_Goal_Automaton const& m_build_tg_aut;
+	::cnf_clause_list_assignmentt m_cnf;
+	::bv_cbmct m_bv;
+	/*typedef ::std::map< ta_state_t, 
+		::std::map< ::goto_programt::const_targett, test_goal_t > > state_context_tg_t;
+	state_context_tg_t m_state_context_tg_map;*/
+	typedef ::std::map< ::goto_programt::const_targett,
+				::std::map< ::goto_programt::const_targett, 
+					::std::set< ::literalt > > > pc_to_context_and_guards_t;
+	pc_to_context_and_guards_t m_pc_to_guard;
+	test_goals_t m_test_goals;
+	//test_goals_t m_satisfied_goals;
+
+	/*! \copydoc copy_constructor
+	*/
+	Compute_Test_Goals_Boolean( Self const& rhs );
+
+	/*! \copydoc assignment_op
+	 */
+	Self& operator=( Self const& rhs );
+};
+	
+inline ::cnf_clause_list_assignmentt & Compute_Test_Goals_Boolean::get_cnf() {
+	return m_cnf;
+}
+	
+inline ::boolbvt const& Compute_Test_Goals_Boolean::get_bv() const {
+	return m_bv;
+}
+	
+inline ::symex_target_equationt::SSA_stepst const& Compute_Test_Goals_Boolean::get_equation() const {
+	return _equation.SSA_steps;
+}
+
+inline ::namespacet const& Compute_Test_Goals_Boolean::get_ns() const {
 	return this->ns;
 }
 

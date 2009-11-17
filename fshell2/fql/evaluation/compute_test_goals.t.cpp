@@ -82,10 +82,10 @@ using namespace ::diagnostics::unittest;
 
 ////////////////////////////////////////////////////////////////////////////////
 /**
- * @test A test of Compute_Test_Goals
+ * @test A test of Compute_Test_Goals_From_Instrumentation
  *
  */
-void test( Test_Data & data )
+void test_instr( Test_Data & data )
 {
 	char * tempname(::strdup("/tmp/srcXXXXXX"));
 	TEST_CHECK(-1 != ::mkstemp(tempname));
@@ -143,10 +143,76 @@ void test( Test_Data & data )
 	::fshell2::fql::Automaton_Inserter aut(pm_eval, tg_builder, gf, cfg, l.context);
 	aut.insert(*q);
 	
-	Compute_Test_Goals goals(l, options, gf, tg_builder, aut);
-	Compute_Test_Goals::test_goals_t const& bb_goals(goals.compute(*q));
+	Compute_Test_Goals_From_Instrumentation goals(l, options, gf, tg_builder, aut);
+	Compute_Test_Goals_From_Instrumentation::test_goals_t const& bb_goals(goals.compute(*q));
 
 	TEST_ASSERT_RELATION(6, ==, bb_goals.size());
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * @test A test of Compute_Test_Goals_Boolean
+ *
+ */
+void test_boolean( Test_Data & data )
+{
+	char * tempname(::strdup("/tmp/srcXXXXXX"));
+	TEST_CHECK(-1 != ::mkstemp(tempname));
+	::std::string tempname_str(tempname);
+	tempname_str += ".c";
+	::std::ofstream of(tempname_str.c_str());
+	TEST_CHECK(of.is_open());
+	of << "int main(int argc, char * argv[])" << ::std::endl
+		<< "{" << ::std::endl
+		<< "int x=0;" << ::std::endl
+		<< "if (argc > 5) x=2; else x=1;" << ::std::endl
+		<< "if (argc > 27) ++x; else --x;" << ::std::endl
+		<< "assert(0);" << ::std::endl
+		<< "return x;" << ::std::endl
+		<< "}" << ::std::endl;
+	of.close();
+	::unlink(tempname);
+	::free(tempname);
+
+	::register_language(new_ansi_c_language);
+	::cmdlinet cmdline;
+	::config.set(cmdline);
+	::language_uit l("FShell2", cmdline);
+	::optionst options;
+	options.set_option("assertions", true);
+	::goto_functionst gf;
+
+	TEST_CHECK(!l.parse(tempname_str));
+	::unlink(tempname_str.c_str());
+	TEST_CHECK(!l.typecheck());
+	TEST_CHECK(!l.final());
+    
+	::goto_convert(l.context, options, gf, l.ui_message_handler);
+	::fshell2::instrumentation::CFG cfg;
+	cfg.compute_edges(gf);
+		
+	Evaluate_Filter eval(gf, cfg);
+	
+	Filter_Expr * bb(Filter_Function::Factory::get_instance().create<F_BASICBLOCKENTRY>());
+	Edgecov * e(Edgecov::Factory::get_instance().create(bb,
+				static_cast< Predicate::preds_t * >(0)));
+	Test_Goal_Sequence::seq_t seq_list;
+	seq_list.push_back(::std::make_pair<Path_Monitor_Expr *, Test_Goal_Set *>(0, e));
+	Test_Goal_Sequence * s(Test_Goal_Sequence::Factory::get_instance().create(seq_list, 0));
+	Query * q(Query::Factory::get_instance().create(0, s, 0));
+	q->accept(&eval);
+	target_graph_t const& bb_entries(eval.get(*bb));
+	TEST_CHECK_RELATION(6, ==, bb_entries.get_edges().size());
+
+	::fshell2::fql::Evaluate_Path_Monitor pm_eval(eval);
+	q->accept(&pm_eval);
+	::fshell2::fql::Build_Test_Goal_Automaton tg_builder(eval, pm_eval, cfg);
+	q->accept(&tg_builder);
+
+	Compute_Test_Goals_Boolean goals(l, options, gf, tg_builder);
+	Compute_Test_Goals_From_Instrumentation::test_goals_t const& bb_goals(goals.compute(*q));
+
+	// TEST_ASSERT_RELATION(6, ==, bb_goals.size());
 }
 
 /** @cond */
@@ -158,7 +224,8 @@ FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
 
 TEST_SUITE_BEGIN;
-TEST_NORMAL_CASE( &test, LEVEL_PROD );
+TEST_NORMAL_CASE( &test_instr, LEVEL_PROD );
+TEST_NORMAL_CASE( &test_boolean, LEVEL_PROD );
 TEST_SUITE_END;
 
 STREAM_TEST_SYSTEM_MAIN;

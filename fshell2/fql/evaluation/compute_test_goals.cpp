@@ -51,7 +51,7 @@
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Compute_Test_Goals::Compute_Test_Goals(::language_uit & manager, ::optionst const& opts,
+Compute_Test_Goals_From_Instrumentation::Compute_Test_Goals_From_Instrumentation(::language_uit & manager, ::optionst const& opts,
 		::goto_functionst const& gf, Build_Test_Goal_Automaton const& build_tg_aut,
 		Automaton_Inserter const& a_i) :
 	::bmct(manager.context, manager.ui_message_handler),
@@ -71,10 +71,10 @@ Compute_Test_Goals::Compute_Test_Goals(::language_uit & manager, ::optionst cons
 	m_bv.set_verbosity(this->get_verbosity());
 }
 
-Compute_Test_Goals::~Compute_Test_Goals() {
+Compute_Test_Goals_From_Instrumentation::~Compute_Test_Goals_From_Instrumentation() {
 }
 
-bool Compute_Test_Goals::decide_default() {
+bool Compute_Test_Goals_From_Instrumentation::decide_default() {
   if(this->options.get_option("arrays-uf")=="never")
     m_bv.unbounded_array=bv_cbmct::U_NONE;
   else if(this->options.get_option("arrays-uf")=="always")
@@ -88,7 +88,7 @@ bool Compute_Test_Goals::decide_default() {
   return false;
 }
 
-void Compute_Test_Goals::initialize() {
+void Compute_Test_Goals_From_Instrumentation::initialize() {
 	if (m_is_initialized) return;
 
 	// build the Boolean equation
@@ -118,7 +118,7 @@ void Compute_Test_Goals::initialize() {
 	m_is_initialized = true;
 }
 	
-Compute_Test_Goals::test_goals_t const& Compute_Test_Goals::compute(Query const& query) {
+Compute_Test_Goals_From_Instrumentation::test_goals_t const& Compute_Test_Goals_From_Instrumentation::compute(Query const& query) {
 	initialize();
 	m_test_goals.clear();
 	
@@ -209,7 +209,7 @@ Compute_Test_Goals::test_goals_t const& Compute_Test_Goals::compute(Query const&
 }
 
 #if 0
-Compute_Test_Goals::test_goals_t const& Compute_Test_Goals::get_satisfied_test_goals() {
+Compute_Test_Goals_From_Instrumentation::test_goals_t const& Compute_Test_Goals_From_Instrumentation::get_satisfied_test_goals() {
 	m_satisfied_goals.clear();
 	Evaluate_Path_Monitor::trace_automaton_t const& aut(m_pm_eval.get_cov_seq_aut());
 	typedef Evaluate_Path_Monitor::trace_automaton_t::state_type state_t;
@@ -315,6 +315,164 @@ Compute_Test_Goals::test_goals_t const& Compute_Test_Goals::get_satisfied_test_g
 	return m_satisfied_goals;
 }
 #endif
+
+Compute_Test_Goals_Boolean::Compute_Test_Goals_Boolean(::language_uit & manager, ::optionst const& opts,
+		::goto_functionst const& gf, Build_Test_Goal_Automaton const& build_tg_aut) :
+	::bmct(manager.context, manager.ui_message_handler),
+	m_is_initialized(false), m_gf(gf),
+	m_build_tg_aut(build_tg_aut), m_cnf(), m_bv(m_cnf) {
+	this->options = opts;
+	this->options.set_option("dimacs", false);
+	this->options.set_option("cvc", false);
+	this->options.set_option("smt", false);
+	this->options.set_option("refine", false);
+	this->options.set_option("cvc", false);
+	this->set_verbosity(manager.get_verbosity());
+
+	m_cnf.set_message_handler(*(this->message_handler));
+	m_cnf.set_verbosity(this->get_verbosity());
+	m_bv.set_message_handler(*(this->message_handler));
+	m_bv.set_verbosity(this->get_verbosity());
+}
+
+Compute_Test_Goals_Boolean::~Compute_Test_Goals_Boolean() {
+}
+
+bool Compute_Test_Goals_Boolean::decide_default() {
+  if(this->options.get_option("arrays-uf")=="never")
+    m_bv.unbounded_array=bv_cbmct::U_NONE;
+  else if(this->options.get_option("arrays-uf")=="always")
+    m_bv.unbounded_array=bv_cbmct::U_ALL;
+
+  status("Passing problem to "+m_bv.decision_procedure_text());
+
+  this->do_unwind_module(m_bv);
+  this->do_cbmc(m_bv);
+
+  return false;
+}
+
+void Compute_Test_Goals_Boolean::initialize() {
+	if (m_is_initialized) return;
+
+	// build the Boolean equation
+	FSHELL2_PROD_CHECK1(::fshell2::FShell2_Error, !this->run(m_gf),
+			"Failed to build Boolean program representation");
+	// protected field, can't read here
+	// FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, this->_symex.remaining_claims);
+
+	// ::std::cerr << "Mapping program:" << ::std::endl;
+	// ::std::cerr << this->_equation << ::std::endl;
+
+	// build a map from GOTO instructions to guard literals by walking the
+	// equation; group them by calling points
+	::goto_programt::const_targett most_recent_caller;
+	for (::symex_target_equationt::SSA_stepst::const_iterator iter( 
+				_equation.SSA_steps.begin() ); iter != _equation.SSA_steps.end(); ++iter)
+	{
+		if (iter->source.pc->is_function_call()) most_recent_caller = iter->source.pc;
+		/*::goto_programt tmp;
+		tmp.output_instruction(this->ns, "", ::std::cerr, iter->source.pc);
+		iter->output(this->ns, ::std::cerr);*/
+		//if (!iter->is_location()) continue;
+		if (!iter->is_assignment() || iter->assignment_type == ::symex_targett::HIDDEN) continue;
+		m_pc_to_guard[ iter->source.pc ][ most_recent_caller ].insert(iter->guard_literal);
+	}
+					
+	m_is_initialized = true;
+}
+	
+Compute_Test_Goals_Boolean::test_goals_t const& Compute_Test_Goals_Boolean::compute(Query const& query) {
+	initialize();
+	m_test_goals.clear();
+	
+#if 0
+	typedef ::std::map< ::goto_programt::const_targett,
+				::std::set< ::goto_programt::const_targett > > context_to_pcs_t;
+
+	for (Test_Goal_Sequence::seq_t::const_iterator iter(query.get_cover()->get_sequence().begin());
+			iter != query.get_cover()->get_sequence().end(); ++iter) {
+
+		context_to_pcs_t context_to_pcs;
+		Build_Test_Goal_Automaton::test_goal_states_t const& states(
+				m_build_tg_aut.get_test_goal_states(*iter));
+		for (Build_Test_Goal_Automaton::test_goal_states_t::const_iterator s_iter(
+					states.begin()); s_iter != states.end(); ++s_iter) {
+			Automaton_Inserter::instrumentation_points_t const& nodes(
+					m_aut_insert.get_test_goal_instrumentation(*s_iter));
+			for (Automaton_Inserter::instrumentation_points_t::const_iterator n_iter(
+						nodes.begin()); n_iter != nodes.end(); ++n_iter) {
+				//FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, n_iter->second->is_location());
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, n_iter->second->is_assign());
+				pc_to_context_and_guards_t::const_iterator guards_entry(m_pc_to_guard.find(n_iter->second));
+				if (m_pc_to_guard.end() == guards_entry) {
+					::std::cerr << "WARNING: no guards for expr "
+						<< ::from_expr(this->ns, "", n_iter->second->code);
+					::std::cerr << " @" << n_iter->second->location << ::std::endl;
+					continue;
+				}
+
+				for (::std::map< ::goto_programt::const_targett, ::std::set< ::literalt > >::const_iterator
+						c_iter(guards_entry->second.begin()); c_iter != guards_entry->second.end(); ++c_iter)
+					context_to_pcs[ c_iter->first ].insert(n_iter->second);
+			}
+		}
+
+		test_goals_t subgoals;
+		for (context_to_pcs_t::const_iterator c_iter(context_to_pcs.begin()); c_iter != context_to_pcs.end();
+				++c_iter) {
+			::bvt set;
+			for (::std::set< ::goto_programt::const_targett >::const_iterator t_iter(c_iter->second.begin());
+					t_iter != c_iter->second.end(); ++t_iter) {
+				pc_to_context_and_guards_t::const_iterator guards_entry(m_pc_to_guard.find(*t_iter));
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_pc_to_guard.end() != guards_entry);
+				::std::map< ::goto_programt::const_targett, ::std::set< ::literalt > >::const_iterator
+					inner_guards_entry(guards_entry->second.find(c_iter->first));
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+						guards_entry->second.end() != inner_guards_entry);
+
+				for (::std::set< ::literalt >::const_iterator l_iter(
+							inner_guards_entry->second.begin()); l_iter != inner_guards_entry->second.end();
+						++l_iter) {
+					if (l_iter->is_false() || l_iter->var_no() == ::literalt::unused_var_no()) continue;
+					// we will always take this edge, a trivial goal
+					if (l_iter->is_true()) {
+						set.clear();
+						// just make sure we have a single entry in there to get at
+						// least one test case
+						// ::std::cerr << "Adding true guard " << l_iter->var_no() << ::std::endl;
+						set.push_back(*l_iter);
+						break;
+					}
+					// ::std::cerr << "Adding guard " << l_iter->var_no() << ::std::endl;
+					set.push_back(*l_iter);
+				}
+			}
+			if (!set.empty()) {
+				::literalt tg(m_cnf.lor(set));
+				subgoals.insert(tg);
+				/*for (Evaluate_Path_Monitor::test_goal_states_t::const_iterator s_iter(
+							states.begin()); s_iter != states.end(); ++s_iter)
+					m_state_context_tg_map[ *s_iter ].insert(::std::make_pair(c_iter->first, tg));
+					*/
+			}
+		}
+		
+		if (iter != query.get_cover()->get_sequence().begin()) {
+			test_goals_t backup;
+			backup.swap(m_test_goals);
+			for (test_goals_t::const_iterator tgi(backup.begin()); tgi != backup.end(); ++tgi)
+				for (test_goals_t::const_iterator sgi(subgoals.begin());
+						sgi != subgoals.end(); ++sgi)
+					m_test_goals.insert(m_cnf.land(*tgi, *sgi));
+		} else {
+			m_test_goals.swap(subgoals);
+		}
+	}
+#endif
+	
+	return m_test_goals;
+}
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;

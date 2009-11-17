@@ -450,7 +450,7 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::test_case_t & tc) const
 	return os;
 }
 
-Test_Suite_Output::Test_Suite_Output(::fshell2::fql::Compute_Test_Goals & goals) :
+Test_Suite_Output::Test_Suite_Output(::fshell2::fql::Compute_Test_Goals_From_Instrumentation & goals) :
 	m_goals(goals) {
 }
 	
