@@ -35,6 +35,7 @@
 
 #include <fshell2/instrumentation/cfg.hpp>
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
+#include <fshell2/fql/evaluation/predicate_instrumentation.hpp>
 #include <fshell2/fql/ast/edgecov.hpp>
 // #include <fshell2/fql/ast/filter_complement.hpp>
 // #include <fshell2/fql/ast/filter_compose.hpp>
@@ -117,7 +118,6 @@ void test( Test_Data & data )
 	::goto_convert(l.context, options, gf, l.ui_message_handler);
 	::fshell2::instrumentation::CFG cfg;
 	cfg.compute_edges(gf);
-	Evaluate_Filter eval(gf, cfg);
 		
 	Filter_Expr * bb(Filter_Function::Factory::get_instance().create<F_BASICBLOCKENTRY>());
 	Edgecov * e(Edgecov::Factory::get_instance().create(bb,
@@ -135,8 +135,11 @@ void test( Test_Data & data )
 
 	Query * q(Query::Factory::get_instance().create(0, s, pm));
 
+	Evaluate_Filter eval(gf, cfg);
 	q->accept(&eval);
-	::fshell2::fql::Evaluate_Path_Monitor pm_eval(eval);
+	Predicate_Instrumentation pred_inst(eval, gf, l.context);
+	q->accept(&pred_inst);
+	Evaluate_Path_Monitor pm_eval(eval, pred_inst);
 	q->accept(&pm_eval);
 	
 	TEST_ASSERT_RELATION(4, ==, pm_eval.get(pm).state_count());

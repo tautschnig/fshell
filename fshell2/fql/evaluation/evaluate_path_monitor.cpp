@@ -40,16 +40,18 @@
 #include <fshell2/fql/ast/pm_postcondition.hpp>
 #include <fshell2/fql/ast/pm_precondition.hpp>
 #include <fshell2/fql/ast/pm_repeat.hpp>
-#include <fshell2/fql/ast/predicate.hpp>
 #include <fshell2/fql/ast/query.hpp>
 #include <fshell2/fql/ast/test_goal_sequence.hpp>
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
+#include <fshell2/fql/evaluation/predicate_instrumentation.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 		
-Evaluate_Path_Monitor::Evaluate_Path_Monitor(Evaluate_Filter const& filter_eval) :
+Evaluate_Path_Monitor::Evaluate_Path_Monitor(Evaluate_Filter const& filter_eval,
+		Predicate_Instrumentation const& pred_instr) :
 	m_eval_filter(filter_eval),
+	m_pred_instr(pred_instr),
 	m_target_graph_index(&(m_eval_filter.get(*(Filter_Function::Factory::get_instance().create<F_IDENTITY>())))) {
 	// we always have the TRUE automaton in there
 	m_entry = m_pm_map.insert(::std::make_pair(static_cast<Path_Monitor_Expr const*>(0), trace_automaton_t()));
@@ -153,13 +155,75 @@ void Evaluate_Path_Monitor::visit(PM_Filter_Adapter const* n) {
 }
 
 void Evaluate_Path_Monitor::visit(PM_Postcondition const* n) {
-	// filter-like automaton for edge with proper assume(.)
-	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+	m_entry = m_pm_map.insert(::std::make_pair(n, trace_automaton_t()));
+	if (!m_entry.second) return;
+	::std::pair< pm_value_t::iterator, bool > entry(m_entry);
+	trace_automaton_t & current_aut(entry.first->second);
+	
+	n->get_path_monitor_expr()->accept(this);
+	::std::pair< pm_value_t::iterator, bool > entry_sub(m_entry);
+
+	::std::pair< ta_state_set_t, ta_state_set_t > sub_init_final(
+				copy_automaton(entry_sub.first->second, current_aut));
+	current_aut.initial().swap(sub_init_final.first);
+	ta_state_t const new_final(current_aut.new_state());
+	current_aut.final(new_final) = 1;
+	
+	for (ta_state_set_t::const_iterator iter(sub_init_final.second.begin());
+			iter != sub_init_final.second.end(); ++iter) {
+		target_graph_t::edges_t pred_edges;
+		trace_automaton_t::edges_type in_edges(current_aut.delta2_backwards(*iter));
+		for (trace_automaton_t::edges_type::const_iterator i_iter(in_edges.begin());
+				i_iter != in_edges.end(); ++i_iter) {
+			target_graph_t const& tgg(*(m_target_graph_index.lookup_index(i_iter->first)));
+			for (target_graph_t::edges_t::const_iterator e_iter(tgg.get_edges().begin());
+					e_iter != tgg.get_edges().end(); ++e_iter)
+				pred_edges.insert(m_pred_instr.get(e_iter->second, n->get_predicate()));
+		}
+		m_more_target_graphs.push_back(target_graph_t());
+		m_more_target_graphs.back().set_edges(pred_edges);
+		current_aut.set_trans(*iter,
+				m_target_graph_index.to_index(&(m_more_target_graphs.back())), new_final);
+	}
+
+	m_entry = entry;
 }
 
 void Evaluate_Path_Monitor::visit(PM_Precondition const* n) {
-	// filter-like automaton for edge with proper assume(.)
-	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+	m_entry = m_pm_map.insert(::std::make_pair(n, trace_automaton_t()));
+	if (!m_entry.second) return;
+	::std::pair< pm_value_t::iterator, bool > entry(m_entry);
+	trace_automaton_t & current_aut(entry.first->second);
+	
+	n->get_path_monitor_expr()->accept(this);
+	::std::pair< pm_value_t::iterator, bool > entry_sub(m_entry);
+
+	::std::pair< ta_state_set_t, ta_state_set_t > sub_init_final(
+				copy_automaton(entry_sub.first->second, current_aut));
+	ta_state_t const new_initial(current_aut.new_state());
+	current_aut.initial().insert(new_initial);
+	for (ta_state_set_t::const_iterator iter(sub_init_final.second.begin());
+			iter != sub_init_final.second.end(); ++iter)
+		current_aut.final(*iter) = 1;
+	
+	for (ta_state_set_t::const_iterator iter(sub_init_final.first.begin());
+			iter != sub_init_final.first.end(); ++iter) {
+		target_graph_t::edges_t pred_edges;
+		trace_automaton_t::edges_type out_edges(current_aut.delta2(*iter));
+		for (trace_automaton_t::edges_type::const_iterator o_iter(out_edges.begin());
+				o_iter != out_edges.end(); ++o_iter) {
+			target_graph_t const& tgg(*(m_target_graph_index.lookup_index(o_iter->first)));
+			for (target_graph_t::edges_t::const_iterator e_iter(tgg.get_edges().begin());
+					e_iter != tgg.get_edges().end(); ++e_iter)
+				pred_edges.insert(m_pred_instr.get(e_iter->first, n->get_predicate()));
+		}
+		m_more_target_graphs.push_back(target_graph_t());
+		m_more_target_graphs.back().set_edges(pred_edges);
+		current_aut.set_trans(new_initial,
+				m_target_graph_index.to_index(&(m_more_target_graphs.back())), *iter);
+	}
+
+	m_entry = entry;
 }
 
 void Evaluate_Path_Monitor::visit(PM_Repeat const* n) {
@@ -252,11 +316,6 @@ void Evaluate_Path_Monitor::visit(PM_Repeat const* n) {
 		current_aut.final(*iter) = 1;
 
 	m_entry = entry;
-}
-
-void Evaluate_Path_Monitor::visit(Predicate const* n) {
-	// filter-like automaton for edge with proper assume(.)
-	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
 }
 
 void Evaluate_Path_Monitor::visit(Query const* n) {

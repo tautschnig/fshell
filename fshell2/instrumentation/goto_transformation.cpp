@@ -33,9 +33,12 @@
 #include <diagnostics/basic_exceptions/invalid_argument.hpp>
 
 #include <fshell2/exception/instrumentation_error.hpp>
+#include <fshell2/instrumentation/goto_utils.hpp>
 
 #include <cbmc/src/util/std_expr.h>
 #include <cbmc/src/util/expr_util.h>
+#include <cbmc/src/ansi-c/ansi_c_typecheck.h>
+#include <cbmc/src/ansi-c/expr2c.h>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_INSTRUMENTATION_NAMESPACE_BEGIN;
@@ -83,15 +86,25 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert(::std::string
 	for (::goto_programt::targett iter(entry->second.body.instructions.begin());
 			iter != entry->second.body.instructions.end(); ++iter) {
 		if (iter->type == stmt_type) {
-			::goto_programt::targett next(iter);
-			++next;
 			::goto_programt tmp;
 			tmp.copy_from(prg);
-			insert(pos, ::std::make_pair(::std::make_pair(&(entry->second.body), iter),
-						::std::make_pair(&(entry->second.body), next)), tmp);
-			if (!m_inserted.empty()) {
-				iter = m_inserted.back().second;
-				if (BEFORE == pos) ++iter;
+			switch (pos) {
+				case BEFORE:
+					insert_at(::std::make_pair(&(entry->second.body), iter), tmp);
+					if (!m_inserted.empty()) {
+						iter = m_inserted.back().second;
+						++iter;
+					}
+					break;
+				case AFTER:
+					{
+						::goto_programt::targett next(iter);
+						++next;
+						insert_at(::std::make_pair(&(entry->second.body), next), tmp);
+						if (!m_inserted.empty())
+							iter = m_inserted.back().second;
+					}
+					break;
 			}
 			collector.insert(collector.end(), m_inserted.begin(), m_inserted.end());
 		}
@@ -101,71 +114,151 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert(::std::string
 	return m_inserted;
 }
 	
-GOTO_Transformation::inserted_t const& GOTO_Transformation::insert(position_t
-		const pos, goto_edge_t const& edge, ::goto_programt & prg) {
+GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_at(
+		goto_node_t const& node, ::goto_programt & prg) {
 	m_inserted.clear();
 	if (prg.instructions.empty()) return m_inserted;
 	
-	switch (pos) {
-		case BEFORE:
-			{
-				if (edge.first.second->is_target()) {
-					for (::std::set< ::goto_programt::targett >::iterator iter(edge.first.second->incoming_edges.begin());
-							iter != edge.first.second->incoming_edges.end(); ++iter) {
-						for (::goto_programt::instructiont::targetst::iterator t_iter((*iter)->targets.begin());
-								t_iter != (*iter)->targets.end(); ) {
-							if (*t_iter == edge.first.second) {
-								(*iter)->targets.insert(t_iter, prg.instructions.begin());
-								::goto_programt::instructiont::targetst::iterator t_iter_bak(t_iter);
-								++t_iter;
-								(*iter)->targets.erase(t_iter_bak);
-							} else {
-								++t_iter;
-							}
-						}
-					}
+	if (node.second->is_target()) {
+		for (::std::set< ::goto_programt::targett >::iterator iter(node.second->incoming_edges.begin());
+				iter != node.second->incoming_edges.end(); ++iter) {
+			for (::goto_programt::instructiont::targetst::iterator t_iter((*iter)->targets.begin());
+					t_iter != (*iter)->targets.end(); ) {
+				if (*t_iter == node.second) {
+					(*iter)->targets.insert(t_iter, prg.instructions.begin());
+					::goto_programt::instructiont::targetst::iterator t_iter_bak(t_iter);
+					++t_iter;
+					(*iter)->targets.erase(t_iter_bak);
+				} else {
+					++t_iter;
 				}
-				set_annotations(edge.first.second, prg);
-				edge.first.first->destructive_insert(edge.first.second, prg);
-				::goto_programt::targett pred(edge.first.second);
-				pred--;
-				m_inserted.push_back(::std::make_pair(edge.first.first, pred));
-				edge.first.first->update();
 			}
-			break;
-		case AFTER:
-			{
-				if (edge.second.second->is_target()) {
-					for (::std::set< ::goto_programt::targett >::iterator iter(edge.second.second->incoming_edges.begin());
-							iter != edge.second.second->incoming_edges.end(); ++iter) {
-						for (::goto_programt::instructiont::targetst::iterator t_iter((*iter)->targets.begin());
-								t_iter != (*iter)->targets.end(); ) {
-							if (*t_iter == edge.second.second) {
-								(*iter)->targets.insert(t_iter, prg.instructions.begin());
-								::goto_programt::instructiont::targetst::iterator t_iter_bak(t_iter);
-								++t_iter;
-								(*iter)->targets.erase(t_iter_bak);
-							} else {
-								++t_iter;
-							}
-						}
-					}
-				}
-				set_annotations(edge.second.second, prg);
-				edge.second.first->destructive_insert(edge.second.second, prg);
-				::goto_programt::targett pred(edge.second.second);
-				pred--;
-				m_inserted.push_back(::std::make_pair(edge.second.first, pred));
-				edge.second.first->update();
-			}
-			break;
+		}
 	}
+	set_annotations(node.second, prg);
+	node.first->destructive_insert(node.second, prg);
+	::goto_programt::targett pred(node.second);
+	pred--;
+	m_inserted.push_back(::std::make_pair(node.first, pred));
+	node.first->update();
+
+	return m_inserted;
+}
+	
+GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
+		goto_node_t const& node, ::exprt const* pred, ::contextt & context) {
+	m_inserted.clear();
+
+	::namespacet const ns(context);
+	::exprt pred_copy(*pred);
+	::std::list< ::exprt * > symbols;
+	find_symbols(pred_copy, symbols);
+	bool make_nondet(false);
+	for (::std::list< ::exprt * >::iterator iter(symbols.begin()); iter != symbols.end(); ++iter) {
+		::std::list< ::exprt > alt_names;
+		// check globals first
+		::goto_functionst::function_mapt::iterator main_entry(m_goto.function_map.find("main"));
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, main_entry != m_goto.function_map.end());
+		for (::goto_programt::instructionst::const_iterator f_iter(main_entry->second.body.instructions.begin());
+				f_iter != main_entry->second.body.instructions.end(); ++f_iter) {
+			if (f_iter->is_other() && ::to_code(f_iter->code).get_statement() == "decl") {
+				::std::list< ::exprt const* > decl_symbols;
+				find_symbols(f_iter->code, decl_symbols);
+				for (::std::list< ::exprt const* >::const_iterator s_iter(decl_symbols.begin());
+						s_iter != decl_symbols.end(); ++s_iter) {
+					::symbolt const& symb(ns.lookup((*s_iter)->get("identifier")));
+					if ((*iter)->get("identifier") == symb.base_name) alt_names.push_back(**s_iter);
+				}
+			}
+		}
+		// function arguments
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !node.first->instructions.empty());
+		::goto_functionst::function_mapt::iterator fct_entry(m_goto.function_map.find(node.first->instructions.front().function));
+		FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, fct_entry != m_goto.function_map.end(),
+				::diagnostics::internal::to_string("Function ",
+					node.first->instructions.front().function, " not found in map!"));
+		::code_typet::argumentst const& argument_types(fct_entry->second.type.arguments());
+		for (::code_typet::argumentst::const_iterator a_iter(argument_types.begin());
+				a_iter != argument_types.end(); ++a_iter) {
+			::symbolt const& symb(ns.lookup(a_iter->get_identifier()));
+			if ((*iter)->get("identifier") == symb.base_name) alt_names.push_back(::symbol_expr(symb));
+		}
+		// local variables
+		for (::goto_programt::instructionst::const_iterator f_iter(node.first->instructions.begin());
+				f_iter != node.second; ++f_iter) {
+			if (f_iter->is_other() && ::to_code(f_iter->code).get_statement() == "decl") {
+				::std::list< ::exprt const* > decl_symbols;
+				find_symbols(f_iter->code, decl_symbols);
+				for (::std::list< ::exprt const* >::const_iterator s_iter(decl_symbols.begin());
+						s_iter != decl_symbols.end(); ++s_iter) {
+					::symbolt const& symb(ns.lookup((*s_iter)->get("identifier")));
+					if ((*iter)->get("identifier") == symb.base_name) alt_names.push_back(**s_iter);
+				}
+			}
+		}
+
+		// rename, if possible
+		if (alt_names.empty()) {
+			make_nondet = true;
+			break;
+		}
+		(*iter)->set("identifier", alt_names.back().get("identifier"));
+	}
+	::goto_programt tmp;
+
+	// predicate may be invalid
+	if (make_nondet) {
+		++m_nondet_var_count; FSHELL2_PROD_CHECK1(Instrumentation_Error,
+				m_nondet_var_count >= 0, "Too many nondet choices required");
+		::std::string const var_name(::diagnostics::internal::to_string("c::!fshell2!nd_choice", m_nondet_var_count));
+		{
+			::symbolt cond_symbol;
+			cond_symbol.mode = "C";
+			cond_symbol.name = var_name;
+			cond_symbol.base_name = var_name.substr(3, ::std::string::npos);
+			cond_symbol.type = ::typet("bool");
+			cond_symbol.lvalue = true;
+			cond_symbol.static_lifetime = false;
+			context.move(cond_symbol);
+		}
+		::symbolst::const_iterator symb_entry(context.symbols.find(var_name));
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, symb_entry != context.symbols.end());
+		::symbolt const& cond_symbol(symb_entry->second);
+		::goto_programt::targett decl(tmp.add_instruction());
+		decl->make_other();
+		decl->code = ::code_declt(::symbol_expr(cond_symbol));
+		pred_copy = ::symbol_expr(cond_symbol);
+	} else {
+		FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Trying to typecheck: ", pred_copy.pretty()));
+		::ansi_c_parse_treet ansi_c_parse_tree;
+		::stream_message_handlert mh(::std::cerr);
+		::ansi_c_typecheckt ct(ansi_c_parse_tree, context, "", mh);
+		ct.typecheck_expr(pred_copy);
+		FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Typecheck completed: ", pred_copy.pretty()));
+		if (pred_copy.type().id() == "code" && 1 == pred_copy.operands().size()) {
+			::exprt pred_bak(pred_copy.op0());
+			pred_copy.swap(pred_bak);
+		}
+		FSHELL2_PROD_CHECK1(Instrumentation_Error, pred_copy.type().id() == "bool",
+				::diagnostics::internal::to_string("Predicate ", ::expr2c(*pred, ns), " is not of Boolean type"));
+	}
+
+
+	::goto_programt::targett if_stmt(tmp.add_instruction());
+	::goto_programt::targett loc(tmp.add_instruction(LOCATION));
+	::goto_programt::targett dest(tmp.add_instruction(SKIP));
+	if_stmt->make_goto(dest, pred_copy);
+	if_stmt->guard.make_not();
+
+	insert_at(node, tmp);
+	m_inserted.clear();
+	m_inserted.push_back(::std::make_pair(node.first, loc));
 
 	return m_inserted;
 }
 	
 GOTO_Transformation::inserted_t & GOTO_Transformation::make_nondet_choice(::goto_programt & dest, int const num,
-		::contextt context) {
+		::contextt & context) {
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, num >= 1);
 	m_inserted.clear();
 	// count up until n-1, each bit sequence determines a boolean
@@ -197,7 +290,7 @@ GOTO_Transformation::inserted_t & GOTO_Transformation::make_nondet_choice(::goto
 				cond_symbol.name = var_name;
 				cond_symbol.base_name = var_name.substr(3, ::std::string::npos);
 				cond_symbol.type = ::typet("bool");
-				cond_symbol.lvalue = false;
+				cond_symbol.lvalue = true;
 				cond_symbol.static_lifetime = false;
 				context.move(cond_symbol);
 			}

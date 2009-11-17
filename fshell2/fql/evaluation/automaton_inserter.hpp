@@ -75,7 +75,7 @@ class Automaton_Inserter
 	void insert(Query const& query);
 
 	instrumentation_points_t const& get_test_goal_instrumentation(ta_state_t const& state) const;
-	CFA::edge_t const& get_target_graph_edge(::goto_programt::const_targett const& node) const;
+	// CFA::edge_t const& get_target_graph_edge(::goto_programt::const_targett const& node) const;
 
 	private:
 	Evaluate_Path_Monitor const& m_pm_eval;

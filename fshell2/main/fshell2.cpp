@@ -29,6 +29,8 @@
 #include <fshell2/main/fshell2.hpp>
 #include <fshell2/config/annotations.hpp>
 
+#include <diagnostics/frame/logging_config.hpp>
+#include <diagnostics/logger/file_logger.hpp>
 #include <diagnostics/basic_exceptions/violated_invariance.hpp>
 
 #include <fshell2/exception/command_processing_error.hpp>
@@ -76,6 +78,9 @@ FSHELL2_FQL_NAMESPACE_END;
 
 FShell2::FShell2(::optionst const& opts, ::goto_functionst & gf) :
 	m_opts(opts), m_gf(gf), m_cmd(opts, gf), m_first_run(true) {
+#if FSHELL2_DEBUG__LEVEL__ >= 2
+	::diagnostics::Logging_Config::register_logger( new ::diagnostics::File_Logger("test/main.log") );
+#endif
 	// try to read history from file, ignore errors
 	::read_history(".fshell2_history"); errno = 0;
 }
@@ -166,14 +171,19 @@ void FShell2::try_query(::language_uit & manager, char const * line) {
 	}
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, query_ast != 0);
 	Query_Cleanup cleanup(query_ast);
+
+	// normalize the input query
+	::fshell2::fql::Normalization_Visitor norm;
+	norm.normalize(&query_ast);
+	cleanup.set_object(query_ast);
 	
-	// parse succeeded, make sure the CFG is prepared
-	bool mod(m_cmd.finalize(manager));
+	// query parse succeeded, make sure the CFA is prepared
+	bool const mod(m_cmd.finalize(manager));
 	
+	// if code changed, check for failing assertions; in the future, this should
+	// be skipped and all extra checks be disabled using CBMC cmdline, but that
+	// must include unwinding assertions et al.
 	if (mod || m_first_run) {
-		// code may have changed, check for failing assertions
-		// we could also disable (using CBMC cmdline) assertions, but that must
-		// include unwinding assertions et al.
 		::bmct bmc(manager.context, manager.ui_message_handler);
 		bmc.options = m_opts;
 		bmc.set_verbosity(manager.get_verbosity());
@@ -182,11 +192,6 @@ void FShell2::try_query(::language_uit & manager, char const * line) {
 				"Program has failing assertions, cannot proceed.");
 		m_first_run = false;
 	}
-
-	// normalize the input query
-	::fshell2::fql::Normalization_Visitor norm;
-	norm.normalize(&query_ast);
-	cleanup.set_object(query_ast);
 	
 	// copy goto program, it will be modified
 	::goto_functionst gf_copy;
@@ -197,22 +202,22 @@ void FShell2::try_query(::language_uit & manager, char const * line) {
 
 	// prepare filter evaluation
 	::fshell2::fql::Evaluate_Filter filter_eval(gf_copy, cfg);
-	// evaluate all filters before modifying the CFG
+	// evaluate all filters before modifying the CFA
 	query_ast->accept(&filter_eval);
 
-	// create a predicated CFA, if necessary, and add predicate edges
-	::fshell2::fql::Predicate_Instrumentation pred_inst(gf_copy);
+	// create a predicated CFA and add pre/post-condition edges
+	Context_Backup context_backup(manager);
+	::fshell2::fql::Predicate_Instrumentation pred_inst(filter_eval, gf_copy, manager.context);
 	query_ast->accept(&pred_inst);
 
 	// build automata from path monitor expressions
-	::fshell2::fql::Evaluate_Path_Monitor pm_eval(filter_eval);
+	::fshell2::fql::Evaluate_Path_Monitor pm_eval(filter_eval, pred_inst);
 	query_ast->accept(&pm_eval);
 	// create a test goal automaton from the coverage sequence
-	::fshell2::fql::Build_Test_Goal_Automaton tg_builder(filter_eval, pm_eval, cfg);
+	::fshell2::fql::Build_Test_Goal_Automaton tg_builder(filter_eval, pm_eval, pred_inst, cfg);
 	query_ast->accept(&tg_builder);
 
 	// do automaton instrumentation
-	Context_Backup context_backup(manager);
 	::fshell2::fql::Automaton_Inserter aut(pm_eval, tg_builder, gf_copy, cfg, manager.context);
 	aut.insert(*query_ast);
 

@@ -31,13 +31,20 @@
 
 #include <fshell2/config/config.hpp>
 
+#include <fshell2/instrumentation/goto_transformation.hpp>
+#include <fshell2/fql/concepts/target_graph.hpp>
 #include <fshell2/fql/ast/ast_visitor.hpp>
 #include <fshell2/fql/ast/standard_ast_visitor_aspect.hpp>
 
 #include <cbmc/src/goto-programs/goto_functions.h>
 
+#include <map>
+#include <set>
+
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
+
+class Evaluate_Filter;
 
 /*! \brief TODO
 */
@@ -48,66 +55,20 @@ class Predicate_Instrumentation : public Standard_AST_Visitor_Aspect<AST_Visitor
 	typedef Predicate_Instrumentation Self;
 
 	public:
+	typedef ::std::map< Predicate const*, target_graph_t::edge_t > pred_instrumentation_map_t;
+	typedef ::std::map< target_graph_t::node_t, pred_instrumentation_map_t > node_to_pred_instrumentation_map_t;
 
-	Predicate_Instrumentation(::goto_functionst & gf);
+	Predicate_Instrumentation(Evaluate_Filter const& eval_filter, ::goto_functionst & gf, ::contextt & context);
 
 	virtual ~Predicate_Instrumentation();
 
-#if 0
+	target_graph_t::edge_t const& get(target_graph_t::node_t const& node, Predicate const* pred) const;
+
 	/*! \{
 	 * \brief Visit a @ref fshell2::fql::Edgecov
 	 * \param  n Edgecov
 	 */
 	virtual void visit(Edgecov const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Filter_Compose
-	 * \param  n Filter_Compose
-	 */
-	virtual void visit(Filter_Compose const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Filter_Complement
-	 * \param  n Filter_Complement
-	 */
-	virtual void visit(Filter_Complement const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Filter_Enclosing_Scopes
-	 * \param  n Filter_Enclosing_Scopes
-	 */
-	virtual void visit(Filter_Enclosing_Scopes const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Filter_Function
-	 * \param  n Filter_Function
-	 */
-	virtual void visit(Filter_Function const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Filter_Intersection
-	 * \param  n Filter_Intersection
-	 */
-	virtual void visit(Filter_Intersection const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Filter_Setminus
-	 * \param  n Filter_Setminus
-	 */
-	virtual void visit(Filter_Setminus const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Filter_Union
-	 * \param  n Filter_Union
-	 */
-	virtual void visit(Filter_Union const* n);
 	/*! \} */
 
 	/*! \{
@@ -132,6 +93,20 @@ class Predicate_Instrumentation : public Standard_AST_Visitor_Aspect<AST_Visitor
 	/*! \} */
 
 	/*! \{
+	 * \brief Visit a @ref fshell2::fql::PM_Postcondition
+	 * \param  n PM_Postcondition
+	 */
+	virtual void visit(PM_Postcondition const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::PM_Precondition
+	 * \param  n PM_Precondition
+	 */
+	virtual void visit(PM_Precondition const* n);
+	/*! \} */
+
+	/*! \{
 	 * \brief Visit a @ref fshell2::fql::PM_Repeat
 	 * \param  n PM_Repeat
 	 */
@@ -143,13 +118,6 @@ class Predicate_Instrumentation : public Standard_AST_Visitor_Aspect<AST_Visitor
 	 * \param  n Pathcov
 	 */
 	virtual void visit(Pathcov const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Predicate
-	 * \param  n Predicate
-	 */
-	virtual void visit(Predicate const* n);
 	/*! \} */
 
 	/*! \{
@@ -174,6 +142,20 @@ class Predicate_Instrumentation : public Standard_AST_Visitor_Aspect<AST_Visitor
 	/*! \} */
 
 	/*! \{
+	 * \brief Visit a @ref fshell2::fql::TGS_Postcondition
+	 * \param  n TGS_Postcondition
+	 */
+	virtual void visit(TGS_Postcondition const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::TGS_Precondition
+	 * \param  n TGS_Precondition
+	 */
+	virtual void visit(TGS_Precondition const* n);
+	/*! \} */
+
+	/*! \{
 	 * \brief Visit a @ref fshell2::fql::TGS_Setminus
 	 * \param  n TGS_Setminus
 	 */
@@ -193,11 +175,17 @@ class Predicate_Instrumentation : public Standard_AST_Visitor_Aspect<AST_Visitor
 	 */
 	virtual void visit(Test_Goal_Sequence const* n);
 	/*! \} */
-#endif
 
 	private:
+	Evaluate_Filter const& m_eval_filter;
 	::goto_functionst & m_gf;
-	
+	::contextt & m_context;
+	::fshell2::instrumentation::GOTO_Transformation m_inserter;
+	::std::set< target_graph_t::node_t > m_current_node_set;
+	node_to_pred_instrumentation_map_t m_node_to_pred_instr;
+
+	void insert_predicate(Predicate const* pred);
+
 	/*! \copydoc copy_constructor
 	*/
 	Predicate_Instrumentation( Self const& rhs );

@@ -33,6 +33,7 @@
 #include <diagnostics/basic_exceptions/invalid_argument.hpp>
 #include <diagnostics/basic_exceptions/not_implemented.hpp>
 
+#include <fshell2/instrumentation/goto_utils.hpp>
 #include <fshell2/fql/evaluation/compute_test_goals.hpp>
 
 #include <cbmc/src/ansi-c/expr2c.h>
@@ -127,14 +128,6 @@ variable_type_t get_variable_type(::std::string const& v)
 			::diagnostics::internal::to_string("Cannot determine variable type of ", v));
 	return UNKNOWN;
 }
-	
-void find_symbols(::exprt const& expr, ::std::list< ::exprt const * > & symbols) {
-	if (expr.id() == "symbol") {
-		symbols.push_back(&expr);
-	} else {
-		forall_operands(iter, expr) find_symbols(*iter, symbols);
-	}
-}
 
 void Test_Suite_Output::get_test_case(Test_Suite_Output::test_case_t & tc) const {
 	tc.clear();
@@ -167,7 +160,7 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::test_case_t & tc) const
 		//// ::std::cerr << "RHS: " << iter->rhs << ::std::endl;
 		
 		::std::list< ::exprt const* > stmt_vars;
-		find_symbols(iter->rhs, stmt_vars);
+		::fshell2::instrumentation::find_symbols(iter->rhs, stmt_vars);
 		for (::std::list< ::exprt const* >::const_iterator v_iter(stmt_vars.begin());
 				v_iter != stmt_vars.end(); ++v_iter) {
 			// keep the name for further manipulation

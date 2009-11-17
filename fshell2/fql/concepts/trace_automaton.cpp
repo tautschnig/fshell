@@ -101,16 +101,7 @@ void simplify_automaton(trace_automaton_t & aut, bool compact) {
 #if FSHELL2_DEBUG__LEVEL__ >= 2
 	::std::ostringstream oss;
 	oss << "Input AUT:" << ::std::endl;
-	for (trace_automaton_t::const_iterator iter(aut.begin()); iter != aut.end(); ++iter) {
-		trace_automaton_t::edges_type out_edges(aut.delta2(*iter));
-		for (trace_automaton_t::edges_type::const_iterator o_iter(out_edges.begin());
-				o_iter != out_edges.end(); ++o_iter) {
-			if (aut.initial().end() != aut.initial().find(*iter)) oss << ".";
-			oss << *iter << " -[ " << o_iter->first << " ]-> " << o_iter->second;
-			if (aut.final(o_iter->second)) oss << ".";
-			oss << ::std::endl;
-		}
-	}
+	print_trace_automaton(aut, oss);
 	FSHELL2_AUDIT_TRACE(oss.str());
 	oss.str("");
 #endif
@@ -220,19 +211,68 @@ void simplify_automaton(trace_automaton_t & aut, bool compact) {
 	
 #if FSHELL2_DEBUG__LEVEL__ >= 2
 	oss << "Simplified AUT:" << ::std::endl;
+	print_trace_automaton(aut, oss);
+	FSHELL2_AUDIT_TRACE(oss.str());
+#endif
+}
+
+::std::ostream & print_trace_automaton(trace_automaton_t const& aut, ::std::ostream & os) {
 	for (trace_automaton_t::const_iterator iter(aut.begin()); iter != aut.end(); ++iter) {
 		trace_automaton_t::edges_type out_edges(aut.delta2(*iter));
 		for (trace_automaton_t::edges_type::const_iterator o_iter(out_edges.begin());
 				o_iter != out_edges.end(); ++o_iter) {
-			if (aut.initial().end() != aut.initial().find(*iter)) oss << ".";
-			oss << *iter << " -[ " << o_iter->first << " ]-> " << o_iter->second;
-			if (aut.final(o_iter->second)) oss << ".";
-			oss << ::std::endl;
+			if (aut.initial().end() != aut.initial().find(*iter)) os << ".";
+			os << *iter << " -[ " << o_iter->first << " ]-> " << o_iter->second;
+			if (aut.final(o_iter->second)) os << ".";
+			os << ::std::endl;
 		}
 	}
-	FSHELL2_AUDIT_TRACE(oss.str());
-#endif
+
+	return os;
 }
+	
+void find_non_eps_pred(trace_automaton_t const& aut, ta_state_t const& s, ::std::set< Target_Graph_Index::char_type > & indices) {
+	ta_state_set_t seen_states;
+	::std::list< ta_state_t > queue;
+	queue.push_back(s);
+	while (!queue.empty()) {
+		ta_state_t const st(queue.front());
+		queue.pop_front();
+		if (seen_states.end() != seen_states.find(st)) continue;
+		trace_automaton_t::edges_type in_edges(aut.delta2_backwards(st));
+		for (trace_automaton_t::edges_type::const_iterator i_iter(in_edges.begin());
+				i_iter != in_edges.end(); ++i_iter) {
+			if (Target_Graph_Index::epsilon == i_iter->first) {
+				queue.push_back(i_iter->second);
+			} else {
+				indices.insert(i_iter->first);
+			}
+		}
+		seen_states.insert(st);
+	}
+}
+	
+void find_non_eps_succ(trace_automaton_t const& aut, ta_state_t const& s, ::std::set< Target_Graph_Index::char_type > & indices) {
+	ta_state_set_t seen_states;
+	::std::list< ta_state_t > queue;
+	queue.push_back(s);
+	while (!queue.empty()) {
+		ta_state_t const st(queue.front());
+		queue.pop_front();
+		if (seen_states.end() != seen_states.find(st)) continue;
+		trace_automaton_t::edges_type out_edges(aut.delta2(st));
+		for (trace_automaton_t::edges_type::const_iterator o_iter(out_edges.begin());
+				o_iter != out_edges.end(); ++o_iter) {
+			if (Target_Graph_Index::epsilon == o_iter->first) {
+				queue.push_back(o_iter->second);
+			} else {
+				indices.insert(o_iter->first);
+			}
+		}
+		seen_states.insert(st);
+	}
+}
+
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;

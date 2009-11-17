@@ -36,11 +36,13 @@
 #include <fshell2/fql/concepts/trace_automaton.hpp>
 
 #include <map>
+#include <list>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 class Evaluate_Filter;
+class Predicate_Instrumentation;
 
 /*! \brief TODO
 */
@@ -54,7 +56,8 @@ class Evaluate_Path_Monitor : public Standard_AST_Visitor_Aspect<AST_Visitor>
 
 	typedef ::std::map< Path_Monitor_Expr const*, trace_automaton_t > pm_value_t;
 
-	explicit Evaluate_Path_Monitor(Evaluate_Filter const& filter_eval);
+	Evaluate_Path_Monitor(Evaluate_Filter const& filter_eval,
+			Predicate_Instrumentation const& pred_instr);
 
 	virtual ~Evaluate_Path_Monitor();
 
@@ -109,13 +112,6 @@ class Evaluate_Path_Monitor : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	/*! \} */
 
 	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Predicate
-	 * \param  n Predicate
-	 */
-	virtual void visit(Predicate const* n);
-	/*! \} */
-
-	/*! \{
 	 * \brief Visit a @ref fshell2::fql::Query
 	 * \param  n Query
 	 */
@@ -131,9 +127,11 @@ class Evaluate_Path_Monitor : public Standard_AST_Visitor_Aspect<AST_Visitor>
 
 	private:
 	Evaluate_Filter const& m_eval_filter;
+	Predicate_Instrumentation const& m_pred_instr;
 	Target_Graph_Index m_target_graph_index;
 	pm_value_t m_pm_map;
 	::std::pair< pm_value_t::iterator, bool > m_entry;
+	::std::list< target_graph_t > m_more_target_graphs;
 
 	/*! \copydoc copy_constructor
 	*/

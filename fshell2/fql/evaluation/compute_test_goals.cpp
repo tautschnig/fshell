@@ -64,6 +64,7 @@ Compute_Test_Goals_From_Instrumentation::Compute_Test_Goals_From_Instrumentation
 	this->options.set_option("refine", false);
 	this->options.set_option("cvc", false);
 	this->set_verbosity(manager.get_verbosity());
+	this->set_ui(manager.ui_message_handler.get_ui());
 
 	m_cnf.set_message_handler(*(this->message_handler));
 	m_cnf.set_verbosity(this->get_verbosity());

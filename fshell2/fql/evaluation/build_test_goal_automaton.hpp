@@ -47,6 +47,7 @@ FSHELL2_FQL_NAMESPACE_BEGIN;
 
 class Evaluate_Filter;
 class Evaluate_Path_Monitor;
+class Predicate_Instrumentation;
 
 /*! \brief TODO
 */
@@ -69,6 +70,7 @@ class Build_Test_Goal_Automaton : public Standard_AST_Visitor_Aspect<AST_Visitor
 
 	Build_Test_Goal_Automaton(Evaluate_Filter const& eval_filter,
 			Evaluate_Path_Monitor & pm_eval,
+			Predicate_Instrumentation const& pred_instr,
 			::fshell2::instrumentation::CFG const& cfg);
 
 	/*! \{
@@ -83,6 +85,7 @@ class Build_Test_Goal_Automaton : public Standard_AST_Visitor_Aspect<AST_Visitor
 	private:
 	Evaluate_Filter const& m_eval_filter;
 	Evaluate_Path_Monitor & m_pm_eval;
+	Predicate_Instrumentation const& m_pred_instr;
 	::fshell2::instrumentation::CFG const& m_cfg;
 	
 	trace_automaton_t m_test_goal_automaton;

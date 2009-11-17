@@ -41,6 +41,7 @@
 #include <cbmc/src/goto-programs/goto_convert_functions.h>
 #include <cbmc/src/util/std_code.h>
 #include <cbmc/src/util/std_expr.h>
+#include <cbmc/src/util/arith_tools.h>
 #include <cbmc/src/langapi/mode.h>
 #include <cbmc/src/ansi-c/ansi_c_language.h>
 #include <cbmc/src/cbmc/bmc.h>
@@ -200,8 +201,46 @@ void test_use_case2( Test_Data & data )
 		(++(targets.begin()))->second->make_skip();
 		(++(++(targets.begin())))->second->make_assertion(f);
 
+		::bmct bmc(l.context, l.ui_message_handler);
+		bmc.options = options;
+		bmc.set_verbosity(l.get_verbosity());
+		TEST_ASSERT(bmc.run(cfg));
+	}
+		
+	cfg.function_map["c::tmp_func"].body.instructions.front().function = "c::tmp_func";
+	::false_exprt f;
+	::fshell2::instrumentation::GOTO_Transformation::goto_node_t ndchoice3(*(++(++(targets.begin()))));
+
+	{
+		// invalidates targets
+		inserter.insert_predicate_at(ndchoice3, &f, l.context);
+		::goto_programt::targett loc(ndchoice3.second);
+		--(--loc);
+		TEST_ASSERT(loc->type == LOCATION);
+		TEST_ASSERT_RELATION(16, ==, cfg.function_map["c::tmp_func"].body.instructions.size());
+		ndchoice3.second->make_skip();
+		loc->make_assertion(f);
+
+		::bmct bmc(l.context, l.ui_message_handler);
+		bmc.options = options;
+		bmc.set_verbosity(l.get_verbosity());
+		TEST_ASSERT(!bmc.run(cfg));
+	}
+
+	{
+		::symbol_exprt x("x");
+		x.set("base_name", "x");
+		::binary_relation_exprt inv(x, "<", ::from_integer(1, ::typet("integer")));
+		// invalidates targets
+		inserter.insert_predicate_at(ndchoice3, &inv, l.context);
+		::goto_programt::targett loc(ndchoice3.second);
+		--(--loc);
+		TEST_ASSERT(loc->type == LOCATION);
 		/*::namespacet const ns(l.context);
 		cfg.output(ns, ::std::cerr);*/
+		TEST_ASSERT_RELATION(20, ==, cfg.function_map["c::tmp_func"].body.instructions.size());
+		::false_exprt f;
+		loc->make_assertion(f);
 
 		::bmct bmc(l.context, l.ui_message_handler);
 		bmc.options = options;

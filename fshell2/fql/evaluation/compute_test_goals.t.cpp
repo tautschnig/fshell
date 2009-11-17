@@ -35,6 +35,7 @@
 
 #include <fshell2/instrumentation/cfg.hpp>
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
+#include <fshell2/fql/evaluation/predicate_instrumentation.hpp>
 #include <fshell2/fql/evaluation/evaluate_path_monitor.hpp>
 #include <fshell2/fql/evaluation/build_test_goal_automaton.hpp>
 #include <fshell2/fql/evaluation/automaton_inserter.hpp>
@@ -135,9 +136,11 @@ void test_instr( Test_Data & data )
 	target_graph_t const& bb_entries(eval.get(*bb));
 	TEST_CHECK_RELATION(6, ==, bb_entries.get_edges().size());
 
-	::fshell2::fql::Evaluate_Path_Monitor pm_eval(eval);
+	Predicate_Instrumentation pred_inst(eval, gf, l.context);
+	q->accept(&pred_inst);
+	::fshell2::fql::Evaluate_Path_Monitor pm_eval(eval, pred_inst);
 	q->accept(&pm_eval);
-	::fshell2::fql::Build_Test_Goal_Automaton tg_builder(eval, pm_eval, cfg);
+	::fshell2::fql::Build_Test_Goal_Automaton tg_builder(eval, pm_eval, pred_inst, cfg);
 	q->accept(&tg_builder);
 
 	::fshell2::fql::Automaton_Inserter aut(pm_eval, tg_builder, gf, cfg, l.context);
@@ -204,9 +207,11 @@ void test_boolean( Test_Data & data )
 	target_graph_t const& bb_entries(eval.get(*bb));
 	TEST_CHECK_RELATION(6, ==, bb_entries.get_edges().size());
 
-	::fshell2::fql::Evaluate_Path_Monitor pm_eval(eval);
+	Predicate_Instrumentation pred_inst(eval, gf, l.context);
+	q->accept(&pred_inst);
+	::fshell2::fql::Evaluate_Path_Monitor pm_eval(eval, pred_inst);
 	q->accept(&pm_eval);
-	::fshell2::fql::Build_Test_Goal_Automaton tg_builder(eval, pm_eval, cfg);
+	::fshell2::fql::Build_Test_Goal_Automaton tg_builder(eval, pm_eval, pred_inst, cfg);
 	q->accept(&tg_builder);
 
 	Compute_Test_Goals_Boolean goals(l, options, gf, tg_builder);

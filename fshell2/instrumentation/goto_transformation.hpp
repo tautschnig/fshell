@@ -59,10 +59,11 @@ class GOTO_Transformation
 	inserted_t const& insert(::std::string const& f, position_t const pos,
 			::goto_program_instruction_typet const stmt_type, ::goto_programt const& prg);
 
-	inserted_t const& insert(position_t const pos, goto_edge_t const& edge,
-			::goto_programt & prg);
+	inserted_t const& insert_at(goto_node_t const& edge, ::goto_programt & prg);
 
-	inserted_t & make_nondet_choice(::goto_programt & dest, int const num, ::contextt context);
+	inserted_t const& insert_predicate_at(goto_node_t const& node, ::exprt const* pred, ::contextt & context);
+
+	inserted_t & make_nondet_choice(::goto_programt & dest, int const num, ::contextt & context);
 
 	static void set_annotations(::goto_programt::const_targett src, ::goto_programt & target);
 	static void mark_instrumented(::goto_programt & target);

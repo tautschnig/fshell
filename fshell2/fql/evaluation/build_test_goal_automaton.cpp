@@ -45,15 +45,18 @@
 #include <fshell2/fql/ast/tgs_union.hpp>
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
 #include <fshell2/fql/evaluation/evaluate_path_monitor.hpp>
+#include <fshell2/fql/evaluation/predicate_instrumentation.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 	
 Build_Test_Goal_Automaton::Build_Test_Goal_Automaton(Evaluate_Filter const& eval_filter,
 			Evaluate_Path_Monitor & pm_eval,
+			Predicate_Instrumentation const& pred_instr,
 			::fshell2::instrumentation::CFG const& cfg) :
 	m_eval_filter(eval_filter),
 	m_pm_eval(pm_eval),
+	m_pred_instr(pred_instr),
 	m_cfg(cfg),
 	m_test_goal_map_entry(m_test_goal_map.end())
 {
@@ -198,6 +201,7 @@ void Build_Test_Goal_Automaton::visit(Query const* n) {
 			iter != m_current_final.end(); ++iter)
 		m_test_goal_automaton.final(*iter) = 1;
 
+	FSHELL2_AUDIT_TRACE("Finalizing test goal automaton");
 	simplify_automaton(m_test_goal_automaton, false);
 }
 
@@ -218,15 +222,59 @@ void Build_Test_Goal_Automaton::visit(TGS_Intersection const* n) {
 }
 
 void Build_Test_Goal_Automaton::visit(TGS_Postcondition const* n) {
-	FSHELL2_PROD_ASSERT(::diagnostics::Not_Implemented, false);
-
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == m_current_final.size());
+	
+	n->get_tgs()->accept(this);
+
+	ta_state_set_t prev_final;
+	prev_final.swap(m_current_final);
+	m_current_final.insert(m_test_goal_automaton.new_state());
+	
+	for (ta_state_set_t::const_iterator iter(prev_final.begin());
+			iter != prev_final.end(); ++iter) {
+		target_graph_t::edges_t pred_edges;
+		::std::set< int > tgg_indices;
+		find_non_eps_pred(m_test_goal_automaton, *iter, tgg_indices);
+		for (::std::set< int >::const_iterator i_iter(tgg_indices.begin());
+				i_iter != tgg_indices.end(); ++i_iter) {
+			target_graph_t const& tgg(m_pm_eval.lookup_index(*i_iter));
+			for (target_graph_t::edges_t::const_iterator e_iter(tgg.get_edges().begin());
+					e_iter != tgg.get_edges().end(); ++e_iter)
+				pred_edges.insert(m_pred_instr.get(e_iter->second, n->get_predicate()));
+		}
+		m_more_target_graphs.push_back(target_graph_t());
+		m_more_target_graphs.back().set_edges(pred_edges);
+		m_test_goal_automaton.set_trans(*iter,
+				m_pm_eval.to_index(m_more_target_graphs.back()), *m_current_final.begin());
+	}
 }
 
 void Build_Test_Goal_Automaton::visit(TGS_Precondition const* n) {
-	FSHELL2_PROD_ASSERT(::diagnostics::Not_Implemented, false);
-
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == m_current_final.size());
+
+	ta_state_set_t prev_final;
+	prev_final.swap(m_current_final);
+	ta_state_t const tmp_final(m_test_goal_automaton.new_state());
+	m_current_final.insert(tmp_final);
+	
+	n->get_tgs()->accept(this);
+	
+	target_graph_t::edges_t pred_edges;
+	::std::set< int > tgg_indices;
+	find_non_eps_succ(m_test_goal_automaton, tmp_final, tgg_indices);
+	for (::std::set< int >::const_iterator iter(tgg_indices.begin());
+			iter != tgg_indices.end(); ++iter) {
+		target_graph_t const& tgg(m_pm_eval.lookup_index(*iter));
+		for (target_graph_t::edges_t::const_iterator e_iter(tgg.get_edges().begin());
+				e_iter != tgg.get_edges().end(); ++e_iter)
+			pred_edges.insert(m_pred_instr.get(e_iter->first, n->get_predicate()));
+	}
+	m_more_target_graphs.push_back(target_graph_t());
+	m_more_target_graphs.back().set_edges(pred_edges);
+	for (ta_state_set_t::const_iterator iter(prev_final.begin());
+			iter != prev_final.end(); ++iter)
+		m_test_goal_automaton.set_trans(*iter,
+				m_pm_eval.to_index(m_more_target_graphs.back()), tmp_final);
 }
 
 void Build_Test_Goal_Automaton::visit(TGS_Setminus const* n) {
