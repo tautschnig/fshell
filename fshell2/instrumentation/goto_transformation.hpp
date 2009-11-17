@@ -66,17 +66,18 @@ class GOTO_Transformation
 	inserted_t const& insert_predicate_at(goto_node_t const& node, ::exprt const* pred);
 
 	inserted_t & make_nondet_choice(::goto_programt & dest, int const num);
-
-	static void set_annotations(::goto_programt::const_targett src, ::goto_programt & target);
-	static void mark_instrumented(::goto_programt & target);
-	static void mark_instrumented(::goto_programt::targett inst);
+	
 	static bool is_instrumented(::goto_programt::const_targett inst);
+	static void mark_instrumented(::goto_programt & target);
 
 	private:
 	::language_uit & m_manager;
 	::goto_functionst & m_goto;
 	inserted_t m_inserted;
-	int m_nondet_var_count;
+
+	static void set_annotations(::goto_programt::const_targett src, ::goto_programt & target);
+	static void mark_instrumented(::goto_programt::targett inst);
+	::symbolt const& new_bool_var(char const* name);
 
 	/*! \copydoc copy_constructor
 	*/

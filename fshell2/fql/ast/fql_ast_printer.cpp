@@ -310,8 +310,9 @@ void FQL_AST_Printer::visit(Predicate const* n) {
 	::std::string c_expr(::expr2c(*(n->get_expr()), ns));
 	::std::string::size_type no_ws_start(0);
 	while (::std::isspace(c_expr.at(no_ws_start))) ++no_ws_start;
-	c_expr = c_expr.substr(no_ws_start);
-	m_os << "{\"" << c_expr.substr(0, c_expr.rfind(";\n")) << "\"}";
+	::std::string::size_type const prefix(c_expr.find("!PRED! = (_Bool)("));
+	c_expr = c_expr.substr(::std::string::npos==prefix?no_ws_start:(prefix+17));
+	m_os << "{\"" << c_expr.substr(0, c_expr.rfind(");\n")) << "\"}";
 }
 
 void FQL_AST_Printer::visit(Query const* n) {

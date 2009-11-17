@@ -111,7 +111,7 @@ variable_type_t get_variable_type(::std::string const& v)
 	// function call used outside assignment
 	else if (::std::string::npos != v.find("::$tmp::return_value_")) return CBMC_TMP_RETURN_VALUE;
 	// generated symbol
-	else if (0 == v.find("c::!fshell2!")) return FSHELL2_INTERNAL;
+	else if (0 == v.find("c::$fshell2$")) return FSHELL2_INTERNAL;
 	// global variables only have c:: and not other ::
 	else if (::std::string::npos == v.find("::", 3)) return GLOBAL;
 	// global static variables have one more ::
@@ -167,27 +167,20 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::test_case_t & tc) const
 			::std::string const& var_name((*v_iter)->get("identifier").as_string());
 			// ::std::cerr << "Checking (RHS)" << var_name << ::std::endl;
 			variable_type_t const vt(get_variable_type(var_name));
-			if (CBMC_TMP_RETURN_VALUE == vt) {
-				if (!vars.insert(var_name).second) continue;
-			} else {
-				if (!vars.insert(var_name.substr(0, var_name.rfind('#'))).second) continue;
-			}
-			// ::std::cerr << "Added var " << var_name << " [" << vt << "]" << ::std::endl;
 			switch (vt) {
 				case CBMC_INTERNAL: // we don't care
 				case CBMC_GUARD: // we don't care
 				case FSHELL2_INTERNAL: // we don't care
 				case CBMC_DYNAMIC_MEMORY: // ignore in RHS
-					break;
-				case CBMC_TMP_RETURN_VALUE:
-					// we must have seen these on the LHS first
-					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, false);
+				case CBMC_TMP_RETURN_VALUE: // ignore in RHS
 					break;
 				case PARAMETER:
 				case LOCAL:
 				case LOCAL_STATIC:
 				case GLOBAL:
 				case GLOBAL_STATIC:
+					if (!vars.insert(var_name.substr(0, var_name.rfind('#'))).second) break;
+					// ::std::cerr << "Added RHS var " << var_name << " [" << vt << "]" << ::std::endl;
 					tc.push_back(program_variable_t());
 					tc.back().m_name = *v_iter;
 					tc.back().m_pretty_name = var_name.substr(0, var_name.rfind('#')).substr(0, var_name.rfind('@')); // @ comes before #
@@ -212,7 +205,7 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::test_case_t & tc) const
 		} else {
 			if (!vars.insert(var_name.substr(0, var_name.rfind('#'))).second) continue;
 		}
-		// ::std::cerr << "Added var " << var_name << " [" << vt << "]" << ::std::endl;
+		// ::std::cerr << "Added LHS var " << var_name << " [" << vt << "]" << ::std::endl;
 		switch (vt) {
 			case CBMC_INTERNAL: // we don't care
 			case CBMC_GUARD: // we don't care
@@ -247,6 +240,8 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::test_case_t & tc) const
 					m_goals.get_ns().lookup(tc.back().m_pretty_name, tc.back().m_symbol);
 					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, tc.back().m_symbol);
 					tc.back().m_location = &(iter->source.pc->location);
+					// remove return values of defined (but inlined) functions
+					if (CBMC_TMP_RETURN_VALUE == vt && !tc.back().m_symbol->value.is_nil()) tc.pop_back();
 				/* we assume malloc doesn't return NULL, should check for
 				 * invalid PTR
 				} else if (iter->source.pc->is_assign() &&
@@ -269,7 +264,7 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::test_case_t & tc) const
 					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, tc.back().m_symbol);
 					tc.back().m_location = &(tc.back().m_symbol->location);
 				} else {
-					//// ::std::cerr << "Skipping:" << ::std::endl;
+					//// ::std::cerr << "Skipping " << var_name << ":" << ::std::endl;
 					//// ::goto_programt tmp;
 					//// tmp.output_instruction(m_goals.get_ns(), "", ::std::cerr, iter->source.pc);
 					//// iter->output(m_goals.get_ns(), ::std::cerr);

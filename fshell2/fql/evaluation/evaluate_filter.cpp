@@ -357,7 +357,9 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 							f_iter != iter->second.body.instructions.end(); ++f_iter) {
 						if (ignore_instruction(*f_iter)) continue;
 						if (!f_iter->is_function_call()) continue;
-						if (::to_code_function_call(f_iter->code).function().get("identifier") != arg) continue;
+						::std::string const& f(::to_code_function_call(f_iter->code).function().get("identifier").as_string());
+						::std::string::size_type delim(f.rfind("::"));
+						if (arg != f.substr(::std::string::npos == delim?0:delim+2)) continue;
 						CFG::entries_t::iterator cfg_node(m_cfg.find(f_iter));
 						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.end());
 						for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
@@ -561,12 +563,14 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 					for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
 							f_iter != iter->second.body.instructions.end(); ++f_iter) {
 						if (ignore_instruction(*f_iter)) continue;
+						bool use_stmt(false);
 						if (types & (STT_IF | STT_FOR | STT_WHILE | STT_SWITCH))
-							if (!f_iter->is_goto() || f_iter->guard.is_true() || f_iter->guard.is_false()) continue;
+							if (f_iter->is_goto() && (!f_iter->guard.is_true() && !f_iter->guard.is_false())) use_stmt = true;
 						if (types & (STT_CONDOP))
-							if (!f_iter->is_assign() || ::to_code_assign(f_iter->code).rhs().id() != "if") continue;
+							if (f_iter->is_assign() && ::to_code_assign(f_iter->code).rhs().id() == "if") use_stmt = true;
 						if (types & (STT_ASSERT))
-							if (!f_iter->is_assert()) continue;
+							if (f_iter->is_assert()) use_stmt = true;
+						if (!use_stmt) continue;
 						CFG::entries_t::iterator cfg_node(m_cfg.find(f_iter));
 						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.end());
 						for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());

@@ -568,7 +568,7 @@ Predicate: TOK_L_BRACE c_LHS Comparison c_LHS TOK_R_BRACE
 		 {
 		   ::stream_message_handlert cbmc_msg_handler(*os);
 		   ::std::ostringstream pr;
-		   pr << "void __fn() {" << $2 << ";}" << ::std::endl;
+		   pr << "void __fn() { PRED = (_Bool)(" << $2 << ");}" << ::std::endl;
 		   // put the string into an istream
 		   ::std::istringstream is(pr.str());
 		   // run the CBMC C parser
@@ -587,6 +587,9 @@ Predicate: TOK_L_BRACE c_LHS Comparison c_LHS TOK_R_BRACE
 		     1 == ansi_c_parser.parse_tree.declarations.size());
 		   FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 		     1 == ansi_c_parser.parse_tree.declarations.front().value().operands().size());
+		   FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+		     ansi_c_parser.parse_tree.declarations.front().value().operands().front().op0().op0().get("identifier") == "PRED");
+		   ansi_c_parser.parse_tree.declarations.front().value().operands().front().op0().op0().set("identifier", "!PRED!");
 		   $$ = ::fshell2::fql::Predicate::Factory::get_instance().create(new
 		     ::exprt(ansi_c_parser.parse_tree.declarations.front().value().operands().front()));
 		   intermediates.insert($$);

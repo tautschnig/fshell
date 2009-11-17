@@ -284,9 +284,11 @@ void Build_Test_Goal_Automaton::visit(TGS_Setminus const* n) {
 }
 
 void Build_Test_Goal_Automaton::visit(TGS_Union const* n) {
-	FSHELL2_PROD_ASSERT(::diagnostics::Not_Implemented, false);
-
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == m_current_final.size());
+	ta_state_set_t final_bak(m_current_final);
+	n->get_tgs_a()->accept(this);
+	m_current_final.swap(final_bak);
+	n->get_tgs_b()->accept(this);
+	m_current_final.insert(final_bak.begin(), final_bak.end());
 }
 
 void Build_Test_Goal_Automaton::visit(Test_Goal_Sequence const* n) {

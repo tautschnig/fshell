@@ -40,13 +40,14 @@
 #include <cbmc/src/langapi/language_ui.h>
 #include <cbmc/src/ansi-c/ansi_c_typecheck.h>
 #include <cbmc/src/ansi-c/expr2c.h>
+#include <cbmc/src/goto-programs/goto_convert.h>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_INSTRUMENTATION_NAMESPACE_BEGIN;
 
 	
 GOTO_Transformation::GOTO_Transformation(::language_uit & manager, ::goto_functionst & gf) :
-	m_manager(manager), m_goto(gf), m_nondet_var_count(-1) {
+	m_manager(manager), m_goto(gf) {
 }
 
 void GOTO_Transformation::set_annotations(::goto_programt::const_targett src, ::goto_programt & target) {
@@ -70,6 +71,27 @@ void GOTO_Transformation::mark_instrumented(::goto_programt & target) {
 
 bool GOTO_Transformation::is_instrumented(::goto_programt::const_targett inst) {
 	return (inst->location.get_property() == "fshell2_instrumentation");
+}
+	
+::symbolt const& GOTO_Transformation::new_bool_var(char const* name) {
+	static int var_count(-1);
+
+	++var_count;
+	FSHELL2_PROD_CHECK1(Instrumentation_Error, var_count >= 0, "Too many nondet choices required");
+	
+	::std::string const var_name(::diagnostics::internal::to_string("c::$fshell2$", name, var_count));
+	::symbolt cond_symbol;
+	cond_symbol.mode = "C";
+	cond_symbol.name = var_name;
+	cond_symbol.base_name = var_name.substr(3, ::std::string::npos);
+	cond_symbol.type = ::typet("bool");
+	cond_symbol.lvalue = true;
+	cond_symbol.static_lifetime = false;
+	m_manager.context.move(cond_symbol);
+	
+	::symbolst::const_iterator symb_entry(m_manager.context.symbols.find(var_name));
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, symb_entry != m_manager.context.symbols.end());
+	return symb_entry->second;
 }
 
 GOTO_Transformation::inserted_t const& GOTO_Transformation::insert(::std::string const& f,
@@ -155,10 +177,27 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 	::std::list< ::exprt * > symbols;
 	find_symbols(pred_copy, symbols);
 	bool make_nondet(false);
+	::exprt * special_pred_symb(0);
 	for (::std::list< ::exprt * >::iterator iter(symbols.begin()); iter != symbols.end(); ++iter) {
+		if ((*iter)->get("identifier") == "!PRED!") {
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 0 == special_pred_symb);
+			special_pred_symb = *iter;
+			continue;
+		}
+
 		::std::list< ::exprt > alt_names;
-		// check globals first
-		::goto_functionst::function_mapt::iterator main_entry(m_goto.function_map.find("main"));
+		::goto_functionst::function_mapt::iterator main_entry(m_goto.function_map.end()),
+			fct_entry(m_goto.function_map.end());
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !node.first->instructions.empty());
+		// walk the function map to check for matching function names
+		for (::goto_functionst::function_mapt::iterator fmap_entry(m_goto.function_map.begin());
+				fmap_entry != m_goto.function_map.end(); ++fmap_entry) {
+			if (fmap_entry->first == "main") main_entry = fmap_entry;
+			if (fmap_entry->first == node.first->instructions.front().function) fct_entry = fmap_entry;
+			::symbolt const& symb(ns.lookup(fmap_entry->first));
+			if ((*iter)->get("identifier") == symb.base_name) alt_names.push_back(::symbol_expr(symb));
+		}
+		// check globals
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, main_entry != m_goto.function_map.end());
 		for (::goto_programt::instructionst::const_iterator f_iter(main_entry->second.body.instructions.begin());
 				f_iter != main_entry->second.body.instructions.end(); ++f_iter) {
@@ -173,8 +212,6 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 			}
 		}
 		// function arguments
-		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !node.first->instructions.empty());
-		::goto_functionst::function_mapt::iterator fct_entry(m_goto.function_map.find(node.first->instructions.front().function));
 		FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, fct_entry != m_goto.function_map.end(),
 				::diagnostics::internal::to_string("Function ",
 					node.first->instructions.front().function, " not found in map!"));
@@ -207,27 +244,27 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 	}
 	::goto_programt tmp;
 
-	// predicate may be invalid
-	if (make_nondet) {
-		++m_nondet_var_count; FSHELL2_PROD_CHECK1(Instrumentation_Error,
-				m_nondet_var_count >= 0, "Too many nondet choices required");
-		::std::string const var_name(::diagnostics::internal::to_string("c::!fshell2!nd_choice", m_nondet_var_count));
-		{
-			::symbolt cond_symbol;
-			cond_symbol.mode = "C";
-			cond_symbol.name = var_name;
-			cond_symbol.base_name = var_name.substr(3, ::std::string::npos);
-			cond_symbol.type = ::typet("bool");
-			cond_symbol.lvalue = true;
-			cond_symbol.static_lifetime = false;
-			m_manager.context.move(cond_symbol);
-		}
-		::symbolst::const_iterator symb_entry(m_manager.context.symbols.find(var_name));
-		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, symb_entry != m_manager.context.symbols.end());
-		::symbolt const& cond_symbol(symb_entry->second);
+	if (make_nondet || special_pred_symb) {
+		::symbolt const& cond_symbol(new_bool_var("pred"));
 		::goto_programt::targett decl(tmp.add_instruction());
 		decl->make_other();
 		decl->code = ::code_declt(::symbol_expr(cond_symbol));
+
+		if (special_pred_symb) {
+			special_pred_symb->set("identifier", cond_symbol.name);
+			
+			FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Trying to typecheck: ", pred_copy.pretty()));
+			::ansi_c_parse_treet ansi_c_parse_tree;
+			::ansi_c_typecheckt ct(ansi_c_parse_tree, m_manager.context, "", m_manager.get_message_handler());
+			ct.typecheck_expr(pred_copy);
+			FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Typecheck completed: ", pred_copy.pretty()));
+
+			::optionst options;
+			::goto_programt dest;
+			::goto_convert(::to_code(pred_copy), m_manager.context, options, dest, m_manager.get_message_handler());
+			tmp.destructive_append(dest);
+		}
+
 		pred_copy = ::symbol_expr(cond_symbol);
 	} else {
 		FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Trying to typecheck: ", pred_copy.pretty()));
@@ -235,14 +272,10 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 		::ansi_c_typecheckt ct(ansi_c_parse_tree, m_manager.context, "", m_manager.get_message_handler());
 		ct.typecheck_expr(pred_copy);
 		FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Typecheck completed: ", pred_copy.pretty()));
-		if (pred_copy.type().id() == "code" && 1 == pred_copy.operands().size()) {
-			::exprt pred_bak(pred_copy.op0());
-			pred_copy.swap(pred_bak);
-		}
-		FSHELL2_PROD_CHECK1(Instrumentation_Error, pred_copy.type().id() == "bool",
-				::diagnostics::internal::to_string("Predicate ", ::expr2c(*pred, ns), " is not of Boolean type"));
 	}
 
+	FSHELL2_PROD_CHECK1(Instrumentation_Error, pred_copy.type().id() == "bool",
+			::diagnostics::internal::to_string("Predicate ", ::expr2c(*pred, ns), " is not of Boolean type"));
 
 	::goto_programt::targett if_stmt(tmp.add_instruction());
 	::goto_programt::targett loc(tmp.add_instruction(LOCATION));
@@ -270,38 +303,24 @@ GOTO_Transformation::inserted_t & GOTO_Transformation::make_nondet_choice(::goto
 
 	::goto_programt tmp_target;
 	::goto_programt::targett out_target(tmp_target.add_instruction(SKIP));
+	::std::vector< ::symbolt const* > var_map(log_2_rounded, static_cast< ::symbolt const* >(0));
 	
-	if (num > 1) {
-		++m_nondet_var_count;
-		FSHELL2_PROD_CHECK1(Instrumentation_Error, m_nondet_var_count >= 0, "Too many nondet choices required");
-	}
-
 	for (int i(0); i < num - 1; ++i) {
 		int bv(i);
 		::exprt * full_cond(0);
 		for (int j(0); j < log_2_rounded; ++j) {
-			bool pos(bv & 0x1);
-			bv >>= 1;
-			::std::string const var_name(::diagnostics::internal::to_string("c::!fshell2!nd_choice", m_nondet_var_count, "$", j));
 			if (0 == i) {
-				::symbolt cond_symbol;
-				cond_symbol.mode = "C";
-				cond_symbol.name = var_name;
-				cond_symbol.base_name = var_name.substr(3, ::std::string::npos);
-				cond_symbol.type = ::typet("bool");
-				cond_symbol.lvalue = true;
-				cond_symbol.static_lifetime = false;
-				m_manager.context.move(cond_symbol);
-			}
-			::symbolst::const_iterator symb_entry(m_manager.context.symbols.find(var_name));
-			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, symb_entry != m_manager.context.symbols.end());
-			::symbolt const& cond_symbol(symb_entry->second);
-			if (0 == i) {
+				::symbolt const& cond_symbol(new_bool_var("nd_choice"));
 				::goto_programt::targett decl(dest.add_instruction());
 				decl->make_other();
 				decl->code = ::code_declt(::symbol_expr(cond_symbol));
+				var_map[j] = &cond_symbol;
 			}
-			::exprt cond(::symbol_expr(cond_symbol));
+			
+			bool pos(bv & 0x1);
+			bv >>= 1;
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, var_map.size() > static_cast<unsigned>(j) && var_map[j] != 0);
+			::exprt cond(::symbol_expr(*(var_map[j])));
 			if (!pos) cond.make_not();
 			if (0 == j) {
 				full_cond = new ::exprt(cond);
