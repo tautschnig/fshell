@@ -131,7 +131,7 @@ variable_type_t get_variable_type(::std::string const& v)
 
 void Test_Suite_Output::get_test_case(Test_Suite_Output::test_case_t & tc) const {
 	tc.clear();
-	::symex_target_equationt::SSA_stepst const& equation(m_goals.get_equation());
+	::symex_target_equationt::SSA_stepst const& equation(m_goals.get_equation().SSA_steps);
 	::cnf_clause_list_assignmentt const& cnf(m_goals.get_cnf());
 
 	// collect variables that are used or defined, skipping level2 counters

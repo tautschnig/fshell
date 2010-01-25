@@ -68,7 +68,7 @@ class Compute_Test_Goals_From_Instrumentation : public ::bmct
 	inline ::cnf_clause_list_assignmentt & get_cnf();
 
 	inline ::boolbvt const& get_bv() const;
-	inline ::symex_target_equationt::SSA_stepst const& get_equation() const;
+	inline ::symex_target_equationt const& get_equation() const;
 
 	inline ::namespacet const& get_ns() const;
 
@@ -110,8 +110,8 @@ inline ::boolbvt const& Compute_Test_Goals_From_Instrumentation::get_bv() const 
 	return m_bv;
 }
 	
-inline ::symex_target_equationt::SSA_stepst const& Compute_Test_Goals_From_Instrumentation::get_equation() const {
-	return _equation.SSA_steps;
+inline ::symex_target_equationt const& Compute_Test_Goals_From_Instrumentation::get_equation() const {
+	return this->_equation;
 }
 
 inline ::namespacet const& Compute_Test_Goals_From_Instrumentation::get_ns() const {

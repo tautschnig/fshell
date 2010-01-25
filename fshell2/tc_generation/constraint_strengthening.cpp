@@ -35,6 +35,8 @@
 
 #include <cbmc/src/util/config.h>
 #include <cbmc/src/solvers/sat/satcheck_minisat.h>
+// #include <cbmc/src/goto-symex/build_goto_trace.h>
+// #include <cbmc/src/solvers/sat/dimacs_cnf.h>
 
 FSHELL2_NAMESPACE_BEGIN;
 
@@ -63,6 +65,12 @@ void Constraint_Strengthening::generate(::fshell2::fql::Query const& query,
 		goal_cl.push_back(cnf.land(*iter, s));
 	}
 	cnf.lcnf(goal_cl);
+
+	/*
+	::dimacs_cnft dimacs;
+	cnf.copy_to(dimacs);
+	dimacs.write_dimacs_cnf(::std::cerr);
+	*/
 	
 	// MC/DC support:
 	// check maximum cardinality required in path set predicates and duplicate
@@ -90,8 +98,12 @@ void Constraint_Strengthening::generate(::fshell2::fql::Query const& query,
 		
 		// solution has k paths!!!
 
-		// store the Boolean variable values
-		//cnf.copy_assignment_from(minisat);
+		/*
+		cnf.copy_assignment_from(minisat);
+		::goto_tracet trace;
+		::build_goto_trace(m_goals.get_equation(), m_goals.get_bv(), trace);
+		::show_goto_trace(::std::cerr, m_goals.get_ns(), trace);
+		*/
 
 		// keep all test cases
 		tcs.push_back(::cnf_clause_list_assignmentt());
@@ -121,6 +133,7 @@ void Constraint_Strengthening::generate(::fshell2::fql::Query const& query,
 				continue;
 			}
 			// test goal is done
+			// ::std::cerr << "Goal " << iter->first.var_no() << " sat" << ::std::endl;
 			goals_done.push_back(::neg(iter->second));
 			fixed_literals.push_back(::neg(iter->second));
 			aux_var_map.erase(iter++);
@@ -141,6 +154,7 @@ void Constraint_Strengthening::generate(::fshell2::fql::Query const& query,
 					continue;
 				}
 				// test goal is done
+				// ::std::cerr << "Goal " << iter->first.var_no() << " sat" << ::std::endl;
 				goals_done.push_back(::neg(iter->second));
 				fixed_literals.push_back(::neg(iter->second));
 				aux_var_map.erase(iter++);

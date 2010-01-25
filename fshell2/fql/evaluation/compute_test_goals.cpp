@@ -134,20 +134,22 @@ Compute_Test_Goals_From_Instrumentation::test_goals_t const& Compute_Test_Goals_
 				m_build_tg_aut.get_test_goal_states(*iter));
 		for (Build_Test_Goal_Automaton::test_goal_states_t::const_iterator s_iter(
 					states.begin()); s_iter != states.end(); ++s_iter) {
+			// ::std::cerr << "Test goal state: " << *s_iter << ::std::endl;
 			Automaton_Inserter::instrumentation_points_t const& nodes(
 					m_aut_insert.get_test_goal_instrumentation(*s_iter));
+			// ::std::cerr << "#instrumentation points: " << nodes.size() << ::std::endl;
 			for (Automaton_Inserter::instrumentation_points_t::const_iterator n_iter(
 						nodes.begin()); n_iter != nodes.end(); ++n_iter) {
 				//FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, n_iter->second->is_location());
 				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, n_iter->second->is_assign());
 				pc_to_context_and_guards_t::const_iterator guards_entry(m_pc_to_guard.find(n_iter->second));
 				if (m_pc_to_guard.end() == guards_entry) {
-					::std::cerr << "WARNING: no guards for expr "
-						<< ::from_expr(this->ns, "", n_iter->second->code);
-					::std::cerr << " @" << n_iter->second->location << ::std::endl;
+					this->warning(::diagnostics::internal::to_string("transition to test goal state ",
+								*s_iter, " in ", n_iter->second->function, " is unreachable"));
 					continue;
 				}
 
+				// collect all possible function calls that may cause transitions to test goal state
 				for (::std::map< ::goto_programt::const_targett, ::std::set< ::literalt > >::const_iterator
 						c_iter(guards_entry->second.begin()); c_iter != guards_entry->second.end(); ++c_iter)
 					context_to_pcs[ c_iter->first ].insert(n_iter->second);
@@ -155,9 +157,12 @@ Compute_Test_Goals_From_Instrumentation::test_goals_t const& Compute_Test_Goals_
 		}
 
 		test_goals_t subgoals;
+		// forall calling contexts
 		for (context_to_pcs_t::const_iterator c_iter(context_to_pcs.begin()); c_iter != context_to_pcs.end();
 				++c_iter) {
+			// ::std::cerr << "Next context." << ::std::endl;
 			::bvt set;
+			// forall transitions to test goal states in this context
 			for (::std::set< ::goto_programt::const_targett >::const_iterator t_iter(c_iter->second.begin());
 					t_iter != c_iter->second.end(); ++t_iter) {
 				pc_to_context_and_guards_t::const_iterator guards_entry(m_pc_to_guard.find(*t_iter));
@@ -167,9 +172,12 @@ Compute_Test_Goals_From_Instrumentation::test_goals_t const& Compute_Test_Goals_
 				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 						guards_entry->second.end() != inner_guards_entry);
 
+				// forall equation entries in the given context for this
+				// transition
 				for (::std::set< ::literalt >::const_iterator l_iter(
 							inner_guards_entry->second.begin()); l_iter != inner_guards_entry->second.end();
 						++l_iter) {
+					// unreachable
 					if (l_iter->is_false() || l_iter->var_no() == ::literalt::unused_var_no()) continue;
 					// we will always take this edge, a trivial goal
 					if (l_iter->is_true()) {
@@ -185,7 +193,9 @@ Compute_Test_Goals_From_Instrumentation::test_goals_t const& Compute_Test_Goals_
 				}
 			}
 			if (!set.empty()) {
-				::literalt tg(m_cnf.lor(set));
+				// ::std::cerr << "Adding subgoal composed of " << set.size() << " guards" << ::std::endl;
+				::literalt const tg(m_cnf.lor(set));
+				// ::std::cerr << "Subgoal " << tg.var_no() << " for ctx " << c_iter->first->location << ::std::endl;
 				subgoals.insert(tg);
 				/*for (Evaluate_Path_Monitor::test_goal_states_t::const_iterator s_iter(
 							states.begin()); s_iter != states.end(); ++s_iter)
@@ -199,8 +209,11 @@ Compute_Test_Goals_From_Instrumentation::test_goals_t const& Compute_Test_Goals_
 			backup.swap(m_test_goals);
 			for (test_goals_t::const_iterator tgi(backup.begin()); tgi != backup.end(); ++tgi)
 				for (test_goals_t::const_iterator sgi(subgoals.begin());
-						sgi != subgoals.end(); ++sgi)
-					m_test_goals.insert(m_cnf.land(*tgi, *sgi));
+						sgi != subgoals.end(); ++sgi) {
+					::literalt const sg(m_cnf.land(*tgi, *sgi));
+					// ::std::cerr << "Subgoal' " << sg.var_no() << " == " << tgi->var_no() << " AND " << sgi->var_no() << ::std::endl;
+					m_test_goals.insert(sg);
+				}
 		} else {
 			m_test_goals.swap(subgoals);
 		}

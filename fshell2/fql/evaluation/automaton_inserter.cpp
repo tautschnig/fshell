@@ -173,9 +173,12 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_cfg.end() != cfg_node_for_end_func);
 		if (cfg_node_for_end_func->second.successors.empty()) continue;
 		
+		//// int i(0);
 		for (::goto_programt::instructionst::iterator i_iter(iter->second.body.instructions.begin());
 				i_iter != iter->second.body.instructions.end(); ++i_iter) {
 			if (Evaluate_Filter::ignore_instruction(*i_iter)) continue;
+			//// ++i;
+			//// i_iter->location.set_column(i);
 			
 			node_to_target_graphs_t::const_iterator n_t_g_entry(m_node_to_target_graphs_map.find(i_iter));
 			if (m_node_to_target_graphs_map.end() == n_t_g_entry) {
@@ -398,21 +401,22 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 
 			for (ta_state_set_t::const_iterator s_iter(tr_iter->second.begin());
 					s_iter != tr_iter->second.end(); ++s_iter, ++t_iter) {
+				if (map_tg) {
+					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 
+							reverse_state_map.end() != reverse_state_map.find(*s_iter));
+					ta_state_t const unmapped_state(
+							reverse_state_map.find(*s_iter)->second);
+					if (m_build_tg_aut.is_test_goal_state(unmapped_state)) {
+						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, tr_iter->first != *s_iter);
+						m_tg_instrumentation_map[ unmapped_state ].push_back(*t_iter);
+					}
+				}
 				if (tr_iter->first == *s_iter) {
 					t_iter->second->type = SKIP;
 				} else {
 					t_iter->second->type = ASSIGN;
 					t_iter->second->code = ::code_assignt(::symbol_expr(state_symb), ::from_integer(
 								*s_iter, state_symb.type));
-					if (map_tg) {
-						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 
-								reverse_state_map.end() != reverse_state_map.find(*s_iter));
-						ta_state_t const unmapped_state(
-								reverse_state_map.find(*s_iter)->second);
-						if (m_build_tg_aut.is_test_goal_state(unmapped_state)) {
-							m_tg_instrumentation_map[ unmapped_state ].push_back(*t_iter);
-						}
-					}
 				}
 			}
 
@@ -432,6 +436,8 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 		body.destructive_append(tmp_target);
 
 		body.add_instruction(END_FUNCTION);
+		Forall_goto_program_instructions(i_iter, body) i_iter->function = func_name;
+
 		::fshell2::instrumentation::GOTO_Transformation::mark_instrumented(body);
 		body.update();
 	}
