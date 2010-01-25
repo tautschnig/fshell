@@ -131,7 +131,7 @@ TOK_STT_SWITCH          SWITCH
 TOK_STT_CONDOP          \?:
 TOK_STT_ASSERT          ASSERT
 /* operations on target graphs */
-TOK_COMPLEMENT          COMPLEMENT
+TOK_COMPLEMENT          (COMPLEMENT|NOT)
 TOK_UNION               UNION
 TOK_INTERSECT           INTERSECT
 TOK_SETMINUS            SETMINUS
