@@ -112,6 +112,11 @@ void test( Test_Data & data )
 	
 	TEST_ASSERT(FQL_Node_Lt_Compare()(s, s2));
 	TEST_ASSERT(FQL_Node_Lt_Compare()(q, q2));
+
+	Predicate * p1(Predicate::Factory::get_instance().create(new ::exprt()));
+	Predicate * p2(Predicate::Factory::get_instance().create(new ::exprt()));
+	TEST_ASSERT(!FQL_Node_Lt_Compare()(p1, p2));
+	TEST_ASSERT(!FQL_Node_Lt_Compare()(p2, p1));
 }
 
 /** @cond */
