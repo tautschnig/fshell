@@ -118,18 +118,19 @@ void test( Test_Data & data )
 	::goto_convert(l.context, options, gf, l.ui_message_handler);
 	::fshell2::instrumentation::CFG cfg;
 	cfg.compute_edges(gf);
+	
+	Path_Monitor_Expr * pm_id(PM_Filter_Adapter::Factory::get_instance().create(
+				Filter_Function::Factory::get_instance().create<F_IDENTITY>()));
+	Path_Monitor_Expr * pm_id_kleene(PM_Repeat::Factory::get_instance().create(pm_id, 0, -1));
 		
 	Filter_Expr * bb(Filter_Function::Factory::get_instance().create<F_BASICBLOCKENTRY>());
 	Edgecov * e(Edgecov::Factory::get_instance().create(bb,
 				static_cast< Predicate::preds_t * >(0)));
 	Test_Goal_Sequence::seq_t seq_list;
-	seq_list.push_back(::std::make_pair<Path_Monitor_Expr *, Test_Goal_Set *>(0, e));
-	Test_Goal_Sequence * s(Test_Goal_Sequence::Factory::get_instance().create(seq_list, 0));
+	seq_list.push_back(::std::make_pair<Path_Monitor_Expr *, Test_Goal_Set *>(pm_id_kleene, e));
+	Test_Goal_Sequence * s(Test_Goal_Sequence::Factory::get_instance().create(seq_list, pm_id_kleene));
 
 	Path_Monitor_Expr * pm_f(PM_Filter_Adapter::Factory::get_instance().create(bb));
-	Path_Monitor_Expr * pm_id(PM_Filter_Adapter::Factory::get_instance().create(
-				Filter_Function::Factory::get_instance().create<F_IDENTITY>()));
-	Path_Monitor_Expr * pm_id_kleene(PM_Repeat::Factory::get_instance().create(pm_id, 0, -1));
 	Path_Monitor_Expr * pm(PM_Concat::Factory::get_instance().create(pm_id_kleene,
 					PM_Concat::Factory::get_instance().create(pm_f, pm_id_kleene)));
 

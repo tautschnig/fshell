@@ -73,6 +73,11 @@ using namespace ::diagnostics::unittest;
  */
 void test_union_intersect( Test_Data & data )
 {
+	Path_Monitor_Expr * idstar(PM_Repeat::Factory::get_instance().create(
+				PM_Filter_Adapter::Factory::get_instance().create(
+					Filter_Function::Factory::get_instance().create<F_IDENTITY>()), 0, -1));
+	idstar->incr_ref_count(); // re-used below, after normalize
+
 	Filter_Expr * file(Filter_Function::Factory::get_instance().create<F_FILE>("bla.c"));
 	Filter_Expr * line(Filter_Function::Factory::get_instance().create<F_LINE>(42));
 	TEST_CHECK(FQL_Node_Lt_Compare()(file, line));
@@ -98,10 +103,10 @@ void test_union_intersect( Test_Data & data )
 				static_cast< Predicate::preds_t * >(0)));
 
 	Test_Goal_Sequence::seq_t seq_list2;
-	seq_list2.push_back(::std::make_pair<Path_Monitor_Expr *, Test_Goal_Set *>(0, e2));
-	Test_Goal_Sequence * s2(Test_Goal_Sequence::Factory::get_instance().create(seq_list2, 0));
+	seq_list2.push_back(::std::make_pair<Path_Monitor_Expr *, Test_Goal_Set *>(idstar, e2));
+	Test_Goal_Sequence * s2(Test_Goal_Sequence::Factory::get_instance().create(seq_list2, idstar));
 
-	Query * q2(Query::Factory::get_instance().create(0, s2, 0));
+	Query * q2(Query::Factory::get_instance().create(0, s2, idstar));
 	::std::ostringstream os2;
 	os2 << *q2;
 	
@@ -140,6 +145,11 @@ void test_union_intersect( Test_Data & data )
  */
 void test_prefix( Test_Data & data )
 {
+	Path_Monitor_Expr * idstar(PM_Repeat::Factory::get_instance().create(
+				PM_Filter_Adapter::Factory::get_instance().create(
+					Filter_Function::Factory::get_instance().create<F_IDENTITY>()), 0, -1));
+	idstar->incr_ref_count(); // re-used below, after normalize
+
 	Filter_Expr * file(Filter_Function::Factory::get_instance().create<F_FILE>("bla.c"));
 	Filter_Expr * line(Filter_Function::Factory::get_instance().create<F_LINE>(42));
 
@@ -160,10 +170,10 @@ void test_prefix( Test_Data & data )
 				static_cast< Predicate::preds_t * >(0)));
 
 	Test_Goal_Sequence::seq_t seq_list2;
-	seq_list2.push_back(::std::make_pair<Path_Monitor_Expr *, Test_Goal_Set *>(0, e2));
-	Test_Goal_Sequence * s2(Test_Goal_Sequence::Factory::get_instance().create(seq_list2, 0));
+	seq_list2.push_back(::std::make_pair<Path_Monitor_Expr *, Test_Goal_Set *>(idstar, e2));
+	Test_Goal_Sequence * s2(Test_Goal_Sequence::Factory::get_instance().create(seq_list2, idstar));
 
-	Query * q2(Query::Factory::get_instance().create(0, s2, 0));
+	Query * q2(Query::Factory::get_instance().create(0, s2, idstar));
 	::std::ostringstream os2;
 	os2 << *q2;
 	

@@ -53,13 +53,6 @@ Evaluate_Path_Monitor::Evaluate_Path_Monitor(Evaluate_Filter const& filter_eval,
 	m_eval_filter(filter_eval),
 	m_pred_instr(pred_instr),
 	m_target_graph_index(&(m_eval_filter.get(*(Filter_Function::Factory::get_instance().create<F_IDENTITY>())))) {
-	// we always have the TRUE automaton in there
-	m_entry = m_pm_map.insert(::std::make_pair(static_cast<Path_Monitor_Expr const*>(0), trace_automaton_t()));
-	trace_automaton_t & current_aut(m_entry.first->second);
-	ta_state_t const s(current_aut.new_state());
-	current_aut.initial().insert(s);
-	current_aut.final(s) = 1;
-	current_aut.set_trans(s, m_target_graph_index.id_index(), s);
 }
 
 Evaluate_Path_Monitor::~Evaluate_Path_Monitor() {
@@ -320,26 +313,23 @@ void Evaluate_Path_Monitor::visit(PM_Repeat const* n) {
 
 void Evaluate_Path_Monitor::visit(Query const* n) {
 	n->get_cover()->accept(this);
-	
-	if (n->get_passing()) {
-		n->get_passing()->accept(this);
-		simplify_automaton(m_entry.first->second, true);
-	}
+
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, n->get_passing());
+	n->get_passing()->accept(this);
+	simplify_automaton(m_entry.first->second, true);
 }
 
 void Evaluate_Path_Monitor::visit(Test_Goal_Sequence const* n) {
 	for (Test_Goal_Sequence::seq_t::const_iterator iter(n->get_sequence().begin());
 			iter != n->get_sequence().end(); ++iter) {
-		if (iter->first) {
-			iter->first->accept(this);
-			simplify_automaton(m_entry.first->second, true);
-		}
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, iter->first);
+		iter->first->accept(this);
+		simplify_automaton(m_entry.first->second, true);
 	}
 		
-	if (n->get_suffix_monitor()) {
-		n->get_suffix_monitor()->accept(this);
-		simplify_automaton(m_entry.first->second, true);
-	} 
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, n->get_suffix_monitor());
+	n->get_suffix_monitor()->accept(this);
+	simplify_automaton(m_entry.first->second, true);
 }
 
 FSHELL2_FQL_NAMESPACE_END;

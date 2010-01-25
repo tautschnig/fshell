@@ -51,8 +51,8 @@
 // #include <fshell2/fql/ast/pathcov.hpp>
 // #include <fshell2/fql/ast/pm_alternative.hpp>
 // #include <fshell2/fql/ast/pm_concat.hpp>
-// #include <fshell2/fql/ast/pm_filter_adapter.hpp>
-// #include <fshell2/fql/ast/pm_repeat.hpp>
+#include <fshell2/fql/ast/pm_filter_adapter.hpp>
+#include <fshell2/fql/ast/pm_repeat.hpp>
 #include <fshell2/fql/ast/predicate.hpp>
 #include <fshell2/fql/ast/query.hpp>
 // #include <fshell2/fql/ast/statecov.hpp>
@@ -125,13 +125,17 @@ void test_instr( Test_Data & data )
 		
 	Evaluate_Filter eval(gf, cfg);
 	
+	Path_Monitor_Expr * pm_id(PM_Filter_Adapter::Factory::get_instance().create(
+				Filter_Function::Factory::get_instance().create<F_IDENTITY>()));
+	Path_Monitor_Expr * pm_id_kleene(PM_Repeat::Factory::get_instance().create(pm_id, 0, -1));
+	
 	Filter_Expr * bb(Filter_Function::Factory::get_instance().create<F_BASICBLOCKENTRY>());
 	Edgecov * e(Edgecov::Factory::get_instance().create(bb,
 				static_cast< Predicate::preds_t * >(0)));
 	Test_Goal_Sequence::seq_t seq_list;
-	seq_list.push_back(::std::make_pair<Path_Monitor_Expr *, Test_Goal_Set *>(0, e));
-	Test_Goal_Sequence * s(Test_Goal_Sequence::Factory::get_instance().create(seq_list, 0));
-	Query * q(Query::Factory::get_instance().create(0, s, 0));
+	seq_list.push_back(::std::make_pair<Path_Monitor_Expr *, Test_Goal_Set *>(pm_id_kleene, e));
+	Test_Goal_Sequence * s(Test_Goal_Sequence::Factory::get_instance().create(seq_list, pm_id_kleene));
+	Query * q(Query::Factory::get_instance().create(0, s, pm_id_kleene));
 	q->accept(&eval);
 	target_graph_t const& bb_entries(eval.get(*bb));
 	TEST_CHECK_RELATION(6, ==, bb_entries.get_edges().size());
@@ -196,13 +200,17 @@ void test_boolean( Test_Data & data )
 		
 	Evaluate_Filter eval(gf, cfg);
 	
+	Path_Monitor_Expr * pm_id(PM_Filter_Adapter::Factory::get_instance().create(
+				Filter_Function::Factory::get_instance().create<F_IDENTITY>()));
+	Path_Monitor_Expr * pm_id_kleene(PM_Repeat::Factory::get_instance().create(pm_id, 0, -1));
+	
 	Filter_Expr * bb(Filter_Function::Factory::get_instance().create<F_BASICBLOCKENTRY>());
 	Edgecov * e(Edgecov::Factory::get_instance().create(bb,
 				static_cast< Predicate::preds_t * >(0)));
 	Test_Goal_Sequence::seq_t seq_list;
-	seq_list.push_back(::std::make_pair<Path_Monitor_Expr *, Test_Goal_Set *>(0, e));
-	Test_Goal_Sequence * s(Test_Goal_Sequence::Factory::get_instance().create(seq_list, 0));
-	Query * q(Query::Factory::get_instance().create(0, s, 0));
+	seq_list.push_back(::std::make_pair<Path_Monitor_Expr *, Test_Goal_Set *>(pm_id_kleene, e));
+	Test_Goal_Sequence * s(Test_Goal_Sequence::Factory::get_instance().create(seq_list, pm_id_kleene));
+	Query * q(Query::Factory::get_instance().create(0, s, pm_id_kleene));
 	q->accept(&eval);
 	target_graph_t const& bb_entries(eval.get(*bb));
 	TEST_CHECK_RELATION(6, ==, bb_entries.get_edges().size());

@@ -388,6 +388,10 @@ void Normalization_Visitor::visit(Query const* n) {
 	if (n->get_passing()) {
 		n->get_passing()->accept(this);
 		passing = m_top_mon;
+	} else {
+		passing = PM_Repeat::Factory::get_instance().create(
+				PM_Filter_Adapter::Factory::get_instance().create(
+					Filter_Function::Factory::get_instance().create<F_IDENTITY>()), 0, -1);
 	}
 
 	m_top_query = Query::Factory::get_instance().create(0, cover.get(), passing.get());
@@ -480,19 +484,20 @@ void Normalization_Visitor::visit(Test_Goal_Sequence const* n) {
 		Smart_FQL_Node_Ptr<Path_Monitor_Expr> mon;
 		if (iter->first) {
 			iter->first->accept(this);
-			mon = m_top_mon;
-			mon.get()->incr_ref_count();
 		} else if (m_prefix.get() && iter != n->get_sequence().begin()) {
 			m_top_mon = PM_Repeat::Factory::get_instance().create(
 					PM_Filter_Adapter::Factory::get_instance().create(
 						Filter_Compose::Factory::get_instance().create(
 							Filter_Function::Factory::get_instance().create<F_IDENTITY>(),
 							m_prefix.get())), 0, -1);
-			mon = m_top_mon;
-			mon.get()->incr_ref_count();
 		} else {
-			mon = 0;
+			m_top_mon = PM_Repeat::Factory::get_instance().create(
+					PM_Filter_Adapter::Factory::get_instance().create(
+						Filter_Function::Factory::get_instance().create<F_IDENTITY>()), 0, -1);
 		}
+		mon = m_top_mon;
+		mon.get()->incr_ref_count();
+		
 		iter->second->accept(this);
 		m_top_tgset.get()->incr_ref_count();
 		seq.push_back(::std::make_pair(mon.get(), m_top_tgset.get()));
@@ -502,6 +507,10 @@ void Normalization_Visitor::visit(Test_Goal_Sequence const* n) {
 	if (n->get_suffix_monitor()) {
 		n->get_suffix_monitor()->accept(this);
 		mon = m_top_mon;
+	} else {
+		mon = PM_Repeat::Factory::get_instance().create(
+				PM_Filter_Adapter::Factory::get_instance().create(
+					Filter_Function::Factory::get_instance().create<F_IDENTITY>()), 0, -1);
 	}
 	
 	for (Test_Goal_Sequence::seq_t::const_iterator iter(seq.begin());
