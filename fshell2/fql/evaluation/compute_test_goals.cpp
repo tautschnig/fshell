@@ -56,7 +56,7 @@ Compute_Test_Goals_From_Instrumentation::Compute_Test_Goals_From_Instrumentation
 		Automaton_Inserter const& a_i) :
 	::bmct(manager.context, manager.ui_message_handler),
 	m_is_initialized(false), m_gf(gf),
-	m_build_tg_aut(build_tg_aut), m_aut_insert(a_i), m_cnf(), m_bv(m_cnf) {
+	m_build_tg_aut(build_tg_aut), m_aut_insert(a_i), m_cnf(), m_bv(this->ns, m_cnf) {
 	this->options = opts;
 	this->options.set_option("dimacs", false);
 	this->options.set_option("cvc", false);
@@ -334,7 +334,7 @@ Compute_Test_Goals_Boolean::Compute_Test_Goals_Boolean(::language_uit & manager,
 		::goto_functionst const& gf, Build_Test_Goal_Automaton const& build_tg_aut) :
 	::bmct(manager.context, manager.ui_message_handler),
 	m_is_initialized(false), m_gf(gf),
-	m_build_tg_aut(build_tg_aut), m_cnf(), m_bv(m_cnf) {
+	m_build_tg_aut(build_tg_aut), m_cnf(), m_bv(this->ns, m_cnf) {
 	this->options = opts;
 	this->options.set_option("dimacs", false);
 	this->options.set_option("cvc", false);
