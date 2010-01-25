@@ -116,6 +116,8 @@ Normalization_Visitor::~Normalization_Visitor() {
 }
 
 void Normalization_Visitor::normalize(Query ** query) {
+	FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Normalization input: ", **query));
+	
 	(*query)->accept(this);
 	if (m_top_query.get() != *query) {
 		(*query)->destroy();
@@ -127,6 +129,8 @@ void Normalization_Visitor::normalize(Query ** query) {
 
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !(*query)->get_prefix());
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, (*query)->get_cover());
+	
+	FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Normalization result: ", **query));
 }
 	
 void Normalization_Visitor::visit(Edgecov const* n) {
@@ -376,6 +380,9 @@ void Normalization_Visitor::visit(Query const* n) {
 
 	n->get_cover()->accept(this);
 	Smart_FQL_Node_Ptr<Test_Goal_Sequence> cover(m_top_tgseq);
+	
+	// IN ... prefix only applies to COVER clause
+	m_prefix = 0;
 
 	Smart_FQL_Node_Ptr<Path_Monitor_Expr> passing;
 	if (n->get_passing()) {
@@ -387,7 +394,6 @@ void Normalization_Visitor::visit(Query const* n) {
 	m_top_filter = 0;
 	m_top_tgseq = 0;
 	m_top_mon = 0;
-	m_prefix = 0;
 }
 
 void Normalization_Visitor::visit(Statecov const* n) {
@@ -476,6 +482,16 @@ void Normalization_Visitor::visit(Test_Goal_Sequence const* n) {
 			iter->first->accept(this);
 			mon = m_top_mon;
 			mon.get()->incr_ref_count();
+		} else if (m_prefix.get() && iter != n->get_sequence().begin()) {
+			m_top_mon = PM_Repeat::Factory::get_instance().create(
+					PM_Filter_Adapter::Factory::get_instance().create(
+						Filter_Compose::Factory::get_instance().create(
+							Filter_Function::Factory::get_instance().create<F_IDENTITY>(),
+							m_prefix.get())), 0, -1);
+			mon = m_top_mon;
+			mon.get()->incr_ref_count();
+		} else {
+			mon = 0;
 		}
 		iter->second->accept(this);
 		m_top_tgset.get()->incr_ref_count();
