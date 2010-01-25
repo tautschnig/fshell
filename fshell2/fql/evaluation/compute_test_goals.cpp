@@ -47,7 +47,6 @@
 #include <cbmc/src/util/message_stream.h>
 #include <cbmc/src/goto-symex/slice.h>
 #include <cbmc/src/goto-symex/slice_by_trace.h>
-#include <cbmc/src/cbmc/document_subgoals.h>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;

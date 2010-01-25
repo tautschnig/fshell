@@ -19,7 +19,6 @@ CBMC_OBJS = $(top_builddir)/cbmc/src/goto-programs/goto-programs.o \
 						$(top_builddir)/cbmc/src/solvers/solvers.o \
 						$(top_builddir)/cbmc/src/cbmc/dimacs.o \
 						$(top_builddir)/cbmc/src/cbmc/bv_cbmc.o \
-						$(top_builddir)/cbmc/src/cbmc/document_subgoals.o \
 						$(top_builddir)/cbmc/src/cbmc/counterexample_beautification_greedy.o \
 						$(top_builddir)/cbmc/src/cbmc/counterexample_beautification.o \
 						$(top_builddir)/cbmc/src/cbmc/symex_bmc.o \
