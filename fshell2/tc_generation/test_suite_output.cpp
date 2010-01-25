@@ -131,8 +131,8 @@ variable_type_t get_variable_type(::std::string const& v)
 
 void Test_Suite_Output::get_test_case(Test_Suite_Output::test_case_t & tc) const {
 	tc.clear();
-	::symex_target_equationt::SSA_stepst const& equation(m_goals.get_equation().SSA_steps);
-	::cnf_clause_list_assignmentt const& cnf(m_goals.get_cnf());
+	::symex_target_equationt::SSA_stepst const& equation(m_equation.get_equation().SSA_steps);
+	::cnf_clause_list_assignmentt const& cnf(m_equation.get_cnf());
 
 	// collect variables that are used or defined, skipping level2 counters
 	typedef ::std::set< ::std::string > seen_vars_t;
@@ -141,7 +141,7 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::test_case_t & tc) const
 	// select the init procedure chosen by the user
 	::std::string main_symb_name("c::");
 	main_symb_name += config.main;
-	::symbolt const& main_symb(m_goals.get_ns().lookup(main_symb_name));
+	::symbolt const& main_symb(m_equation.get_ns().lookup(main_symb_name));
 	::std::string const start_proc_prefix(::diagnostics::internal::to_string(
 				"c::", main_symb.module, "::", config.main, "::"));
 
@@ -152,8 +152,8 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::test_case_t & tc) const
 		if (!iter->guard_expr.is_true() && cnf.l_get(iter->guard_literal) != ::tvt(true)) continue;
 		//// ::goto_programt tmp;
 		//// ::std::cerr << "#########################################################" << ::std::endl;
-		//// tmp.output_instruction(m_goals.get_ns(), "", ::std::cerr, iter->source.pc);
-		//// iter->output(m_goals.get_ns(), ::std::cerr);
+		//// tmp.output_instruction(m_equation.get_ns(), "", ::std::cerr, iter->source.pc);
+		//// iter->output(m_equation.get_ns(), ::std::cerr);
 		if (!iter->is_assignment()) continue;
 		//// ::std::cerr << "LHS: " << iter->lhs << ::std::endl;
 		//// ::std::cerr << "ORIG_LHS: " << iter->original_lhs << ::std::endl;
@@ -186,7 +186,7 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::test_case_t & tc) const
 					tc.back().m_pretty_name = var_name.substr(0, var_name.rfind('#')).substr(0, var_name.rfind('@')); // @ comes before #
 					tc.back().m_value = *v_iter;
 					tc.back().m_symbol = 0;
-					m_goals.get_ns().lookup(tc.back().m_pretty_name, tc.back().m_symbol);
+					m_equation.get_ns().lookup(tc.back().m_pretty_name, tc.back().m_symbol);
 					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, tc.back().m_symbol);
 					tc.back().m_location = &(tc.back().m_symbol->location);
 					break;
@@ -218,7 +218,7 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::test_case_t & tc) const
 					tc.back().m_pretty_name = var_name.substr(0, var_name.rfind('#'));
 					tc.back().m_value = &(iter->lhs);
 					tc.back().m_symbol = 0;
-					m_goals.get_ns().lookup(tc.back().m_pretty_name, tc.back().m_symbol);
+					m_equation.get_ns().lookup(tc.back().m_pretty_name, tc.back().m_symbol);
 					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, tc.back().m_symbol);
 					tc.back().m_location = &(tc.back().m_symbol->location);
 				}
@@ -237,7 +237,7 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::test_case_t & tc) const
 					tc.back().m_pretty_name = fct.function().get("identifier").as_string();
 					tc.back().m_value = &(iter->lhs);
 					tc.back().m_symbol = 0;
-					m_goals.get_ns().lookup(tc.back().m_pretty_name, tc.back().m_symbol);
+					m_equation.get_ns().lookup(tc.back().m_pretty_name, tc.back().m_symbol);
 					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, tc.back().m_symbol);
 					tc.back().m_location = &(iter->source.pc->location);
 					// remove return values of defined (but inlined) functions
@@ -260,14 +260,14 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::test_case_t & tc) const
 					tc.back().m_pretty_name = var_name.substr(0, var_name.rfind('#')).substr(0, var_name.rfind('@')); // @ comes before #
 					tc.back().m_value = &(iter->lhs);
 					tc.back().m_symbol = 0;
-					m_goals.get_ns().lookup(tc.back().m_pretty_name, tc.back().m_symbol);
+					m_equation.get_ns().lookup(tc.back().m_pretty_name, tc.back().m_symbol);
 					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, tc.back().m_symbol);
 					tc.back().m_location = &(tc.back().m_symbol->location);
 				} else {
 					//// ::std::cerr << "Skipping " << var_name << ":" << ::std::endl;
 					//// ::goto_programt tmp;
-					//// tmp.output_instruction(m_goals.get_ns(), "", ::std::cerr, iter->source.pc);
-					//// iter->output(m_goals.get_ns(), ::std::cerr);
+					//// tmp.output_instruction(m_equation.get_ns(), "", ::std::cerr, iter->source.pc);
+					//// iter->output(m_equation.get_ns(), ::std::cerr);
 					//// ::std::cerr << "LHS: " << iter->lhs << ::std::endl;
 					//// ::std::cerr << "ORIG_LHS: " << iter->original_lhs << ::std::endl;
 					//// ::std::cerr << "RHS: " << iter->rhs << ::std::endl;
@@ -285,19 +285,19 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::test_case_t & tc) const
 	// beautify pointers
 	// ::std::map< ::std::string, ::std::string > beautified_name;
 	
-	::boolbvt const& bv(m_goals.get_bv());
+	::boolbvt const& bv(m_equation.get_bv());
 
 	//// for (::boolbv_mapt::mappingt::const_iterator iter(bv.map.mapping.begin()); iter != bv.map.mapping.end(); ++iter) {
 	//// 	::exprt sym("symbol");
 	//// 	sym.set("identifier", iter->first);
 	//// 	if (get_variable_type(iter->first.as_string()) != FSHELL2_INTERNAL)
-	//// 		::std::cerr << "SYMB: " << iter->first << " VALUE: " << ::expr2c(bv.get(sym), m_goals.get_ns()) << ::std::endl;
+	//// 		::std::cerr << "SYMB: " << iter->first << " VALUE: " << ::expr2c(bv.get(sym), m_equation.get_ns()) << ::std::endl;
 	//// }
 	
 	// select the init procedure chosen by the user
 	::std::string main_symb_name("c::");
 	main_symb_name += config.main;
-	::symbolt const& main_symb(m_goals.get_ns().lookup(main_symb_name));
+	::symbolt const& main_symb(m_equation.get_ns().lookup(main_symb_name));
 	::code_typet::argumentst const &arguments(::to_code_type(main_symb.type).arguments());
 	os << "  ENTRY " << main_symb.base_name << "(";
 	for (::code_typet::argumentst::const_iterator iter(arguments.begin());
@@ -311,13 +311,13 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::test_case_t & tc) const
 		os << "  ";
 		if (iter->m_symbol->type.id() == "code") {
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, iter->m_symbol->value.is_nil());
-			::std::string const decl(::from_type(m_goals.get_ns(),
+			::std::string const decl(::from_type(m_equation.get_ns(),
 						iter->m_name->get("identifier"), iter->m_symbol->type));
 			::std::string::size_type pos(decl.find('('));
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, pos != ::std::string::npos);
 			os << decl.substr(0, pos) << iter->m_symbol->base_name << decl.substr(pos);
 		} else {
-			os << ::from_type(m_goals.get_ns(), iter->m_name->get("identifier"), iter->m_symbol->type);
+			os << ::from_type(m_equation.get_ns(), iter->m_name->get("identifier"), iter->m_symbol->type);
 			os << " " << iter->m_symbol->base_name;
 		}
 		FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, !iter->m_location->is_nil());
@@ -334,14 +334,14 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::test_case_t & tc) const
 			}
 			FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, bv.map.mapping.end() !=
 					bv.map.mapping.find(new_sym.get("identifier")));
-			::std::string const val(::from_expr(m_goals.get_ns(),
+			::std::string const val(::from_expr(m_equation.get_ns(),
 						iter->m_name->get("identifier"), bv.get(new_sym)));
 			FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, !val.empty());
 			os << val;
 		} else {
 			FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, bv.map.mapping.end() !=
 					bv.map.mapping.find(iter->m_value->get("identifier")));
-			::std::string const val(::from_expr(m_goals.get_ns(),
+			::std::string const val(::from_expr(m_equation.get_ns(),
 						iter->m_name->get("identifier"), bv.get(*(iter->m_value))));
 			FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, !val.empty());
 			os << val;
@@ -368,14 +368,14 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::test_case_t & tc) const
 
 ::std::ostream & Test_Suite_Output::print_test_case_xml(::std::ostream & os,
 		Test_Suite_Output::test_case_t const& tc) const {
-	::boolbvt const& bv(m_goals.get_bv());
+	::boolbvt const& bv(m_equation.get_bv());
 
 	::xmlt xml_tc("test-case");
 
 	// select the init procedure chosen by the user
 	::std::string main_symb_name("c::");
 	main_symb_name += config.main;
-	::symbolt const& main_symb(m_goals.get_ns().lookup(main_symb_name));
+	::symbolt const& main_symb(m_equation.get_ns().lookup(main_symb_name));
 	::code_typet::argumentst const &arguments(::to_code_type(main_symb.type).arguments());
 	::std::ostringstream oss;
 	oss << main_symb.base_name << "(";
@@ -417,19 +417,19 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::test_case_t & tc) const
 			}
 			FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, bv.map.mapping.end() !=
 					bv.map.mapping.find(new_sym.get("identifier")));
-			::std::string const val(::from_expr(m_goals.get_ns(),
+			::std::string const val(::from_expr(m_equation.get_ns(),
 						iter->m_name->get("identifier"), bv.get(new_sym)));
 			FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, !val.empty());
 			xml_obj.new_element("value").data = ::xmlt::escape(val);
 		} else {
 			FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, bv.map.mapping.end() !=
 					bv.map.mapping.find(iter->m_value->get("identifier")));
-			::std::string const val(::from_expr(m_goals.get_ns(),
+			::std::string const val(::from_expr(m_equation.get_ns(),
 						iter->m_name->get("identifier"), bv.get(*(iter->m_value))));
 			FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, !val.empty());
 			xml_obj.new_element("value").data = ::xmlt::escape(val);
 		}
-		xml_obj.new_element("type").data = ::xmlt::escape(::from_type(m_goals.get_ns(),
+		xml_obj.new_element("type").data = ::xmlt::escape(::from_type(m_equation.get_ns(),
 					iter->m_name->get("identifier"), iter->m_symbol->type));
 		xml_tc.new_element().swap(xml_obj);
 	}
@@ -438,15 +438,15 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::test_case_t & tc) const
 	return os;
 }
 
-Test_Suite_Output::Test_Suite_Output(::fshell2::fql::Compute_Test_Goals_From_Instrumentation & goals) :
-	m_goals(goals) {
+Test_Suite_Output::Test_Suite_Output(::fshell2::fql::CNF_Conversion & equation) :
+	m_equation(equation) {
 }
 	
 ::std::ostream & Test_Suite_Output::print_ts(
 		Constraint_Strengthening::test_cases_t & test_suite,
 		::std::ostream & os, ::ui_message_handlert::uit const ui) {
 	
-	::cnf_clause_list_assignmentt & cnf(m_goals.get_cnf());
+	::cnf_clause_list_assignmentt & cnf(m_equation.get_cnf());
 	
 	for (::fshell2::Constraint_Strengthening::test_cases_t::const_iterator iter(
 				test_suite.begin()); iter != test_suite.end(); ++iter) {

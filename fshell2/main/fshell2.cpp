@@ -227,20 +227,25 @@ void FShell2::try_query(::language_uit & manager, char const * line) {
 		gf_copy.output(ns, smp.get_ostream());
 	}
 	
+	// convert CFA to CNF
+	::fshell2::fql::CNF_Conversion equation(manager, m_opts);
+	equation.convert(gf_copy);
+
 	// compute test goals
-	::fshell2::fql::Compute_Test_Goals_From_Instrumentation goals(manager, m_opts, gf_copy, tg_builder, aut);
+	::fshell2::fql::Compute_Test_Goals_From_Instrumentation goals(equation, tg_builder, aut);
+	goals.compute(*query_ast);
 
 	// do the enumeration
-	::fshell2::Constraint_Strengthening cs(goals);
+	::fshell2::Constraint_Strengthening cs(equation);
 	::fshell2::Constraint_Strengthening::test_cases_t test_suite;
-	cs.generate(*query_ast, test_suite);
+	cs.generate(test_suite);
 
 	// post-minimization
 	::fshell2::Test_Suite_Minimization ts_min;
 	ts_min.minimize(test_suite);
 
 	// output
-	::fshell2::Test_Suite_Output out(goals);
+	::fshell2::Test_Suite_Output out(equation);
 	out.print_ts(test_suite, ::std::cout, manager.ui_message_handler.get_ui());
 }
 

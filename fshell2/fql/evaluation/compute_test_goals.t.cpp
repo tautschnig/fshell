@@ -149,9 +149,13 @@ void test_instr( Test_Data & data )
 
 	::fshell2::fql::Automaton_Inserter aut(pm_eval, tg_builder, gf, cfg, l);
 	aut.insert(*q);
-	
-	Compute_Test_Goals_From_Instrumentation goals(l, options, gf, tg_builder, aut);
-	Compute_Test_Goals_From_Instrumentation::test_goals_t const& bb_goals(goals.compute(*q));
+
+	CNF_Conversion eq(l, options);
+	eq.convert(gf);
+
+	Compute_Test_Goals_From_Instrumentation goals(eq, tg_builder, aut);
+	goals.compute(*q);
+	CNF_Conversion::test_goals_t const& bb_goals(eq.get_test_goal_literals());
 
 	TEST_ASSERT_RELATION(6, ==, bb_goals.size());
 }
@@ -222,8 +226,12 @@ void test_boolean( Test_Data & data )
 	::fshell2::fql::Build_Test_Goal_Automaton tg_builder(eval, pm_eval, pred_inst, cfg);
 	q->accept(&tg_builder);
 
-	Compute_Test_Goals_Boolean goals(l, options, gf, tg_builder);
-	Compute_Test_Goals_From_Instrumentation::test_goals_t const& bb_goals(goals.compute(*q));
+	CNF_Conversion eq(l, options);
+	eq.convert(gf);
+
+	Compute_Test_Goals_Boolean goals(eq, tg_builder);
+	goals.compute(*q);
+	CNF_Conversion::test_goals_t const& bb_goals(eq.get_test_goal_literals());
 
 	// TEST_ASSERT_RELATION(6, ==, bb_goals.size());
 }

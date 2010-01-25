@@ -40,25 +40,24 @@
 
 FSHELL2_NAMESPACE_BEGIN;
 
-Constraint_Strengthening::Constraint_Strengthening(::fshell2::fql::Compute_Test_Goals_From_Instrumentation & goals) :
-	m_goals(goals) {
+Constraint_Strengthening::Constraint_Strengthening(::fshell2::fql::CNF_Conversion & equation) :
+	m_equation(equation) {
 }
 
-void Constraint_Strengthening::generate(::fshell2::fql::Query const& query,
-		test_cases_t & tcs) {
+void Constraint_Strengthening::generate(test_cases_t & tcs) {
 	/*
 	// find proper strategy
 	::fshell2::fql::Strategy_Selection_Visitor strat;
 	::fshell2::fql::Strategy_Selection_Visitor::strategy_t s(strat.select(*ast));
 	*/
 
-	::fshell2::fql::Compute_Test_Goals_From_Instrumentation::test_goals_t const& goal_set(m_goals.compute(query));
-	::cnf_clause_list_assignmentt & cnf(m_goals.get_cnf());
+	::fshell2::fql::CNF_Conversion::test_goals_t const& goal_set(m_equation.get_test_goal_literals());
+	::cnf_clause_list_assignmentt & cnf(m_equation.get_cnf());
 
 	::std::map< ::literalt, ::literalt > aux_var_map;
 
 	::bvt goal_cl;
-	for (::fshell2::fql::Compute_Test_Goals_From_Instrumentation::test_goals_t::const_iterator iter(goal_set.begin());
+	for (::fshell2::fql::CNF_Conversion::test_goals_t::const_iterator iter(goal_set.begin());
 			iter != goal_set.end(); ++iter) {
 		::literalt s(cnf.new_variable());
 		aux_var_map.insert(::std::make_pair(*iter, s));
@@ -101,8 +100,8 @@ void Constraint_Strengthening::generate(::fshell2::fql::Query const& query,
 		/*
 		cnf.copy_assignment_from(minisat);
 		::goto_tracet trace;
-		::build_goto_trace(m_goals.get_equation(), m_goals.get_bv(), trace);
-		::show_goto_trace(::std::cerr, m_goals.get_ns(), trace);
+		::build_goto_trace(m_equation.get_equation(), m_equation.get_bv(), trace);
+		::show_goto_trace(::std::cerr, m_equation.get_ns(), trace);
 		*/
 
 		// keep all test cases
@@ -111,11 +110,11 @@ void Constraint_Strengthening::generate(::fshell2::fql::Query const& query,
 		tcs.back().copy_assignment_from(minisat);
 
 		// deactivate test goals
-		/*::fshell2::fql::Compute_Test_Goals_From_Instrumentation::test_goals_t const& satisfied_tg(m_goals.get_satisfied_test_goals());
+		/*::fshell2::fql::Compute_Test_Goals_From_Instrumentation::test_goals_t const& satisfied_tg(m_equation.get_satisfied_test_goals());
 		::std::cerr << "NOT IMPLEMENTED" << ::std::endl;*/
 		unsigned const size1(aux_var_map.size());
 		::bvt fixed_literals;
-		::boolbvt const& bv(m_goals.get_bv());
+		::boolbvt const& bv(m_equation.get_bv());
 		for (::boolbv_mapt::mappingt::const_iterator iter(bv.map.mapping.begin());
 			iter != bv.map.mapping.end(); ++iter) {
 			if (iter->first.as_string().substr(0, 12) == "c::$fshell2$") continue;

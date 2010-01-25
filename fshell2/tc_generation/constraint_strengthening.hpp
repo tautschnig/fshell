@@ -39,8 +39,7 @@ FSHELL2_NAMESPACE_BEGIN;
 
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-class Query;
-class Compute_Test_Goals_From_Instrumentation;
+class CNF_Conversion;
 
 FSHELL2_FQL_NAMESPACE_END;
 
@@ -55,12 +54,12 @@ class Constraint_Strengthening
 	public:
 	typedef ::std::list< ::cnf_clause_list_assignmentt > test_cases_t;
 	
-	explicit Constraint_Strengthening(::fshell2::fql::Compute_Test_Goals_From_Instrumentation & goals);
+	explicit Constraint_Strengthening(::fshell2::fql::CNF_Conversion & equation);
 
-	void generate(::fshell2::fql::Query const& query, test_cases_t & tcs);
+	void generate(test_cases_t & tcs);
 
 	private:
-	::fshell2::fql::Compute_Test_Goals_From_Instrumentation & m_goals;
+	::fshell2::fql::CNF_Conversion & m_equation;
 
 	/*! \copydoc copy_constructor
 	*/
