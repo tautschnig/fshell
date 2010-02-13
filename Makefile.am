@@ -14,7 +14,7 @@ include $(top_srcdir)/doxygen.am
 
 AUX_DIST = $(ac_aux_dir)/config.guess $(ac_aux_dir)/config.sub $(ac_aux_dir)/install-sh $(ac_aux_dir)/ltmain.sh $(ac_aux_dir)/missing $(ac_aux_dir)/depcomp $(ac_aux_dir)/ylwrap m4/libtool.m4 m4/ltoptions.m4 m4/ltsugar.m4 m4/ltversion.m4 m4/lt~obsolete.m4
 
-EXTRA_DIST = $(DX_CONFIG) LICENSE NOTICE Artistic
+EXTRA_DIST = $(DX_CONFIG) LICENSE NOTICE Artistic config/runtest.sh
 
 MAINTAINERCLEANFILES += aclocal.m4 configure config.h.in $(AUX_DIST)
 DISTCLEANFILES = config.h.in~ _configs.sed fshell2/config/features.hpp
@@ -27,6 +27,9 @@ dist-hook:
 	(cd $(distdir) && mkdir -p $(ac_aux_dir))
 	for file in $(AUX_DIST) $(AUX_DIST_EXTRA) ; do cp $$file $(distdir)/$$file ; done
 
+check-local:
+	$(MAKE) -C $(top_srcdir)/astl check
+
 all-local:
 	if [ ! -d astl/.git ] ; then \
 		if [ ! -d astl ] ; then \
@@ -38,7 +41,7 @@ all-local:
 	fi
 	$(MAKE) -C $(top_srcdir)/astl
 	if [ "$(top_srcdir)" = "." ] ; then \
-		$(top_srcdir)/config/update-makefiles.pl @enable_install_headers@ @disable_update_makefiles@ @with_diagnostics@ fshell2/ ; \
+		$(top_srcdir)/config/update-makefiles.pl @enable_install_headers@ @disable_update_makefiles@ fshell2/ ; \
 	fi
 	if [ ! -d cbmc/.git ] ; then \
 		if [ ! -d cbmc ] ; then \

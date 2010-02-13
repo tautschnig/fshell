@@ -53,3 +53,4 @@ query_parser_LDADD = libparser.la ../ast/libast.la ../../exception/libexception.
 # note that this entry (query_parser_SOURCES, query_parser_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually
+TESTS = query_parser

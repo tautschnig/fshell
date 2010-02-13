@@ -27,3 +27,4 @@ normalization_visitor_LDADD = libnormalize.la ../ast/libast.la $(CBMC_OBJS)
 # note that this entry (normalization_visitor_SOURCES, normalization_visitor_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually
+TESTS = normalization_visitor

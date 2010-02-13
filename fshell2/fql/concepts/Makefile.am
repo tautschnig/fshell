@@ -20,3 +20,4 @@ cfa_LDADD = libconcepts.la
 # note that this entry (cfa_SOURCES, cfa_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually
+TESTS = cfa

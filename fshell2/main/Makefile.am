@@ -51,3 +51,4 @@ fshell2_LDADD = libmain.la \
 # note that this entry (fshell2_SOURCES, fshell2_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually
+TESTS = fshell2

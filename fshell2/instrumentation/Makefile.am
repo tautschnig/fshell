@@ -41,3 +41,4 @@ goto_transformation_LDADD = libinstrumentation.la ../exception/libexception.la $
 # note that this entry (goto_transformation_SOURCES, goto_transformation_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually
+TESTS = goto_transformation

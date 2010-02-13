@@ -75,3 +75,4 @@ predicate_instrumentation_LDADD =
 # note that this entry (predicate_instrumentation_SOURCES, predicate_instrumentation_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually
+TESTS = automaton_inserter build_test_goal_automaton compute_test_goals evaluate_filter evaluate_path_monitor predicate_instrumentation

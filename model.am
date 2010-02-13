@@ -30,22 +30,9 @@ AM_LDFLAGS = -ldiagnostics
 if DIAGNOSTICSDIR_DEFINED
 AM_CPPFLAGS += -I@DIAGNOSTICSDIR@/include
 AM_LDFLAGS += -L@DIAGNOSTICSDIR@/lib
-
-check-local::
-	if [ "$(top_builddir)" = "." ] ; then $(MAKE) -C $(top_srcdir)/astl check ; fi
-	mkdir -p $(top_srcdir)/test
-	for t in $(check_PROGRAMS) ; do \
-		( check_path=`pwd` ; cd $(top_srcdir) ; \
-			LD_LIBRARY_PATH=@DIAGNOSTICSDIR@/lib $$check_path/$$t run "/*" $(DIAGNOSTICSLEVEL) ) || exit $$? ; \
-  done
+TESTS_ENVIRONMENT = LD_LIBRARY_PATH=@DIAGNOSTICSDIR@/lib $(top_srcdir)/config/runtest.sh $(top_srcdir) $(DIAGNOSTICSLEVEL)
 else
-check-local::
-	if [ "$(top_builddir)" = "." ] ; then $(MAKE) -C $(top_srcdir)/astl check ; fi
-	mkdir -p $(top_srcdir)/test
-	for t in $(check_PROGRAMS) ; do \
-		( check_path=`pwd` ; cd $(top_srcdir) ; \
-			$$check_path/$$t run "/*" $(DIAGNOSTICSLEVEL) ) || exit $$? ; \
-  done
+TESTS_ENVIRONMENT = $(top_srcdir)/config/runtest.sh $(top_srcdir) $(DIAGNOSTICSLEVEL)
 endif
 
 debug audit debug-check audit-check: CXXFLAGS := $(filter-out -O1 -O2 -O3 -Os,$(CXXFLAGS)) -O0 -g

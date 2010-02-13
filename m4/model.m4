@@ -82,11 +82,6 @@ void set_initial_loggers(::std::vector<Logger *> & loggers) {}
   AM_CONDITIONAL(DIAGNOSTICSDIR_DEFINED, test "x$DIAGNOSTICSDIR" != x)
   AC_SUBST(DIAGNOSTICSDIR)
   AC_SUBST(DIAGNOSTICSLEVEL)
-  if test $DIAGNOSTICSLEVEL -gt -1 ; then
-    AC_SUBST(with_diagnostics,[--diagnostics])
-  else
-    AC_SUBST(with_diagnostics,[""])
-  fi
 ])
 
 # macros to control update-makefiles.pl, disabled by default

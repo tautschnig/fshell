@@ -10,14 +10,12 @@ use Getopt::Long;
 my $print_usage = 0;
 my $not_really = 0;
 my $install_headers = 0;
-my $diagnostics = 0;
 my $verbose = 0;
 
 GetOptions( 
   "help" => \$print_usage,
   "not-really" => \$not_really,
   "install-headers" => \$install_headers,
-  "diagnostics" => \$diagnostics,
   "verbose" => \$verbose
 );
 
@@ -33,7 +31,6 @@ usage: $0 [-hnid] directories ...
  -h        : this (help) message
  -n        : not-really, exits immediately
  -i        : get header files installed
- -d        : use diagnostics
  -v        : verbose
 
 example: $0 -i -d directory1 directory2
@@ -44,7 +41,6 @@ EOF
 
 my @opts = ();
 ( 1 == $install_headers ) and push @opts, "--install-headers";
-( 1 == $diagnostics ) and push @opts, "--diagnostics";
 
 
 use Cwd qw/ cwd abs_path /;
@@ -401,16 +397,13 @@ opendir( CWD, cwd() );
 @wanted_files = ();
 foreach( readdir( CWD ) )
 {
-  open( F, $_ );
-  push @wanted_files, $_ if( <F> =~ /^#!\/bin\/sh/ );
+  my $f = $_;
+  open( F, $f );
+  push @wanted_files, $f if( <F> =~ /^#!\/bin\/sh/ );
   close( F );
-  unless( 1 == $diagnostics )
-  {
-    my $f = $_;
-    next unless( /\.t\.cpp$/ );
-    $f =~ s/\.t\.cpp$//;
-    push @wanted_files, $f;
-  }
+  next unless( /\.t\.cpp$/ );
+  $f =~ s/\.t\.cpp$//;
+  push @wanted_files, $f;
 }
 closedir( CWD );
 &update_makefile_entry( "TESTS", @wanted_files );

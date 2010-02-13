@@ -42,3 +42,4 @@ command_processing_LDADD = ../exception/libexception.la libcommand.la $(CBMC_OBJ
 # note that this entry (command_processing_SOURCES, command_processing_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually
+TESTS = command_processing

@@ -22,3 +22,4 @@ macro_processing_LDADD = ../exception/libexception.la libmacro.la
 # note that this entry (macro_processing_SOURCES, macro_processing_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually
+TESTS = macro_processing

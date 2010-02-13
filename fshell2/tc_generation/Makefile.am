@@ -34,3 +34,4 @@ test_suite_output_LDADD =
 # note that this entry (test_suite_output_SOURCES, test_suite_output_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually
+TESTS = constraint_strengthening test_suite_minimization test_suite_output

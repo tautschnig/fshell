@@ -34,3 +34,4 @@ fql_node_lt_visitor_LDADD = libast.la $(CBMC_OBJS)
 # note that this entry (fql_node_lt_visitor_SOURCES, fql_node_lt_visitor_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually
+TESTS = fql_ast_printer fql_node_lt_visitor
