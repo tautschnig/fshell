@@ -34,7 +34,6 @@
 #include <cstring>
 #include <fstream>
 #include <cstdio>
-#include <sys/wait.h>
 #include <unistd.h>
 #include <vector>
 #include <cstdlib>

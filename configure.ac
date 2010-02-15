@@ -63,7 +63,6 @@ AC_CHECK_HEADERS([diagnostics/basic_exceptions/low_level_exception.hpp \
                   AC_MSG_ERROR([Essential header $ac_header missing]))
 
 # platform specific or non-essential headers
-AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS([tr1/unordered_map \
                   ext/hash_map \
                   ])
