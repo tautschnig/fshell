@@ -33,7 +33,7 @@ void File::open(cchar* name, cchar* mode_)
     if (has_w)  mask |= O_TRUNC;
     if (has_x)  mask |= O_EXCL;
 
-    fd = open64(name, mask, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
+    fd = open64(name, mask, S_IRUSR|S_IWUSR);
 
     if (fd != -1){
         mode   = has_r ? READ : WRITE;
@@ -88,7 +88,7 @@ int64 File::tell(void)
 void putUInt(File& out, uint64 val)
 {
     if (val < 0x20000000){
-        uint    v = (uint)val;
+        unsigned int    v = (unsigned int)val;
         if (v < 0x80)
             out.putChar(v);
         else{
@@ -121,9 +121,9 @@ void putUInt(File& out, uint64 val)
 uint64 getUInt(File& in)
     throw(Exception_EOF)
 {
-    uint byte0, byte1, byte2, byte3, byte4, byte5, byte6, byte7;
+    unsigned int byte0, byte1, byte2, byte3, byte4, byte5, byte6, byte7;
     byte0 = in.getChar();
-    if (byte0 == (uint)EOF)
+    if (byte0 == (unsigned int)EOF)
         throw Exception_EOF();
     if (!(byte0 & 0x80))
         return byte0;

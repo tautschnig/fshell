@@ -54,7 +54,7 @@ public:
     friend bool operator == (Lit p, Lit q);
     friend bool operator <  (Lit p, Lit q);
 
-    uint hash() const { return (uint)x; }
+    unsigned int hash() const { return (unsigned int)x; }
 };
 inline Lit operator ~ (Lit p) { Lit q; q.x = p.x ^ 1; return q; }
 inline bool sign  (Lit p) { return p.x & 1; }
@@ -82,7 +82,7 @@ const   int ClauseId_NULL = INT_MIN;
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 class Clause {
-    uint    size_learnt;
+    unsigned int    size_learnt;
     Lit     data[1];
 public:
     // NOTE: This constructor cannot be used directly (doesn't allocate enough memory).
@@ -104,10 +104,10 @@ public:
 };
 
 inline Clause* Clause_new(bool learnt, const vec<Lit>& ps, ClauseId id = ClauseId_NULL) {
-    assert(sizeof(Lit)      == sizeof(uint));
-    assert(sizeof(float)    == sizeof(uint));
-    assert(sizeof(ClauseId) == sizeof(uint));
-    void*   mem = xmalloc<char>(sizeof(Clause) + sizeof(uint)*(ps.size() + (int)learnt + (int)(id != ClauseId_NULL)));
+    assert(sizeof(Lit)      == sizeof(unsigned int));
+    assert(sizeof(float)    == sizeof(unsigned int));
+    assert(sizeof(ClauseId) == sizeof(unsigned int));
+    void*   mem = xmalloc<char>(sizeof(Clause) + sizeof(unsigned int)*(ps.size() + (int)learnt + (int)(id != ClauseId_NULL)));
     return new (mem) Clause(learnt, ps, id); }
 
 

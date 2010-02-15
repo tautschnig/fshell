@@ -301,7 +301,7 @@ void Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel)
     if (expensive_ccmin){
         // Simplify conflict clause (a lot):
         //
-        uint    min_level = 0;
+        unsigned int    min_level = 0;
         for (i = 1; i < out_learnt.size(); i++)
             min_level |= 1 << (level[var(out_learnt[i])] & 31);         // (maintain an abstraction of levels involved in conflict)
 
@@ -360,7 +360,7 @@ void Solver::analyze(Clause* confl, vec<Lit>& out_learnt, int& out_btlevel)
 
 // Check if 'p' can be removed. 'min_level' is used to abort early if visiting literals at a level that cannot be removed.
 //
-bool Solver::analyze_removable(Lit p, uint min_level)
+bool Solver::analyze_removable(Lit p, unsigned int min_level)
 {
     assert(reason[var(p)] != NULL);
     analyze_stack.clear(); analyze_stack.push(p);

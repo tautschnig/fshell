@@ -92,7 +92,7 @@ protected:
     void        record           (const vec<Lit>& clause);
 
     void        analyze          (Clause* confl, vec<Lit>& out_learnt, int& out_btlevel); // (bt = backtrack)
-    bool        analyze_removable(Lit p, uint min_level);                                 // (helper method for 'analyze()')
+    bool        analyze_removable(Lit p, unsigned int min_level);                                 // (helper method for 'analyze()')
     void        analyzeFinal     (Clause* confl, bool skip_first = false);
     bool        enqueue          (Lit fact, Clause* from = NULL);
     Clause*     propagate        ();

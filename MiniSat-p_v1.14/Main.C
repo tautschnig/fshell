@@ -340,7 +340,9 @@ int main(int argc, char** argv)
     S.verbosity = 1;
     solver = &S;
     signal(SIGINT,SIGINT_handler);
+#ifdef SIGHUP
     signal(SIGHUP,SIGINT_handler);
+#endif
 
     S.solve();
     printStats(S.stats);

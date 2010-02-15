@@ -61,7 +61,7 @@ clean:
 ## Linking rules (standard/profile/debug/release)
 $(EXEC): $(COBJS)
 	@echo Linking $(EXEC)
-	@$(CXX) $(COBJS) -lz -ggdb -Wall -o $@ 
+	@$(CXX) $(CFLAGS) $(COBJS) -lz -ggdb -Wall -o $@ 
 
 $(EXEC)_profile: $(PCOBJS)
 	@echo Linking $@
