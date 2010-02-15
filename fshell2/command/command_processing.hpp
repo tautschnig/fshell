@@ -36,6 +36,7 @@
 #include <ctime>
 #include <list>
 
+#include <cbmc/src/util/options.h>
 #include <cbmc/src/goto-programs/goto_functions.h>
 
 class language_uit;

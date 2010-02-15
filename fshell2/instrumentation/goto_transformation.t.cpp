@@ -147,6 +147,20 @@ void test_use_case2( Test_Data & data )
 	::goto_functionst cfg;
 	::fshell2::instrumentation::GOTO_Transformation inserter(l, cfg);
 	
+	{
+		// add dummy symbol to make CBMC happy
+		cfg.function_map["c::__CPROVER_initialize"].body_available = false;
+		cfg.function_map["c::__CPROVER_initialize"].type.return_type() = ::empty_typet(); 
+		::symbol_exprt func_expr("c::__CPROVER_initialize", ::typet("code"));
+		::symbolt func_symb;
+		func_symb.from_irep(func_expr);
+		func_symb.value = ::code_blockt();
+		func_symb.mode = "C";
+		func_symb.name = "c::__CPROVER_initialize";
+		func_symb.base_name = "__CPROVER_initialize";
+		l.context.move(func_symb);
+	}
+	
 	cfg.function_map["c::tmp_func"].body_available = true;
 	cfg.function_map["c::tmp_func"].type.return_type() = ::empty_typet(); 
 	::config.main = "tmp_func";

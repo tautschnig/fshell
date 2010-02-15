@@ -84,8 +84,7 @@ bool CNF_Conversion::decide_default() {
 
   status("Passing problem to "+m_bv.decision_procedure_text());
 
-  this->do_unwind_module(m_bv);
-  this->do_cbmc(m_bv);
+  this->do_conversion(m_bv);
 
   return false;
 }
