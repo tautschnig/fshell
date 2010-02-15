@@ -60,10 +60,10 @@ all-local:
 cbmc-src.tar.gz: $(shell find cbmc -name "*.cpp" -o -name "*.h")
 	rm -f $@
 	make -C cbmc/src/ clean
-	tar czf $@ cbmc/src/
+	tar czf $@ --exclude .git cbmc/src/
 
 astl-src.tar.gz: $(shell find astl -name "*.cpp" -o -name "*.cc" -o -name "*.h")
 	rm -f $@
 	make -C astl/ clean
-	tar czf $@ astl/
+	tar czf $@ --exclude .git astl/
 
