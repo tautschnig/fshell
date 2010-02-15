@@ -38,6 +38,7 @@
 #include <readline/readline.h>
 
 #include <cbmc/src/util/config.h>
+#include <cbmc/src/util/tempfile.h>
 #include <cbmc/src/langapi/language_ui.h>
 #include <cbmc/src/langapi/mode.h>
 #include <cbmc/src/ansi-c/ansi_c_language.h>
@@ -89,9 +90,8 @@ void test_interactive( Test_Data & data )
 
 	::fshell2::FShell2 fshell(options, cfg);
 	
-	char * tempname(::strdup("/tmp/queryXXXXXX"));
-	TEST_CHECK(-1 != ::mkstemp(tempname));
-	::std::ofstream of(tempname);
+	::std::string const tempname_str(::get_temporary_file("tmp.query", ""));
+	::std::ofstream of(tempname_str.c_str());
 	TEST_CHECK(of.is_open());
 	of << "show sourcecode all" << ::std::endl
 		<< "#define bla blubb" << ::std::endl
@@ -99,7 +99,7 @@ void test_interactive( Test_Data & data )
 	of.close();
 		
 	// open the input file
-	FILE * in(fopen(tempname, "r"));
+	FILE * in(fopen(tempname_str.c_str(), "r"));
 	TEST_CHECK(0 == errno);
 	// change the readline input to the file
 	rl_instream = in;
@@ -118,8 +118,7 @@ void test_interactive( Test_Data & data )
 	rl_instream = 0;
 	fclose(in);
 
-	::unlink(tempname);
-	free(tempname);
+	::unlink(tempname_str.c_str());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -129,13 +128,8 @@ void test_interactive( Test_Data & data )
  */
 void test_single2( Test_Data & data )
 {
-	char * tempname(::strdup("/tmp/srcXXXXXX"));
-	TEST_CHECK(-1 != ::mkstemp(tempname));
-	::std::string tempname_str(tempname);
-	tempname_str += ".c";
+	::std::string const tempname_str(::get_temporary_file("tmp.src", ".c"));
 	::std::ofstream of(tempname_str.c_str());
-	::unlink(tempname);
-	::free(tempname);
 	TEST_CHECK(of.is_open());
 of 
   << "int main(int argc, char* argv[]) {" << ::std::endl

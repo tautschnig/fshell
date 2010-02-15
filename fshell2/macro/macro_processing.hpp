@@ -58,8 +58,7 @@ class Macro_Processing
 	bool m_has_defines;
 	::std::string m_deffilename;
 	::std::string m_checkfilename;
-	int m_file_index;
-	char ** m_cpp_argv;
+	::std::string m_cpp_cmdline;
 
 	int preprocess(::std::ostream & out) const;
 

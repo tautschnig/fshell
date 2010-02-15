@@ -34,6 +34,7 @@
 #include <fstream>
 
 #include <cbmc/src/util/config.h>
+#include <cbmc/src/util/tempfile.h>
 #include <cbmc/src/langapi/language_ui.h>
 #include <cbmc/src/langapi/mode.h>
 #include <cbmc/src/ansi-c/ansi_c_language.h>
@@ -150,10 +151,7 @@ void test_use_case( Test_Data & data )
 
 	Command_Processing cmd(options, cfg);
 
-	char * tempname(::strdup("/tmp/srcXXXXXX"));
-	TEST_CHECK(-1 != ::mkstemp(tempname));
-	::std::string tempname_str(tempname);
-	tempname_str += ".c";
+	::std::string const tempname_str(::get_temporary_file("tmp.src", ".c"));
 	::std::ofstream of(tempname_str.c_str());
 	TEST_CHECK(of.is_open());
 	of << "int main(int argc, char * argv[])" << ::std::endl
@@ -161,8 +159,6 @@ void test_use_case( Test_Data & data )
 		<< "return 0;" << ::std::endl
 		<< "}" << ::std::endl;
 	of.close();
-	::unlink(tempname);
-	::free(tempname);
 
 	::std::ostringstream cmd_str;
 	cmd_str << "add sourcecode \"" << tempname_str << "\"";
@@ -211,10 +207,7 @@ void test_use_case_extended_invariants( Test_Data & data )
 	Command_Processing cmd(options, cfg);
 
 	{
-		char * tempname(::strdup("/tmp/srcXXXXXX"));
-		TEST_CHECK(-1 != ::mkstemp(tempname));
-		::std::string tempname_str(tempname);
-		tempname_str += ".c";
+		::std::string const tempname_str(::get_temporary_file("tmp.src", ".c"));
 		::std::ofstream of(tempname_str.c_str());
 		TEST_CHECK(of.is_open());
 		of << "int foo();" << ::std::endl
@@ -223,8 +216,6 @@ void test_use_case_extended_invariants( Test_Data & data )
 			<< "return foo();" << ::std::endl
 			<< "}" << ::std::endl;
 		of.close();
-		::unlink(tempname);
-		::free(tempname);
 
 		::std::ostringstream cmd_str;
 		cmd_str << "add sourcecode \"" << tempname_str << "\"";
@@ -245,10 +236,8 @@ void test_use_case_extended_invariants( Test_Data & data )
 	TEST_CHECK(!cfg.function_map.find("c::foo")->second.body_available);
 	
 	{
-		char * tempname(::strdup("/tmp/srcXXXXXX"));
-		TEST_CHECK(-1 != ::mkstemp(tempname));
-		::std::string tempname_str(tempname);
-		tempname_str += "2.c"; // just to make sure we never ever get the same filename
+		// just to make sure we never ever get the same filename
+		::std::string const tempname_str(::get_temporary_file("tmp.src", "2.c"));
 		::std::ofstream of(tempname_str.c_str());
 		TEST_CHECK(of.is_open());
 		of << "int foo()" << ::std::endl
@@ -256,8 +245,6 @@ void test_use_case_extended_invariants( Test_Data & data )
 			<< "return 42;" << ::std::endl
 			<< "}" << ::std::endl;
 		of.close();
-		::unlink(tempname);
-		::free(tempname);
 
 		::std::ostringstream cmd_str;
 		cmd_str << "add sourcecode \"" << tempname_str << "\"";
