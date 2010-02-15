@@ -106,6 +106,7 @@ bool Evaluate_Filter::ignore_instruction(::goto_programt::instructiont const& e)
 		case END_FUNCTION:
 		case ATOMIC_BEGIN:
 		case ATOMIC_END:
+		case DECL:
 			return true;
 		case OTHER:
 			{
