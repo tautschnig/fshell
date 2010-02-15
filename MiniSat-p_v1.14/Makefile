@@ -16,7 +16,7 @@ RCOBJS    = $(addsuffix r,  $(COBJS))
 EXEC      = minisat
 
 CXX       = g++
-CFLAGS    = $(CXXFLAGS) -ffloat-store
+CFLAGS    = $(filter-out -Werror, $(CXXFLAGS)) -ffloat-store
 COPTIMIZE = -O3
 
 

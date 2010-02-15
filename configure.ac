@@ -20,14 +20,6 @@ AC_SUBST(ac_aux_dir)
 # you prefer
 AX_PREFIX_CONFIG_H(fshell2/config/features.hpp)
 
-AC_CHECK_PROG([PKGCONFIG],[pkg-config],[yes],[no])
-
-if test "x$PKGCONFIG" = "xno" ; then
-  AC_MSG_ERROR([pkg-config not found in PATH. Please install it first.])
-fi
-
-PKG_PROG_PKG_CONFIG
-
 AC_LANG([C++])
 
 # Checks for programs.
@@ -71,9 +63,9 @@ AC_CHECK_HEADERS([diagnostics/basic_exceptions/low_level_exception.hpp \
                   AC_MSG_ERROR([Essential header $ac_header missing]))
 
 # platform specific or non-essential headers
+AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS([tr1/unordered_map \
                   ext/hash_map \
-                  sys/wait.h \
                   ])
 
 # Checks for library functions.
