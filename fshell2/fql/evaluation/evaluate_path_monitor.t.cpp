@@ -60,6 +60,7 @@
 #include <fstream>
 
 #include <cbmc/src/util/config.h>
+#include <cbmc/src/util/tempfile.h>
 #include <cbmc/src/langapi/language_ui.h>
 #include <cbmc/src/goto-programs/goto_convert_functions.h>
 #include <cbmc/src/langapi/mode.h>
@@ -84,10 +85,7 @@ using namespace ::diagnostics::unittest;
  */
 void test( Test_Data & data )
 {
-	char * tempname(::strdup("/tmp/srcXXXXXX"));
-	TEST_CHECK(-1 != ::mkstemp(tempname));
-	::std::string tempname_str(tempname);
-	tempname_str += ".c";
+	::std::string const tempname_str(::get_temporary_file("tmp.src", ".c"));
 	::std::ofstream of(tempname_str.c_str());
 	TEST_CHECK(of.is_open());
 	of << "int main(int argc, char * argv[])" << ::std::endl
@@ -99,8 +97,6 @@ void test( Test_Data & data )
 		<< "return x;" << ::std::endl
 		<< "}" << ::std::endl;
 	of.close();
-	::unlink(tempname);
-	::free(tempname);
 
 	::register_language(new_ansi_c_language);
 	::cmdlinet cmdline;

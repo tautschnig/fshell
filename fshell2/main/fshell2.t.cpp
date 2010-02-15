@@ -178,7 +178,10 @@ FSHELL2_NAMESPACE_END;
 
 TEST_SUITE_BEGIN;
 TEST_NORMAL_CASE( &test_single, LEVEL_PROD );
+#ifndef __MINGW32__
+// resetting rl_instream apparently doesn't work
 TEST_NORMAL_CASE( &test_interactive, LEVEL_PROD );
+#endif
 TEST_NORMAL_CASE( &test_single2, LEVEL_PROD );
 TEST_SUITE_END;
 
