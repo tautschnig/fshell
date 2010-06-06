@@ -15,6 +15,9 @@ CBMC_OBJS = $(top_builddir)/cbmc/src/util/util.o \
 $(CBMC_OBJS):
 	$(MAKE) -C $(top_builddir)/cbmc/src util.dir big-int.dir ansi-c.dir
 
+$(top_builddir)/cbmc/src/util/irep_ids.h:
+	$(MAKE) -C $(top_builddir)/cbmc/src/util irep_ids.h
+
 include_fshell2_fql_astdir = $(includedir)/fshell2/fql/ast
 noinst_LTLIBRARIES = libast.la
 libast_la_SOURCES = ast_visitor.cpp fql_ast_printer.cpp fql_node.cpp pathcov.cpp predicate.cpp  query.cpp  test_goal_sequence.cpp test_goal_set.cpp tgs_intersection.cpp tgs_setminus.cpp tgs_union.cpp  edgecov.cpp  filter_complement.cpp filter_enclosing_scopes.cpp filter_intersection.cpp filter_setminus.cpp filter_union.cpp fql_node_lt_visitor.cpp  pm_alternative.cpp pm_concat.cpp pm_filter_adapter.cpp  pm_repeat.cpp statecov.cpp filter_compose.cpp filter_function.cpp path_monitor_expr.cpp filter_expr.cpp pm_postcondition.cpp pm_precondition.cpp tgs_postcondition.cpp tgs_precondition.cpp

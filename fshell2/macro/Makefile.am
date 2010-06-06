@@ -16,6 +16,9 @@ CBMC_OBJS = $(top_builddir)/cbmc/src/util/util.o \
 $(CBMC_OBJS):
 	$(MAKE) -C $(top_builddir)/cbmc/src util.dir big-int.dir
 
+$(top_builddir)/cbmc/src/util/irep_ids.h:
+	$(MAKE) -C $(top_builddir)/cbmc/src/util irep_ids.h
+
 noinst_LTLIBRARIES = libmacro.la
 libmacro_la_SOURCES = macro_processing.cpp
 include_fshell2_macrodir = $(includedir)/fshell2/macro

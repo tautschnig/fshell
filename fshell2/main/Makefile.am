@@ -28,6 +28,9 @@ CBMC_OBJS = $(top_builddir)/cbmc/src/goto-programs/goto-programs.o \
 $(CBMC_OBJS):
 	-$(MAKE) -C $(top_builddir)/cbmc/src
 
+$(top_builddir)/cbmc/src/util/irep_ids.h:
+	$(MAKE) -C $(top_builddir)/cbmc/src/util irep_ids.h
+
 include_fshell2_maindir = $(includedir)/fshell2/main
 noinst_LTLIBRARIES = libmain.la
 libmain_la_SOURCES = fshell2.cpp
