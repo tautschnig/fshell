@@ -36,6 +36,9 @@
 #include <cbmc/src/util/config.h>
 #include <cbmc/src/langapi/language_ui.h>
 #include <cbmc/src/goto-programs/goto_convert_functions.h>
+#include <cbmc/src/pointer-analysis/add_failed_symbols.h>
+#include <cbmc/src/goto-programs/goto_function_pointers.h>
+#include <cbmc/src/goto-programs/goto_inline.h>
 
 #include <cerrno>
 #include <fstream>
@@ -320,22 +323,46 @@ bool Command_Processing::finalize(::language_uit & manager) {
 		}
 	}
     
+
 	::goto_convert_functionst converter(manager.context, m_opts, m_gf,
 			manager.ui_message_handler);
-    converter.convert_function(main_iter->first);
 
-    // more functions may have been added, but iterators are unstable, copy
-	// symbol names first
+	// convert all symbols; iterators are unstable, copy symbol names first
 	::std::vector< ::irep_idt > symbols;
 	for(::symbolst::iterator iter(manager.context.symbols.begin()); iter !=
 			manager.context.symbols.end(); ++iter)
-		if(iter->second.type.id() == "code" && iter->second.value.id() != "compiled")
+		if(iter->second.type.id() == "code")
 			symbols.push_back(iter->first);
 	for(::std::vector< ::irep_idt >::const_iterator iter(symbols.begin());
-			iter != symbols.end(); ++iter)
+			iter != symbols.end(); ++iter) {
+		::goto_functionst::function_mapt::iterator fct(m_gf.function_map.find(*iter));
+		if (m_gf.function_map.end() != fct) m_gf.function_map.erase(fct);
 		converter.convert_function(*iter);
+	}
+
+	finalize_goto_program(manager);
 
 	return true;
+}
+
+void Command_Processing::finalize_goto_program(::language_uit & manager) {
+	::namespacet ns(manager.context);
+
+	manager.status("Function Pointer Removal");
+	::remove_function_pointers(m_gf);
+
+	manager.status("Partial Inlining");
+	// do partial inlining
+	::goto_partial_inline(m_gf, ns, manager.ui_message_handler);
+
+	// add failed symbols
+	::add_failed_symbols(manager.context);
+
+	// recalculate numbers, etc.
+	m_gf.update();
+
+	// add loop ids
+	m_gf.compute_loop_numbers();
 }
 
 FSHELL2_COMMAND_NAMESPACE_END;

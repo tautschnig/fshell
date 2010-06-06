@@ -94,6 +94,8 @@ class Command_Processing
 	void add_sourcecode(::language_uit & manager, char const * file,
 			::std::list< ::std::pair< char*, char* > > const& defines);
 
+	void finalize_goto_program(::language_uit & manager);
+
 	/*! \copydoc copy_constructor
 	*/
 	Command_Processing( Self const& rhs );
