@@ -152,7 +152,7 @@ foreach my $id (sort keys %test_suite) {
       $new_name =~ s/\./_/g;
       push @{ $inserts{ $sym->{file} } }, "extern unsigned __fshell2__tc_selector;";
       if ($sym->{type} =~ /\[\d+\]/) {
-        $replaces{ $sym->{file} }{ $sym->{line} }{ "\\[.*\\][[:space:]]*" . $sym->{symbol} } =
+        $replaces{ $sym->{file} }{ $sym->{line} }{ "[[:space:]]" . $sym->{symbol} . "\\[.*\\]" } =
           "*" . $sym->{symbol} . "=$new_name\[__fshell2__tc_selector][idx__$new_name++]";
       } else {
         $replaces{ $sym->{file} }{ $sym->{line} }{ "[[:space:]]" . $sym->{symbol} } =
