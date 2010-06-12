@@ -63,18 +63,32 @@ class Test_Suite_Output
 			test_suite, ::std::ostream & os, ::ui_message_handlert::uit const ui);
 
 	private:
-	typedef struct {
-		::exprt const * m_name;
-		::std::string m_pretty_name;
-		::exprt const * m_value;
-		::symbolt const * m_symbol;
-		::locationt const * m_location;
-	} program_variable_t;
-	typedef ::std::list< program_variable_t > test_case_t;
+	class Test_Input
+	{
+		public:
+		typedef struct {
+			::exprt const * m_name;
+			::std::string m_pretty_name;
+			::exprt const * m_value;
+			::symbolt const * m_symbol;
+			::locationt const * m_location;
+			::std::string m_value_str;
+			::std::string m_type_str;
+		} program_variable_t;
+		typedef ::std::list< program_variable_t > test_inputs_t;
 
-	void get_test_case(test_case_t & tc) const;
-	::std::ostream & print_test_case_plain(::std::ostream & os, test_case_t const& tc) const;
-	::std::ostream & print_test_case_xml(::std::ostream & os, test_case_t const& tc) const;
+		Test_Input(::symbolt const& main_sym, 
+				::std::string const& main_str, ::locationt const& main_loc);
+
+		::symbolt const& m_main_symbol;
+		::std::string const m_main_symbol_str;
+		::locationt const& m_main_location;
+		test_inputs_t m_test_inputs;
+	};
+
+	void get_test_case(Test_Input & ti) const;
+	::std::ostream & print_test_case_plain(::std::ostream & os, Test_Input const& ti) const;
+	::std::ostream & print_test_case_xml(::std::ostream & os, Test_Input const& ti) const;
 	
 	::fshell2::fql::CNF_Conversion & m_equation;
 	

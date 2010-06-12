@@ -34,7 +34,7 @@ FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_INSTRUMENTATION_NAMESPACE_BEGIN;
 
 void find_symbols(::exprt & expr, ::std::list< ::exprt * > & symbols) {
-	if (expr.id() == "symbol")
+	if (expr.id() == ID_symbol)
 		symbols.push_back(&expr);
 	else {
 		Forall_operands(iter, expr) find_symbols(*iter, symbols);
@@ -42,10 +42,18 @@ void find_symbols(::exprt & expr, ::std::list< ::exprt * > & symbols) {
 }
 
 void find_symbols(::exprt const& expr, ::std::list< ::exprt const * > & symbols) {
-	if (expr.id() == "symbol")
+	if (expr.id() == ID_symbol)
 		symbols.push_back(&expr);
 	else {
 		forall_operands(iter, expr) find_symbols(*iter, symbols);
+	}
+}
+
+void collect_expr_with_parents(::exprt const& expr, ::std::map< ::exprt const*, ::exprt const* > & exprs) {
+	exprs.insert(::std::make_pair< ::exprt const*, ::exprt const*>(&expr, 0)); // will fail most of the time
+	forall_operands(iter, expr) {
+			exprs.insert(::std::make_pair(&(*iter), &expr));
+			collect_expr_with_parents(*iter, exprs);
 	}
 }
 

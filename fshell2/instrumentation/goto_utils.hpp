@@ -32,6 +32,7 @@
 #include <fshell2/config/config.hpp>
 
 #include <list>
+#include <map>
 
 class exprt;
 
@@ -40,6 +41,7 @@ FSHELL2_INSTRUMENTATION_NAMESPACE_BEGIN;
 
 void find_symbols(::exprt & expr, ::std::list< ::exprt * > & symbols);
 void find_symbols(::exprt const& expr, ::std::list< ::exprt const * > & symbols);
+void collect_expr_with_parents(::exprt const& expr, ::std::map< ::exprt const*, ::exprt const* > & exprs);
 
 FSHELL2_INSTRUMENTATION_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
