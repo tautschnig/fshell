@@ -51,6 +51,7 @@ all-local:
 			$(MAKE) -C cbmc/src/ clean ; \
 		fi ; \
 	fi
+	$(MAKE) -C $(top_builddir)/cbmc/src/util irep_ids.h
 	if [ "$(top_srcdir)" != "." ] ; then \
 		mkdir -p MiniSat-p_v1.14 ; \
 		cp -p $(top_srcdir)/MiniSat-p_v1.14/{Makefile,*.C,*.h} MiniSat-p_v1.14 ; \
