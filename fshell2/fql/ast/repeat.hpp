@@ -21,7 +21,7 @@
 #ifndef FSHELL2__FQL__AST__REPEAT_HPP
 #define FSHELL2__FQL__AST__REPEAT_HPP
 
-/*! \file fshell2/fql/ast/pm_repeat.hpp
+/*! \file fshell2/fql/ast/repeat.hpp
  * \brief TODO
  *
  * $Id$
@@ -119,4 +119,4 @@ inline Repeat * FQL_Node_Factory<Repeat>::create(Path_Pattern_Expr * pp, int low
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
 
-#endif /* FSHELL2__FQL__AST__PM_REPEAT_HPP */
+#endif /* FSHELL2__FQL__AST__REPEAT_HPP */

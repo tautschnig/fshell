@@ -124,4 +124,4 @@ inline Depcov * FQL_Node_Factory<Depcov>::create(Filter_Expr * a, Filter_Expr * 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
 
-#endif /* FSHELL2__FQL__AST__TEST_GOAL_SET_HPP */
+#endif /* FSHELL2__FQL__AST__DEPCOV_HPP */

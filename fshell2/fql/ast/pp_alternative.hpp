@@ -114,4 +114,4 @@ inline PP_Alternative * FQL_Node_Factory<PP_Alternative>::create(Path_Pattern_Ex
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
 
-#endif /* FSHELL2__FQL__AST__PM_ALTERNATIVE_HPP */
+#endif /* FSHELL2__FQL__AST__PP_ALTERNATIVE_HPP */

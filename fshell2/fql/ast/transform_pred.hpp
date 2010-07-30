@@ -21,7 +21,7 @@
 #ifndef FSHELL2__FQL__AST__TRANSFORM_PRED_HPP
 #define FSHELL2__FQL__AST__TRANSFORM_PRED_HPP
 
-/*! \file fshell2/fql/ast/edgecov.hpp
+/*! \file fshell2/fql/ast/transform_pred.hpp
  * \brief TODO
  *
  * $Id$
@@ -129,4 +129,4 @@ inline Transform_Pred * FQL_Node_Factory<Transform_Pred>::create(Filter_Expr * f
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
 
-#endif /* FSHELL2__FQL__AST__EDGECOV_HPP */
+#endif /* FSHELL2__FQL__AST__TRANSFORM_PRED_HPP */
