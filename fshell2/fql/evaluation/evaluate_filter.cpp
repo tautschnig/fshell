@@ -119,13 +119,13 @@ bool Evaluate_Filter::ignore_instruction(::goto_programt::instructiont const& e)
 		case GOTO:
 		case ASSUME:
 		case ASSERT:
-		case SYNC:
 		case LOCATION:
 		case RETURN:
 		case ASSIGN:
 		case FUNCTION_CALL:
 		case START_THREAD:
 		case END_THREAD:
+		case DEAD:
 			return false;
 	}
 

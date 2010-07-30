@@ -247,7 +247,7 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 	if (make_nondet || special_pred_symb) {
 		::symbolt const& cond_symbol(new_bool_var("pred"));
 		::goto_programt::targett decl(tmp.add_instruction());
-		decl->make_other();
+		decl->make_decl();
 		decl->code = ::code_declt(::symbol_expr(cond_symbol));
 
 		if (special_pred_symb) {
@@ -312,7 +312,7 @@ GOTO_Transformation::inserted_t & GOTO_Transformation::make_nondet_choice(::goto
 			if (0 == i) {
 				::symbolt const& cond_symbol(new_bool_var("nd_choice"));
 				::goto_programt::targett decl(dest.add_instruction());
-				decl->make_other();
+				decl->make_decl();
 				decl->code = ::code_declt(::symbol_expr(cond_symbol));
 				var_map[j] = &cond_symbol;
 			}

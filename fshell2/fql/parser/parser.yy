@@ -584,14 +584,14 @@ Predicate: TOK_L_BRACE c_LHS Comparison c_LHS TOK_R_BRACE
 		   FSHELL2_PROD_CHECK1(::diagnostics::Parse_Error, !result,
 		     ::diagnostics::internal::to_string("Failed to parse predicate ", $2));
 		   FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-		     1 == ansi_c_parser.parse_tree.declarations.size());
+		     1 == ansi_c_parser.parse_tree.items.size());
 		   FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-		     1 == ansi_c_parser.parse_tree.declarations.front().value().operands().size());
+		     1 == (static_cast<const exprt&>(ansi_c_parser.parse_tree.items.front().find(ID_value))).operands().size());
 		   FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-		     ansi_c_parser.parse_tree.declarations.front().value().operands().front().op0().op0().get("identifier") == "PRED");
-		   ansi_c_parser.parse_tree.declarations.front().value().operands().front().op0().op0().set("identifier", "!PRED!");
+		     (static_cast<const exprt&>(ansi_c_parser.parse_tree.items.front().find(ID_value))).operands().front().op0().op0().get("identifier") == "PRED");
+		   (static_cast<exprt &>(ansi_c_parser.parse_tree.items.front().add(ID_value))).operands().front().op0().op0().set("identifier", "!PRED!");
 		   $$ = ::fshell2::fql::Predicate::Factory::get_instance().create(new
-		     ::exprt(ansi_c_parser.parse_tree.declarations.front().value().operands().front()));
+		     ::exprt((static_cast<const exprt&>(ansi_c_parser.parse_tree.items.front().find(ID_value))).operands().front()));
 		   intermediates.insert($$);
 		   // clean up the things we don't need anymore
 		   ansi_c_parser.clear();
