@@ -124,7 +124,7 @@ void test_invalid( Test_Data & data )
 	Command_Processing cmd(options, cfg);
 
 	TEST_THROWING_BLOCK_ENTER;
-	cmd.process(l, os, "add sourcecode \"no_such_file.c\"");
+	cmd.process(l, os, "add sourcecode 'no_such_file.c'");
 	TEST_THROWING_BLOCK_EXIT1(::fshell2::Command_Processing_Error, "Failed to parse no_such_file.c");
 	
 	TEST_THROWING_BLOCK_ENTER;
@@ -161,7 +161,7 @@ void test_use_case( Test_Data & data )
 	of.close();
 
 	::std::ostringstream cmd_str;
-	cmd_str << "add sourcecode \"" << tempname_str << "\"";
+	cmd_str << "add sourcecode '" << tempname_str << "'";
 
 	TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, cmd_str.str().c_str()));
 	
@@ -173,7 +173,7 @@ void test_use_case( Test_Data & data )
 	TEST_ASSERT(data.compare("tmp_source_show_all", os.str()));
 	
 	cmd_str.str("");
-	cmd_str << "show sourcecode \"" << tempname_str << "\"";
+	cmd_str << "show sourcecode '" << tempname_str << "'";
 	os.str("");
 	TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, cmd_str.str().c_str()));
 	TEST_ASSERT(data.compare("tmp_source_show", os.str()));
@@ -218,7 +218,7 @@ void test_use_case_extended_invariants( Test_Data & data )
 		of.close();
 
 		::std::ostringstream cmd_str;
-		cmd_str << "add sourcecode \"" << tempname_str << "\"";
+		cmd_str << "add sourcecode '" << tempname_str << "'";
 		TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, cmd_str.str().c_str()));
 		::unlink(tempname_str.c_str());
 	}
@@ -247,7 +247,7 @@ void test_use_case_extended_invariants( Test_Data & data )
 		of.close();
 
 		::std::ostringstream cmd_str;
-		cmd_str << "add sourcecode \"" << tempname_str << "\"";
+		cmd_str << "add sourcecode '" << tempname_str << "'";
 		TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, cmd_str.str().c_str()));
 		::unlink(tempname_str.c_str());
 	}

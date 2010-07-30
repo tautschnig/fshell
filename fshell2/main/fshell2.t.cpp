@@ -158,7 +158,7 @@ of
 
 	::fshell2::FShell2 fshell(options, gf);
 	
-	TEST_ASSERT(!fshell.process_line(l, ::diagnostics::internal::to_string("add sourcecode \"", tempname_str, "\"").c_str()));
+	TEST_ASSERT(!fshell.process_line(l, ::diagnostics::internal::to_string("add sourcecode '", tempname_str, "'").c_str()));
 	::unlink(tempname_str.c_str());
 	TEST_ASSERT(!fshell.process_line(l, "cover edges(@basicblockentry)"));
 	TEST_ASSERT(!fshell.process_line(l, "cover edges(@basicblockentry) passing @func(main)*.@label(L1)->@label(L2).@func(main)*"));

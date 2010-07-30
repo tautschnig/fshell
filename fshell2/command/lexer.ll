@@ -96,7 +96,7 @@ TOK_NO_ZERO_INIT        NO_ZERO_INIT
 /* C identifier */
 TOK_C_IDENT             [_a-zA-Z][_a-zA-Z0-9]*
 /* a quoted string (no newline) */
-TOK_QUOTED_STRING       \"[^\"]*\"
+TOK_QUOTED_STRING       '[^']*'
 /* a natural number */
 TOK_NAT_NUMBER          [0-9]+
 
