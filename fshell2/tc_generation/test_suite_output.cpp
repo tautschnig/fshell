@@ -446,6 +446,7 @@ Test_Suite_Output::Test_Suite_Output(::fshell2::fql::CNF_Conversion & equation) 
 	
 	// select the init procedure chosen by the user
 	::std::string main_symb_name("c::");
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !config.main.empty());
 	main_symb_name += config.main;
 	::symbolt const& main_symb(m_equation.get_ns().lookup(main_symb_name));
 	::code_typet::argumentst const &arguments(::to_code_type(main_symb.type).arguments());

@@ -53,7 +53,7 @@ compute_test_goals_LDADD = libevaluation.la ../ast/libast.la ../concepts/libconc
 automaton_inserter_SOURCES = automaton_inserter.t.cpp
 # add additional objects required to build automaton_inserter here, like
 # automaton_inserter_LDADD = ../base/libbase.la libbla.la
-automaton_inserter_LDADD =
+automaton_inserter_LDADD = libevaluation.la ../ast/libast.la ../concepts/libconcepts.la ../../instrumentation/libinstrumentation.la ../../exception/libexception.la $(CBMC_OBJS)
 # note that this entry (automaton_inserter_SOURCES, automaton_inserter_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually

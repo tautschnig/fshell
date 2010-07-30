@@ -65,7 +65,7 @@ Automaton_Inserter::Automaton_Inserter(Evaluate_Path_Pattern const& pp_eval,
 Automaton_Inserter::instrumentation_points_t const& Automaton_Inserter::get_test_goal_instrumentation(
 			ta_state_t const& state) const {
 	instrumentation_map_t::const_iterator entry(m_tg_instrumentation_map.find(state));
-	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Protocol,
+	FSHELL2_DEBUG_CHECK(::diagnostics::Invalid_Protocol,
 			entry != m_tg_instrumentation_map.end());
 	return entry->second;
 }
