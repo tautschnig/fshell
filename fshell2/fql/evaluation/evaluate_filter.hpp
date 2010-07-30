@@ -34,6 +34,7 @@
 #include <fshell2/fql/ast/ast_visitor.hpp>
 #include <fshell2/fql/ast/standard_ast_visitor_aspect.hpp>
 #include <fshell2/fql/concepts/target_graph.hpp>
+#include <fshell2/fql/evaluation/predicate_instrumentation.hpp>
 
 #include <map>
 
@@ -58,7 +59,8 @@ class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	typedef ::std::map< Filter_Expr const*, target_graph_t > filter_value_t;
 
 	Evaluate_Filter(::goto_functionst & ts,
-			::fshell2::instrumentation::CFG & cfg);
+			::fshell2::instrumentation::CFG & cfg,
+			::language_uit & manager);
 
 	virtual ~Evaluate_Filter();
 
@@ -66,6 +68,27 @@ class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	static bool ignore_instruction(::goto_programt::instructiont const& e);
 
 	target_graph_t const& get(Filter_Expr const& f) const;
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::CP_Alternative
+	 * \param  n CP_Alternative
+	 */
+	virtual void visit(CP_Alternative const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::CP_Concat
+	 * \param  n CP_Concat
+	 */
+	virtual void visit(CP_Concat const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Depcov
+	 * \param  n Depcov
+	 */
+	virtual void visit(Depcov const* n);
+	/*! \} */
 
 	/*! \{
 	 * \brief Visit a @ref fshell2::fql::Edgecov
@@ -79,20 +102,6 @@ class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	 * \param  n Filter_Compose
 	 */
 	virtual void visit(Filter_Compose const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Filter_Complement
-	 * \param  n Filter_Complement
-	 */
-	virtual void visit(Filter_Complement const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Filter_Enclosing_Scopes
-	 * \param  n Filter_Enclosing_Scopes
-	 */
-	virtual void visit(Filter_Enclosing_Scopes const* n);
 	/*! \} */
 
 	/*! \{
@@ -124,45 +133,24 @@ class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	/*! \} */
 
 	/*! \{
-	 * \brief Visit a @ref fshell2::fql::PM_Alternative
-	 * \param  n PM_Alternative
+	 * \brief Visit a @ref fshell2::fql::Nodecov
+	 * \param  n Nodecov
 	 */
-	virtual void visit(PM_Alternative const* n);
+	virtual void visit(Nodecov const* n);
 	/*! \} */
 
 	/*! \{
-	 * \brief Visit a @ref fshell2::fql::PM_Concat
-	 * \param  n PM_Concat
+	 * \brief Visit a @ref fshell2::fql::PP_Alternative
+	 * \param  n PP_Alternative
 	 */
-	virtual void visit(PM_Concat const* n);
+	virtual void visit(PP_Alternative const* n);
 	/*! \} */
 
 	/*! \{
-	 * \brief Visit a @ref fshell2::fql::PM_Filter_Adapter
-	 * \param  n PM_Filter_Adapter
+	 * \brief Visit a @ref fshell2::fql::PP_Concat
+	 * \param  n PP_Concat
 	 */
-	virtual void visit(PM_Filter_Adapter const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::PM_Postcondition
-	 * \param  n PM_Postcondition
-	 */
-	virtual void visit(PM_Postcondition const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::PM_Precondition
-	 * \param  n PM_Precondition
-	 */
-	virtual void visit(PM_Precondition const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::PM_Repeat
-	 * \param  n PM_Repeat
-	 */
-	virtual void visit(PM_Repeat const* n);
+	virtual void visit(PP_Concat const* n);
 	/*! \} */
 
 	/*! \{
@@ -173,6 +161,20 @@ class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	/*! \} */
 
 	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Predicate
+	 * \param  n Predicate
+	 */
+	virtual void visit(Predicate const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Quote
+	 * \param  n Quote
+	 */
+	virtual void visit(Quote const* n);
+	/*! \} */
+
+	/*! \{
 	 * \brief Visit a @ref fshell2::fql::Query
 	 * \param  n Query
 	 */
@@ -180,57 +182,23 @@ class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	/*! \} */
 
 	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Statecov
-	 * \param  n Statecov
+	 * \brief Visit a @ref fshell2::fql::Repeat
+	 * \param  n Repeat
 	 */
-	virtual void visit(Statecov const* n);
+	virtual void visit(Repeat const* n);
 	/*! \} */
 
 	/*! \{
-	 * \brief Visit a @ref fshell2::fql::TGS_Intersection
-	 * \param  n TGS_Intersection
+	 * \brief Visit a @ref fshell2::fql::Transform_Pred
+	 * \param  n Transform_Pred
 	 */
-	virtual void visit(TGS_Intersection const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::TGS_Postcondition
-	 * \param  n TGS_Postcondition
-	 */
-	virtual void visit(TGS_Postcondition const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::TGS_Precondition
-	 * \param  n TGS_Precondition
-	 */
-	virtual void visit(TGS_Precondition const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::TGS_Setminus
-	 * \param  n TGS_Setminus
-	 */
-	virtual void visit(TGS_Setminus const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::TGS_Union
-	 * \param  n TGS_Union
-	 */
-	virtual void visit(TGS_Union const* n);
-	/*! \} */
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Test_Goal_Sequence
-	 * \param  n Test_Goal_Sequence
-	 */
-	virtual void visit(Test_Goal_Sequence const* n);
+	virtual void visit(Transform_Pred const* n);
 	/*! \} */
 		
 	private:
 	::goto_functionst & m_gf;
 	::fshell2::instrumentation::CFG & m_cfg;
+	::fshell2::fql::Predicate_Instrumentation m_pred_instr;
 	filter_value_t m_filter_map;
 
 	/*! \copydoc copy_constructor

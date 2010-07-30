@@ -34,8 +34,8 @@
 #include <fshell2/fql/ast/fql_node_factory.hpp>
 
 #include <fshell2/fql/ast/filter_expr.hpp>
-#include <fshell2/fql/ast/test_goal_sequence.hpp>
-#include <fshell2/fql/ast/path_monitor_expr.hpp>
+#include <fshell2/fql/ast/coverage_pattern_expr.hpp>
+#include <fshell2/fql/ast/path_pattern_expr.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
@@ -62,21 +62,21 @@ class Query : public FQL_Node
 	virtual bool destroy();
 
 	inline Filter_Expr const * get_prefix() const;
-	inline Test_Goal_Sequence const * get_cover() const;
-	inline Path_Monitor_Expr const * get_passing() const;
+	inline Coverage_Pattern_Expr const * get_cover() const;
+	inline Path_Pattern_Expr const * get_passing() const;
 
 	private:
-	friend Self * FQL_Node_Factory<Self>::create(Filter_Expr * prefix, Test_Goal_Sequence * cover,
-			Path_Monitor_Expr * passing);
+	friend Self * FQL_Node_Factory<Self>::create(Filter_Expr * prefix, Coverage_Pattern_Expr * cover,
+			Path_Pattern_Expr * passing);
 	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
 
 	Filter_Expr * m_prefix;
-	Test_Goal_Sequence * m_cover;
-	Path_Monitor_Expr * m_passing;
+	Coverage_Pattern_Expr * m_cover;
+	Path_Pattern_Expr * m_passing;
 
 	/*! Constructor
 	*/
-	Query(Filter_Expr * prefix, Test_Goal_Sequence * cover, Path_Monitor_Expr * passing);
+	Query(Filter_Expr * prefix, Coverage_Pattern_Expr * cover, Path_Pattern_Expr * passing);
 
 	/*! \copydoc copy_constructor
 	*/
@@ -95,17 +95,17 @@ inline Filter_Expr const * Query::get_prefix() const {
 	return m_prefix;
 }
 
-inline Test_Goal_Sequence const * Query::get_cover() const {
+inline Coverage_Pattern_Expr const * Query::get_cover() const {
 	return m_cover;
 }
 
-inline Path_Monitor_Expr const * Query::get_passing() const {
+inline Path_Pattern_Expr const * Query::get_passing() const {
 	return m_passing;
 }
 
 template <>
-inline Query * FQL_Node_Factory<Query>::create(Filter_Expr * prefix, Test_Goal_Sequence * cover,
-		Path_Monitor_Expr * passing) {
+inline Query * FQL_Node_Factory<Query>::create(Filter_Expr * prefix, Coverage_Pattern_Expr * cover,
+		Path_Pattern_Expr * passing) {
 	if (m_available.empty()) {
 		m_available.push_back(new Query(prefix, cover, passing));
 	}

@@ -37,29 +37,24 @@
 
 #include <fshell2/instrumentation/cfg.hpp>
 #include <fshell2/instrumentation/goto_utils.hpp>
+#include <fshell2/fql/ast/cp_alternative.hpp>
+#include <fshell2/fql/ast/cp_concat.hpp>
+#include <fshell2/fql/ast/depcov.hpp>
 #include <fshell2/fql/ast/edgecov.hpp>
-#include <fshell2/fql/ast/filter_complement.hpp>
 #include <fshell2/fql/ast/filter_compose.hpp>
-#include <fshell2/fql/ast/filter_enclosing_scopes.hpp>
 #include <fshell2/fql/ast/filter_function.hpp>
 #include <fshell2/fql/ast/filter_intersection.hpp>
 #include <fshell2/fql/ast/filter_setminus.hpp>
 #include <fshell2/fql/ast/filter_union.hpp>
+#include <fshell2/fql/ast/nodecov.hpp>
 #include <fshell2/fql/ast/pathcov.hpp>
-#include <fshell2/fql/ast/pm_alternative.hpp>
-#include <fshell2/fql/ast/pm_concat.hpp>
-#include <fshell2/fql/ast/pm_filter_adapter.hpp>
-#include <fshell2/fql/ast/pm_postcondition.hpp>
-#include <fshell2/fql/ast/pm_precondition.hpp>
-#include <fshell2/fql/ast/pm_repeat.hpp>
+#include <fshell2/fql/ast/pp_alternative.hpp>
+#include <fshell2/fql/ast/pp_concat.hpp>
+#include <fshell2/fql/ast/predicate.hpp>
 #include <fshell2/fql/ast/query.hpp>
-#include <fshell2/fql/ast/statecov.hpp>
-#include <fshell2/fql/ast/test_goal_sequence.hpp>
-#include <fshell2/fql/ast/tgs_intersection.hpp>
-#include <fshell2/fql/ast/tgs_postcondition.hpp>
-#include <fshell2/fql/ast/tgs_precondition.hpp>
-#include <fshell2/fql/ast/tgs_setminus.hpp>
-#include <fshell2/fql/ast/tgs_union.hpp>
+#include <fshell2/fql/ast/quote.hpp>
+#include <fshell2/fql/ast/repeat.hpp>
+#include <fshell2/fql/ast/transform_pred.hpp>
 
 #include <algorithm>
 #include <iterator>
@@ -70,8 +65,9 @@ FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 Evaluate_Filter::Evaluate_Filter(::goto_functionst & gf,
-		::fshell2::instrumentation::CFG & cfg) :
-	m_gf(gf), m_cfg(cfg) {
+		::fshell2::instrumentation::CFG & cfg,
+		::language_uit & manager) :
+	m_gf(gf), m_cfg(cfg), m_pred_instr(gf, manager) {
 	// we should always have the target graph for ID
 	Filter_Function::Factory::get_instance().create<F_IDENTITY>()->accept(this);
 }
@@ -132,34 +128,24 @@ bool Evaluate_Filter::ignore_instruction(::goto_programt::instructiont const& e)
 	return false;
 }
 
-void Evaluate_Filter::visit(Edgecov const* n) {
-	n->get_filter_expr()->accept(this);
+void Evaluate_Filter::visit(CP_Alternative const* n) {
+	n->get_cp_a()->accept(this);
+	n->get_cp_b()->accept(this);
 }
 
-void Evaluate_Filter::visit(Filter_Complement const* n) {
-	::std::pair< filter_value_t::iterator, bool > entry(m_filter_map.insert(
-				::std::make_pair(n, target_graph_t())));
-	if (!entry.second) return;
-	
+void Evaluate_Filter::visit(CP_Concat const* n) {
+	n->get_cp_a()->accept(this);
+	n->get_cp_b()->accept(this);
+}
+
+void Evaluate_Filter::visit(Depcov const* n) {
+	n->get_filter_a()->accept(this);
+	n->get_filter_b()->accept(this);
+	n->get_filter_c()->accept(this);
+}
+
+void Evaluate_Filter::visit(Edgecov const* n) {
 	n->get_filter_expr()->accept(this);
-	Filter_Function * id(Filter_Function::Factory::get_instance().create<F_IDENTITY>());
-	id->accept(this);
-
-	filter_value_t::const_iterator id_set(m_filter_map.find(id));
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, id_set != m_filter_map.end());
-	filter_value_t::const_iterator f_set(m_filter_map.find(n->get_filter_expr()));
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, f_set != m_filter_map.end());
-
-	CFA::edges_t edges;
-	::std::set_difference(id_set->second.get_edges().begin(), id_set->second.get_edges().end(),
-			f_set->second.get_edges().begin(), f_set->second.get_edges().end(),
-			::std::inserter(edges, edges.begin()));
-	entry.first->second.set_edges(edges);
-	CFA::initial_states_t initial;
-	::std::set_difference(id_set->second.get_initial_states().begin(), id_set->second.get_initial_states().end(),
-			f_set->second.get_initial_states().begin(), f_set->second.get_initial_states().end(),
-			::std::inserter(initial, initial.begin()));
-	entry.first->second.set_initial_states(initial);
 }
 
 void Evaluate_Filter::visit(Filter_Compose const* n) {
@@ -184,16 +170,6 @@ void Evaluate_Filter::visit(Filter_Compose const* n) {
 	::std::copy(a_set->second.get_initial_states().begin(), a_set->second.get_initial_states().end(),
 			::std::inserter(initial, initial.begin()));
 	entry.first->second.set_initial_states(initial);
-}
-
-void Evaluate_Filter::visit(Filter_Enclosing_Scopes const* n) {
-	::std::pair< filter_value_t::iterator, bool > entry(m_filter_map.insert(
-				::std::make_pair(n, target_graph_t())));
-	if (!entry.second) return;
-	
-	n->get_filter_expr()->accept(this);
-
-	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
 }
 
 void Evaluate_Filter::visit(Filter_Function const* n) {
@@ -664,85 +640,54 @@ void Evaluate_Filter::visit(Filter_Union const* n) {
 	entry.first->second.set_initial_states(initial);
 }
 
-void Evaluate_Filter::visit(PM_Alternative const* n) {
-	n->get_path_monitor_expr_a()->accept(this);
-	n->get_path_monitor_expr_b()->accept(this);
-}
-
-void Evaluate_Filter::visit(PM_Concat const* n) {
-	n->get_path_monitor_expr_a()->accept(this);
-	n->get_path_monitor_expr_b()->accept(this);
-}
-
-void Evaluate_Filter::visit(PM_Filter_Adapter const* n) {
+void Evaluate_Filter::visit(Nodecov const* n) {
 	n->get_filter_expr()->accept(this);
 }
 
-void Evaluate_Filter::visit(PM_Postcondition const* n) {
-	n->get_path_monitor_expr()->accept(this);
+void Evaluate_Filter::visit(PP_Alternative const* n) {
+	n->get_pp_a()->accept(this);
+	n->get_pp_b()->accept(this);
 }
 
-void Evaluate_Filter::visit(PM_Precondition const* n) {
-	n->get_path_monitor_expr()->accept(this);
-}
-
-void Evaluate_Filter::visit(PM_Repeat const* n) {
-	n->get_path_monitor_expr()->accept(this);
+void Evaluate_Filter::visit(PP_Concat const* n) {
+	n->get_pp_a()->accept(this);
+	n->get_pp_b()->accept(this);
 }
 
 void Evaluate_Filter::visit(Pathcov const* n) {
 	n->get_filter_expr()->accept(this);
 }
 
+void Evaluate_Filter::visit(Predicate const* n) {
+	filter_value_t::const_iterator id_set(m_filter_map.find(FQL_CREATE_FF0(F_IDENTITY)));
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, id_set != m_filter_map.end());
+	
+	Predicate_Instrumentation::node_set_t nodes;
+	for (target_graph_t::edges_t::const_iterator e_iter(id_set->second.get_edges().begin());
+			e_iter != id_set->second.get_edges().end(); ++e_iter)
+		nodes.insert(e_iter->first);
+
+	m_pred_instr.insert_predicate(nodes, n);
+}
+
 void Evaluate_Filter::visit(Query const* n) {
-	FSHELL2_DEBUG_ASSERT1(::diagnostics::Invalid_Argument, !n->get_prefix(), "Query not normalized");
+	FSHELL2_DEBUG_ASSERT1(::diagnostics::Invalid_Argument, !n->get_prefix() && n->get_passing(),
+			"Query not normalized");
 
 	n->get_cover()->accept(this);
-	
-	if (n->get_passing()) {
-		n->get_passing()->accept(this);
-	}
+	n->get_passing()->accept(this);
 }
 
-void Evaluate_Filter::visit(Statecov const* n) {
-	n->get_filter_expr()->accept(this);
+void Evaluate_Filter::visit(Quote const* n) {
+	n->get_pp()->accept(this);
 }
 
-void Evaluate_Filter::visit(TGS_Intersection const* n) {
-	n->get_tgs_a()->accept(this);
-	n->get_tgs_b()->accept(this);
+void Evaluate_Filter::visit(Repeat const* n) {
+	n->get_pp()->accept(this);
 }
 
-void Evaluate_Filter::visit(TGS_Postcondition const* n) {
-	n->get_tgs()->accept(this);
-}
-
-void Evaluate_Filter::visit(TGS_Precondition const* n) {
-	n->get_tgs()->accept(this);
-}
-
-void Evaluate_Filter::visit(TGS_Setminus const* n) {
-	n->get_tgs_a()->accept(this);
-	n->get_tgs_b()->accept(this);
-}
-
-void Evaluate_Filter::visit(TGS_Union const* n) {
-	n->get_tgs_a()->accept(this);
-	n->get_tgs_b()->accept(this);
-}
-
-void Evaluate_Filter::visit(Test_Goal_Sequence const* n) {
-	for (Test_Goal_Sequence::seq_t::const_iterator iter(n->get_sequence().begin());
-			iter != n->get_sequence().end(); ++iter) {
-		if (iter->first) {
-			iter->first->accept(this);
-		}
-		iter->second->accept(this);
-	}
-
-	if (n->get_suffix_monitor()) {
-		n->get_suffix_monitor()->accept(this);
-	}
+void Evaluate_Filter::visit(Transform_Pred const* n) {
+	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
 }
 
 FSHELL2_FQL_NAMESPACE_END;

@@ -71,17 +71,15 @@ FSHELL2_FQL_NAMESPACE_BEGIN;
 
 class Filter_Expr;
 class Predicate;
-class Path_Monitor_Expr;
-class Test_Goal_Sequence;
-class Test_Goal_Set;
+class Path_Pattern_Expr;
+class Coverage_Pattern_Expr;
+class ECP_Atom;
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
 
 #include <set>
 #include <list>
-
-class exprt;
 
 #include <fshell2/fql/parser/parser.h>
 
@@ -113,8 +111,8 @@ TOK_FUNC                @FUNC
 TOK_LABEL               @LABEL
 TOK_CALL                @CALL
 TOK_CALLS               @CALLS
-TOK_ENTRY               (@ENTRY|\^)
-TOK_EXIT                (@EXIT|\$)
+TOK_ENTRY               @ENTRY
+TOK_EXIT                @EXIT
 TOK_EXPR                @EXPR
 TOK_REGEXP              @REGEXP
 TOK_BASICBLOCKENTRY     @BASICBLOCKENTRY
@@ -130,33 +128,31 @@ TOK_STT_WHILE           WHILE
 TOK_STT_SWITCH          SWITCH
 TOK_STT_CONDOP          \?:
 TOK_STT_ASSERT          ASSERT
-/* operations on target graphs */
-TOK_COMPLEMENT          (COMPLEMENT|NOT)
-TOK_UNION               UNION
-TOK_INTERSECT           INTERSECT
+/* CFA transformers */
+TOK_NOT                 NOT
+TOK_TGUNION             \|
+TOK_TGINTERSECT         &
 TOK_SETMINUS            SETMINUS
-TOK_ENCLOSING_SCOPES    ENCLOSING_SCOPES
 TOK_COMPOSE             COMPOSE
-/* abstraction/predicates */
-TOK_L_BRACE             \{
-TOK_R_BRACE             \}
-TOK_GREATER_OR_EQ       >=
-TOK_GREATER             >
-TOK_EQ                  ==
-TOK_LESS_OR_EQ          <=
-TOK_LESS                <
-TOK_NEQ                 !=
-/* coverage specification */
-TOK_STATECOV            STATES
+TOK_PRED                PRED
+/* predicates */
+TOK_ARBITRARY_PRED      \{[^\{\}]+\}
+/* target graph interpreters */
+TOK_NODECOV             NODES
 TOK_EDGECOV             EDGES
 TOK_PATHCOV             PATHS
-TOK_L_SEQ               -\[
-TOK_R_SEQ               \]>
-/* path monitors */
+TOK_DEPCOV              DEPS
+/* elementary coverage patterns */
 TOK_NEXT                ->
 TOK_CONCAT              \.
 TOK_ALTERNATIVE         \+
 TOK_KLEENE              \*
+TOK_DBLQUOTE            \" 
+TOK_GREATER_OR_EQ       >=
+TOK_EQ                  ==
+TOK_LESS_OR_EQ          <=
+TOK_START               \^
+TOK_END                 \$
 /* query */
 TOK_IN                  IN
 TOK_COVER               COVER
@@ -166,7 +162,7 @@ TOK_C_IDENT             [_a-zA-Z][_a-zA-Z0-9]*
 /* a quoted string (no newline); see
  * http://dinosaur.compilertools.net/flex/flex_11.html for a more powerful
  * quoted-string lexer including support for escape sequences */
-TOK_QUOTED_STRING       \"[^\"]*\"
+TOK_QUOTED_STRING       '[^']*'
 /* a natural number */
 TOK_NAT_NUMBER          [0-9]+
 
@@ -214,32 +210,39 @@ TOK_NAT_NUMBER          [0-9]+
 <stmttype>{TOK_STT_CONDOP}   { return TOK_STT_CONDOP; }
 <stmttype>{TOK_STT_ASSERT}   { return TOK_STT_ASSERT; }
 
-<query_scope,query_cover,query_passing>{TOK_COMPLEMENT}   { return TOK_COMPLEMENT; }
-<query_scope,query_cover,query_passing>{TOK_UNION}   { return TOK_UNION; }
-<query_scope,query_cover,query_passing>{TOK_INTERSECT}   { return TOK_INTERSECT; }
+<query_scope,query_cover,query_passing>{TOK_NOT}   { return TOK_NOT; }
+<query_scope,query_cover,query_passing>{TOK_TGUNION}   { return TOK_TGUNION; }
+<query_scope,query_cover,query_passing>{TOK_TGINTERSECT}   { return TOK_TGINTERSECT; }
 <query_scope,query_cover,query_passing>{TOK_SETMINUS}   { return TOK_SETMINUS; }
-<query_scope,query_cover,query_passing>{TOK_ENCLOSING_SCOPES}   { return TOK_ENCLOSING_SCOPES; }
 <query_scope,query_cover,query_passing>{TOK_COMPOSE}   { return TOK_COMPOSE; }
+<query_scope,query_cover,query_passing>{TOK_PRED}   { return TOK_PRED; }
 
-<query_cover,query_passing>{TOK_L_BRACE}   { return TOK_L_BRACE; }
-<query_cover,query_passing>{TOK_R_BRACE}   { return TOK_R_BRACE; }
-<query_cover,query_passing>{TOK_GREATER_OR_EQ}   { return TOK_GREATER_OR_EQ; }
-<query_cover,query_passing>{TOK_GREATER}   { return TOK_GREATER; }
-<query_cover,query_passing>{TOK_EQ}   { return TOK_EQ; }
-<query_cover,query_passing>{TOK_LESS_OR_EQ}   { return TOK_LESS_OR_EQ; }
-<query_cover,query_passing>{TOK_LESS}   { return TOK_LESS; }
-<query_cover,query_passing>{TOK_NEQ}   { return TOK_NEQ; }
+<query_scope,query_cover,query_passing>{TOK_ARBITRARY_PRED}	{
+                                        /* only return the string between { } */
+                                        int len = strlen( yytext );
+                                        yylval.STRING = static_cast<char*>(malloc((len - 1)*sizeof(char)));
+                                        FSHELL2_PROD_ASSERT1(::diagnostics::Parse_Error,
+                                          yylval.STRING != 0, "Out of memory" );
+                                        strncpy( yylval.STRING, yytext + sizeof(char), (len - 2)*sizeof(char) ); 
+                                        yylval.STRING[ len - 2 ] = '\0';
+                                        return TOK_ARBITRARY_PRED; 
+                                      }
 
-<query_cover>{TOK_STATECOV}   { return TOK_STATECOV; }
+<query_cover>{TOK_NODECOV}   { return TOK_NODECOV; }
 <query_cover>{TOK_EDGECOV}   { return TOK_EDGECOV; }
 <query_cover>{TOK_PATHCOV}   { return TOK_PATHCOV; }
-<query_cover>{TOK_L_SEQ}   { return TOK_L_SEQ; }
-<query_cover>{TOK_R_SEQ}   { return TOK_R_SEQ; }
+<query_cover>{TOK_DEPCOV}   { return TOK_DEPCOV; }
 
 <query_cover,query_passing>{TOK_NEXT}   { return TOK_NEXT; }
 <query_cover,query_passing>{TOK_CONCAT}   { return TOK_CONCAT; }
 <query_cover,query_passing>{TOK_ALTERNATIVE}   { return TOK_ALTERNATIVE; }
 <query_cover,query_passing>{TOK_KLEENE}   { return TOK_KLEENE; }
+<query_cover,query_passing>{TOK_DBLQUOTE}   { return TOK_DBLQUOTE; }
+<query_cover,query_passing>{TOK_GREATER_OR_EQ}   { return TOK_GREATER_OR_EQ; }
+<query_cover,query_passing>{TOK_EQ}   { return TOK_EQ; }
+<query_cover,query_passing>{TOK_LESS_OR_EQ}   { return TOK_LESS_OR_EQ; }
+<query_cover,query_passing>{TOK_START}   { return TOK_START; }
+<query_cover,query_passing>{TOK_END}   { return TOK_END; }
 
 <INITIAL>{TOK_IN}   { BEGIN query_scope; return TOK_IN; }
 <INITIAL,query_scope>{TOK_COVER}   { BEGIN query_cover; return TOK_COVER; }

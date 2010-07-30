@@ -28,7 +28,7 @@
 
 #include <fshell2/fql/ast/fql_node_lt_visitor.hpp>
 
-#if AUTOMATA_DEBUG__LEVEL__ > -1
+#if FSHELL2_DEBUG__LEVEL__ > -1
 #  include <diagnostics/basic_exceptions/not_implemented.hpp>
 #endif
 
@@ -67,45 +67,47 @@ void FQL_Node_Lt_Visitor::Compare_To_Visitor<T>::visit(Filter_Expr const* n)
 LT_VISIT_BUILDER_CPP_BASE(Filter_Expr, FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, false));
 
 template <typename T>
-void FQL_Node_Lt_Visitor::Compare_To_Visitor<T>::visit(Path_Monitor_Expr const* n)
+void FQL_Node_Lt_Visitor::Compare_To_Visitor<T>::visit(Path_Pattern_Expr const* n)
 {
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, false);
 }
 
-LT_VISIT_BUILDER_CPP_BASE(Path_Monitor_Expr, FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, false));
+LT_VISIT_BUILDER_CPP_BASE(Path_Pattern_Expr, FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, false));
 
 template <typename T>
-void FQL_Node_Lt_Visitor::Compare_To_Visitor<T>::visit(Test_Goal_Set const* n)
+void FQL_Node_Lt_Visitor::Compare_To_Visitor<T>::visit(Coverage_Pattern_Expr const* n)
 {
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, false);
 }
 
-LT_VISIT_BUILDER_CPP_BASE(Test_Goal_Set, FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, false));
+LT_VISIT_BUILDER_CPP_BASE(Coverage_Pattern_Expr, FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, false));
 
+template <typename T>
+void FQL_Node_Lt_Visitor::Compare_To_Visitor<T>::visit(ECP_Atom const* n)
+{
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, false);
+}
+
+LT_VISIT_BUILDER_CPP_BASE(ECP_Atom, FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, false));
+
+LT_VISIT_BUILDER_1(CP_Alternative);
+LT_VISIT_BUILDER_1(CP_Concat);
+LT_VISIT_BUILDER_1(Depcov);
 LT_VISIT_BUILDER_1(Edgecov);
-LT_VISIT_BUILDER_1(Filter_Complement);
 LT_VISIT_BUILDER_1(Filter_Compose);
-LT_VISIT_BUILDER_1(Filter_Enclosing_Scopes);
 LT_VISIT_BUILDER_1(Filter_Function);
 LT_VISIT_BUILDER_1(Filter_Intersection);
 LT_VISIT_BUILDER_1(Filter_Setminus);
 LT_VISIT_BUILDER_1(Filter_Union);
-LT_VISIT_BUILDER_1(PM_Alternative);
-LT_VISIT_BUILDER_1(PM_Concat);
-LT_VISIT_BUILDER_1(PM_Filter_Adapter);
-LT_VISIT_BUILDER_1(PM_Postcondition);
-LT_VISIT_BUILDER_1(PM_Precondition);
-LT_VISIT_BUILDER_1(PM_Repeat);
+LT_VISIT_BUILDER_1(Nodecov);
+LT_VISIT_BUILDER_1(PP_Alternative);
+LT_VISIT_BUILDER_1(PP_Concat);
 LT_VISIT_BUILDER_1(Pathcov);
 LT_VISIT_BUILDER_1(Predicate);
+LT_VISIT_BUILDER_1(Quote);
 LT_VISIT_BUILDER_1(Query);
-LT_VISIT_BUILDER_1(Statecov);
-LT_VISIT_BUILDER_1(TGS_Intersection);
-LT_VISIT_BUILDER_1(TGS_Postcondition);
-LT_VISIT_BUILDER_1(TGS_Precondition);
-LT_VISIT_BUILDER_1(TGS_Setminus);
-LT_VISIT_BUILDER_1(TGS_Union);
-LT_VISIT_BUILDER_1(Test_Goal_Sequence);
+LT_VISIT_BUILDER_1(Repeat);
+LT_VISIT_BUILDER_1(Transform_Pred);
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;

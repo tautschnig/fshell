@@ -61,7 +61,7 @@ void test_basic( Test_Data & data )
 	::fshell2::fql::Query * q(0);
 	Query_Parser qp;
 
-	qp.parse(os, "cover edges(@file(\"bla.c\"))", &q);
+	qp.parse(os, "cover edges(@file('bla.c'))", &q);
 	TEST_ASSERT(q != 0);
 	os.str("");
 
@@ -100,7 +100,7 @@ void test_invalid( Test_Data & data )
 	TEST_THROWING_BLOCK_EXIT(::fshell2::Query_Processing_Error);
 	
 	TEST_THROWING_BLOCK_ENTER;
-	qp.parse(os, "cover edges(@basicblockentry)->(@basicblockentry)", &q);
+	qp.parse(os, "cover edges(@basicblockentry)->(@basicblockentry) passing \"ID*\"", &q);
 	TEST_THROWING_BLOCK_EXIT(::fshell2::Query_Processing_Error);
 
 	TEST_ASSERT(0 == q);
@@ -117,35 +117,35 @@ void test_use_case( Test_Data & data )
 	::fshell2::fql::Query * q(0);
 	Query_Parser qp;
 	
-	qp.parse(os, "cover edges(@file(\"bla.c\"))", &q);
+	qp.parse(os, "cover edges(@file('bla.c'))", &q);
 	TEST_ASSERT(q != 0);
 	os.str("");
 	os << *q;
 	TEST_ASSERT(data.compare("parsed_use_case_query_1", os.str()));
 	q->destroy();
 	
-	qp.parse(os, "in @file(\"bla.c\") cover edges(id) passing @func(main)*", &q);
+	qp.parse(os, "in @file('bla.c') cover edges(id) passing @func(main)*", &q);
 	TEST_ASSERT(q != 0);
 	os.str("");
 	os << *q;
 	TEST_ASSERT(data.compare("parsed_use_case_query_2", os.str()));
 	q->destroy();
 	
-	qp.parse(os, "in @file(\"bla.c\") cover edges(@BASICBLOCKENTRY) passing setminus(@file(\"bla.c\"),@func(unimplemented))*", &q);
+	qp.parse(os, "in @file('bla.c') cover edges(@BASICBLOCKENTRY) passing setminus(@file('bla.c'),@func(unimplemented))*", &q);
 	TEST_ASSERT(q != 0);
 	os.str("");
 	os << *q;
 	TEST_ASSERT(data.compare("parsed_use_case_query_3", os.str()));
 	q->destroy();
 	
-	qp.parse(os, "in @file(\"bla.c\") cover edges(@BASICBLOCKENTRY) -[ @func(main)+@func(other) ]> edges(@BASICBLOCKENTRY) passing @func(main)*.@func(other).id*", &q);
+	qp.parse(os, "in @file('bla.c') cover edges(@BASICBLOCKENTRY) . (@func(main)+@func(other)) . edges(@BASICBLOCKENTRY) passing @func(main)*.@func(other).id*", &q);
 	TEST_ASSERT(q != 0);
 	os.str("");
 	os << *q;
 	TEST_ASSERT(data.compare("parsed_use_case_query_4", os.str()));
 	q->destroy();
 	
-	qp.parse(os, "cover {x<5}{\"is_empty()\"}edges(@BASICBLOCKENTRY){\"x>5\"}{x>5} passing @func(main)*.{x==6}@func(other).id{x==7}*", &q);
+	qp.parse(os, "cover {x<5}.{is_empty()}.edges(@BASICBLOCKENTRY).{x>5}.{x>5} passing @func(main)*.{x==6}.@func(other).(id.{x==7})*", &q);
 	TEST_ASSERT(q != 0);
 	os.str("");
 	os << *q;

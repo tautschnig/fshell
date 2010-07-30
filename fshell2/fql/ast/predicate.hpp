@@ -30,7 +30,7 @@
 */
 
 #include <fshell2/config/config.hpp>
-#include <fshell2/fql/ast/fql_node.hpp>
+#include <fshell2/fql/ast/ecp_atom.hpp>
 #include <fshell2/fql/ast/fql_node_factory.hpp>
 
 #include <set>
@@ -42,7 +42,7 @@ FSHELL2_FQL_NAMESPACE_BEGIN;
 
 /*! \brief TODO
 */
-class Predicate : public FQL_Node
+class Predicate : public ECP_Atom
 {
 	/*! \copydoc doc_self
 	*/

@@ -31,6 +31,11 @@
 
 #include <fshell2/config/config.hpp>
 
+#include <fshell2/fql/ast/ast_visitor.hpp>
+#include <fshell2/fql/ast/standard_ast_visitor_aspect.hpp>
+#include <fshell2/fql/concepts/trace_automaton.hpp>
+#include <fshell2/fql/evaluation/evaluate_coverage_pattern.hpp>
+
 #include <cbmc/src/cbmc/bmc.h>
 #include <cbmc/src/cbmc/bv_cbmc.h>
 #include <cbmc/src/solvers/sat/cnf_clause_list.h>
@@ -38,8 +43,7 @@
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-class Query;
-class Build_Test_Goal_Automaton;
+class Evaluate_Path_Pattern;
 class Automaton_Inserter;
 
 /*! \brief TODO
@@ -108,7 +112,7 @@ inline ::namespacet const& CNF_Conversion::get_ns() const {
 
 /*! \brief TODO
 */
-class Compute_Test_Goals_From_Instrumentation
+class Compute_Test_Goals_From_Instrumentation : public Standard_AST_Visitor_Aspect<AST_Visitor>
 {
 	/*! \copydoc doc_self
 	*/
@@ -116,17 +120,23 @@ class Compute_Test_Goals_From_Instrumentation
 
 	public:
 	Compute_Test_Goals_From_Instrumentation(CNF_Conversion & equation,
-			Build_Test_Goal_Automaton const& build_tg_aut,
+			Evaluate_Coverage_Pattern const& cp_eval,
 			Automaton_Inserter const& a_i);
 
-	~Compute_Test_Goals_From_Instrumentation();
+	virtual ~Compute_Test_Goals_From_Instrumentation();
 
-	void compute(Query const& query);
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Query
+	 * \param  n Query
+	 */
+	virtual void visit(Query const* n);
+	/*! \} */
 
 	private:
 	CNF_Conversion & m_equation;
-	Build_Test_Goal_Automaton const& m_build_tg_aut;
+	Evaluate_Coverage_Pattern const& m_cp_eval;
 	Automaton_Inserter const& m_aut_insert;
+	Evaluate_Coverage_Pattern::Test_Goal_States const* m_test_goal_states;
 	/*typedef ::std::map< ta_state_t, 
 		::std::map< ::goto_programt::const_targett, test_goal_t > > state_context_tg_t;
 	state_context_tg_t m_state_context_tg_map;*/
@@ -134,6 +144,71 @@ class Compute_Test_Goals_From_Instrumentation
 				::std::map< ::goto_programt::const_targett, 
 					::std::set< ::literalt > > > pc_to_context_and_guards_t;
 	pc_to_context_and_guards_t m_pc_to_guard;
+	CNF_Conversion::test_goals_t m_test_goals;
+	typedef ::std::map< ::goto_programt::const_targett,
+				::std::set< ::goto_programt::const_targett > > context_to_pcs_t;
+
+	bool find_all_contexts(context_to_pcs_t & context_to_pcs) const;
+
+	void context_to_literals(::goto_programt::const_targett const& context,
+		::std::set< ::goto_programt::const_targett > const& pcs, ::bvt & test_goal_literals) const;
+	
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::CP_Alternative
+	 * \param  n CP_Alternative
+	 */
+	virtual void visit(CP_Alternative const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::CP_Concat
+	 * \param  n CP_Concat
+	 */
+	virtual void visit(CP_Concat const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Depcov
+	 * \param  n Depcov
+	 */
+	virtual void visit(Depcov const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Edgecov
+	 * \param  n Edgecov
+	 */
+	virtual void visit(Edgecov const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Nodecov
+	 * \param  n Nodecov
+	 */
+	virtual void visit(Nodecov const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Pathcov
+	 * \param  n Pathcov
+	 */
+	virtual void visit(Pathcov const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Predicate
+	 * \param  n Predicate
+	 */
+	virtual void visit(Predicate const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Quote
+	 * \param  n Quote
+	 */
+	virtual void visit(Quote const* n);
+	/*! \} */
+
 
 	/*! \copydoc copy_constructor
 	*/
@@ -154,7 +229,8 @@ class Compute_Test_Goals_Boolean
 
 	public:
 	Compute_Test_Goals_Boolean(CNF_Conversion & equation,
-			Build_Test_Goal_Automaton const& build_tg_aut);
+			Evaluate_Path_Pattern const& pp_eval,
+			Evaluate_Coverage_Pattern const& cp_eval);
 
 	virtual ~Compute_Test_Goals_Boolean();
 
@@ -162,7 +238,8 @@ class Compute_Test_Goals_Boolean
 
 	private:
 	CNF_Conversion & m_equation;
-	Build_Test_Goal_Automaton const& m_build_tg_aut;
+	Evaluate_Path_Pattern const& m_pp_eval;
+	Evaluate_Coverage_Pattern const& m_cp_eval;
 	/*typedef ::std::map< ta_state_t, 
 		::std::map< ::goto_programt::const_targett, test_goal_t > > state_context_tg_t;
 	state_context_tg_t m_state_context_tg_map;*/

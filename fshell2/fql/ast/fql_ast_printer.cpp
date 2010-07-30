@@ -31,30 +31,24 @@
 
 #include <diagnostics/basic_exceptions/violated_invariance.hpp>
 
+#include <fshell2/fql/ast/cp_alternative.hpp>
+#include <fshell2/fql/ast/cp_concat.hpp>
+#include <fshell2/fql/ast/depcov.hpp>
 #include <fshell2/fql/ast/edgecov.hpp>
-#include <fshell2/fql/ast/filter_complement.hpp>
 #include <fshell2/fql/ast/filter_compose.hpp>
-#include <fshell2/fql/ast/filter_enclosing_scopes.hpp>
 #include <fshell2/fql/ast/filter_function.hpp>
 #include <fshell2/fql/ast/filter_intersection.hpp>
 #include <fshell2/fql/ast/filter_setminus.hpp>
 #include <fshell2/fql/ast/filter_union.hpp>
+#include <fshell2/fql/ast/nodecov.hpp>
 #include <fshell2/fql/ast/pathcov.hpp>
-#include <fshell2/fql/ast/pm_alternative.hpp>
-#include <fshell2/fql/ast/pm_concat.hpp>
-#include <fshell2/fql/ast/pm_filter_adapter.hpp>
-#include <fshell2/fql/ast/pm_postcondition.hpp>
-#include <fshell2/fql/ast/pm_precondition.hpp>
-#include <fshell2/fql/ast/pm_repeat.hpp>
+#include <fshell2/fql/ast/pp_alternative.hpp>
+#include <fshell2/fql/ast/pp_concat.hpp>
 #include <fshell2/fql/ast/predicate.hpp>
 #include <fshell2/fql/ast/query.hpp>
-#include <fshell2/fql/ast/statecov.hpp>
-#include <fshell2/fql/ast/test_goal_sequence.hpp>
-#include <fshell2/fql/ast/tgs_intersection.hpp>
-#include <fshell2/fql/ast/tgs_postcondition.hpp>
-#include <fshell2/fql/ast/tgs_precondition.hpp>
-#include <fshell2/fql/ast/tgs_setminus.hpp>
-#include <fshell2/fql/ast/tgs_union.hpp>
+#include <fshell2/fql/ast/quote.hpp>
+#include <fshell2/fql/ast/repeat.hpp>
+#include <fshell2/fql/ast/transform_pred.hpp>
 
 #include <cbmc/src/ansi-c/expr2c.h>
 
@@ -68,21 +62,34 @@ FQL_AST_Printer::FQL_AST_Printer(::std::ostream & os) :
 FQL_AST_Printer::~FQL_AST_Printer() {
 }
 
-void FQL_AST_Printer::visit(Edgecov const* n) {
-	m_os << "EDGES(";
-	n->get_filter_expr()->accept(this);
-	if (n->get_predicates()) {
-		for (Predicate::preds_t::const_iterator iter(n->get_predicates()->begin());
-				iter != n->get_predicates()->end(); ++iter) {
-			m_os << ",";
-			(*iter)->accept(this);
-		}
-	}
+void FQL_AST_Printer::visit(CP_Alternative const* n) {
+	m_os << "(";
+	n->get_cp_a()->accept(this);
+	m_os << "+";
+	n->get_cp_b()->accept(this);
 	m_os << ")";
 }
 
-void FQL_AST_Printer::visit(Filter_Complement const* n) {
-	m_os << "COMPLEMENT(";
+void FQL_AST_Printer::visit(CP_Concat const* n) {
+	m_os << "(";
+	n->get_cp_a()->accept(this);
+	m_os << ".";
+	n->get_cp_b()->accept(this);
+	m_os << ")";
+}
+
+void FQL_AST_Printer::visit(Depcov const* n) {
+	m_os << "DEPS(";
+	n->get_filter_a()->accept(this);
+	m_os << ",";
+	n->get_filter_b()->accept(this);
+	m_os << ",";
+	n->get_filter_c()->accept(this);
+	m_os << ")";
+}
+
+void FQL_AST_Printer::visit(Edgecov const* n) {
+	m_os << "EDGES(";
 	n->get_filter_expr()->accept(this);
 	m_os << ")";
 }
@@ -95,21 +102,15 @@ void FQL_AST_Printer::visit(Filter_Compose const* n) {
 	m_os << ")";
 }
 
-void FQL_AST_Printer::visit(Filter_Enclosing_Scopes const* n) {
-	m_os << "ENCLOSING_SCOPES(";
-	n->get_filter_expr()->accept(this);
-	m_os << ")";
-}
-
 void FQL_AST_Printer::visit(Filter_Function const* n) {
 	switch (n->get_filter_type()) {
 		case F_IDENTITY:
 			m_os << "ID";
 			break;
 		case F_FILE:
-            m_os << "@FILE(\"";
+            m_os << "@FILE('";
 			m_os << n->get_string_arg<F_FILE>();
-			m_os << "\")";
+			m_os << "')";
             break;
 		case F_LINE:
             m_os << "@LINE(";
@@ -150,14 +151,14 @@ void FQL_AST_Printer::visit(Filter_Function const* n) {
 			m_os << ")";
             break;
 		case F_EXPR:
-            m_os << "@EXPR(\"";
+            m_os << "@EXPR('";
 			m_os << n->get_string_arg<F_EXPR>();
-			m_os << "\")";
+			m_os << "')";
             break;
 		case F_REGEXP:
-            m_os << "@REGEXP(\"";
+            m_os << "@REGEXP('";
 			m_os << n->get_string_arg<F_REGEXP>();
-			m_os << "\")";
+			m_os << "')";
             break;
 		case F_BASICBLOCKENTRY:
             m_os << "@BASICBLOCKENTRY";
@@ -172,18 +173,18 @@ void FQL_AST_Printer::visit(Filter_Function const* n) {
             m_os << "@CONDITIONGRAPH";
             break;
 		case F_DEF:
-            m_os << "@DEF(\"";
+            m_os << "@DEF(";
 			m_os << n->get_string_arg<F_DEF>();
-			m_os << "\")";
+			m_os << ")";
             break;
 		case F_USE:
-            m_os << "@USE(\"";
+            m_os << "@USE(";
 			m_os << n->get_string_arg<F_USE>();
-			m_os << "\")";
+			m_os << ")";
             break;
 		case F_STMTTYPE:
 			{
-            	m_os << "@STMTTYPE(\"";
+            	m_os << "@STMTTYPE(";
 				int types(n->get_int_arg<F_STMTTYPE>());
 				bool not_first(false);
 				for (unsigned i(0); types && i < sizeof(int)*8; ++i) {
@@ -217,16 +218,16 @@ void FQL_AST_Printer::visit(Filter_Function const* n) {
 						types &= ~(1 << i);
 					}
 				}
-				m_os << "\")";
+				m_os << ")";
 			}
             break;
 	}
 }
 
 void FQL_AST_Printer::visit(Filter_Intersection const* n) {
-	m_os << "INTERSECT(";
+	m_os << "(";
 	n->get_filter_expr_a()->accept(this);
-	m_os << ",";
+	m_os << "&";
 	n->get_filter_expr_b()->accept(this);
 	m_os << ")";
 }
@@ -240,67 +241,39 @@ void FQL_AST_Printer::visit(Filter_Setminus const* n) {
 }
 
 void FQL_AST_Printer::visit(Filter_Union const* n) {
-	m_os << "UNION(";
+	m_os << "(";
 	n->get_filter_expr_a()->accept(this);
-	m_os << ",";
+	m_os << "|";
 	n->get_filter_expr_b()->accept(this);
 	m_os << ")";
 }
 
-void FQL_AST_Printer::visit(PM_Alternative const* n) {
+void FQL_AST_Printer::visit(PP_Alternative const* n) {
 	m_os << "(";
-	n->get_path_monitor_expr_a()->accept(this);
+	n->get_pp_a()->accept(this);
 	m_os << "+";
-	n->get_path_monitor_expr_b()->accept(this);
+	n->get_pp_b()->accept(this);
 	m_os << ")";
 }
 
-void FQL_AST_Printer::visit(PM_Concat const* n) {
+void FQL_AST_Printer::visit(PP_Concat const* n) {
 	m_os << "(";
-	n->get_path_monitor_expr_a()->accept(this);
+	n->get_pp_a()->accept(this);
 	m_os << ".";
-	n->get_path_monitor_expr_b()->accept(this);
+	n->get_pp_b()->accept(this);
 	m_os << ")";
 }
 
-void FQL_AST_Printer::visit(PM_Filter_Adapter const* n) {
+void FQL_AST_Printer::visit(Nodecov const* n) {
+	m_os << "NODES(";
 	n->get_filter_expr()->accept(this);
-}
-
-void FQL_AST_Printer::visit(PM_Postcondition const* n) {
-	n->get_path_monitor_expr()->accept(this);
-	n->get_predicate()->accept(this);
-}
-
-void FQL_AST_Printer::visit(PM_Precondition const* n) {
-	n->get_predicate()->accept(this);
-	n->get_path_monitor_expr()->accept(this);
-}
-
-void FQL_AST_Printer::visit(PM_Repeat const* n) {
-	int const lb(n->get_lower_bound());
-	int const ub(n->get_upper_bound());
-	m_os << "(";
-	n->get_path_monitor_expr()->accept(this);
-	if (-1 == ub) m_os << ">=" << lb;
-	else {
-		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 0 == lb);
-		m_os << "<=" << ub;
-	}
 	m_os << ")";
 }
 
 void FQL_AST_Printer::visit(Pathcov const* n) {
-	m_os << "PATHCOV(";
+	m_os << "PATHS(";
 	n->get_filter_expr()->accept(this);
 	m_os << "," << n->get_bound();
-	if (n->get_predicates()) {
-		for (Predicate::preds_t::const_iterator iter(n->get_predicates()->begin());
-				iter != n->get_predicates()->end(); ++iter) {
-			m_os << ",";
-			(*iter)->accept(this);
-		}
-	}
 	m_os << ")";
 }
 
@@ -312,7 +285,7 @@ void FQL_AST_Printer::visit(Predicate const* n) {
 	while (::std::isspace(c_expr.at(no_ws_start))) ++no_ws_start;
 	::std::string::size_type const prefix(c_expr.find("!PRED! = (_Bool)("));
 	c_expr = c_expr.substr(::std::string::npos==prefix?no_ws_start:(prefix+17));
-	m_os << "{\"" << c_expr.substr(0, c_expr.rfind(");\n")) << "\"}";
+	m_os << "{" << c_expr.substr(0, c_expr.rfind(");\n")) << "}";
 }
 
 void FQL_AST_Printer::visit(Query const* n) {
@@ -329,77 +302,36 @@ void FQL_AST_Printer::visit(Query const* n) {
 	}
 }
 
-void FQL_AST_Printer::visit(Statecov const* n) {
-	m_os << "STATES(";
+void FQL_AST_Printer::visit(Quote const* n) {
+	m_os << "\"";
+	n->get_pp()->accept(this);
+	m_os << "\"";
+}
+
+void FQL_AST_Printer::visit(Repeat const* n) {
+	int const lb(n->get_lower_bound());
+	int const ub(n->get_upper_bound());
+	m_os << "(";
+	n->get_pp()->accept(this);
+	if (-1 == ub) {
+		if (0 == lb) m_os << "*";
+		else m_os << ">=" << lb;
+	} else {
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 0 == lb);
+		m_os << "<=" << ub;
+	}
+	m_os << ")";
+}
+
+void FQL_AST_Printer::visit(Transform_Pred const* n) {
+	m_os << "PRED(";
 	n->get_filter_expr()->accept(this);
-	if (n->get_predicates()) {
-		for (Predicate::preds_t::const_iterator iter(n->get_predicates()->begin());
-				iter != n->get_predicates()->end(); ++iter) {
-			m_os << ",";
-			(*iter)->accept(this);
-		}
+	for (Predicate::preds_t::const_iterator iter(n->get_predicates()->begin());
+			iter != n->get_predicates()->end(); ++iter) {
+		m_os << ",";
+		(*iter)->accept(this);
 	}
 	m_os << ")";
-}
-
-
-void FQL_AST_Printer::visit(TGS_Intersection const* n) {
-	m_os << "INTERSECT(";
-	n->get_tgs_a()->accept(this);
-	m_os << ",";
-	n->get_tgs_b()->accept(this);
-	m_os << ")";
-}
-
-void FQL_AST_Printer::visit(TGS_Postcondition const* n) {
-	n->get_tgs()->accept(this);
-	n->get_predicate()->accept(this);
-}
-
-void FQL_AST_Printer::visit(TGS_Precondition const* n) {
-	n->get_predicate()->accept(this);
-	n->get_tgs()->accept(this);
-}
-
-void FQL_AST_Printer::visit(TGS_Setminus const* n) {
-	m_os << "SETMINUS(";
-	n->get_tgs_a()->accept(this);
-	m_os << ",";
-	n->get_tgs_b()->accept(this);
-	m_os << ")";
-}
-
-void FQL_AST_Printer::visit(TGS_Union const* n) {
-	m_os << "UNION(";
-	n->get_tgs_a()->accept(this);
-	m_os << ",";
-	n->get_tgs_b()->accept(this);
-	m_os << ")";
-}
-
-void FQL_AST_Printer::visit(Test_Goal_Sequence const* n) {
-	if (n->get_sequence().front().first) {
-		m_os << "[";
-		n->get_sequence().front().first->accept(this);
-		m_os << "]>";
-	}
-	n->get_sequence().front().second->accept(this);
-
-	for (Test_Goal_Sequence::seq_t::const_iterator iter(++(n->get_sequence().begin()));
-			iter != n->get_sequence().end(); ++iter) {
-		if (iter->first) {
-			m_os << "-[";
-			iter->first->accept(this);
-			m_os << "]>";
-		}
-		iter->second->accept(this);
-	}
-
-	if (n->get_suffix_monitor()) {
-		m_os << "-[";
-		n->get_suffix_monitor()->accept(this);
-		m_os << "]";
-	}
 }
 
 FSHELL2_FQL_NAMESPACE_END;

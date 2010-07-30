@@ -32,10 +32,10 @@ $(top_builddir)/cbmc/src/util/irep_ids.h:
 	$(MAKE) -C $(top_builddir)/cbmc/src/util irep_ids.h
 
 noinst_LTLIBRARIES = libevaluation.la
-libevaluation_la_SOURCES =  evaluate_filter.cpp predicate_instrumentation.cpp evaluate_path_monitor.cpp build_test_goal_automaton.cpp automaton_inserter.cpp compute_test_goals.cpp
+libevaluation_la_SOURCES =  evaluate_filter.cpp predicate_instrumentation.cpp evaluate_path_pattern.cpp evaluate_coverage_pattern.cpp automaton_inserter.cpp compute_test_goals.cpp
 include_fshell2_fql_evaluationdir = $(includedir)/fshell2/fql/evaluation
-include_fshell2_fql_evaluation_HEADERS =  evaluate_filter.hpp evaluate_path_monitor.hpp automaton_inserter.hpp compute_test_goals.hpp build_test_goal_automaton.hpp predicate_instrumentation.hpp
-check_PROGRAMS =  evaluate_filter predicate_instrumentation evaluate_path_monitor build_test_goal_automaton automaton_inserter compute_test_goals
+include_fshell2_fql_evaluation_HEADERS =  evaluate_filter.hpp evaluate_path_pattern.hpp automaton_inserter.hpp compute_test_goals.hpp evaluate_coverage_pattern.hpp predicate_instrumentation.hpp
+check_PROGRAMS =  evaluate_filter predicate_instrumentation evaluate_path_pattern evaluate_coverage_pattern automaton_inserter compute_test_goals
 evaluate_filter_SOURCES = evaluate_filter.t.cpp
 # add additional objects required to build evaluate_filter here, like
 # evaluate_filter_LDADD = ../base/libbase.la libbla.la
@@ -57,25 +57,25 @@ automaton_inserter_LDADD =
 # note that this entry (automaton_inserter_SOURCES, automaton_inserter_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually
-evaluate_path_monitor_SOURCES = evaluate_path_monitor.t.cpp
-# add additional objects required to build evaluate_path_monitor here, like
-# evaluate_path_monitor_LDADD = ../base/libbase.la libbla.la
-evaluate_path_monitor_LDADD = libevaluation.la ../ast/libast.la ../concepts/libconcepts.la ../../instrumentation/libinstrumentation.la ../../exception/libexception.la $(CBMC_OBJS)
+evaluate_path_pattern_SOURCES = evaluate_path_pattern.t.cpp
+# add additional objects required to build evaluate_path_pattern here, like
+# evaluate_path_pattern_LDADD = ../base/libbase.la libbla.la
+evaluate_path_pattern_LDADD = libevaluation.la ../ast/libast.la ../concepts/libconcepts.la ../../instrumentation/libinstrumentation.la ../../exception/libexception.la $(CBMC_OBJS)
 # note that this entry (target_graph_SOURCES, target_graph_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually
-build_test_goal_automaton_SOURCES = build_test_goal_automaton.t.cpp
-# add additional objects required to build build_test_goal_automaton here, like
-# build_test_goal_automaton_LDADD = ../base/libbase.la libbla.la
-build_test_goal_automaton_LDADD =
-# note that this entry (build_test_goal_automaton_SOURCES, build_test_goal_automaton_LDADD) will not be removed
+evaluate_coverage_pattern_SOURCES = evaluate_coverage_pattern.t.cpp
+# add additional objects required to build evaluate_coverage_pattern here, like
+# evaluate_coverage_pattern_LDADD = ../base/libbase.la libbla.la
+evaluate_coverage_pattern_LDADD = libevaluation.la ../ast/libast.la ../concepts/libconcepts.la ../../instrumentation/libinstrumentation.la ../../exception/libexception.la $(CBMC_OBJS)
+# note that this entry (evaluate_coverage_pattern_SOURCES, evaluate_coverage_pattern_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually
 predicate_instrumentation_SOURCES = predicate_instrumentation.t.cpp
 # add additional objects required to build predicate_instrumentation here, like
 # predicate_instrumentation_LDADD = ../base/libbase.la libbla.la
-predicate_instrumentation_LDADD =
+predicate_instrumentation_LDADD = libevaluation.la ../ast/libast.la ../concepts/libconcepts.la ../../instrumentation/libinstrumentation.la ../../exception/libexception.la $(CBMC_OBJS)
 # note that this entry (predicate_instrumentation_SOURCES, predicate_instrumentation_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually
-TESTS = automaton_inserter build_test_goal_automaton compute_test_goals evaluate_filter evaluate_path_monitor predicate_instrumentation
+TESTS = automaton_inserter evaluate_coverage_pattern compute_test_goals evaluate_filter evaluate_path_pattern predicate_instrumentation

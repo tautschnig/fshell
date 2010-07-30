@@ -33,26 +33,24 @@
 
 #include <fshell2/fql/normalize/normalization_visitor.hpp>
 
+#include <fshell2/fql/ast/cp_alternative.hpp>
+#include <fshell2/fql/ast/cp_concat.hpp>
+#include <fshell2/fql/ast/depcov.hpp>
 #include <fshell2/fql/ast/edgecov.hpp>
-#include <fshell2/fql/ast/filter_complement.hpp>
 #include <fshell2/fql/ast/filter_compose.hpp>
-#include <fshell2/fql/ast/filter_enclosing_scopes.hpp>
 #include <fshell2/fql/ast/filter_function.hpp>
 #include <fshell2/fql/ast/filter_intersection.hpp>
 #include <fshell2/fql/ast/filter_setminus.hpp>
 #include <fshell2/fql/ast/filter_union.hpp>
+#include <fshell2/fql/ast/nodecov.hpp>
 #include <fshell2/fql/ast/pathcov.hpp>
-#include <fshell2/fql/ast/pm_alternative.hpp>
-#include <fshell2/fql/ast/pm_concat.hpp>
-#include <fshell2/fql/ast/pm_filter_adapter.hpp>
-#include <fshell2/fql/ast/pm_repeat.hpp>
+#include <fshell2/fql/ast/pp_alternative.hpp>
+#include <fshell2/fql/ast/pp_concat.hpp>
 #include <fshell2/fql/ast/predicate.hpp>
 #include <fshell2/fql/ast/query.hpp>
-#include <fshell2/fql/ast/statecov.hpp>
-#include <fshell2/fql/ast/test_goal_sequence.hpp>
-#include <fshell2/fql/ast/tgs_intersection.hpp>
-#include <fshell2/fql/ast/tgs_setminus.hpp>
-#include <fshell2/fql/ast/tgs_union.hpp>
+#include <fshell2/fql/ast/quote.hpp>
+#include <fshell2/fql/ast/repeat.hpp>
+#include <fshell2/fql/ast/transform_pred.hpp>
 
 #define TEST_COMPONENT_NAME Normalization_Visitor
 #define TEST_COMPONENT_NAMESPACE fshell2::fql
@@ -73,40 +71,26 @@ using namespace ::diagnostics::unittest;
  */
 void test_union_intersect( Test_Data & data )
 {
-	Path_Monitor_Expr * idstar(PM_Repeat::Factory::get_instance().create(
-				PM_Filter_Adapter::Factory::get_instance().create(
-					Filter_Function::Factory::get_instance().create<F_IDENTITY>()), 0, -1));
+	Path_Pattern_Expr * idstar(FQL_CREATE3(Repeat, FQL_CREATE1(Edgecov, FQL_CREATE_FF0(F_IDENTITY)), 0, -1));
 	idstar->incr_ref_count(); // re-used below, after normalize
 
-	Filter_Expr * file(Filter_Function::Factory::get_instance().create<F_FILE>("bla.c"));
-	Filter_Expr * line(Filter_Function::Factory::get_instance().create<F_LINE>(42));
+	Filter_Expr * file(FQL_CREATE_FF1(F_FILE, "bla.c"));
+	Filter_Expr * line(FQL_CREATE_FF1(F_LINE, 42));
 	TEST_CHECK(FQL_Node_Lt_Compare()(file, line));
 
-	Filter_Expr * intersec1(Filter_Intersection::Factory::get_instance().create(line, file));
+	Filter_Expr * intersec1(FQL_CREATE2(Filter_Intersection, line, file));
 	intersec1->incr_ref_count(); // re-used below, after normalize
 
-	Edgecov * e(Edgecov::Factory::get_instance().create(intersec1,
-				static_cast< Predicate::preds_t * >(0)));
+	Edgecov * e(FQL_CREATE1(Edgecov, intersec1));
 
-	Test_Goal_Sequence::seq_t seq_list;
-	seq_list.push_back(::std::make_pair<Path_Monitor_Expr *, Test_Goal_Set *>(0, e));
-	Test_Goal_Sequence * s(Test_Goal_Sequence::Factory::get_instance().create(seq_list, 0));
-
-	Query * q(Query::Factory::get_instance().create(0, s, 0));
+	Query * q(FQL_CREATE3(Query, 0, e, 0));
 	::std::ostringstream os1;
 	os1 << *q;
+
+	Filter_Expr * intersec2(FQL_CREATE2(Filter_Intersection, file, line));
+	Edgecov * e2(FQL_CREATE1(Edgecov, intersec2));
 	
-	Filter_Expr * intersec2(Filter_Intersection::Factory::get_instance().create(file, line));
-	intersec2->incr_ref_count(); // re-used below, after normalize
-
-	Edgecov * e2(Edgecov::Factory::get_instance().create(intersec2,
-				static_cast< Predicate::preds_t * >(0)));
-
-	Test_Goal_Sequence::seq_t seq_list2;
-	seq_list2.push_back(::std::make_pair<Path_Monitor_Expr *, Test_Goal_Set *>(idstar, e2));
-	Test_Goal_Sequence * s2(Test_Goal_Sequence::Factory::get_instance().create(seq_list2, idstar));
-
-	Query * q2(Query::Factory::get_instance().create(0, s2, idstar));
+	Query * q2(FQL_CREATE3(Query, 0, e2, idstar));
 	::std::ostringstream os2;
 	os2 << *q2;
 	
@@ -119,23 +103,18 @@ void test_union_intersect( Test_Data & data )
 	
 	TEST_ASSERT_RELATION(os1.str(), ==, os2.str());
 	
-	Filter_Expr * union1(Filter_Union::Factory::get_instance().create(intersec1, intersec2));
+	Filter_Expr * union1(FQL_CREATE2(Filter_Union, intersec1, intersec2));
 	
-	Edgecov * e3(Edgecov::Factory::get_instance().create(union1,
-				static_cast< Predicate::preds_t * >(0)));
+	Edgecov * e3(FQL_CREATE1(Edgecov, union1));
 
-	Test_Goal_Sequence::seq_t seq_list3;
-	seq_list3.push_back(::std::make_pair<Path_Monitor_Expr *, Test_Goal_Set *>(0, e3));
-	Test_Goal_Sequence * s3(Test_Goal_Sequence::Factory::get_instance().create(seq_list3, 0));
-
-	Query * q3(Query::Factory::get_instance().create(0, s3, 0));
+	Query * q3(Query::Factory::get_instance().create(0, e3, 0));
 	os1.str("");
 	os1 << *q3;
-	TEST_CHECK(os1.str().find("UNION(") != ::std::string::npos);
+	TEST_CHECK(os1.str().find("|") != ::std::string::npos);
 	norm.normalize(&q3);
 	os1.str("");
 	os1 << *q3;
-	TEST_CHECK(::std::string::npos == os1.str().find("UNION("));
+	TEST_CHECK(::std::string::npos == os1.str().find("|"));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -145,35 +124,21 @@ void test_union_intersect( Test_Data & data )
  */
 void test_prefix( Test_Data & data )
 {
-	Path_Monitor_Expr * idstar(PM_Repeat::Factory::get_instance().create(
-				PM_Filter_Adapter::Factory::get_instance().create(
-					Filter_Function::Factory::get_instance().create<F_IDENTITY>()), 0, -1));
-	idstar->incr_ref_count(); // re-used below, after normalize
+	Filter_Expr * file(FQL_CREATE_FF1(F_FILE, "bla.c"));
+	Filter_Expr * line(FQL_CREATE_FF1(F_LINE, 42));
 
-	Filter_Expr * file(Filter_Function::Factory::get_instance().create<F_FILE>("bla.c"));
-	Filter_Expr * line(Filter_Function::Factory::get_instance().create<F_LINE>(42));
+	Edgecov * e(FQL_CREATE1(Edgecov, line));
 
-	Edgecov * e(Edgecov::Factory::get_instance().create(line,
-				static_cast< Predicate::preds_t * >(0)));
-
-	Test_Goal_Sequence::seq_t seq_list;
-	seq_list.push_back(::std::make_pair<Path_Monitor_Expr *, Test_Goal_Set *>(0, e));
-	Test_Goal_Sequence * s(Test_Goal_Sequence::Factory::get_instance().create(seq_list, 0));
-
-	Query * q(Query::Factory::get_instance().create(file, s, 0));
+	Query * q(FQL_CREATE3(Query, file, e, 0));
 	::std::ostringstream os1;
 	os1 << *q;
 	
-	Filter_Expr * compose(Filter_Compose::Factory::get_instance().create(line, file));
+	Filter_Expr * compose(FQL_CREATE2(Filter_Compose, line, file));
 
-	Edgecov * e2(Edgecov::Factory::get_instance().create(compose,
-				static_cast< Predicate::preds_t * >(0)));
+	Edgecov * e2(FQL_CREATE1(Edgecov, compose));
 
-	Test_Goal_Sequence::seq_t seq_list2;
-	seq_list2.push_back(::std::make_pair<Path_Monitor_Expr *, Test_Goal_Set *>(idstar, e2));
-	Test_Goal_Sequence * s2(Test_Goal_Sequence::Factory::get_instance().create(seq_list2, idstar));
-
-	Query * q2(Query::Factory::get_instance().create(0, s2, idstar));
+	Path_Pattern_Expr * idstar(FQL_CREATE3(Repeat, FQL_CREATE1(Edgecov, FQL_CREATE_FF0(F_IDENTITY)), 0, -1));
+	Query * q2(FQL_CREATE3(Query, 0, e2, idstar));
 	::std::ostringstream os2;
 	os2 << *q2;
 	

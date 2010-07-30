@@ -222,7 +222,11 @@ void simplify_automaton(trace_automaton_t & aut, bool compact) {
 		for (trace_automaton_t::edges_type::const_iterator o_iter(out_edges.begin());
 				o_iter != out_edges.end(); ++o_iter) {
 			if (aut.initial().end() != aut.initial().find(*iter)) os << ".";
-			os << *iter << " -[ " << o_iter->first << " ]-> " << o_iter->second;
+			os << *iter;
+			if (aut.final(*iter)) os << ".";
+			os << " -[ " << o_iter->first << " ]-> ";
+			if (aut.initial().end() != aut.initial().find(o_iter->second)) os << ".";
+			os << o_iter->second;
 			if (aut.final(o_iter->second)) os << ".";
 			os << ::std::endl;
 		}
@@ -230,7 +234,7 @@ void simplify_automaton(trace_automaton_t & aut, bool compact) {
 
 	return os;
 }
-	
+
 void find_non_eps_pred(trace_automaton_t const& aut, ta_state_t const& s, ::std::set< Target_Graph_Index::char_type > & indices) {
 	ta_state_set_t seen_states;
 	::std::list< ta_state_t > queue;

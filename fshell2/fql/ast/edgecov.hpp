@@ -30,18 +30,17 @@
 */
 
 #include <fshell2/config/config.hpp>
-#include <fshell2/fql/ast/test_goal_set.hpp>
+#include <fshell2/fql/ast/ecp_atom.hpp>
 #include <fshell2/fql/ast/fql_node_factory.hpp>
 
 #include <fshell2/fql/ast/filter_expr.hpp>
-#include <fshell2/fql/ast/predicate.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 /*! \brief TODO
 */
-class Edgecov : public Test_Goal_Set
+class Edgecov : public ECP_Atom
 {
 	/*! \copydoc doc_self
 	*/
@@ -61,18 +60,16 @@ class Edgecov : public Test_Goal_Set
 	virtual bool destroy();
 
 	inline Filter_Expr const * get_filter_expr() const;
-	inline Predicate::preds_t const * get_predicates() const;
 
 	private:
-	friend Self * FQL_Node_Factory<Self>::create(Filter_Expr * filter_expr, Predicate::preds_t * predicates);
+	friend Self * FQL_Node_Factory<Self>::create(Filter_Expr * filter_expr);
 	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
 
 	Filter_Expr * m_filter_expr;
-	Predicate::preds_t * m_predicates;
 
 	/*! Constructor
 	*/
-	Edgecov(Filter_Expr * filter_expr, Predicate::preds_t * predicates);
+	explicit Edgecov(Filter_Expr * filter_expr);
 
 	/*! \copydoc copy_constructor
 	*/
@@ -91,37 +88,18 @@ inline Filter_Expr const * Edgecov::get_filter_expr() const {
 	return m_filter_expr;
 }
 
-inline Predicate::preds_t const * Edgecov::get_predicates() const {
-	return m_predicates;
-}
-
 template <>
-inline Edgecov * FQL_Node_Factory<Edgecov>::create(Filter_Expr * filter_expr, Predicate::preds_t * predicates) {
+inline Edgecov * FQL_Node_Factory<Edgecov>::create(Filter_Expr * filter_expr) {
 	if (m_available.empty()) {
-		m_available.push_back(new Edgecov(filter_expr, predicates));
+		m_available.push_back(new Edgecov(filter_expr));
 	}
 
 	m_available.back()->m_filter_expr = filter_expr;
-	m_available.back()->m_predicates = predicates;
 	::std::pair< ::std::set<Edgecov *, FQL_Node_Lt_Compare>::const_iterator, bool > inserted(
 			m_used.insert(m_available.back()));
 	if (inserted.second) {
 		m_available.pop_back();
 		filter_expr->incr_ref_count();
-		if (predicates) {
-			for (Predicate::preds_t::iterator iter((*inserted.first)->m_predicates->begin());
-					iter != (*inserted.first)->m_predicates->end(); ++iter) {
-				(*iter)->incr_ref_count();
-			}
-		}
-	} else {
-		if (predicates) {
-			for (Predicate::preds_t::iterator iter(predicates->begin());
-					iter != predicates->end(); ++iter) {
-				(*iter)->destroy();
-			}
-			delete predicates;
-		}
 	}
 
 	return *(inserted.first);

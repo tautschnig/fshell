@@ -34,26 +34,7 @@
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
 
 #include <fshell2/instrumentation/cfg.hpp>
-// #include <fshell2/fql/ast/edgecov.hpp>
-// #include <fshell2/fql/ast/filter_complement.hpp>
-// #include <fshell2/fql/ast/filter_compose.hpp>
-// #include <fshell2/fql/ast/filter_enclosing_scopes.hpp>
 #include <fshell2/fql/ast/filter_function.hpp>
-// #include <fshell2/fql/ast/filter_intersection.hpp>
-// #include <fshell2/fql/ast/filter_setminus.hpp>
-// #include <fshell2/fql/ast/filter_union.hpp>
-// #include <fshell2/fql/ast/pathcov.hpp>
-// #include <fshell2/fql/ast/pm_alternative.hpp>
-// #include <fshell2/fql/ast/pm_concat.hpp>
-// #include <fshell2/fql/ast/pm_filter_adapter.hpp>
-// #include <fshell2/fql/ast/pm_repeat.hpp>
-// #include <fshell2/fql/ast/predicate.hpp>
-// #include <fshell2/fql/ast/query.hpp>
-// #include <fshell2/fql/ast/statecov.hpp>
-// #include <fshell2/fql/ast/test_goal_sequence.hpp>
-// #include <fshell2/fql/ast/tgs_intersection.hpp>
-// #include <fshell2/fql/ast/tgs_setminus.hpp>
-// #include <fshell2/fql/ast/tgs_union.hpp>
 
 #include <fstream>
 
@@ -108,19 +89,19 @@ void test( Test_Data & data )
 	::goto_convert(l.context, options, gf, l.ui_message_handler);
 	::fshell2::instrumentation::CFG cfg;
 	cfg.compute_edges(gf);
-	Evaluate_Filter eval(gf, cfg);
+	Evaluate_Filter eval(gf, cfg, l);
 	
-	Filter_Expr * bb(Filter_Function::Factory::get_instance().create<F_BASICBLOCKENTRY>());
+	Filter_Expr * bb(FQL_CREATE_FF0(F_BASICBLOCKENTRY));
 	bb->accept(&eval);
 	target_graph_t const& bb_entries(eval.get(*bb));
 	TEST_ASSERT_RELATION(3, ==, bb_entries.get_edges().size());
 	
-	Filter_Expr * cc(Filter_Function::Factory::get_instance().create<F_CONDITIONEDGE>());
+	Filter_Expr * cc(FQL_CREATE_FF0(F_CONDITIONEDGE));
 	cc->accept(&eval);
 	target_graph_t const& cc_entries(eval.get(*cc));
 	TEST_ASSERT_RELATION(2, ==, cc_entries.get_edges().size());
 	
-	Filter_Expr * ff(Filter_Function::Factory::get_instance().create<F_FILE>(tempname_str));
+	Filter_Expr * ff(FQL_CREATE_FF1(F_FILE, tempname_str));
 	ff->accept(&eval);
 	target_graph_t const& ff_entries(eval.get(*ff));
 	TEST_ASSERT_RELATION(5, ==, ff_entries.get_edges().size());

@@ -34,34 +34,29 @@
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
+class CP_Alternative;
+class CP_Concat;
+class Coverage_Pattern_Expr;
+class Depcov;
+class ECP_Atom;
 class Edgecov;
 class FQL_Node;
-class Filter_Expr;
-class Filter_Complement;
 class Filter_Compose;
-class Filter_Enclosing_Scopes;
+class Filter_Expr;
 class Filter_Function;
 class Filter_Intersection;
 class Filter_Setminus;
 class Filter_Union;
-class PM_Alternative;
-class PM_Concat;
-class PM_Filter_Adapter;
-class PM_Postcondition;
-class PM_Precondition;
-class PM_Repeat;
-class Path_Monitor_Expr;
+class Nodecov;
+class PP_Alternative;
+class PP_Concat;
+class Path_Pattern_Expr;
 class Pathcov;
 class Predicate;
+class Quote;
 class Query;
-class Statecov;
-class TGS_Intersection;
-class TGS_Postcondition;
-class TGS_Precondition;
-class TGS_Setminus;
-class TGS_Union;
-class Test_Goal_Sequence;
-class Test_Goal_Set;
+class Repeat;
+class Transform_Pred;
 
 /*! \brief TODO
 */
@@ -71,6 +66,46 @@ class AST_Visitor
 		/*! \brief Destructor
 		*/
 		virtual ~AST_Visitor();
+
+		/*! \{
+		 * \brief Visit a @ref fshell2::fql::CP_Alternative
+		 * \param  n CP_Alternative
+		 */
+		virtual void visit(CP_Alternative const* n) = 0;
+		virtual void visit(CP_Alternative const* n) const = 0;
+		/*! \} */
+
+		/*! \{
+		 * \brief Visit a @ref fshell2::fql::CP_Concat
+		 * \param  n CP_Concat
+		 */
+		virtual void visit(CP_Concat const* n) = 0;
+		virtual void visit(CP_Concat const* n) const = 0;
+		/*! \} */
+
+		/*! \{
+		 * \brief Visit a @ref fshell2::fql::Coverage_Pattern_Expr
+		 * \param  n Coverage_Pattern_Expr
+		 */
+		virtual void visit(Coverage_Pattern_Expr const* n) = 0;
+		virtual void visit(Coverage_Pattern_Expr const* n) const = 0;
+		/*! \} */
+
+		/*! \{
+		 * \brief Visit a @ref fshell2::fql::Depcov
+		 * \param  n Depcov
+		 */
+		virtual void visit(Depcov const* n) = 0;
+		virtual void visit(Depcov const* n) const = 0;
+		/*! \} */
+
+		/*! \{
+		 * \brief Visit a @ref fshell2::fql::ECP_Atom
+		 * \param  n ECP_Atom
+		 */
+		virtual void visit(ECP_Atom const* n) = 0;
+		virtual void visit(ECP_Atom const* n) const = 0;
+		/*! \} */
 
 		/*! \{
 		 * \brief Visit a @ref fshell2::fql::Edgecov
@@ -89,14 +124,6 @@ class AST_Visitor
 		/*! \} */
 
 		/*! \{
-		 * \brief Visit a @ref fshell2::fql::Filter_Expr
-		 * \param  n Filter
-		 */
-		virtual void visit(Filter_Expr const* n) = 0;
-		virtual void visit(Filter_Expr const* n) const = 0;
-		/*! \} */
-
-		/*! \{
 		 * \brief Visit a @ref fshell2::fql::Filter_Compose
 		 * \param  n Filter_Compose
 		 */
@@ -105,19 +132,11 @@ class AST_Visitor
 		/*! \} */
 
 		/*! \{
-		 * \brief Visit a @ref fshell2::fql::Filter_Complement
-		 * \param  n Filter_Complement
+		 * \brief Visit a @ref fshell2::fql::Filter_Expr
+		 * \param  n Filter_Expr
 		 */
-		virtual void visit(Filter_Complement const* n) = 0;
-		virtual void visit(Filter_Complement const* n) const = 0;
-		/*! \} */
-
-		/*! \{
-		 * \brief Visit a @ref fshell2::fql::Filter_Enclosing_Scopes
-		 * \param  n Filter_Enclosing_Scopes
-		 */
-		virtual void visit(Filter_Enclosing_Scopes const* n) = 0;
-		virtual void visit(Filter_Enclosing_Scopes const* n) const = 0;
+		virtual void visit(Filter_Expr const* n) = 0;
+		virtual void visit(Filter_Expr const* n) const = 0;
 		/*! \} */
 
 		/*! \{
@@ -153,59 +172,35 @@ class AST_Visitor
 		/*! \} */
 
 		/*! \{
-		 * \brief Visit a @ref fshell2::fql::PM_Alternative
-		 * \param  n PM_Alternative
+		 * \brief Visit a @ref fshell2::fql::Nodecov
+		 * \param  n Nodecov
 		 */
-		virtual void visit(PM_Alternative const* n) = 0;
-		virtual void visit(PM_Alternative const* n) const = 0;
+		virtual void visit(Nodecov const* n) = 0;
+		virtual void visit(Nodecov const* n) const = 0;
 		/*! \} */
 
 		/*! \{
-		 * \brief Visit a @ref fshell2::fql::PM_Concat
-		 * \param  n PM_Concat
+		 * \brief Visit a @ref fshell2::fql::PP_Alternative
+		 * \param  n PP_Alternative
 		 */
-		virtual void visit(PM_Concat const* n) = 0;
-		virtual void visit(PM_Concat const* n) const = 0;
+		virtual void visit(PP_Alternative const* n) = 0;
+		virtual void visit(PP_Alternative const* n) const = 0;
 		/*! \} */
 
 		/*! \{
-		 * \brief Visit a @ref fshell2::fql::PM_Filter_Adapter
-		 * \param  n PM_Filter_Adapter
+		 * \brief Visit a @ref fshell2::fql::PP_Concat
+		 * \param  n PP_Concat
 		 */
-		virtual void visit(PM_Filter_Adapter const* n) = 0;
-		virtual void visit(PM_Filter_Adapter const* n) const = 0;
+		virtual void visit(PP_Concat const* n) = 0;
+		virtual void visit(PP_Concat const* n) const = 0;
 		/*! \} */
 
 		/*! \{
-		 * \brief Visit a @ref fshell2::fql::PM_Postcondition
-		 * \param  n PM_Postcondition
+		 * \brief Visit a @ref fshell2::fql::Path_Pattern_Expr
+		 * \param  n Path_Pattern_Expr
 		 */
-		virtual void visit(PM_Postcondition const* n) = 0;
-		virtual void visit(PM_Postcondition const* n) const = 0;
-		/*! \} */
-
-		/*! \{
-		 * \brief Visit a @ref fshell2::fql::PM_Precondition
-		 * \param  n PM_Precondition
-		 */
-		virtual void visit(PM_Precondition const* n) = 0;
-		virtual void visit(PM_Precondition const* n) const = 0;
-		/*! \} */
-
-		/*! \{
-		 * \brief Visit a @ref fshell2::fql::PM_Repeat
-		 * \param  n PM_Repeat
-		 */
-		virtual void visit(PM_Repeat const* n) = 0;
-		virtual void visit(PM_Repeat const* n) const = 0;
-		/*! \} */
-
-		/*! \{
-		 * \brief Visit a @ref fshell2::fql::Path_Monitor_Expr
-		 * \param  n Path_Monitor
-		 */
-		virtual void visit(Path_Monitor_Expr const* n) = 0;
-		virtual void visit(Path_Monitor_Expr const* n) const = 0;
+		virtual void visit(Path_Pattern_Expr const* n) = 0;
+		virtual void visit(Path_Pattern_Expr const* n) const = 0;
 		/*! \} */
 
 		/*! \{
@@ -225,6 +220,14 @@ class AST_Visitor
 		/*! \} */
 
 		/*! \{
+		 * \brief Visit a @ref fshell2::fql::Quote
+		 * \param  n Quote
+		 */
+		virtual void visit(Quote const* n) = 0;
+		virtual void visit(Quote const* n) const = 0;
+		/*! \} */
+
+		/*! \{
 		 * \brief Visit a @ref fshell2::fql::Query
 		 * \param  n Query
 		 */
@@ -233,68 +236,21 @@ class AST_Visitor
 		/*! \} */
 
 		/*! \{
-		 * \brief Visit a @ref fshell2::fql::Statecov
-		 * \param  n Statecov
+		 * \brief Visit a @ref fshell2::fql::Repeat
+		 * \param  n Repeat
 		 */
-		virtual void visit(Statecov const* n) = 0;
-		virtual void visit(Statecov const* n) const = 0;
+		virtual void visit(Repeat const* n) = 0;
+		virtual void visit(Repeat const* n) const = 0;
 		/*! \} */
 
 		/*! \{
-		 * \brief Visit a @ref fshell2::fql::TGS_Intersection
-		 * \param  n TGS_Intersection
+		 * \brief Visit a @ref fshell2::fql::Transform_Pred
+		 * \param  n Transform_Pred
 		 */
-		virtual void visit(TGS_Intersection const* n) = 0;
-		virtual void visit(TGS_Intersection const* n) const = 0;
+		virtual void visit(Transform_Pred const* n) = 0;
+		virtual void visit(Transform_Pred const* n) const = 0;
 		/*! \} */
 
-		/*! \{
-		 * \brief Visit a @ref fshell2::fql::TGS_Postcondition
-		 * \param  n TGS_Postcondition
-		 */
-		virtual void visit(TGS_Postcondition const* n) = 0;
-		virtual void visit(TGS_Postcondition const* n) const = 0;
-		/*! \} */
-
-		/*! \{
-		 * \brief Visit a @ref fshell2::fql::TGS_Precondition
-		 * \param  n TGS_Precondition
-		 */
-		virtual void visit(TGS_Precondition const* n) = 0;
-		virtual void visit(TGS_Precondition const* n) const = 0;
-		/*! \} */
-
-		/*! \{
-		 * \brief Visit a @ref fshell2::fql::TGS_Setminus
-		 * \param  n TGS_Setminus
-		 */
-		virtual void visit(TGS_Setminus const* n) = 0;
-		virtual void visit(TGS_Setminus const* n) const = 0;
-		/*! \} */
-
-		/*! \{
-		 * \brief Visit a @ref fshell2::fql::TGS_Union
-		 * \param  n TGS_Union
-		 */
-		virtual void visit(TGS_Union const* n) = 0;
-		virtual void visit(TGS_Union const* n) const = 0;
-		/*! \} */
-
-		/*! \{
-		 * \brief Visit a @ref fshell2::fql::Test_Goal_Sequence
-		 * \param  n Test_Goal_Sequence
-		 */
-		virtual void visit(Test_Goal_Sequence const* n) = 0;
-		virtual void visit(Test_Goal_Sequence const* n) const = 0;
-		/*! \} */
-
-		/*! \{
-		 * \brief Visit a @ref fshell2::fql::Test_Goal_Set
-		 * \param  n Test_Goal_Set
-		 */
-		virtual void visit(Test_Goal_Set const* n) = 0;
-		virtual void visit(Test_Goal_Set const* n) const = 0;
-		/*! \} */
 };
 
 FSHELL2_FQL_NAMESPACE_END;

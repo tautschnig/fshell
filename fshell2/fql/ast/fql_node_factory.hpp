@@ -44,10 +44,9 @@ FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 class Filter_Expr;
-class Path_Monitor_Expr;
+class Path_Pattern_Expr;
+class Coverage_Pattern_Expr;
 class Predicate;
-class Test_Goal_Set;
-class Test_Goal_Sequence;
 
 typedef enum {
 	F_IDENTITY = 0,
@@ -92,9 +91,11 @@ class FQL_Node_Factory
 	public:
 	static Self & get_instance();
 
-	// Edgecov, Statecov
-	Element * create(Filter_Expr * filter_expr, ::std::set<Predicate *, FQL_Node_Lt_Compare> * predicates);
-	// Filter_Complement, Filter_Enclosing_Scopes, PM_Filter_Adapter
+	// CP_Alternative, CP_Concat
+	Element * create(Coverage_Pattern_Expr * a, Coverage_Pattern_Expr * b);
+	// Depcov
+	Element * create(Filter_Expr * a, Filter_Expr * b, Filter_Expr * c);
+	// Edgecov, Nodecov
 	Element * create(Filter_Expr * filter_expr);
 	// Filter_Compose, Filter_Intersection, Filter_Setminus, Filter_Union
 	Element * create(Filter_Expr * a, Filter_Expr * b);
@@ -106,25 +107,20 @@ class FQL_Node_Factory
 	template <filter_function_t Filter_Function>
 	Element * create(::std::string const& val);
 	// Pathcov
-	Element * create(Filter_Expr * filter, int bound, ::std::set<Predicate *, FQL_Node_Lt_Compare> * predicates);
-	// PM_Alternative, PM_Concat, PM_Next
-	Element * create(Path_Monitor_Expr * a, Path_Monitor_Expr * b);
-	// PM_Precondition, PM_Postcondition
-	Element * create(Path_Monitor_Expr * pm, Predicate * pred);
-	// PM_Repeat
-	Element * create(Path_Monitor_Expr * pm, int lower, int upper);
+	Element * create(Filter_Expr * filter, int bound);
+	// PP_Alternative, PP_Concat
+	Element * create(Path_Pattern_Expr * a, Path_Pattern_Expr * b);
 	// Predicate
 	Element * create(::exprt * expr);
 	// Query
-	Element * create(Filter_Expr * prefix, Test_Goal_Sequence * cover,
-			Path_Monitor_Expr * passing);
-	// Test_Goal_Sequence
-	Element * create(::std::list< ::std::pair< Path_Monitor_Expr *, Test_Goal_Set * > > & seq,
-			Path_Monitor_Expr * suffix_aut);
-	// TGS_Intersection, TGS_Setminus, TGS_Union
-	Element * create(Test_Goal_Set * a, Test_Goal_Set * b);
-	// TGS_Precondition, TGS_Postcondition
-	Element * create(Test_Goal_Set * tgs, Predicate * pred);
+	Element * create(Filter_Expr * prefix, Coverage_Pattern_Expr * cover,
+			Path_Pattern_Expr * passing);
+	// Quote
+	Element * create(Path_Pattern_Expr * pp);
+	// Repeat
+	Element * create(Path_Pattern_Expr * pp, int lower, int upper);
+    // Transform_Pred	
+	Element * create(Filter_Expr * filter_expr, ::std::set<Predicate *, FQL_Node_Lt_Compare> * predicates);
 	
 	void destroy(Element * e);
 
@@ -145,6 +141,12 @@ class FQL_Node_Factory
 	 */
 	Self& operator=( Self const& rhs );
 };
+
+#define FQL_CREATE1(c, x)   ::fshell2::fql:: c ::Factory::get_instance().create(x)
+#define FQL_CREATE2(c, x, y)   ::fshell2::fql:: c ::Factory::get_instance().create(x, y)
+#define FQL_CREATE3(c, x, y, z)   ::fshell2::fql:: c ::Factory::get_instance().create(x, y, z)
+#define FQL_CREATE_FF0(f)  ::fshell2::fql::Filter_Function::Factory::get_instance().create< ::fshell2::fql:: f >()
+#define FQL_CREATE_FF1(f, x)  ::fshell2::fql::Filter_Function::Factory::get_instance().create< ::fshell2::fql:: f >(x)
 
 template <typename Element>
 FQL_Node_Factory<Element>& FQL_Node_Factory<Element>::get_instance() {

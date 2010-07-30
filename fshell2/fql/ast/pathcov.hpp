@@ -30,18 +30,17 @@
 */
 
 #include <fshell2/config/config.hpp>
-#include <fshell2/fql/ast/test_goal_set.hpp>
+#include <fshell2/fql/ast/ecp_atom.hpp>
 #include <fshell2/fql/ast/fql_node_factory.hpp>
 
 #include <fshell2/fql/ast/filter_expr.hpp>
-#include <fshell2/fql/ast/predicate.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 /*! \brief TODO
 */
-class Pathcov : public Test_Goal_Set
+class Pathcov : public ECP_Atom
 {
 	/*! \copydoc doc_self
 	*/
@@ -62,19 +61,17 @@ class Pathcov : public Test_Goal_Set
 
 	inline Filter_Expr const * get_filter_expr() const;
 	inline int const get_bound() const;
-	inline Predicate::preds_t const * get_predicates() const;
 
 	private:
-	friend Self * FQL_Node_Factory<Self>::create(Filter_Expr * filter_expr, int bound, Predicate::preds_t * predicates);
+	friend Self * FQL_Node_Factory<Self>::create(Filter_Expr * filter_expr, int bound);
 	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
 
 	Filter_Expr * m_filter_expr;
 	int m_bound;
-	Predicate::preds_t * m_predicates;
 
 	/*! Constructor
 	*/
-	Pathcov(Filter_Expr * filter_expr, int bound, Predicate::preds_t * predicates);
+	Pathcov(Filter_Expr * filter_expr, int bound);
 
 	/*! \copydoc copy_constructor
 	*/
@@ -97,38 +94,19 @@ inline int const Pathcov::get_bound() const {
 	return m_bound;
 }
 
-inline Predicate::preds_t const * Pathcov::get_predicates() const {
-	return m_predicates;
-}
-
 template <>
-inline Pathcov * FQL_Node_Factory<Pathcov>::create(Filter_Expr * filter_expr, int bound, Predicate::preds_t * predicates) {
+inline Pathcov * FQL_Node_Factory<Pathcov>::create(Filter_Expr * filter_expr, int bound) {
 	if (m_available.empty()) {
-		m_available.push_back(new Pathcov(filter_expr, bound, predicates));
+		m_available.push_back(new Pathcov(filter_expr, bound));
 	}
 
 	m_available.back()->m_filter_expr = filter_expr;
 	m_available.back()->m_bound = bound;
-	m_available.back()->m_predicates = predicates;
 	::std::pair< ::std::set<Pathcov *, FQL_Node_Lt_Compare>::const_iterator, bool > inserted(
 			m_used.insert(m_available.back()));
 	if (inserted.second) {
 		m_available.pop_back();
 		filter_expr->incr_ref_count();
-		if (predicates) {
-			for (Predicate::preds_t::iterator iter((*inserted.first)->m_predicates->begin());
-					iter != (*inserted.first)->m_predicates->end(); ++iter) {
-				(*iter)->incr_ref_count();
-			}
-		}
-	} else {
-		if (predicates) {
-			for (Predicate::preds_t::iterator iter(predicates->begin());
-					iter != predicates->end(); ++iter) {
-				(*iter)->destroy();
-			}
-			delete predicates;
-		}
 	}
 
 	return *(inserted.first);

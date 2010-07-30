@@ -31,30 +31,29 @@
 
 #include <diagnostics/basic_exceptions/violated_invariance.hpp>
 
+#include <fshell2/fql/ast/coverage_pattern_expr.hpp>
+#include <fshell2/fql/ast/cp_alternative.hpp>
+#include <fshell2/fql/ast/cp_concat.hpp>
+#include <fshell2/fql/ast/depcov.hpp>
+#include <fshell2/fql/ast/ecp_atom.hpp>
 #include <fshell2/fql/ast/edgecov.hpp>
-#include <fshell2/fql/ast/filter_complement.hpp>
 #include <fshell2/fql/ast/filter_compose.hpp>
-#include <fshell2/fql/ast/filter_enclosing_scopes.hpp>
+#include <fshell2/fql/ast/filter_expr.hpp>
 #include <fshell2/fql/ast/filter_function.hpp>
 #include <fshell2/fql/ast/filter_intersection.hpp>
 #include <fshell2/fql/ast/filter_setminus.hpp>
 #include <fshell2/fql/ast/filter_union.hpp>
+#include <fshell2/fql/ast/fql_node.hpp>
+#include <fshell2/fql/ast/nodecov.hpp>
+#include <fshell2/fql/ast/path_pattern_expr.hpp>
 #include <fshell2/fql/ast/pathcov.hpp>
-#include <fshell2/fql/ast/pm_alternative.hpp>
-#include <fshell2/fql/ast/pm_concat.hpp>
-#include <fshell2/fql/ast/pm_filter_adapter.hpp>
-#include <fshell2/fql/ast/pm_postcondition.hpp>
-#include <fshell2/fql/ast/pm_precondition.hpp>
-#include <fshell2/fql/ast/pm_repeat.hpp>
+#include <fshell2/fql/ast/pp_alternative.hpp>
+#include <fshell2/fql/ast/pp_concat.hpp>
 #include <fshell2/fql/ast/predicate.hpp>
 #include <fshell2/fql/ast/query.hpp>
-#include <fshell2/fql/ast/statecov.hpp>
-#include <fshell2/fql/ast/test_goal_sequence.hpp>
-#include <fshell2/fql/ast/tgs_intersection.hpp>
-#include <fshell2/fql/ast/tgs_postcondition.hpp>
-#include <fshell2/fql/ast/tgs_precondition.hpp>
-#include <fshell2/fql/ast/tgs_setminus.hpp>
-#include <fshell2/fql/ast/tgs_union.hpp>
+#include <fshell2/fql/ast/quote.hpp>
+#include <fshell2/fql/ast/repeat.hpp>
+#include <fshell2/fql/ast/transform_pred.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
@@ -132,36 +131,57 @@ void Normalization_Visitor::normalize(Query ** query) {
 	
 	FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Normalization result: ", **query));
 }
+
+#define MOVE_TO_CP  if (m_top_atom.get()) { m_top_cp = m_top_atom.get(); m_top_atom = 0; } DUMMY_FUNC
+#define MOVE_TO_PP  if (m_top_atom.get()) { m_top_pp = m_top_atom.get(); m_top_atom = 0; } DUMMY_FUNC
 	
+void Normalization_Visitor::visit(CP_Alternative const* n) {
+	n->get_cp_a()->accept(this);
+	MOVE_TO_CP;
+	Smart_FQL_Node_Ptr<Coverage_Pattern_Expr> cp_a(m_top_cp);
+	n->get_cp_b()->accept(this);
+	MOVE_TO_CP;
+	Smart_FQL_Node_Ptr<Coverage_Pattern_Expr> cp_b(m_top_cp);
+
+	if (FQL_Node_Lt_Compare()(cp_a.get(), cp_b.get())) {
+		m_top_cp = FQL_CREATE2(CP_Alternative, cp_a.get(), cp_b.get());
+	} else if (FQL_Node_Lt_Compare()(cp_b.get(), cp_a.get())) {
+		m_top_cp = FQL_CREATE2(CP_Alternative, cp_b.get(), cp_a.get());
+	} else {
+		m_top_cp = cp_a;
+	}
+}
+
+void Normalization_Visitor::visit(CP_Concat const* n) {
+	n->get_cp_a()->accept(this);
+	MOVE_TO_CP;
+	Smart_FQL_Node_Ptr<Coverage_Pattern_Expr> cp_a(m_top_cp);
+	n->get_cp_b()->accept(this);
+	MOVE_TO_CP;
+	Smart_FQL_Node_Ptr<Coverage_Pattern_Expr> cp_b(m_top_cp);
+
+	m_top_cp = FQL_CREATE2(CP_Concat, cp_a.get(), cp_b.get());
+}
+
+void Normalization_Visitor::visit(Depcov const* n) {
+	n->get_filter_a()->accept(this);
+	Smart_FQL_Node_Ptr<Filter_Expr> filter_a(m_top_filter);
+	n->get_filter_b()->accept(this);
+	Smart_FQL_Node_Ptr<Filter_Expr> filter_b(m_top_filter);
+	n->get_filter_c()->accept(this);
+	Smart_FQL_Node_Ptr<Filter_Expr> filter_c(m_top_filter);
+	
+	m_top_atom = FQL_CREATE3(Depcov, filter_a.get(), filter_b.get(), filter_c.get());
+	m_top_filter = 0;
+}
+
 void Normalization_Visitor::visit(Edgecov const* n) {
 	n->get_filter_expr()->accept(this);
 	Smart_FQL_Node_Ptr<Filter_Expr> filter(m_top_filter);
 
-	Predicate::preds_t * preds(0);
-	if (n->get_predicates()) {
-		preds = new Predicate::preds_t;
-		for (Predicate::preds_t::const_iterator iter(n->get_predicates()->begin());
-				iter != n->get_predicates()->end(); ++iter) {
-			(*iter)->accept(this);
-			if (preds->insert(m_top_pred.get()).second) m_top_pred.get()->incr_ref_count();
-		}
-	
-		for (Predicate::preds_t::const_iterator iter(preds->begin());
-				iter != preds->end(); ++iter)
-			(*iter)->decr_ref_count();
-		m_top_pred = 0;
-	}
-	
-	m_top_tgset = Edgecov::Factory::get_instance().create(
-			m_prefix.get() ?
-				Filter_Compose::Factory::get_instance().create(filter.get(), m_prefix.get()) :
-				filter.get(), preds);
+	m_top_atom = FQL_CREATE1(Edgecov, m_prefix.get() ?
+			FQL_CREATE2(Filter_Compose, filter.get(), m_prefix.get()) : filter.get());
 	m_top_filter = 0;
-}
-
-void Normalization_Visitor::visit(Filter_Complement const* n) {
-	n->get_filter_expr()->accept(this);
-	m_top_filter = Filter_Complement::Factory::get_instance().create(m_top_filter.get());
 }
 
 void Normalization_Visitor::visit(Filter_Compose const* n) {
@@ -171,11 +191,6 @@ void Normalization_Visitor::visit(Filter_Compose const* n) {
 	Smart_FQL_Node_Ptr<Filter_Expr> filter_b(m_top_filter);
 
 	m_top_filter = Filter_Compose::Factory::get_instance().create(filter_a.get(), filter_b.get());
-}
-
-void Normalization_Visitor::visit(Filter_Enclosing_Scopes const* n) {
-	n->get_filter_expr()->accept(this);
-	m_top_filter = Filter_Enclosing_Scopes::Factory::get_instance().create(m_top_filter.get());
 }
 
 void Normalization_Visitor::visit(Filter_Function const* n) {
@@ -292,236 +307,118 @@ void Normalization_Visitor::visit(Filter_Union const* n) {
 	}
 }
 
-void Normalization_Visitor::visit(PM_Alternative const* n) {
-	n->get_path_monitor_expr_a()->accept(this);
-	Smart_FQL_Node_Ptr<Path_Monitor_Expr> path_monitor_a(m_top_mon);
-	n->get_path_monitor_expr_b()->accept(this);
-	Smart_FQL_Node_Ptr<Path_Monitor_Expr> path_monitor_b(m_top_mon);
+void Normalization_Visitor::visit(Nodecov const* n) {
+	n->get_filter_expr()->accept(this);
+	Smart_FQL_Node_Ptr<Filter_Expr> filter(m_top_filter);
+
+	m_top_atom = FQL_CREATE1(Nodecov, m_prefix.get() ?
+			FQL_CREATE2(Filter_Compose, filter.get(), m_prefix.get()) : filter.get());
+	m_top_filter = 0;
+}
+
+void Normalization_Visitor::visit(PP_Alternative const* n) {
+	n->get_pp_a()->accept(this);
+	MOVE_TO_PP;
+	Smart_FQL_Node_Ptr<Path_Pattern_Expr> pp_a(m_top_pp);
+	n->get_pp_b()->accept(this);
+	MOVE_TO_PP;
+	Smart_FQL_Node_Ptr<Path_Pattern_Expr> pp_b(m_top_pp);
 	
-	if (FQL_Node_Lt_Compare()(path_monitor_a.get(), path_monitor_b.get())) {
-		m_top_mon = PM_Alternative::Factory::get_instance().create(path_monitor_a.get(), path_monitor_b.get());
-	} else if (FQL_Node_Lt_Compare()(path_monitor_b.get(), path_monitor_a.get())) {
-		m_top_mon = PM_Alternative::Factory::get_instance().create(path_monitor_b.get(), path_monitor_a.get());
+	if (FQL_Node_Lt_Compare()(pp_a.get(), pp_b.get())) {
+		m_top_pp = FQL_CREATE2(PP_Alternative, pp_a.get(), pp_b.get());
+	} else if (FQL_Node_Lt_Compare()(pp_b.get(), pp_a.get())) {
+		m_top_pp = FQL_CREATE2(PP_Alternative, pp_b.get(), pp_a.get());
 	} else {
-		m_top_mon = path_monitor_a;
+		m_top_pp = pp_a;
 	}
 }
 
-void Normalization_Visitor::visit(PM_Concat const* n) {
-	n->get_path_monitor_expr_a()->accept(this);
-	Smart_FQL_Node_Ptr<Path_Monitor_Expr> path_monitor_a(m_top_mon);
-	n->get_path_monitor_expr_b()->accept(this);
-	Smart_FQL_Node_Ptr<Path_Monitor_Expr> path_monitor_b(m_top_mon);
+void Normalization_Visitor::visit(PP_Concat const* n) {
+	n->get_pp_a()->accept(this);
+	MOVE_TO_PP;
+	Smart_FQL_Node_Ptr<Path_Pattern_Expr> pp_a(m_top_pp);
+	n->get_pp_b()->accept(this);
+	MOVE_TO_PP;
+	Smart_FQL_Node_Ptr<Path_Pattern_Expr> pp_b(m_top_pp);
 
-	m_top_mon = PM_Concat::Factory::get_instance().create(path_monitor_a.get(), path_monitor_b.get());
-}
-
-void Normalization_Visitor::visit(PM_Filter_Adapter const* n) {
-	n->get_filter_expr()->accept(this);
-	m_top_mon = PM_Filter_Adapter::Factory::get_instance().create(
-			m_prefix.get() ?
-				Filter_Compose::Factory::get_instance().create(m_top_filter.get(), m_prefix.get()) :
-				m_top_filter.get());
-}
-
-void Normalization_Visitor::visit(PM_Postcondition const* n) {
-	n->get_path_monitor_expr()->accept(this);
-	n->get_predicate()->accept(this);
-	m_top_mon = PM_Postcondition::Factory::get_instance().create(m_top_mon.get(), m_top_pred.get());
-}
-
-void Normalization_Visitor::visit(PM_Precondition const* n) {
-	n->get_predicate()->accept(this);
-	n->get_path_monitor_expr()->accept(this);
-	m_top_mon = PM_Precondition::Factory::get_instance().create(m_top_mon.get(), m_top_pred.get());
-}
-
-void Normalization_Visitor::visit(PM_Repeat const* n) {
-	n->get_path_monitor_expr()->accept(this);
-	m_top_mon = PM_Repeat::Factory::get_instance().create(m_top_mon.get(), n->get_lower_bound(),
-			n->get_upper_bound());
+	m_top_pp = FQL_CREATE2(PP_Concat, pp_a.get(), pp_b.get());
 }
 
 void Normalization_Visitor::visit(Pathcov const* n) {
 	n->get_filter_expr()->accept(this);
 	Smart_FQL_Node_Ptr<Filter_Expr> filter(m_top_filter);
 
-	Predicate::preds_t * preds(0);
-	if (n->get_predicates()) {
-		preds = new Predicate::preds_t;
-		for (Predicate::preds_t::const_iterator iter(n->get_predicates()->begin());
-				iter != n->get_predicates()->end(); ++iter) {
-			(*iter)->accept(this);
-			if (preds->insert(m_top_pred.get()).second) m_top_pred.get()->incr_ref_count();
-		}
-	
-		for (Predicate::preds_t::const_iterator iter(preds->begin());
-				iter != preds->end(); ++iter)
-			(*iter)->decr_ref_count();
-		m_top_pred = 0;
-	}
-	
-	m_top_tgset = Pathcov::Factory::get_instance().create(
-			m_prefix.get() ?
-				Filter_Compose::Factory::get_instance().create(filter.get(), m_prefix.get()) :
-				filter.get(), n->get_bound(), preds);
+	m_top_atom = FQL_CREATE2(Pathcov, m_prefix.get() ?
+			FQL_CREATE2(Filter_Compose, filter.get(), m_prefix.get()) :
+				filter.get(), n->get_bound());
 	m_top_filter = 0;
 }
 
 void Normalization_Visitor::visit(Predicate const* n) {
-	m_top_pred = Predicate::Factory::get_instance().create(new ::exprt(*(n->get_expr())));
+	m_top_atom = Predicate::Factory::get_instance().create(new ::exprt(*(n->get_expr())));
 }
-	
+
 void Normalization_Visitor::visit(Query const* n) {
+	m_prefix = 0;
 	if (n->get_prefix()) {
 		n->get_prefix()->accept(this);
 		m_prefix = m_top_filter;
 	}
 
 	n->get_cover()->accept(this);
-	Smart_FQL_Node_Ptr<Test_Goal_Sequence> cover(m_top_tgseq);
-	
+	MOVE_TO_CP;
 	// IN ... prefix only applies to COVER clause
 	m_prefix = 0;
 
-	Smart_FQL_Node_Ptr<Path_Monitor_Expr> passing;
 	if (n->get_passing()) {
 		n->get_passing()->accept(this);
-		passing = m_top_mon;
-	} else {
-		passing = PM_Repeat::Factory::get_instance().create(
-				PM_Filter_Adapter::Factory::get_instance().create(
-					Filter_Function::Factory::get_instance().create<F_IDENTITY>()), 0, -1);
-	}
+		MOVE_TO_PP;
+	} else
+		m_top_pp = FQL_CREATE3(Repeat, FQL_CREATE1(Edgecov, FQL_CREATE_FF0(F_IDENTITY)), 0, -1);
 
-	m_top_query = Query::Factory::get_instance().create(0, cover.get(), passing.get());
+	m_top_query = Query::Factory::get_instance().create(0, m_top_cp.get(), m_top_pp.get());
 	m_top_filter = 0;
-	m_top_tgseq = 0;
-	m_top_mon = 0;
+	m_top_cp = 0;
+	m_top_pp = 0;
 }
 
-void Normalization_Visitor::visit(Statecov const* n) {
+void Normalization_Visitor::visit(Quote const* n) {
+	Smart_FQL_Node_Ptr<Filter_Expr> prefix_bak(m_prefix);
+	m_prefix = 0;
+	n->get_pp()->accept(this);
+	MOVE_TO_PP;
+	m_prefix = prefix_bak;
+
+	m_top_cp = FQL_CREATE1(Quote, m_top_pp.get());
+	m_top_pp = 0;
+}
+
+void Normalization_Visitor::visit(Repeat const* n) {
+	n->get_pp()->accept(this);
+	MOVE_TO_PP;
+	m_top_pp = FQL_CREATE3(Repeat, m_top_pp.get(), n->get_lower_bound(),
+			n->get_upper_bound());
+}
+
+void Normalization_Visitor::visit(Transform_Pred const* n) {
 	n->get_filter_expr()->accept(this);
 	Smart_FQL_Node_Ptr<Filter_Expr> filter(m_top_filter);
 
-	Predicate::preds_t * preds(0);
-	if (n->get_predicates()) {
-		preds = new Predicate::preds_t;
-		for (Predicate::preds_t::const_iterator iter(n->get_predicates()->begin());
-				iter != n->get_predicates()->end(); ++iter) {
-			(*iter)->accept(this);
-			if (preds->insert(m_top_pred.get()).second) m_top_pred.get()->incr_ref_count();
-		}
+	Predicate::preds_t * preds(new Predicate::preds_t);
+	for (Predicate::preds_t::const_iterator iter(n->get_predicates()->begin());
+			iter != n->get_predicates()->end(); ++iter) {
+		(*iter)->accept(this);
+		Predicate * pred(dynamic_cast< Predicate * >(m_top_atom.get()));
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 0 != pred);
+		if (preds->insert(pred).second) pred->incr_ref_count();
+	}
+
+	for (Predicate::preds_t::const_iterator iter(preds->begin());
+			iter != preds->end(); ++iter)
+		(*iter)->decr_ref_count();
 	
-		for (Predicate::preds_t::const_iterator iter(preds->begin());
-				iter != preds->end(); ++iter)
-			(*iter)->decr_ref_count();
-		m_top_pred = 0;
-	}
-	
-	m_top_tgset = Statecov::Factory::get_instance().create(
-			m_prefix.get() ?
-				Filter_Compose::Factory::get_instance().create(filter.get(), m_prefix.get()) :
-				filter.get(), preds);
-	m_top_filter = 0;
-}
-	
-void Normalization_Visitor::visit(TGS_Intersection const* n) {
-	n->get_tgs_a()->accept(this);
-	Smart_FQL_Node_Ptr<Test_Goal_Set> tgs_a(m_top_tgset);
-	n->get_tgs_b()->accept(this);
-	Smart_FQL_Node_Ptr<Test_Goal_Set> tgs_b(m_top_tgset);
-
-	if (FQL_Node_Lt_Compare()(tgs_a.get(), tgs_b.get())) {
-		m_top_tgset = TGS_Intersection::Factory::get_instance().create(tgs_a.get(), tgs_b.get());
-	} else if (FQL_Node_Lt_Compare()(tgs_b.get(), tgs_a.get())) {
-		m_top_tgset = TGS_Intersection::Factory::get_instance().create(tgs_b.get(), tgs_a.get());
-	} else {
-		m_top_tgset = tgs_a;
-	}
-}
-
-void Normalization_Visitor::visit(TGS_Postcondition const* n) {
-	n->get_tgs()->accept(this);
-	n->get_predicate()->accept(this);
-	m_top_tgset = TGS_Postcondition::Factory::get_instance().create(m_top_tgset.get(), m_top_pred.get());
-}
-
-void Normalization_Visitor::visit(TGS_Precondition const* n) {
-	n->get_predicate()->accept(this);
-	n->get_tgs()->accept(this);
-	m_top_tgset = TGS_Precondition::Factory::get_instance().create(m_top_tgset.get(), m_top_pred.get());
-}
-
-void Normalization_Visitor::visit(TGS_Setminus const* n) {
-	n->get_tgs_a()->accept(this);
-	Smart_FQL_Node_Ptr<Test_Goal_Set> tgs_a(m_top_tgset);
-	n->get_tgs_b()->accept(this);
-	Smart_FQL_Node_Ptr<Test_Goal_Set> tgs_b(m_top_tgset);
-
-	m_top_tgset = TGS_Setminus::Factory::get_instance().create(tgs_a.get(), tgs_b.get());
-}
-
-void Normalization_Visitor::visit(TGS_Union const* n) {
-	n->get_tgs_a()->accept(this);
-	Smart_FQL_Node_Ptr<Test_Goal_Set> tgs_a(m_top_tgset);
-	n->get_tgs_b()->accept(this);
-	Smart_FQL_Node_Ptr<Test_Goal_Set> tgs_b(m_top_tgset);
-
-	if (FQL_Node_Lt_Compare()(tgs_a.get(), tgs_b.get())) {
-		m_top_tgset = TGS_Union::Factory::get_instance().create(tgs_a.get(), tgs_b.get());
-	} else if (FQL_Node_Lt_Compare()(tgs_b.get(), tgs_a.get())) {
-		m_top_tgset = TGS_Union::Factory::get_instance().create(tgs_b.get(), tgs_a.get());
-	} else {
-		m_top_tgset = tgs_a;
-	}
-}
-
-void Normalization_Visitor::visit(Test_Goal_Sequence const* n) {
-	Test_Goal_Sequence::seq_t seq;
-	for (Test_Goal_Sequence::seq_t::const_iterator iter(n->get_sequence().begin());
-			iter != n->get_sequence().end(); ++iter) {
-		Smart_FQL_Node_Ptr<Path_Monitor_Expr> mon;
-		if (iter->first) {
-			iter->first->accept(this);
-		} else if (m_prefix.get() && iter != n->get_sequence().begin()) {
-			m_top_mon = PM_Repeat::Factory::get_instance().create(
-					PM_Filter_Adapter::Factory::get_instance().create(
-						Filter_Compose::Factory::get_instance().create(
-							Filter_Function::Factory::get_instance().create<F_IDENTITY>(),
-							m_prefix.get())), 0, -1);
-		} else {
-			m_top_mon = PM_Repeat::Factory::get_instance().create(
-					PM_Filter_Adapter::Factory::get_instance().create(
-						Filter_Function::Factory::get_instance().create<F_IDENTITY>()), 0, -1);
-		}
-		mon = m_top_mon;
-		mon.get()->incr_ref_count();
-		
-		iter->second->accept(this);
-		m_top_tgset.get()->incr_ref_count();
-		seq.push_back(::std::make_pair(mon.get(), m_top_tgset.get()));
-	}
-
-	Smart_FQL_Node_Ptr<Path_Monitor_Expr> mon;
-	if (n->get_suffix_monitor()) {
-		n->get_suffix_monitor()->accept(this);
-		mon = m_top_mon;
-	} else {
-		mon = PM_Repeat::Factory::get_instance().create(
-				PM_Filter_Adapter::Factory::get_instance().create(
-					Filter_Function::Factory::get_instance().create<F_IDENTITY>()), 0, -1);
-	}
-	
-	for (Test_Goal_Sequence::seq_t::const_iterator iter(seq.begin());
-			iter != seq.end(); ++iter) {
-		if (iter->first) iter->first->decr_ref_count();
-		iter->second->decr_ref_count();
-	}
-
-	m_top_tgseq = Test_Goal_Sequence::Factory::get_instance().create(seq, mon.get());
-	m_top_mon = 0;
-	m_top_tgset = 0;
+	m_top_filter = FQL_CREATE2(Transform_Pred, filter.get(), preds);
+	m_top_atom = 0;
 }
 
 FSHELL2_FQL_NAMESPACE_END;

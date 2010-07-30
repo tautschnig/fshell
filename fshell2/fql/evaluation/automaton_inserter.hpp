@@ -51,8 +51,8 @@ FSHELL2_INSTRUMENTATION_NAMESPACE_END;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 class Query;
-class Evaluate_Path_Monitor;
-class Build_Test_Goal_Automaton;
+class Evaluate_Path_Pattern;
+class Evaluate_Coverage_Pattern;
 
 /*! \brief TODO
 */
@@ -69,8 +69,8 @@ class Automaton_Inserter
 	typedef ::std::map< target_graph_t::edge_t, ::std::set< target_graph_t const* > > edge_to_target_graphs_t;
 	typedef ::std::map< ::goto_programt::const_targett, edge_to_target_graphs_t > node_to_target_graphs_t; 
 
-	Automaton_Inserter(Evaluate_Path_Monitor const& pm_eval,
-			Build_Test_Goal_Automaton const& build_tg_aut,
+	Automaton_Inserter(Evaluate_Path_Pattern const& pp_eval,
+			Evaluate_Coverage_Pattern const& cp_eval,
 			::goto_functionst & gf,
 			::fshell2::instrumentation::CFG & cfg, ::language_uit & manager);
 
@@ -80,8 +80,8 @@ class Automaton_Inserter
 	// CFA::edge_t const& get_target_graph_edge(::goto_programt::const_targett const& node) const;
 
 	private:
-	Evaluate_Path_Monitor const& m_pm_eval;
-	Build_Test_Goal_Automaton const& m_build_tg_aut;
+	Evaluate_Path_Pattern const& m_pp_eval;
+	Evaluate_Coverage_Pattern const& m_cp_eval;
 	::goto_functionst & m_gf;
 	::language_uit & m_manager;
 	::fshell2::instrumentation::CFG & m_cfg;

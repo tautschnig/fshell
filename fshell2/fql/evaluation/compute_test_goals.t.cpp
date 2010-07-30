@@ -36,30 +36,17 @@
 #include <fshell2/instrumentation/cfg.hpp>
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
 #include <fshell2/fql/evaluation/predicate_instrumentation.hpp>
-#include <fshell2/fql/evaluation/evaluate_path_monitor.hpp>
-#include <fshell2/fql/evaluation/build_test_goal_automaton.hpp>
+#include <fshell2/fql/evaluation/evaluate_path_pattern.hpp>
+#include <fshell2/fql/evaluation/evaluate_coverage_pattern.hpp>
 #include <fshell2/fql/evaluation/automaton_inserter.hpp>
 
+#include <fshell2/fql/ast/cp_concat.hpp>
 #include <fshell2/fql/ast/edgecov.hpp>
-// #include <fshell2/fql/ast/filter_complement.hpp>
-// #include <fshell2/fql/ast/filter_compose.hpp>
-// #include <fshell2/fql/ast/filter_enclosing_scopes.hpp>
 #include <fshell2/fql/ast/filter_function.hpp>
-// #include <fshell2/fql/ast/filter_intersection.hpp>
-// #include <fshell2/fql/ast/filter_setminus.hpp>
-// #include <fshell2/fql/ast/filter_union.hpp>
-// #include <fshell2/fql/ast/pathcov.hpp>
-// #include <fshell2/fql/ast/pm_alternative.hpp>
-// #include <fshell2/fql/ast/pm_concat.hpp>
-#include <fshell2/fql/ast/pm_filter_adapter.hpp>
-#include <fshell2/fql/ast/pm_repeat.hpp>
+#include <fshell2/fql/ast/repeat.hpp>
 #include <fshell2/fql/ast/predicate.hpp>
 #include <fshell2/fql/ast/query.hpp>
-// #include <fshell2/fql/ast/statecov.hpp>
-#include <fshell2/fql/ast/test_goal_sequence.hpp>
-// #include <fshell2/fql/ast/tgs_intersection.hpp>
-// #include <fshell2/fql/ast/tgs_setminus.hpp>
-// #include <fshell2/fql/ast/tgs_union.hpp>
+#include <fshell2/fql/ast/quote.hpp>
 
 #include <fstream>
 
@@ -119,38 +106,37 @@ void test_instr( Test_Data & data )
 	::fshell2::instrumentation::CFG cfg;
 	cfg.compute_edges(gf);
 		
-	Evaluate_Filter eval(gf, cfg);
+	Evaluate_Filter eval(gf, cfg, l);
 	
-	Path_Monitor_Expr * pm_id(PM_Filter_Adapter::Factory::get_instance().create(
-				Filter_Function::Factory::get_instance().create<F_IDENTITY>()));
-	Path_Monitor_Expr * pm_id_kleene(PM_Repeat::Factory::get_instance().create(pm_id, 0, -1));
-	
-	Filter_Expr * bb(Filter_Function::Factory::get_instance().create<F_BASICBLOCKENTRY>());
-	Edgecov * e(Edgecov::Factory::get_instance().create(bb,
-				static_cast< Predicate::preds_t * >(0)));
-	Test_Goal_Sequence::seq_t seq_list;
-	seq_list.push_back(::std::make_pair<Path_Monitor_Expr *, Test_Goal_Set *>(pm_id_kleene, e));
-	Test_Goal_Sequence * s(Test_Goal_Sequence::Factory::get_instance().create(seq_list, pm_id_kleene));
-	Query * q(Query::Factory::get_instance().create(0, s, pm_id_kleene));
+	Path_Pattern_Expr * id_kleene(FQL_CREATE3(Repeat, FQL_CREATE1(Edgecov,
+					FQL_CREATE_FF0(F_IDENTITY)), 0, -1));
+	Coverage_Pattern_Expr * id_kleene_q(FQL_CREATE1(Quote, id_kleene));
+		
+	Filter_Expr * bb(FQL_CREATE_FF0(F_BASICBLOCKENTRY));
+	Edgecov * e(FQL_CREATE1(Edgecov, bb));
+	Coverage_Pattern_Expr * c(FQL_CREATE2(CP_Concat, id_kleene_q,
+				FQL_CREATE2(CP_Concat, e, id_kleene_q)));
+
+	Query * q(Query::Factory::get_instance().create(0, c, id_kleene));
 	q->accept(&eval);
 	target_graph_t const& bb_entries(eval.get(*bb));
 	TEST_CHECK_RELATION(6, ==, bb_entries.get_edges().size());
 
-	Predicate_Instrumentation pred_inst(eval, gf, l);
-	q->accept(&pred_inst);
-	::fshell2::fql::Evaluate_Path_Monitor pm_eval(eval, pred_inst);
-	q->accept(&pm_eval);
-	::fshell2::fql::Build_Test_Goal_Automaton tg_builder(eval, pm_eval, pred_inst, cfg);
-	q->accept(&tg_builder);
+	::fshell2::fql::Evaluate_Path_Pattern pp_eval(eval);
+	q->accept(&pp_eval);
+	::fshell2::fql::Evaluate_Coverage_Pattern cp_eval(eval, pp_eval, cfg);
+	q->accept(&cp_eval);
+	TEST_CHECK_RELATION(1, ==, cp_eval.get_test_goal_states().m_children.back().m_children.front().m_tg_states.size());
 
-	::fshell2::fql::Automaton_Inserter aut(pm_eval, tg_builder, gf, cfg, l);
+	::fshell2::fql::Automaton_Inserter aut(pp_eval, cp_eval, gf, cfg, l);
 	aut.insert(*q);
+	// gf.output(::namespacet(l.context), ::std::cerr);
 
 	CNF_Conversion eq(l, options);
 	eq.convert(gf);
 
-	Compute_Test_Goals_From_Instrumentation goals(eq, tg_builder, aut);
-	goals.compute(*q);
+	Compute_Test_Goals_From_Instrumentation goals(eq, cp_eval, aut);
+	q->accept(&goals);
 	CNF_Conversion::test_goals_t const& bb_goals(eq.get_test_goal_literals());
 
 	TEST_ASSERT_RELATION(6, ==, bb_goals.size());
@@ -193,34 +179,37 @@ void test_boolean( Test_Data & data )
 	::fshell2::instrumentation::CFG cfg;
 	cfg.compute_edges(gf);
 		
-	Evaluate_Filter eval(gf, cfg);
+	Evaluate_Filter eval(gf, cfg, l);
 	
-	Path_Monitor_Expr * pm_id(PM_Filter_Adapter::Factory::get_instance().create(
-				Filter_Function::Factory::get_instance().create<F_IDENTITY>()));
-	Path_Monitor_Expr * pm_id_kleene(PM_Repeat::Factory::get_instance().create(pm_id, 0, -1));
-	
-	Filter_Expr * bb(Filter_Function::Factory::get_instance().create<F_BASICBLOCKENTRY>());
-	Edgecov * e(Edgecov::Factory::get_instance().create(bb,
-				static_cast< Predicate::preds_t * >(0)));
-	Test_Goal_Sequence::seq_t seq_list;
-	seq_list.push_back(::std::make_pair<Path_Monitor_Expr *, Test_Goal_Set *>(pm_id_kleene, e));
-	Test_Goal_Sequence * s(Test_Goal_Sequence::Factory::get_instance().create(seq_list, pm_id_kleene));
-	Query * q(Query::Factory::get_instance().create(0, s, pm_id_kleene));
+	Path_Pattern_Expr * id_kleene(FQL_CREATE3(Repeat, FQL_CREATE1(Edgecov,
+					FQL_CREATE_FF0(F_IDENTITY)), 0, -1));
+	Coverage_Pattern_Expr * id_kleene_q(FQL_CREATE1(Quote, id_kleene));
+		
+	Filter_Expr * bb(FQL_CREATE_FF0(F_BASICBLOCKENTRY));
+	Edgecov * e(FQL_CREATE1(Edgecov, bb));
+	Coverage_Pattern_Expr * c(FQL_CREATE2(CP_Concat, id_kleene_q,
+				FQL_CREATE2(CP_Concat, e, id_kleene_q)));
+
+	Query * q(Query::Factory::get_instance().create(0, c, id_kleene));
 	q->accept(&eval);
 	target_graph_t const& bb_entries(eval.get(*bb));
 	TEST_CHECK_RELATION(6, ==, bb_entries.get_edges().size());
 
-	Predicate_Instrumentation pred_inst(eval, gf, l);
-	q->accept(&pred_inst);
-	::fshell2::fql::Evaluate_Path_Monitor pm_eval(eval, pred_inst);
-	q->accept(&pm_eval);
-	::fshell2::fql::Build_Test_Goal_Automaton tg_builder(eval, pm_eval, pred_inst, cfg);
-	q->accept(&tg_builder);
+	::fshell2::fql::Evaluate_Path_Pattern pp_eval(eval);
+	q->accept(&pp_eval);
+	::fshell2::fql::Evaluate_Coverage_Pattern cp_eval(eval, pp_eval, cfg);
+	q->accept(&cp_eval);
+	
+	::goto_programt tmp;
+	::goto_programt::targett as(tmp.add_instruction(ASSERT));
+	as->make_assertion(::false_exprt());
+	::fshell2::instrumentation::GOTO_Transformation inserter(l, gf);
+	inserter.insert("main", ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::END_FUNCTION, tmp);
 
 	CNF_Conversion eq(l, options);
 	eq.convert(gf);
 
-	Compute_Test_Goals_Boolean goals(eq, tg_builder);
+	Compute_Test_Goals_Boolean goals(eq, pp_eval, cp_eval);
 	goals.compute(*q);
 	CNF_Conversion::test_goals_t const& bb_goals(eq.get_test_goal_literals());
 

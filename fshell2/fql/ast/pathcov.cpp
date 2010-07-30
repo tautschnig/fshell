@@ -36,8 +36,8 @@
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Pathcov::Pathcov(Filter_Expr * filter_expr, int bound, Predicate::preds_t * predicates) :
-	m_filter_expr(filter_expr), m_bound(bound), m_predicates(predicates) {
+Pathcov::Pathcov(Filter_Expr * filter_expr, int bound) :
+	m_filter_expr(filter_expr), m_bound(bound) {
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_filter_expr);
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_bound > 0);
 }
@@ -55,19 +55,10 @@ bool Pathcov::destroy() {
 	Factory::get_instance().destroy(this);
 	m_filter_expr->decr_ref_count();
 	m_filter_expr->destroy();
-	if (m_predicates) {
-		for (Predicate::preds_t::iterator iter(m_predicates->begin());
-				iter != m_predicates->end(); ++iter) {
-			(*iter)->decr_ref_count();
-			(*iter)->destroy();
-		}
-		delete m_predicates;
-	}
 	return true;
 }
 
 Pathcov::~Pathcov() {
-	if (m_predicates) delete m_predicates;
 }
 
 FSHELL2_FQL_NAMESPACE_END;

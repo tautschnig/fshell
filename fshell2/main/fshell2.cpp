@@ -39,9 +39,8 @@
 #include <fshell2/instrumentation/cfg.hpp>
 #include <fshell2/fql/normalize/normalization_visitor.hpp>
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
-#include <fshell2/fql/evaluation/predicate_instrumentation.hpp>
-#include <fshell2/fql/evaluation/evaluate_path_monitor.hpp>
-#include <fshell2/fql/evaluation/build_test_goal_automaton.hpp>
+#include <fshell2/fql/evaluation/evaluate_path_pattern.hpp>
+#include <fshell2/fql/evaluation/evaluate_coverage_pattern.hpp>
 #include <fshell2/fql/evaluation/automaton_inserter.hpp>
 #include <fshell2/fql/evaluation/compute_test_goals.hpp>
 #include <fshell2/fql/ast/query.hpp>
@@ -201,24 +200,21 @@ void FShell2::try_query(::language_uit & manager, char const * line) {
 	cfg.compute_edges(gf_copy);
 
 	// prepare filter evaluation
-	::fshell2::fql::Evaluate_Filter filter_eval(gf_copy, cfg);
-	// evaluate all filters before modifying the CFA
+	::fshell2::fql::Evaluate_Filter filter_eval(gf_copy, cfg, manager);
+	// evaluate all filters before instrumenting automata
+	// may create a predicated CFA and add predicate edges
+	Context_Backup context_backup(manager);
 	query_ast->accept(&filter_eval);
 
-	// create a predicated CFA and add pre/post-condition edges
-	Context_Backup context_backup(manager);
-	::fshell2::fql::Predicate_Instrumentation pred_inst(filter_eval, gf_copy, manager);
-	query_ast->accept(&pred_inst);
-
 	// build automata from path monitor expressions
-	::fshell2::fql::Evaluate_Path_Monitor pm_eval(filter_eval, pred_inst);
-	query_ast->accept(&pm_eval);
+	::fshell2::fql::Evaluate_Path_Pattern pp_eval(filter_eval);
+	query_ast->accept(&pp_eval);
 	// create a test goal automaton from the coverage sequence
-	::fshell2::fql::Build_Test_Goal_Automaton tg_builder(filter_eval, pm_eval, pred_inst, cfg);
-	query_ast->accept(&tg_builder);
+	::fshell2::fql::Evaluate_Coverage_Pattern cp_eval(filter_eval, pp_eval, cfg);
+	query_ast->accept(&cp_eval);
 
 	// do automaton instrumentation
-	::fshell2::fql::Automaton_Inserter aut(pm_eval, tg_builder, gf_copy, cfg, manager);
+	::fshell2::fql::Automaton_Inserter aut(pp_eval, cp_eval, gf_copy, cfg, manager);
 	aut.insert(*query_ast);
 
 	if (m_opts.get_bool_option("show-goto-functions")) {
@@ -232,8 +228,8 @@ void FShell2::try_query(::language_uit & manager, char const * line) {
 	equation.convert(gf_copy);
 
 	// compute test goals
-	::fshell2::fql::Compute_Test_Goals_From_Instrumentation goals(equation, tg_builder, aut);
-	goals.compute(*query_ast);
+	::fshell2::fql::Compute_Test_Goals_From_Instrumentation goals(equation, cp_eval, aut);
+	query_ast->accept(&goals);
 
 	// do the enumeration
 	::fshell2::Constraint_Strengthening cs(equation);
