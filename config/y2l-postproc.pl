@@ -22,7 +22,8 @@ foreach (@inputs) {
     $line_bak = $line;
     $line =~ s/(\s+|^)([a-zA-Z_]+)(\s+|$)/$1<$2>$3/g;
   }
-  $line =~ s/"([^"]+)"/`$1'/g;
+  $line =~ s/"""/`\\"'/g;
+  $line =~ s/"([^"`]+)"/`$1'/g;
   ($line =~ /^(<[a-zA-Z_]+>\s+::)(=)/) or die "$line was unexpected\n";
   if ($1 eq $last_tok) {
     my $blanks = $1;
