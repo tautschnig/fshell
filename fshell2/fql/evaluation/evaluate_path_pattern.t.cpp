@@ -118,7 +118,7 @@ void test( Test_Data & data )
 
 	Evaluate_Filter eval(gf, cfg, l);
 	q->accept(&eval);
-	Evaluate_Path_Pattern pp_eval(eval);
+	Evaluate_Path_Pattern pp_eval(eval, cfg);
 	q->accept(&pp_eval);
 	
 	TEST_ASSERT_RELATION(4, ==, pp_eval.get(pp).state_count());

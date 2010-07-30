@@ -38,6 +38,12 @@
 #include <map>
 
 FSHELL2_NAMESPACE_BEGIN;
+FSHELL2_INSTRUMENTATION_NAMESPACE_BEGIN;
+
+class CFG;
+
+FSHELL2_INSTRUMENTATION_NAMESPACE_END;
+
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 class Evaluate_Filter;
@@ -54,7 +60,8 @@ class Evaluate_Path_Pattern : public Standard_AST_Visitor_Aspect<AST_Visitor>
 
 	typedef ::std::map< Path_Pattern_Expr const*, trace_automaton_t > pp_value_t;
 
-	explicit Evaluate_Path_Pattern(Evaluate_Filter const& filter_eval);
+	Evaluate_Path_Pattern(Evaluate_Filter const& filter_eval,
+			::fshell2::instrumentation::CFG const& cfg);
 
 	virtual ~Evaluate_Path_Pattern();
 
@@ -151,11 +158,18 @@ class Evaluate_Path_Pattern : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	/*! \} */
 
 	private:
+
+	typedef ::std::map< target_graph_t::node_t, int > node_counts_t;
+
 	Evaluate_Filter const& m_eval_filter;
+	::fshell2::instrumentation::CFG const& m_cfg;
 	Target_Graph_Index m_target_graph_index;
 	pp_value_t m_pp_map;
 	::std::pair< pp_value_t::iterator, bool > m_entry;
-	//::std::list< target_graph_t > m_more_target_graphs;
+	::std::list< target_graph_t > m_more_target_graphs;
+	void dfs_build(trace_automaton_t & ta, ta_state_t const& state,
+			target_graph_t::node_t const& root, int const bound,
+			node_counts_t const& nc, target_graph_t const& tgg);
 
 	/*! \copydoc copy_constructor
 	*/

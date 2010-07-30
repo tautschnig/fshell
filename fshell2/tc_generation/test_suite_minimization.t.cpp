@@ -123,9 +123,9 @@ void test( Test_Data & data )
 	fql::target_graph_t const& bb_entries(eval.get(*bb));
 	TEST_CHECK_RELATION(6, ==, bb_entries.get_edges().size());
 
-	::fshell2::fql::Evaluate_Path_Pattern pp_eval(eval);
+	::fshell2::fql::Evaluate_Path_Pattern pp_eval(eval, cfg);
 	q->accept(&pp_eval);
-	::fshell2::fql::Evaluate_Coverage_Pattern cp_eval(eval, pp_eval, cfg);
+	::fshell2::fql::Evaluate_Coverage_Pattern cp_eval(eval, pp_eval);
 	q->accept(&cp_eval);
 	TEST_CHECK_RELATION(1, ==, cp_eval.get_test_goal_states().m_children.back().m_children.front().m_tg_states.size());
 

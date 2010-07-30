@@ -36,12 +36,6 @@
 #include <fshell2/fql/concepts/trace_automaton.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
-FSHELL2_INSTRUMENTATION_NAMESPACE_BEGIN;
-
-class CFG;
-
-FSHELL2_INSTRUMENTATION_NAMESPACE_END;
-
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 class Evaluate_Filter;
@@ -56,9 +50,6 @@ class Evaluate_Coverage_Pattern : public Standard_AST_Visitor_Aspect<AST_Visitor
 	typedef Evaluate_Coverage_Pattern Self;
 
 	public:
-
-	typedef ::std::map< target_graph_t::node_t, int > node_counts_t;
-
 	class Test_Goal_States {
 		public:
 		Coverage_Pattern_Expr const * m_cp;
@@ -73,8 +64,7 @@ class Evaluate_Coverage_Pattern : public Standard_AST_Visitor_Aspect<AST_Visitor
 	inline bool is_test_goal_state(ta_state_t const& state) const;
 
 	Evaluate_Coverage_Pattern(Evaluate_Filter const& eval_filter,
-			Evaluate_Path_Pattern & pp_eval,
-			::fshell2::instrumentation::CFG const& cfg);
+			Evaluate_Path_Pattern & pp_eval);
 
 	virtual ~Evaluate_Coverage_Pattern();
 
@@ -90,17 +80,13 @@ class Evaluate_Coverage_Pattern : public Standard_AST_Visitor_Aspect<AST_Visitor
 	private:
 	Evaluate_Filter const& m_eval_filter;
 	Evaluate_Path_Pattern & m_pp_eval;
-	::fshell2::instrumentation::CFG const& m_cfg;
 	
 	trace_automaton_t m_test_goal_automaton;
 	Test_Goal_States m_test_goal_states;
 	Test_Goal_States * m_current_tg_states;
 	ta_state_set_t m_current_final;
-	::std::list< target_graph_t > m_more_target_graphs;
 	
 	static bool is_test_goal_state(Test_Goal_States const& tgs, ta_state_t const& state);
-	void dfs_build(ta_state_t const& state, target_graph_t::node_t const& root, int const bound,
-		node_counts_t const& nc, target_graph_t const& tgg);
 	
 	/*! \{
 	 * \brief Visit a @ref fshell2::fql::CP_Alternative

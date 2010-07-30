@@ -33,6 +33,7 @@
 #include <diagnostics/basic_exceptions/invalid_protocol.hpp>
 #include <diagnostics/basic_exceptions/not_implemented.hpp>
 
+#include <fshell2/instrumentation/cfg.hpp>
 #include <fshell2/fql/ast/cp_alternative.hpp>
 #include <fshell2/fql/ast/cp_concat.hpp>
 #include <fshell2/fql/ast/depcov.hpp>
@@ -51,8 +52,10 @@
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 		
-Evaluate_Path_Pattern::Evaluate_Path_Pattern(Evaluate_Filter const& filter_eval) :
+Evaluate_Path_Pattern::Evaluate_Path_Pattern(Evaluate_Filter const& filter_eval,
+			::fshell2::instrumentation::CFG const& cfg) :
 	m_eval_filter(filter_eval),
+	m_cfg(cfg),
 	m_target_graph_index(&(m_eval_filter.get(*(Filter_Function::Factory::get_instance().create<F_IDENTITY>())))) {
 }
 
@@ -64,6 +67,62 @@ trace_automaton_t const& Evaluate_Path_Pattern::get(Path_Pattern_Expr const* pm)
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Protocol,
 			entry != m_pp_map.end());
 	return entry->second;
+}
+
+void Evaluate_Path_Pattern::dfs_build(trace_automaton_t & ta, ta_state_t const& state,
+		target_graph_t::node_t const& root, int const bound,
+		node_counts_t const& nc, target_graph_t const& tgg) {
+	
+	::fshell2::instrumentation::CFG::entries_t::const_iterator cfg_node(m_cfg.find(root.second));
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.end());
+	// the end? that's ok as well
+	if (cfg_node->second.successors.empty()) {
+		ta.final(state) = 1;
+		return;
+	}
+
+	for (::fshell2::instrumentation::CFG::successors_t::const_iterator s_iter(
+				cfg_node->second.successors.begin());
+			s_iter != cfg_node->second.successors.end(); ++s_iter) {
+		// maybe the root statement is to be ignored, then just keep going but
+		// don't add anything
+		if (Evaluate_Filter::ignore_instruction(*(root.second))) {
+			// maybe this is the end, maybe we'll find some more; if we do,
+			// we'll pass this state anyway, but just be sure we have something.
+			ta.final(state) = 1;
+			dfs_build(ta, state, s_iter->first, bound, nc, tgg);
+			continue;
+		}
+		node_counts_t::const_iterator nc_iter(nc.find(s_iter->first));
+		// test the bound
+		if (nc.end() != nc_iter && nc_iter->second == bound) {
+			ta.final(state) = 1;
+			continue;
+		}
+		target_graph_t::edge_t new_edge(::std::make_pair(root, s_iter->first));
+		// check target graph
+		if (tgg.get_edges().end() == tgg.get_edges().find(new_edge)) {
+			ta.final(state) = 1;
+			continue;
+		}
+		// keep going, we're within the limits
+		// create a new target graph
+		m_more_target_graphs.push_back(target_graph_t());
+		target_graph_t::edges_t e;
+		e.insert(new_edge);
+		m_more_target_graphs.back().set_edges(e);
+		// make new node count map
+		node_counts_t nc_next(nc);
+		if (nc.end() == nc_iter)
+			nc_next[ s_iter->first ] = 1;
+		else
+			++(nc_next[ s_iter->first ]);
+		// next automaton state
+		ta_state_t const new_state(ta.new_state());
+		ta.set_trans(state, m_target_graph_index.to_index(&(m_more_target_graphs.back())), new_state);
+		// DFS recursion
+		dfs_build(ta, new_state, s_iter->first, bound, nc_next, tgg);
+	}
 }
 
 void Evaluate_Path_Pattern::visit(CP_Alternative const* n) {
@@ -181,62 +240,32 @@ void Evaluate_Path_Pattern::visit(PP_Concat const* n) {
 }
 
 void Evaluate_Path_Pattern::visit(Pathcov const* n) {
-	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false); // (build paths);
-#if 0
 	m_entry = m_pp_map.insert(::std::make_pair(n, trace_automaton_t()));
 	if (!m_entry.second) return;
 	trace_automaton_t & current_aut(m_entry.first->second);
 	
 	ta_state_t const current_initial(current_aut.new_state());
 	current_aut.initial().insert(current_initial);
-	ta_state_t const current_final(current_aut.new_state());
-	current_aut.final(current_final) = 1;
-
-	current_aut.set_trans(current_initial,
-			m_target_graph_index.to_index(&(m_eval_filter.get(*(n->get_filter_expr())))),
-			current_final);
 	
-	from evaluate coverage pattern:
-	
-	if (n->get_predicates()) {
-		FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
-	}
-
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == m_current_final.size());
-
-	ta_state_set_t prev_final;
-	prev_final.swap(m_current_final);
-
-	// for each initial state to a depth-first traversal of the CFG as long as
+	// for each initial state do a depth-first traversal of the CFG as long as
 	// the edge remains within the given target graph; each edge yields a new
-	// target graph that only has a single edge; set reverse lookups (move into
-	// this class, do after collecting relevant tggs)
+	// target graph that only has a single edgei
 
 	int const bound(n->get_bound());
 	target_graph_t const& tgg(m_eval_filter.get(*(n->get_filter_expr())));
 	target_graph_t::initial_states_t const& i_states(tgg.get_initial_states());
 	
-	for (ta_state_set_t::const_iterator iter(prev_final.begin());
-			iter != prev_final.end(); ++iter) {
-		for (target_graph_t::initial_states_t::const_iterator i_iter(i_states.begin());
-				i_iter != i_states.end(); ++i_iter) {
-			ta_state_t const i_state(m_test_goal_automaton.new_state());
-			m_test_goal_automaton.set_trans(*iter, m_pm_eval.epsilon_index(), i_state);
-			node_counts_t node_counts;
-			node_counts[ *i_iter ] = 1;
-			dfs_build(i_state, *i_iter, bound, node_counts, tgg);
-		}
-		// we currently don't properly deal with empty path sets
-		FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented,
-				m_current_final.end() == m_current_final.find(*iter));
+	for (target_graph_t::initial_states_t::const_iterator iter(i_states.begin());
+			iter != i_states.end(); ++iter) {
+		ta_state_t const i_state(current_aut.new_state());
+		current_aut.set_trans(current_initial, m_target_graph_index.epsilon_index(), i_state);
+		node_counts_t node_counts;
+		node_counts[ *iter ] = 1;
+		dfs_build(current_aut, i_state, *iter, bound, node_counts, tgg);
+		// if initial state has no successor then remove it from accepting
+		// states
+		if (current_aut.final(i_state)) current_aut.final(i_state) = 0;
 	}
-
-	for (ta_state_set_t::const_iterator iter(m_current_final.begin());
-			iter != m_current_final.end(); ++iter) {
-		m_test_goal_map_entry->second.insert(*iter);
-		m_reverse_test_goal_map.insert(::std::make_pair(*iter, m_test_goal_map_entry));
-	}
-#endif
 }
 	
 void Evaluate_Path_Pattern::visit(Predicate const* n) {

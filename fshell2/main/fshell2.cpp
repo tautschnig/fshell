@@ -207,10 +207,10 @@ void FShell2::try_query(::language_uit & manager, char const * line) {
 	query_ast->accept(&filter_eval);
 
 	// build automata from path monitor expressions
-	::fshell2::fql::Evaluate_Path_Pattern pp_eval(filter_eval);
+	::fshell2::fql::Evaluate_Path_Pattern pp_eval(filter_eval, cfg);
 	query_ast->accept(&pp_eval);
 	// create a test goal automaton from the coverage sequence
-	::fshell2::fql::Evaluate_Coverage_Pattern cp_eval(filter_eval, pp_eval, cfg);
+	::fshell2::fql::Evaluate_Coverage_Pattern cp_eval(filter_eval, pp_eval);
 	query_ast->accept(&cp_eval);
 
 	// do automaton instrumentation
