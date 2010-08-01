@@ -33,7 +33,7 @@
 #include <fshell2/fql/ast/coverage_pattern_expr.hpp>
 #include <fshell2/fql/ast/fql_node_factory.hpp>
 
-#include <fshell2/fql/ast/Predicate.hpp>
+#include <fshell2/fql/ast/predicate.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
