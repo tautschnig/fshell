@@ -155,13 +155,17 @@ void test( Test_Data & data )
 	TEST_CHECK_RELATION(test_suite.size(), <=, size);
 	
 	::config.main = "main";
+	::std::string data_name("test_results_");
+	char hname[256];
+	TEST_CHECK(0 == ::gethostname(hname, 256));
+	data_name += hname;
 	Test_Suite_Output out(eq);
 	::std::ostringstream os;
 	out.print_ts(test_suite, os, ::ui_message_handlert::PLAIN);
-	TEST_ASSERT(data.compare("test_results_plain_1", os.str()));
+	TEST_ASSERT(data.compare(data_name + "_plain_1", os.str()));
 	::std::ostringstream os_xml;
 	out.print_ts(test_suite, os_xml, ::ui_message_handlert::XML_UI);
-	TEST_ASSERT(data.compare("test_results_xml_1", os_xml.str()));
+	TEST_ASSERT(data.compare(data_name + "_xml_1", os_xml.str()));
 }
 
 /** @cond */
