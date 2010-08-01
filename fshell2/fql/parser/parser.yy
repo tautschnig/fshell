@@ -25,7 +25,7 @@
  * @brief YACC/bison based parser
  *
  *
- * $Id$
+ * $Id: parser.yy 236 2010-07-30 10:32:14Z tautschnig $
  *
  * @author Michael Tautschnig <tautschn@model.in.tum.de>
  * @date   Thu Feb 19 23:41:39 CET 2009
@@ -73,6 +73,7 @@
 #define yychar FQLchar
 
 #define MAKE_ID_STAR FQL_CREATE3(Repeat, FQL_CREATE1(Edgecov, FQL_CREATE_FF0(F_IDENTITY)), 0, -1)
+#define IN_USE(n) needs_cleanup.erase(n); intermediates.insert(n)
 
 extern "C"
 {
@@ -84,6 +85,7 @@ extern "C"
 /* #define YYDEBUG 1 */
 
 ::std::set< ::fshell2::fql::FQL_Node * > intermediates;
+::std::set< ::fshell2::fql::FQL_Node * > needs_cleanup;
 
 %}
 
@@ -195,6 +197,7 @@ Query: Scope Cover Passing
 	 {
 	   *query_ast = FQL_CREATE3(Query, $1, $2, $3);
 	   intermediates.clear();
+	   needs_cleanup.clear();
 	 }
 	 ;
 
@@ -213,42 +216,42 @@ Cover: TOK_COVER Start_Anchor Coverage_Pattern End_Anchor
 	   $$ = $3;
 	   if ($4) {
 		 $$ = FQL_CREATE2(CP_Concat, $$, FQL_CREATE1(Quote, $4));
-		 intermediates.erase($4);
+		 IN_USE($4);
 	   }
 	   if ($2) {
 	     $$ = FQL_CREATE2(CP_Concat, FQL_CREATE1(Quote, $2), $$);
-		 intermediates.erase($2);
+		 IN_USE($2);
 	   }
-	   intermediates.erase($3);
-	   intermediates.insert($$);
+	   IN_USE($3);
+	   needs_cleanup.insert($$);
 	 }
 	 ;
 
 Passing: /* empty */
 	   {
 		 $$ = MAKE_ID_STAR;
-		 intermediates.insert($$);
+		 needs_cleanup.insert($$);
 	   }
 	   | TOK_PASSING Start_Anchor Path_Pattern End_Anchor
 	   {
 	     $$ = $3;
 	     if ($4) {
 	       $$ = FQL_CREATE2(PP_Concat, $$, $4);
-	       intermediates.erase($4);
+	       IN_USE($4);
 	     }
 	     if ($2) {
 	       $$ = FQL_CREATE2(PP_Concat, $2, $$);
-	       intermediates.erase($2);
+	       IN_USE($2);
 	     }
-	     intermediates.erase($3);
-	     intermediates.insert($$);
+	     IN_USE($3);
+	     needs_cleanup.insert($$);
 	   }
 	   ;
 
 Start_Anchor: /* empty */
 			{
 			  $$ = MAKE_ID_STAR;
-			  intermediates.insert($$);
+			  needs_cleanup.insert($$);
 			}
 			| TOK_START
 			{
@@ -259,7 +262,7 @@ Start_Anchor: /* empty */
 End_Anchor: /* empty */
 		  {
 		    $$ = MAKE_ID_STAR;
-			intermediates.insert($$);
+			needs_cleanup.insert($$);
 		  }
 		  | TOK_END
 		  {
@@ -274,9 +277,9 @@ Coverage_Pattern: Coverage_Pattern_Term
 				| Coverage_Pattern TOK_ALTERNATIVE Coverage_Pattern_Term
 				{
 		      	  $$ = FQL_CREATE2(CP_Alternative, $1, $3);
-				  intermediates.erase($1);
-				  intermediates.erase($3);
-			   	  intermediates.insert($$);
+				  IN_USE($1);
+				  IN_USE($3);
+			   	  needs_cleanup.insert($$);
 				}
 				;
 				
@@ -287,17 +290,17 @@ Coverage_Pattern_Term: Coverage_Pattern_Factor
 				     | Coverage_Pattern_Term TOK_CONCAT Coverage_Pattern_Factor
 				     {
 		      	       $$ = FQL_CREATE2(CP_Concat, $1, $3);
-				       intermediates.erase($1);
-				       intermediates.erase($3);
-			   	       intermediates.insert($$);
+				       IN_USE($1);
+				       IN_USE($3);
+			   	       needs_cleanup.insert($$);
 				     }
 				     | Coverage_Pattern_Term TOK_NEXT Coverage_Pattern_Factor
 				     {
 		      	       $$ = FQL_CREATE2(CP_Concat, $1, FQL_CREATE2(CP_Concat,
 				       		 FQL_CREATE1(Quote, MAKE_ID_STAR), $3));
-				       intermediates.erase($1);
-				       intermediates.erase($3);
-			           intermediates.insert($$);
+				       IN_USE($1);
+				       IN_USE($3);
+			           needs_cleanup.insert($$);
 				     }
 				     ;
 
@@ -312,8 +315,8 @@ Coverage_Pattern_Factor: ECP_Atom
 					   | TOK_DBLQUOTE Path_Pattern TOK_DBLQUOTE
 					   {
 					     $$ = FQL_CREATE1(Quote, $2);
-						 intermediates.erase($2);
-						 intermediates.insert($$);
+						 IN_USE($2);
+						 needs_cleanup.insert($$);
 					   }
 					   ;
 
@@ -324,9 +327,9 @@ Path_Pattern: Path_Pattern_Term
 		    | Path_Pattern TOK_ALTERNATIVE Path_Pattern_Term
 		    {
 		      $$ = FQL_CREATE2(PP_Alternative, $1, $3);
-			  intermediates.erase($1);
-			  intermediates.erase($3);
-			  intermediates.insert($$);
+			  IN_USE($1);
+			  IN_USE($3);
+			  needs_cleanup.insert($$);
 		    }
 		    ;
 
@@ -337,17 +340,17 @@ Path_Pattern_Term: Path_Pattern_Factor
 				 | Path_Pattern_Term TOK_CONCAT Path_Pattern_Factor
 				 {
 		      	   $$ = FQL_CREATE2(PP_Concat, $1, $3);
-				   intermediates.erase($1);
-				   intermediates.erase($3);
-			   	   intermediates.insert($$);
+				   IN_USE($1);
+				   IN_USE($3);
+			   	   needs_cleanup.insert($$);
 				 }
 				 | Path_Pattern_Term TOK_NEXT Path_Pattern_Factor
 				 {
 		      	  $$ = FQL_CREATE2(PP_Concat, $1, FQL_CREATE2(PP_Concat,
 				  		 MAKE_ID_STAR, $3));
-				   intermediates.erase($1);
-				   intermediates.erase($3);
-			       intermediates.insert($$);
+				   IN_USE($1);
+				   IN_USE($3);
+			       needs_cleanup.insert($$);
 				 }
 				 ;
 
@@ -362,26 +365,26 @@ Path_Pattern_Factor: ECP_Atom
 				   | Path_Pattern_Factor TOK_KLEENE
 				   {
 		      	   	 $$ = FQL_CREATE3(Repeat, $1, 0, -1);
-				     intermediates.erase($1);
-			   		 intermediates.insert($$);
+				     IN_USE($1);
+			   		 needs_cleanup.insert($$);
 				   }
 				   | Path_Pattern_Factor TOK_GREATER_OR_EQ TOK_NAT_NUMBER
 				   {
 		      	   	 $$ = FQL_CREATE3(Repeat, $1, $3, -1);
-				     intermediates.erase($1);
-			   		 intermediates.insert($$);
+				     IN_USE($1);
+			   		 needs_cleanup.insert($$);
 				   }
 				   | Path_Pattern_Factor TOK_EQ TOK_NAT_NUMBER
 				   {
 		      	   	 $$ = FQL_CREATE3(Repeat, $1, $3, $3);
-				     intermediates.erase($1);
-			   		 intermediates.insert($$);
+				     IN_USE($1);
+			   		 needs_cleanup.insert($$);
 				   }
 				   | Path_Pattern_Factor TOK_LESS_OR_EQ TOK_NAT_NUMBER
 				   {
 		      	   	 $$ = FQL_CREATE3(Repeat, $1, 0, $3);
-				     intermediates.erase($1);
-			   		 intermediates.insert($$);
+				     IN_USE($1);
+			   		 needs_cleanup.insert($$);
 				   }
 				   ;
 
@@ -392,34 +395,34 @@ ECP_Atom: Predicate
 		| TOK_NODECOV TOK_L_PARENTHESIS Filter TOK_R_PARENTHESIS
 	    {
 		  $$ = FQL_CREATE1(Nodecov, $3);
-	      intermediates.erase($3);
-	      intermediates.insert($$);
+	      IN_USE($3);
+	      needs_cleanup.insert($$);
 	    }
 		| TOK_EDGECOV TOK_L_PARENTHESIS Filter TOK_R_PARENTHESIS
  	    {
 		  $$ = FQL_CREATE1(Edgecov, $3);
- 	      intermediates.erase($3);
- 	      intermediates.insert($$);
+ 	      IN_USE($3);
+ 	      needs_cleanup.insert($$);
  	    }
 		| Filter
 		{
 		  $$ = FQL_CREATE1(Edgecov, $1);
- 	      intermediates.erase($1);
- 	      intermediates.insert($$);
+ 	      IN_USE($1);
+ 	      needs_cleanup.insert($$);
 		}
 		| TOK_PATHCOV TOK_L_PARENTHESIS Filter TOK_COMMA TOK_NAT_NUMBER TOK_R_PARENTHESIS
 	    {
 		  $$ = FQL_CREATE2(Pathcov, $3, $5);
-	      intermediates.erase($3);
- 	      intermediates.insert($$);
+	      IN_USE($3);
+ 	      needs_cleanup.insert($$);
 	    }
 		| TOK_DEPCOV TOK_L_PARENTHESIS Filter TOK_COMMA Filter TOK_COMMA Filter TOK_R_PARENTHESIS
 	    {
 		  $$ = FQL_CREATE3(Depcov, $3, $5, $7);
-	      intermediates.erase($3);
-	      intermediates.erase($5);
-	      intermediates.erase($7);
- 	      intermediates.insert($$);
+	      IN_USE($3);
+	      IN_USE($5);
+	      IN_USE($7);
+ 	      needs_cleanup.insert($$);
 	    }
 		;
 
@@ -451,7 +454,7 @@ Predicate: TOK_ARBITRARY_PRED
 		   (static_cast<exprt &>(ansi_c_parser.parse_tree.items.front().add(ID_value))).operands().front().op0().op0().set("identifier", "!PRED!");
 		   $$ = ::fshell2::fql::Predicate::Factory::get_instance().create(new
 		     ::exprt((static_cast<const exprt&>(ansi_c_parser.parse_tree.items.front().find(ID_value))).operands().front()));
-		   intermediates.insert($$);
+		   needs_cleanup.insert($$);
 		   // clean up the things we don't need anymore
 		   ansi_c_parser.clear();
 		 }
@@ -480,144 +483,144 @@ Filter: Filter_Function
 	  | TOK_NOT TOK_L_PARENTHESIS Filter TOK_R_PARENTHESIS
 	  {
         $$ = FQL_CREATE2(Filter_Setminus, FQL_CREATE_FF0(F_IDENTITY), $3);
-	 	intermediates.erase($3);
-	    intermediates.insert($$);
+	 	IN_USE($3);
+	    needs_cleanup.insert($$);
 	  }
 	  | Filter TOK_TGUNION Filter
 	  {
 	    $$ = FQL_CREATE2(Filter_Union, $1, $3);
-	 	intermediates.erase($1);
-	 	intermediates.erase($3);
-	    intermediates.insert($$);
+	 	IN_USE($1);
+	 	IN_USE($3);
+	    needs_cleanup.insert($$);
 	  }
       | Filter TOK_TGINTERSECT Filter
 	  {
 	    $$ = FQL_CREATE2(Filter_Intersection, $1, $3);
-	 	intermediates.erase($1);
-	 	intermediates.erase($3);
-	    intermediates.insert($$);
+	 	IN_USE($1);
+	 	IN_USE($3);
+	    needs_cleanup.insert($$);
 	  }
       | TOK_SETMINUS TOK_L_PARENTHESIS Filter TOK_COMMA Filter TOK_R_PARENTHESIS
 	  {
 	    $$ = FQL_CREATE2(Filter_Setminus, $3, $5);
-	 	intermediates.erase($3);
-	 	intermediates.erase($5);
-	    intermediates.insert($$);
+	 	IN_USE($3);
+	 	IN_USE($5);
+	    needs_cleanup.insert($$);
 	  }
 	  | TOK_COMPOSE TOK_L_PARENTHESIS Filter TOK_COMMA Filter TOK_R_PARENTHESIS
 	  {
 	    $$ = FQL_CREATE2(Filter_Compose, $3, $5);
-	 	intermediates.erase($3);
-	 	intermediates.erase($5);
-	    intermediates.insert($$);
+	 	IN_USE($3);
+	 	IN_USE($5);
+	    needs_cleanup.insert($$);
 	  }
 	  | TOK_PRED TOK_L_PARENTHESIS Filter TOK_COMMA Predicates TOK_R_PARENTHESIS
 	  {
 	    $$ = FQL_CREATE2(Transform_Pred, $3, $5);
-	 	intermediates.erase($3);
-	    intermediates.insert($$);
+	 	IN_USE($3);
+	    needs_cleanup.insert($$);
 	  }
 	  ;
 	  
 Filter_Function: TOK_IDENTITY
 			   {
 			     $$ = FQL_CREATE_FF0(F_IDENTITY);
-	    	     intermediates.insert($$);
+	    	     needs_cleanup.insert($$);
 			   }
 			   | TOK_FILE TOK_L_PARENTHESIS TOK_QUOTED_STRING TOK_R_PARENTHESIS
 			   {
 			     $$ = FQL_CREATE_FF1(F_FILE, $3);
-	    	     intermediates.insert($$);
+	    	     needs_cleanup.insert($$);
 			   }
 			   | TOK_LINE TOK_L_PARENTHESIS TOK_NAT_NUMBER TOK_R_PARENTHESIS
 			   {
 			     $$ = FQL_CREATE_FF1(F_LINE, $3);
-	    	     intermediates.insert($$);
+	    	     needs_cleanup.insert($$);
 			   }
 			   | TOK_LINE_ABBREV
 			   {
 			     $$ = FQL_CREATE_FF1(F_LINE, $1);
-	    	     intermediates.insert($$);
+	    	     needs_cleanup.insert($$);
 			   }
 			   | TOK_COLUMN TOK_L_PARENTHESIS TOK_NAT_NUMBER TOK_R_PARENTHESIS
 			   {
 			     $$ = FQL_CREATE_FF1(F_COLUMN, $3);
-	    	     intermediates.insert($$);
+	    	     needs_cleanup.insert($$);
 			   }
 			   | TOK_FUNC TOK_L_PARENTHESIS TOK_C_IDENT TOK_R_PARENTHESIS
 			   {
 			     $$ = FQL_CREATE_FF1(F_FUNC, $3);
-	    	     intermediates.insert($$);
+	    	     needs_cleanup.insert($$);
 			   }
 			   | TOK_LABEL TOK_L_PARENTHESIS TOK_C_IDENT TOK_R_PARENTHESIS
 			   {
 			     $$ = FQL_CREATE_FF1(F_LABEL, $3);
-	    	     intermediates.insert($$);
+	    	     needs_cleanup.insert($$);
 			   }
 			   | TOK_CALL TOK_L_PARENTHESIS TOK_C_IDENT TOK_R_PARENTHESIS
 			   {
 			     $$ = FQL_CREATE_FF1(F_CALL, $3);
-	    	     intermediates.insert($$);
+	    	     needs_cleanup.insert($$);
 			   }
 			   | TOK_CALLS
 			   {
 			     $$ = FQL_CREATE_FF0(F_CALLS);
-	    	     intermediates.insert($$);
+	    	     needs_cleanup.insert($$);
 			   }
 			   | TOK_ENTRY TOK_L_PARENTHESIS TOK_C_IDENT TOK_R_PARENTHESIS
 			   {
 			     $$ = FQL_CREATE_FF1(F_ENTRY, $3);
-	    	     intermediates.insert($$);
+	    	     needs_cleanup.insert($$);
 			   }
 			   | TOK_EXIT TOK_L_PARENTHESIS TOK_C_IDENT TOK_R_PARENTHESIS
 			   {
 			     $$ = FQL_CREATE_FF1(F_EXIT, $3);
-	    	     intermediates.insert($$);
+	    	     needs_cleanup.insert($$);
 			   }
 			   | TOK_EXPR TOK_L_PARENTHESIS TOK_QUOTED_STRING TOK_R_PARENTHESIS
 			   {
 			     $$ = FQL_CREATE_FF1(F_EXPR, $3);
-	    	     intermediates.insert($$);
+	    	     needs_cleanup.insert($$);
 			   }
 			   | TOK_REGEXP TOK_L_PARENTHESIS TOK_QUOTED_STRING TOK_R_PARENTHESIS
 			   {
 			     $$ = FQL_CREATE_FF1(F_REGEXP, $3);
-	    	     intermediates.insert($$);
+	    	     needs_cleanup.insert($$);
 			   }
 			   | TOK_BASICBLOCKENTRY
 			   {
 			     $$ = FQL_CREATE_FF0(F_BASICBLOCKENTRY);
-	    	     intermediates.insert($$);
+	    	     needs_cleanup.insert($$);
 			   }
 			   | TOK_CONDITIONEDGE
 			   {
 			     $$ = FQL_CREATE_FF0(F_CONDITIONEDGE);
-	    	     intermediates.insert($$);
+	    	     needs_cleanup.insert($$);
 			   }
 			   | TOK_DECISIONEDGE
 			   {
 			     $$ = FQL_CREATE_FF0(F_DECISIONEDGE);
-	    	     intermediates.insert($$);
+	    	     needs_cleanup.insert($$);
 			   }
 			   | TOK_CONDITIONGRAPH
 			   {
 			     $$ = FQL_CREATE_FF0(F_CONDITIONGRAPH);
-	    	     intermediates.insert($$);
+	    	     needs_cleanup.insert($$);
 			   }
 			   | TOK_DEF TOK_L_PARENTHESIS TOK_C_IDENT TOK_R_PARENTHESIS
 			   {
 			     $$ = FQL_CREATE_FF1(F_DEF, $3);
-	    	     intermediates.insert($$);
+	    	     needs_cleanup.insert($$);
 			   }
 			   | TOK_USE TOK_L_PARENTHESIS TOK_C_IDENT TOK_R_PARENTHESIS
 			   {
 			     $$ = FQL_CREATE_FF1(F_USE, $3);
-	    	     intermediates.insert($$);
+	    	     needs_cleanup.insert($$);
 			   }
 			   | TOK_STMTTYPE TOK_L_PARENTHESIS Stmttypes TOK_R_PARENTHESIS
 			   {
 			     $$ = FQL_CREATE_FF1(F_STMTTYPE, $3);
-	    	     intermediates.insert($$);
+	    	     needs_cleanup.insert($$);
 			   }
 			   ;
 
@@ -662,9 +665,12 @@ Stmttypes: Stmttype
 void yyerror(yyFlexLexer *, ::std::ostream *, ::fshell2::fql::Query **, char const* errstr)
 {
   for (::std::set< ::fshell2::fql::FQL_Node * >::iterator
-  	iter(intermediates.begin()); iter != intermediates.end(); ++iter)
-    if (*iter) (*iter)->destroy();
+	iter(needs_cleanup.begin()); iter != needs_cleanup.end(); ++iter)
+	if (*iter && intermediates.end() == intermediates.find(*iter))
+		(*iter)->destroy();
   intermediates.clear();
+  needs_cleanup.clear();
+  
   FSHELL2_PROD_CHECK1(::diagnostics::Parse_Error, false,
   ::diagnostics::internal::to_string( 
     errstr, "; type \"help\" to get usage information" ));
