@@ -299,21 +299,21 @@ bool Command_Processing::finalize(::language_uit & manager) {
 	m_finalized = ! manager.final();
 	// this must never fail, given all the previous sanity checks
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_finalized);
-    ::symbolst::iterator main_iter(manager.context.symbols.find("main"));
+    ::symbolst::iterator init_iter(manager.context.symbols.find("c::__CPROVER_initialize"));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-			main_iter != manager.context.symbols.end());
+			init_iter != manager.context.symbols.end());
 
 	// remove 0-initialization of global variables, if requested by user
 	if (m_remove_zero_init) {
 		// check all operands
-		for (::exprt::operandst::iterator iter(main_iter->second.value.operands().begin());
-				iter != main_iter->second.value.operands().end();)
+		for (::exprt::operandst::iterator iter(init_iter->second.value.operands().begin());
+				iter != init_iter->second.value.operands().end();)
 		{
 			if (iter->get("statement") == "assign" &&
 					iter->location().get_file() != "<built-in>") {
 				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 2 == iter->operands().size());
 				if (iter->op1().get_bool("#zero_initializer")) {
-					iter = main_iter->second.value.operands().erase(iter);
+					iter = init_iter->second.value.operands().erase(iter);
 				} else {
 					++iter;
 				}
