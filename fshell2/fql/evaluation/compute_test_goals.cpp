@@ -320,7 +320,33 @@ void Compute_Test_Goals_From_Instrumentation::visit(Pathcov const* n) {
 void Compute_Test_Goals_From_Instrumentation::visit(Predicate const* n) {
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_test_goal_states->m_cp == n);
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_test_goal_states->m_children.empty());
-	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+	
+	// Nearly same code as Quote
+	context_to_pcs_t context_to_pcs;
+#if FSHELL2_DEBUG__LEVEL__ >= 2
+	bool has_initial(find_all_contexts(context_to_pcs));
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !has_initial);
+#else
+	find_all_contexts(context_to_pcs);
+#endif
+
+	::bvt set;
+	// collect all calling contexts
+	for (context_to_pcs_t::const_iterator c_iter(context_to_pcs.begin()); 
+			c_iter != context_to_pcs.end(); ++c_iter) {
+		// ::std::cerr << "Next context." << ::std::endl;
+		context_to_literals(c_iter->first, c_iter->second, set);
+	}
+	if (!set.empty()) {
+		// ::std::cerr << "Adding subgoal composed of " << set.size() << " guards" << ::std::endl;
+		::literalt const tg(m_equation.get_cnf().lor(set));
+		// ::std::cerr << "Predicate-Subgoal " << tg.var_no() << ::std::endl;
+		m_test_goals.insert(tg);
+		/*for (Evaluate_Path_Monitor::test_goal_states_t::const_iterator s_iter(
+		  states.begin()); s_iter != states.end(); ++s_iter)
+		  m_state_context_tg_map[ *s_iter ].insert(::std::make_pair(c_iter->first, tg));
+		  */
+	}
 }
 
 void Compute_Test_Goals_From_Instrumentation::visit(Query const* n) {

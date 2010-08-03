@@ -201,14 +201,13 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, main_entry != m_goto.function_map.end());
 		for (::goto_programt::instructionst::const_iterator f_iter(main_entry->second.body.instructions.begin());
 				f_iter != main_entry->second.body.instructions.end(); ++f_iter) {
-			if (f_iter->is_other() && ::to_code(f_iter->code).get_statement() == "decl") {
-				::std::list< ::exprt const* > decl_symbols;
-				find_symbols(f_iter->code, decl_symbols);
-				for (::std::list< ::exprt const* >::const_iterator s_iter(decl_symbols.begin());
-						s_iter != decl_symbols.end(); ++s_iter) {
-					::symbolt const& symb(ns.lookup((*s_iter)->get("identifier")));
-					if ((*iter)->get("identifier") == symb.base_name) alt_names.push_back(**s_iter);
-				}
+			if (!f_iter->is_decl()) continue;
+			::std::list< ::exprt const* > decl_symbols;
+			find_symbols(f_iter->code, decl_symbols);
+			for (::std::list< ::exprt const* >::const_iterator s_iter(decl_symbols.begin());
+					s_iter != decl_symbols.end(); ++s_iter) {
+				::symbolt const& symb(ns.lookup((*s_iter)->get("identifier")));
+				if ((*iter)->get("identifier") == symb.base_name) alt_names.push_back(**s_iter);
 			}
 		}
 		// function arguments
@@ -224,22 +223,23 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 		// local variables
 		for (::goto_programt::instructionst::const_iterator f_iter(node.first->instructions.begin());
 				f_iter != node.second; ++f_iter) {
-			if (f_iter->is_other() && ::to_code(f_iter->code).get_statement() == "decl") {
-				::std::list< ::exprt const* > decl_symbols;
-				find_symbols(f_iter->code, decl_symbols);
-				for (::std::list< ::exprt const* >::const_iterator s_iter(decl_symbols.begin());
-						s_iter != decl_symbols.end(); ++s_iter) {
-					::symbolt const& symb(ns.lookup((*s_iter)->get("identifier")));
-					if ((*iter)->get("identifier") == symb.base_name) alt_names.push_back(**s_iter);
-				}
+			if (!f_iter->is_decl()) continue;
+			::std::list< ::exprt const* > decl_symbols;
+			find_symbols(f_iter->code, decl_symbols);
+			for (::std::list< ::exprt const* >::const_iterator s_iter(decl_symbols.begin());
+					s_iter != decl_symbols.end(); ++s_iter) {
+				::symbolt const& symb(ns.lookup((*s_iter)->get("identifier")));
+				if ((*iter)->get("identifier") == symb.base_name) alt_names.push_back(**s_iter);
 			}
 		}
 
 		// rename, if possible
 		if (alt_names.empty()) {
+			FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Failed to resolve ", (*iter)->get("identifier"), " at ", node.second->location));
 			make_nondet = true;
 			break;
 		}
+		FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Renaming ", (*iter)->get("identifier"), " to ", alt_names.back().get("identifier")));
 		(*iter)->set("identifier", alt_names.back().get("identifier"));
 	}
 	::goto_programt tmp;
@@ -250,7 +250,7 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 		decl->make_decl();
 		decl->code = ::code_declt(::symbol_expr(cond_symbol));
 
-		if (special_pred_symb) {
+		if (special_pred_symb && !make_nondet) {
 			special_pred_symb->set("identifier", cond_symbol.name);
 			
 			FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Trying to typecheck: ", pred_copy.pretty()));

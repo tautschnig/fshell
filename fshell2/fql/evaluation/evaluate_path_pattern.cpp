@@ -269,8 +269,6 @@ void Evaluate_Path_Pattern::visit(Pathcov const* n) {
 }
 	
 void Evaluate_Path_Pattern::visit(Predicate const* n) {
-	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false); // (turn predicates into nodes);
-#if 0
 	m_entry = m_pp_map.insert(::std::make_pair(n, trace_automaton_t()));
 	if (!m_entry.second) return;
 	trace_automaton_t & current_aut(m_entry.first->second);
@@ -281,43 +279,8 @@ void Evaluate_Path_Pattern::visit(Predicate const* n) {
 	current_aut.final(current_final) = 1;
 
 	current_aut.set_trans(current_initial,
-			m_target_graph_index.to_index(&(m_eval_filter.get(*(n->get_filter_expr())))),
+			m_target_graph_index.to_index(&(m_eval_filter.get(*n))),
 			current_final);
-	
-	from pm_postcond;
-	m_entry = m_pp_map.insert(::std::make_pair(n, trace_automaton_t()));
-	if (!m_entry.second) return;
-	::std::pair< pp_value_t::iterator, bool > entry(m_entry);
-	trace_automaton_t & current_aut(entry.first->second);
-	
-	n->get_pp()->accept(this);
-	::std::pair< pp_value_t::iterator, bool > entry_sub(m_entry);
-
-	::std::pair< ta_state_set_t, ta_state_set_t > sub_init_final(
-				copy_automaton(entry_sub.first->second, current_aut));
-	current_aut.initial().swap(sub_init_final.first);
-	ta_state_t const new_final(current_aut.new_state());
-	current_aut.final(new_final) = 1;
-	
-	for (ta_state_set_t::const_iterator iter(sub_init_final.second.begin());
-			iter != sub_init_final.second.end(); ++iter) {
-		target_graph_t::edges_t pred_edges;
-		trace_automaton_t::edges_type in_edges(current_aut.delta2_backwards(*iter));
-		for (trace_automaton_t::edges_type::const_iterator i_iter(in_edges.begin());
-				i_iter != in_edges.end(); ++i_iter) {
-			target_graph_t const& tgg(*(m_target_graph_index.lookup_index(i_iter->first)));
-			for (target_graph_t::edges_t::const_iterator e_iter(tgg.get_edges().begin());
-					e_iter != tgg.get_edges().end(); ++e_iter)
-				pred_edges.insert(m_pred_instr.get(e_iter->second, n->get_predicate()));
-		}
-		m_more_target_graphs.push_back(target_graph_t());
-		m_more_target_graphs.back().set_edges(pred_edges);
-		current_aut.set_trans(*iter,
-				m_target_graph_index.to_index(&(m_more_target_graphs.back())), new_final);
-	}
-
-	m_entry = entry;
-#endif
 }
 	
 void Evaluate_Path_Pattern::visit(Query const* n) {

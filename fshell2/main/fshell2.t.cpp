@@ -138,7 +138,7 @@ of
   << "    if (argc<27)" << ::std::endl
   << "L1:   --x;" << ::std::endl
   << "    else" << ::std::endl
-  << "	  ++x;" << ::std::endl
+  << "	    ++x;" << ::std::endl
   << "	}" << ::std::endl
   << "L2:" << ::std::endl
   << "  x--;" << ::std::endl
@@ -166,6 +166,9 @@ of
 	TEST_ASSERT(!fshell.process_line(l, "cover edges(@conditionedge)->edges(@conditionedge)"));
 	TEST_ASSERT(!fshell.process_line(l, "cover edges(@basicblockentry). \"@func(main)*\" .edges(@basicblockentry)"));
 	TEST_ASSERT(!fshell.process_line(l, "cover paths(id,1)"));
+	TEST_ASSERT(!fshell.process_line(l, "cover @label(L2).{x>=0}"));
+	TEST_ASSERT(!fshell.process_line(l, "cover @label(L2).{x>0}"));
+	TEST_ASSERT(!fshell.process_line(l, "cover {x>0}.@label(L2)"));
 	TEST_ASSERT(fshell.process_line(l, "QUIT"));
 }	
 

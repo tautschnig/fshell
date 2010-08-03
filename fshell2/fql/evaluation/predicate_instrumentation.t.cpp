@@ -117,7 +117,8 @@ void test( Test_Data & data )
 	
 	::fshell2::fql::Predicate * pred(FQL_CREATE1(Predicate, dummy));
 	::fshell2::fql::Predicate_Instrumentation pi(gf, l);
-	pi.insert_predicate(nodes, pred);
+	CFA::edges_t edges;
+	pi.insert_predicate(nodes, pred, edges);
 	// gf.output(namespacet(l.context), ::std::cerr);
 
 	for (target_graph_t::edges_t::const_iterator e_iter(id_entries.get_edges().begin());

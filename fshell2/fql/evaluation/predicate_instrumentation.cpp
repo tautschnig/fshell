@@ -58,7 +58,8 @@ target_graph_t::edge_t const& Predicate_Instrumentation::get(target_graph_t::nod
 	return entry2->second;
 }
 
-void Predicate_Instrumentation::insert_predicate(node_set_t const& nodes, Predicate const* pred) {
+void Predicate_Instrumentation::insert_predicate(node_set_t const& nodes, 
+		Predicate const* pred, CFA::edges_t & pred_edges) {
 	using ::fshell2::instrumentation::GOTO_Transformation;
 
 	for (::std::set< target_graph_t::node_t >::iterator n_iter(nodes.begin());
@@ -70,7 +71,8 @@ void Predicate_Instrumentation::insert_predicate(node_set_t const& nodes, Predic
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == res.size());
 			goto_programt::targett next(res.front().second);
 			++next;
-			m_node_to_pred_instr[ *n_iter ][ pred ] = ::std::make_pair(res.front(), ::std::make_pair(n_iter->first, next));
+			m_node_to_pred_instr[ *n_iter ][ pred ] = 
+				*pred_edges.insert(::std::make_pair(res.front(), ::std::make_pair(n_iter->first, next))).first;
 		}
 }
 

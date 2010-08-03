@@ -32,6 +32,7 @@
 #include <fshell2/config/config.hpp>
 
 #include <fshell2/instrumentation/goto_transformation.hpp>
+#include <fshell2/fql/concepts/cfa.hpp>
 #include <fshell2/fql/concepts/target_graph.hpp>
 
 #include <cbmc/src/goto-programs/goto_functions.h>
@@ -63,7 +64,7 @@ class Predicate_Instrumentation
 
 	target_graph_t::edge_t const& get(target_graph_t::node_t const& node, Predicate const* pred) const;
 
-	void insert_predicate(node_set_t const& nodes, Predicate const* pred);
+	void insert_predicate(node_set_t const& nodes, Predicate const* pred, CFA::edges_t & pred_edges);
 
 	private:
 	::goto_functionst & m_gf;

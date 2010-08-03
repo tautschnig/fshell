@@ -199,36 +199,20 @@ void Evaluate_Coverage_Pattern::visit(Pathcov const* n) {
 }
 
 void Evaluate_Coverage_Pattern::visit(Predicate const* n) {
-	FSHELL2_PROD_ASSERT(::diagnostics::Not_Implemented, false);
-#if 0
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == m_current_final.size());
-	
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == m_current_final.size());
-
 	ta_state_set_t prev_final;
 	prev_final.swap(m_current_final);
-	ta_state_t const tmp_final(m_test_goal_automaton.new_state());
-	m_current_final.insert(tmp_final);
-	
-	n->get_tgs()->accept(this);
-	
-	target_graph_t::edges_t pred_edges;
-	::std::set< int > tgg_indices;
-	find_non_eps_succ(m_test_goal_automaton, tmp_final, tgg_indices);
-	for (::std::set< int >::const_iterator iter(tgg_indices.begin());
-			iter != tgg_indices.end(); ++iter) {
-		target_graph_t const& tgg(m_pm_eval.lookup_index(*iter));
-		for (target_graph_t::edges_t::const_iterator e_iter(tgg.get_edges().begin());
-				e_iter != tgg.get_edges().end(); ++e_iter)
-			pred_edges.insert(m_pred_instr.get(e_iter->first, n->get_predicate()));
-	}
-	m_more_target_graphs.push_back(target_graph_t());
-	m_more_target_graphs.back().set_edges(pred_edges);
+			
+	ta_state_t const new_state(m_test_goal_automaton.new_state());
+	m_current_final.insert(new_state);
+	m_test_goal_automaton.final(new_state) = 1;
+	m_current_tg_states->m_tg_states.insert(new_state);
+	int const idx(m_pp_eval.to_index(m_eval_filter.get(*n)));
+			
 	for (ta_state_set_t::const_iterator iter(prev_final.begin());
-			iter != prev_final.end(); ++iter)
-		m_test_goal_automaton.set_trans(*iter,
-				m_pm_eval.to_index(m_more_target_graphs.back()), tmp_final);
-#endif
+			iter != prev_final.end(); ++iter) {
+		m_test_goal_automaton.set_trans(*iter, idx, new_state);
+		m_test_goal_automaton.final(*iter) = 0;
+	}
 }
 
 void Evaluate_Coverage_Pattern::visit(Query const* n) {

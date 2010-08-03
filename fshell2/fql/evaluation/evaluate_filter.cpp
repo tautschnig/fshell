@@ -82,6 +82,13 @@ target_graph_t const& Evaluate_Filter::get(Filter_Expr const& f) const {
 	return entry->second;
 }
 	
+target_graph_t const& Evaluate_Filter::get(Predicate const& p) const {
+	pred_to_filter_value_t::const_iterator entry(m_predicate_map.find(&p));
+	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Protocol,
+			entry != m_predicate_map.end());
+	return entry->second;
+}
+	
 bool Evaluate_Filter::ignore_function(::goto_functionst::goto_functiont const& fct) {
 	if (!fct.body_available) return true;
 	if (fct.body.instructions.empty()) return true;
@@ -174,6 +181,7 @@ void Evaluate_Filter::visit(Filter_Compose const* n) {
 
 void Evaluate_Filter::visit(Filter_Function const* n) {
 	using ::fshell2::instrumentation::CFG;
+	using ::fshell2::instrumentation::GOTO_Transformation;
 
 	::std::pair< filter_value_t::iterator, bool > entry(m_filter_map.insert(
 				::std::make_pair(n, target_graph_t())));
@@ -193,6 +201,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 				for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
 						f_iter != iter->second.body.instructions.end(); ++f_iter) {
 					if (ignore_instruction(*f_iter)) continue;
+					if (GOTO_Transformation::is_instrumented(f_iter)) continue;
 					if (first && iter->first == (prefix + ::config.main)) {
 						initial.insert(::std::make_pair(&(iter->second.body), f_iter));
 						first = false;
@@ -218,6 +227,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 					for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
 							f_iter != iter->second.body.instructions.end(); ++f_iter) {
 						if (ignore_instruction(*f_iter)) continue;
+						if (GOTO_Transformation::is_instrumented(f_iter)) continue;
 						if (first) {
 							initial.insert(::std::make_pair(&(iter->second.body), f_iter));
 							first = false;
@@ -240,6 +250,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 					for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
 							f_iter != iter->second.body.instructions.end(); ++f_iter) {
 						if (ignore_instruction(*f_iter)) continue;
+						if (GOTO_Transformation::is_instrumented(f_iter)) continue;
 						if (f_iter->location.is_nil() ||
 								f_iter->location.get_line().empty() ||
 								f_iter->location.get_line() != arg) continue;
@@ -263,6 +274,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 					for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
 							f_iter != iter->second.body.instructions.end(); ++f_iter) {
 						if (ignore_instruction(*f_iter)) continue;
+						if (GOTO_Transformation::is_instrumented(f_iter)) continue;
 						if (f_iter->location.is_nil() ||
 								f_iter->location.get_column().empty() ||
 								f_iter->location.get_column() != arg) continue;
@@ -288,6 +300,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 				for (::goto_programt::instructionst::iterator f_iter(fct->second.body.instructions.begin());
 						f_iter != fct->second.body.instructions.end(); ++f_iter) {
 					if (ignore_instruction(*f_iter)) continue;
+					if (GOTO_Transformation::is_instrumented(f_iter)) continue;
 					if (first) {
 						initial.insert(::std::make_pair(&(fct->second.body), f_iter));
 						first = false;
@@ -312,6 +325,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 					for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
 							f_iter != iter->second.body.instructions.end(); ++f_iter) {
 						if (ignore_instruction(*f_iter)) continue;
+						if (GOTO_Transformation::is_instrumented(f_iter)) continue;
 						if (::std::find(f_iter->labels.begin(), f_iter->labels.end(), arg) == f_iter->labels.end()) continue;
 						CFG::entries_t::iterator cfg_node(m_cfg.find(f_iter));
 						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.end());
@@ -333,6 +347,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 					for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
 							f_iter != iter->second.body.instructions.end(); ++f_iter) {
 						if (ignore_instruction(*f_iter)) continue;
+						if (GOTO_Transformation::is_instrumented(f_iter)) continue;
 						if (!f_iter->is_function_call()) continue;
 						::std::string const& f(::to_code_function_call(f_iter->code).function().get("identifier").as_string());
 						::std::string::size_type delim(f.rfind("::"));
@@ -355,6 +370,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 				for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
 						f_iter != iter->second.body.instructions.end(); ++f_iter) {
 					if (ignore_instruction(*f_iter)) continue;
+					if (GOTO_Transformation::is_instrumented(f_iter)) continue;
 					if (!f_iter->is_function_call()) continue;
 					CFG::entries_t::iterator cfg_node(m_cfg.find(f_iter));
 					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.end());
@@ -376,6 +392,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 				for (::goto_programt::instructionst::iterator f_iter(fct->second.body.instructions.begin());
 						f_iter != fct->second.body.instructions.end(); ++f_iter) {
 					if (ignore_instruction(*f_iter)) continue;
+					if (GOTO_Transformation::is_instrumented(f_iter)) continue;
 					CFG::entries_t::iterator cfg_node(m_cfg.find(f_iter));
 					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.end());
 					for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
@@ -398,6 +415,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 				for (::goto_programt::instructionst::iterator f_iter(fct->second.body.instructions.begin());
 						f_iter != fct->second.body.instructions.end(); ++f_iter) {
 					if (ignore_instruction(*f_iter)) continue;
+					if (GOTO_Transformation::is_instrumented(f_iter)) continue;
 					if (!f_iter->is_return()) continue;
 					CFG::entries_t::iterator cfg_node(m_cfg.find(f_iter));
 					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.end());
@@ -425,6 +443,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 				for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
 						f_iter != iter->second.body.instructions.end(); ++f_iter) {
 					if (ignore_instruction(*f_iter)) continue;
+					if (GOTO_Transformation::is_instrumented(f_iter)) continue;
 					CFG::entries_t::iterator cfg_node(m_cfg.find(f_iter));
 					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.end());
 					if (!cfg_node->second.successors.empty() && (take_next ||
@@ -446,6 +465,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 				for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
 						f_iter != iter->second.body.instructions.end(); ++f_iter) {
 					if (ignore_instruction(*f_iter)) continue;
+					if (GOTO_Transformation::is_instrumented(f_iter)) continue;
 					if (!f_iter->is_goto() || f_iter->guard.is_true() || f_iter->guard.is_false()) continue;
 					CFG::entries_t::iterator cfg_node(m_cfg.find(f_iter));
 					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.end());
@@ -472,6 +492,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 					for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
 							f_iter != iter->second.body.instructions.end(); ++f_iter) {
 						if (ignore_instruction(*f_iter)) continue;
+						if (GOTO_Transformation::is_instrumented(f_iter)) continue;
 						if (!f_iter->is_assign()) continue;
 						::std::list< ::exprt const* > symbols;
 						::fshell2::instrumentation::find_symbols(::to_code_assign(f_iter->code).lhs(), symbols);
@@ -506,6 +527,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 					for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
 							f_iter != iter->second.body.instructions.end(); ++f_iter) {
 						if (ignore_instruction(*f_iter)) continue;
+						if (GOTO_Transformation::is_instrumented(f_iter)) continue;
 						if (!f_iter->is_assign()) continue;
 						::std::list< ::exprt const* > symbols;
 						::fshell2::instrumentation::find_symbols(::to_code_assign(f_iter->code).rhs(), symbols);
@@ -540,6 +562,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 					for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
 							f_iter != iter->second.body.instructions.end(); ++f_iter) {
 						if (ignore_instruction(*f_iter)) continue;
+						if (GOTO_Transformation::is_instrumented(f_iter)) continue;
 						bool use_stmt(false);
 						if (types & (STT_IF | STT_FOR | STT_WHILE | STT_SWITCH))
 							if (f_iter->is_goto() && (!f_iter->guard.is_true() && !f_iter->guard.is_false())) use_stmt = true;
@@ -659,6 +682,10 @@ void Evaluate_Filter::visit(Pathcov const* n) {
 }
 
 void Evaluate_Filter::visit(Predicate const* n) {
+	::std::pair< pred_to_filter_value_t::iterator, bool > entry(m_predicate_map.insert(
+				::std::make_pair(n, target_graph_t())));
+	if (!entry.second) return;
+	
 	filter_value_t::const_iterator id_set(m_filter_map.find(FQL_CREATE_FF0(F_IDENTITY)));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, id_set != m_filter_map.end());
 	
@@ -667,7 +694,14 @@ void Evaluate_Filter::visit(Predicate const* n) {
 			e_iter != id_set->second.get_edges().end(); ++e_iter)
 		nodes.insert(e_iter->first);
 
-	m_pred_instr.insert_predicate(nodes, n);
+	CFA::edges_t edges;
+	m_pred_instr.insert_predicate(nodes, n, edges);
+	
+	entry.first->second.set_edges(edges);
+	CFA::initial_states_t initial;
+	for (CFA::edges_t::const_iterator iter(edges.begin()); iter != edges.end(); ++iter)
+		initial.insert(iter->first);
+	entry.first->second.set_initial_states(initial);
 }
 
 void Evaluate_Filter::visit(Query const* n) {
@@ -687,6 +721,14 @@ void Evaluate_Filter::visit(Repeat const* n) {
 }
 
 void Evaluate_Filter::visit(Transform_Pred const* n) {
+	::std::pair< filter_value_t::iterator, bool > entry(m_filter_map.insert(
+				::std::make_pair(n, target_graph_t())));
+	if (!entry.second) return;
+	
+	n->get_filter_expr()->accept(this);
+	filter_value_t::const_iterator filt_set(m_filter_map.find(n->get_filter_expr()));
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, filt_set != m_filter_map.end());
+
 	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
 }
 
