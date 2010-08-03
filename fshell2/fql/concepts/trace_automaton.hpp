@@ -96,9 +96,6 @@ void simplify_automaton(trace_automaton_t & aut, bool compact);
 
 ::std::ostream & print_trace_automaton(trace_automaton_t const& aut, ::std::ostream & os);
 
-void find_non_eps_pred(trace_automaton_t const& aut, ta_state_t const& s, ::std::set< Target_Graph_Index::char_type > & indices);
-void find_non_eps_succ(trace_automaton_t const& aut, ta_state_t const& s, ::std::set< Target_Graph_Index::char_type > & indices);
-
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
 
