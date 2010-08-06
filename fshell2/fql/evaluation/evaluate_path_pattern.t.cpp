@@ -105,21 +105,18 @@ void test( Test_Data & data )
 	Path_Pattern_Expr * id_kleene(FQL_CREATE3(Repeat, FQL_CREATE1(Edgecov,
 					FQL_CREATE_FF0(F_IDENTITY)), 0, -1));
 	Coverage_Pattern_Expr * id_kleene_q(FQL_CREATE1(Quote, id_kleene));
-		
 	Filter_Expr * bb(FQL_CREATE_FF0(F_BASICBLOCKENTRY));
 	Edgecov * e(FQL_CREATE1(Edgecov, bb));
 	Coverage_Pattern_Expr * c(FQL_CREATE2(CP_Concat, id_kleene_q,
 				FQL_CREATE2(CP_Concat, e, id_kleene_q)));
-
 	Path_Pattern_Expr * pp(FQL_CREATE2(PP_Concat, id_kleene,
 				FQL_CREATE2(PP_Concat, e, id_kleene)));
-
 	Query * q(Query::Factory::get_instance().create(0, c, pp));
 
-	Evaluate_Filter eval(gf, cfg, l);
-	q->accept(&eval);
-	Evaluate_Path_Pattern pp_eval(eval, cfg);
-	q->accept(&pp_eval);
+	Evaluate_Filter eval(l);
+	eval.do_query(gf, cfg, *q);
+	Evaluate_Path_Pattern pp_eval(eval);
+	pp_eval.do_query(cfg, *q);
 	
 	TEST_ASSERT_RELATION(4, ==, pp_eval.get(pp).state_count());
 }

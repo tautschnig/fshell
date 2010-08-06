@@ -34,16 +34,15 @@
 #include <fshell2/fql/ast/ast_visitor.hpp>
 #include <fshell2/fql/ast/standard_ast_visitor_aspect.hpp>
 #include <fshell2/fql/concepts/trace_automaton.hpp>
+#include <fshell2/fql/evaluation/evaluate_filter.hpp>
+#include <fshell2/fql/evaluation/evaluate_path_pattern.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-class Evaluate_Filter;
-class Evaluate_Path_Pattern;
-
 /*! \brief TODO
 */
-class Evaluate_Coverage_Pattern : public Standard_AST_Visitor_Aspect<AST_Visitor>
+class Evaluate_Coverage_Pattern : private Standard_AST_Visitor_Aspect<AST_Visitor>
 {
 	/*! \copydoc doc_self
 	*/
@@ -60,30 +59,25 @@ class Evaluate_Coverage_Pattern : public Standard_AST_Visitor_Aspect<AST_Visitor
 		}
 	};
 	
-	Test_Goal_States const& get_test_goal_states() const;
-	inline bool is_test_goal_state(ta_state_t const& state) const;
-
-	Evaluate_Coverage_Pattern(Evaluate_Filter const& eval_filter,
-			Evaluate_Path_Pattern & pp_eval);
+	explicit Evaluate_Coverage_Pattern(::language_uit & manager);
 
 	virtual ~Evaluate_Coverage_Pattern();
-
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Query
-	 * \param  n Query
-	 */
-	virtual void visit(Query const* n);
-	/*! \} */
+	
+	Test_Goal_States const& do_query(::goto_functionst & gf,
+			::fshell2::instrumentation::CFG & cfg, Query const& query);
+	
+	inline bool is_test_goal_state(ta_state_t const& state) const;
 
 	trace_automaton_t const& get() const;
 
+	inline Evaluate_Path_Pattern const& get_pp_eval() const;
+
 	private:
-	Evaluate_Filter const& m_eval_filter;
-	Evaluate_Path_Pattern & m_pp_eval;
-	
-	trace_automaton_t m_test_goal_automaton;
+	Evaluate_Filter m_eval_filter;
+	Evaluate_Path_Pattern m_pp_eval;
 	Test_Goal_States m_test_goal_states;
 	Test_Goal_States * m_current_tg_states;
+	trace_automaton_t m_test_goal_automaton;
 	ta_state_set_t m_current_final;
 	
 	static bool is_test_goal_state(Test_Goal_States const& tgs, ta_state_t const& state);
@@ -138,6 +132,13 @@ class Evaluate_Coverage_Pattern : public Standard_AST_Visitor_Aspect<AST_Visitor
 	/*! \} */
 
 	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Query
+	 * \param  n Query
+	 */
+	virtual void visit(Query const* n);
+	/*! \} */
+
+	/*! \{
 	 * \brief Visit a @ref fshell2::fql::Quote
 	 * \param  n Quote
 	 */
@@ -155,6 +156,10 @@ class Evaluate_Coverage_Pattern : public Standard_AST_Visitor_Aspect<AST_Visitor
 
 bool Evaluate_Coverage_Pattern::is_test_goal_state(ta_state_t const& state) const {
 	return is_test_goal_state(m_test_goal_states, state);
+}
+	
+inline Evaluate_Path_Pattern const& Evaluate_Coverage_Pattern::get_pp_eval() const {
+	return m_pp_eval;
 }
 
 FSHELL2_FQL_NAMESPACE_END;

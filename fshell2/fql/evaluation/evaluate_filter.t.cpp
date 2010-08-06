@@ -34,7 +34,9 @@
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
 
 #include <fshell2/instrumentation/cfg.hpp>
+#include <fshell2/fql/ast/edgecov.hpp>
 #include <fshell2/fql/ast/filter_function.hpp>
+#include <fshell2/fql/ast/query.hpp>
 
 #include <fstream>
 
@@ -89,22 +91,34 @@ void test( Test_Data & data )
 	::goto_convert(l.context, options, gf, l.ui_message_handler);
 	::fshell2::instrumentation::CFG cfg;
 	cfg.compute_edges(gf);
-	Evaluate_Filter eval(gf, cfg, l);
+	Evaluate_Filter eval(l);
 	
-	Filter_Expr * bb(FQL_CREATE_FF0(F_BASICBLOCKENTRY));
-	bb->accept(&eval);
-	target_graph_t const& bb_entries(eval.get(*bb));
-	TEST_ASSERT_RELATION(3, ==, bb_entries.get_edges().size());
+	{
+		Filter_Expr * bb(FQL_CREATE_FF0(F_BASICBLOCKENTRY));
+		Query * q(FQL_CREATE3(Query, 0, FQL_CREATE1(Edgecov, bb),
+					FQL_CREATE1(Edgecov, FQL_CREATE_FF0(F_IDENTITY))));
+		eval.do_query(gf, cfg, *q);
+		target_graph_t const& bb_entries(eval.get(*bb));
+		TEST_ASSERT_RELATION(3, ==, bb_entries.get_edges().size());
+	}
+
+	{
+		Filter_Expr * cc(FQL_CREATE_FF0(F_CONDITIONEDGE));
+		Query * q(FQL_CREATE3(Query, 0, FQL_CREATE1(Edgecov, cc),
+					FQL_CREATE1(Edgecov, FQL_CREATE_FF0(F_IDENTITY))));
+		eval.do_query(gf, cfg, *q);
+		target_graph_t const& cc_entries(eval.get(*cc));
+		TEST_ASSERT_RELATION(2, ==, cc_entries.get_edges().size());
+	}
 	
-	Filter_Expr * cc(FQL_CREATE_FF0(F_CONDITIONEDGE));
-	cc->accept(&eval);
-	target_graph_t const& cc_entries(eval.get(*cc));
-	TEST_ASSERT_RELATION(2, ==, cc_entries.get_edges().size());
-	
-	Filter_Expr * ff(FQL_CREATE_FF1(F_FILE, tempname_str));
-	ff->accept(&eval);
-	target_graph_t const& ff_entries(eval.get(*ff));
-	TEST_ASSERT_RELATION(5, ==, ff_entries.get_edges().size());
+	{
+		Filter_Expr * ff(FQL_CREATE_FF1(F_FILE, tempname_str));
+		Query * q(FQL_CREATE3(Query, 0, FQL_CREATE1(Edgecov, ff),
+					FQL_CREATE1(Edgecov, FQL_CREATE_FF0(F_IDENTITY))));
+		eval.do_query(gf, cfg, *q);
+		target_graph_t const& ff_entries(eval.get(*ff));
+		TEST_ASSERT_RELATION(5, ==, ff_entries.get_edges().size());
+	}
 }
 
 /** @cond */

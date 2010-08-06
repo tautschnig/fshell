@@ -34,8 +34,6 @@
 #include <fshell2/fql/evaluation/evaluate_coverage_pattern.hpp>
 
 #include <fshell2/instrumentation/cfg.hpp>
-#include <fshell2/fql/evaluation/evaluate_filter.hpp>
-#include <fshell2/fql/evaluation/evaluate_path_pattern.hpp>
 #include <fshell2/fql/ast/cp_concat.hpp>
 #include <fshell2/fql/ast/edgecov.hpp>
 #include <fshell2/fql/ast/filter_function.hpp>
@@ -114,16 +112,10 @@ void test( Test_Data & data )
 
 	Query * q(Query::Factory::get_instance().create(0, c, id_kleene));
 
-	Evaluate_Filter eval(gf, cfg, l);
-	q->accept(&eval);
-	target_graph_t const& bb_entries(eval.get(*bb));
-	TEST_CHECK_RELATION(6, ==, bb_entries.get_edges().size());
-	Evaluate_Path_Pattern pp_eval(eval, cfg);
-	q->accept(&pp_eval);
-	Evaluate_Coverage_Pattern cp_eval(eval, pp_eval);
-	q->accept(&cp_eval);
+	Evaluate_Coverage_Pattern cp_eval(l);
+	Evaluate_Coverage_Pattern::Test_Goal_States const& tgs(cp_eval.do_query(gf, cfg, *q));
 	
-	TEST_ASSERT_RELATION(1, ==, cp_eval.get_test_goal_states().m_children.back().m_children.front().m_tg_states.size());
+	TEST_ASSERT_RELATION(1, ==, tgs.m_children.back().m_children.front().m_tg_states.size());
 }
 
 /** @cond */

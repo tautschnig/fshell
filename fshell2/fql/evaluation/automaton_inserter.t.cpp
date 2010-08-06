@@ -35,10 +35,6 @@
 #include <fshell2/fql/evaluation/automaton_inserter.hpp>
 
 #include <fshell2/instrumentation/cfg.hpp>
-#include <fshell2/fql/evaluation/evaluate_filter.hpp>
-#include <fshell2/fql/evaluation/predicate_instrumentation.hpp>
-#include <fshell2/fql/evaluation/evaluate_path_pattern.hpp>
-#include <fshell2/fql/evaluation/evaluate_coverage_pattern.hpp>
 
 #include <fshell2/fql/ast/cp_concat.hpp>
 #include <fshell2/fql/ast/edgecov.hpp>
@@ -106,8 +102,6 @@ void test( Test_Data & data )
 	::fshell2::instrumentation::CFG cfg;
 	cfg.compute_edges(gf);
 		
-	Evaluate_Filter eval(gf, cfg, l);
-	
 	Path_Pattern_Expr * id_kleene(FQL_CREATE3(Repeat, FQL_CREATE1(Edgecov,
 					FQL_CREATE_FF0(F_IDENTITY)), 0, -1));
 	Coverage_Pattern_Expr * id_kleene_q(FQL_CREATE1(Quote, id_kleene));
@@ -118,23 +112,13 @@ void test( Test_Data & data )
 				FQL_CREATE2(CP_Concat, e, id_kleene_q)));
 
 	Query * q(Query::Factory::get_instance().create(0, c, id_kleene));
-	q->accept(&eval);
-	target_graph_t const& bb_entries(eval.get(*bb));
-	TEST_CHECK_RELATION(6, ==, bb_entries.get_edges().size());
+	
+	::fshell2::fql::Automaton_Inserter aut(l);
+	aut.do_query(gf, cfg, *q);
 
-	::fshell2::fql::Evaluate_Path_Pattern pp_eval(eval, cfg);
-	q->accept(&pp_eval);
-	::fshell2::fql::Evaluate_Coverage_Pattern cp_eval(eval, pp_eval);
-	q->accept(&cp_eval);
-	TEST_CHECK_RELATION(1, ==, cp_eval.get_test_goal_states().m_children.back().m_children.front().m_tg_states.size());
-
-	::fshell2::fql::Automaton_Inserter aut(pp_eval, cp_eval, gf, cfg, l);
-	aut.insert(*q);
-
-	trace_automaton_t const& ta(cp_eval.get());
-	print_trace_automaton(ta, ::std::cerr);
+	trace_automaton_t const& ta(aut.get_tg_aut());
 	for (trace_automaton_t::const_iterator iter(ta.begin()); iter != ta.end(); ++iter) {
-		if (!cp_eval.is_test_goal_state(*iter) || ta.delta2_backwards(*iter).empty()) {
+		if (!aut.is_test_goal_state(*iter) || ta.delta2_backwards(*iter).empty()) {
 #if FSHELL2_DEBUG__LEVEL__ >= 1
 			TEST_THROWING_BLOCK_ENTER;
 			aut.get_test_goal_instrumentation(*iter);

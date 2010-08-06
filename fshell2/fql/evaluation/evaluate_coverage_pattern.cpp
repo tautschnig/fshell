@@ -48,10 +48,9 @@
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 	
-Evaluate_Coverage_Pattern::Evaluate_Coverage_Pattern(Evaluate_Filter const& eval_filter,
-			Evaluate_Path_Pattern & pp_eval) :
-	m_eval_filter(eval_filter),
-	m_pp_eval(pp_eval),
+Evaluate_Coverage_Pattern::Evaluate_Coverage_Pattern(::language_uit & manager) :
+	m_eval_filter(manager), 
+	m_pp_eval(m_eval_filter), 
 	m_test_goal_states(0),
 	m_current_tg_states(&m_test_goal_states)
 {
@@ -66,10 +65,30 @@ trace_automaton_t const& Evaluate_Coverage_Pattern::get() const {
 	return m_test_goal_automaton;
 }
 
-Evaluate_Coverage_Pattern::Test_Goal_States const& Evaluate_Coverage_Pattern::get_test_goal_states() const {
-	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Protocol, m_test_goal_states.m_cp);
+Evaluate_Coverage_Pattern::Test_Goal_States const& Evaluate_Coverage_Pattern::do_query(
+		::goto_functionst & gf, ::fshell2::instrumentation::CFG & cfg, Query const& query) {
+	m_test_goal_states.m_cp = 0;
+	m_test_goal_states.m_tg_states.clear();
+	m_test_goal_states.m_children.clear();
+	m_current_tg_states = &m_test_goal_states;
+	for (trace_automaton_t::const_iterator iter(m_test_goal_automaton.begin());
+			iter != m_test_goal_automaton.end(); ++iter)
+		m_test_goal_automaton.del_state(*iter);
+	m_current_final.clear();
+	
+	// prepare filter evaluation
+	// may create a predicated CFA and add predicate edges
+	m_eval_filter.do_query(gf, cfg, query);
+	
+	// build automata from path patterns
+	m_pp_eval.do_query(cfg, query);
+
+	query.accept(this);
+	
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_test_goal_states.m_cp);
 	return m_test_goal_states;
 }
+
 
 bool Evaluate_Coverage_Pattern::is_test_goal_state(Test_Goal_States const& tgs, ta_state_t const& state) {
 	if (tgs.m_tg_states.end() != tgs.m_tg_states.find(state)) return true;

@@ -51,7 +51,10 @@ class Target_Graph_Index
 	public:
 	typedef int char_type;
 
-	explicit Target_Graph_Index(target_graph_t const* id_tgg);
+	Target_Graph_Index();
+	
+	void init(target_graph_t const* id_tgg);
+	void clear();
 
 	int to_index(target_graph_t const* f);
 
@@ -73,9 +76,10 @@ class Target_Graph_Index
 	target_graph_t const* lookup_index(int index) const;
 
 	private:
+	bool m_initialized;
+	int m_next_index;
 	::std::map< target_graph_t const*, int > m_target_graph_to_int;
 	::std::map< int, target_graph_t const* > m_int_to_target_graph;
-	int m_next_index;
 
 	/*! \copydoc copy_constructor
 	*/

@@ -50,20 +50,20 @@ class Evaluate_Filter;
 
 /*! \brief TODO
 */
-class Evaluate_Path_Pattern : public Standard_AST_Visitor_Aspect<AST_Visitor>
+class Evaluate_Path_Pattern : private Standard_AST_Visitor_Aspect<AST_Visitor>
 {
 	/*! \copydoc doc_self
 	*/
 	typedef Evaluate_Path_Pattern Self;
 
 	public:
-
 	typedef ::std::map< Path_Pattern_Expr const*, trace_automaton_t > pp_value_t;
 
-	Evaluate_Path_Pattern(Evaluate_Filter const& filter_eval,
-			::fshell2::instrumentation::CFG const& cfg);
+	explicit Evaluate_Path_Pattern(Evaluate_Filter const& filter_eval);
 
 	virtual ~Evaluate_Path_Pattern();
+
+	void do_query(::fshell2::instrumentation::CFG const& cfg, Query const& query);
 
 	trace_automaton_t const& get(Path_Pattern_Expr const* pp) const;
 
@@ -72,6 +72,20 @@ class Evaluate_Path_Pattern : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	inline int to_index(target_graph_t const& tgg);
 	inline int id_index() const;
 	inline int epsilon_index() const;
+
+	private:
+	typedef ::std::map< target_graph_t::node_t, int > node_counts_t;
+
+	Evaluate_Filter const& m_eval_filter;
+	::fshell2::instrumentation::CFG const* m_cfg;
+	pp_value_t m_pp_map;
+	::std::pair< pp_value_t::iterator, bool > m_entry;
+	Target_Graph_Index m_target_graph_index;
+	::std::list< target_graph_t > m_more_target_graphs;
+	
+	void dfs_build(trace_automaton_t & ta, ta_state_t const& state,
+			target_graph_t::node_t const& root, int const bound,
+			node_counts_t const& nc, target_graph_t const& tgg);
 
 	/*! \{
 	 * \brief Visit a @ref fshell2::fql::CP_Alternative
@@ -156,20 +170,6 @@ class Evaluate_Path_Pattern : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	 */
 	virtual void visit(Repeat const* n);
 	/*! \} */
-
-	private:
-
-	typedef ::std::map< target_graph_t::node_t, int > node_counts_t;
-
-	Evaluate_Filter const& m_eval_filter;
-	::fshell2::instrumentation::CFG const& m_cfg;
-	Target_Graph_Index m_target_graph_index;
-	pp_value_t m_pp_map;
-	::std::pair< pp_value_t::iterator, bool > m_entry;
-	::std::list< target_graph_t > m_more_target_graphs;
-	void dfs_build(trace_automaton_t & ta, ta_state_t const& state,
-			target_graph_t::node_t const& root, int const bound,
-			node_counts_t const& nc, target_graph_t const& tgg);
 
 	/*! \copydoc copy_constructor
 	*/

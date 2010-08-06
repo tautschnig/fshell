@@ -39,11 +39,8 @@
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Predicate_Instrumentation::Predicate_Instrumentation(
-		::goto_functionst & gf, ::language_uit & manager) :
-	m_gf(gf),
-	m_manager(manager),
-	m_inserter(m_manager, m_gf)
+Predicate_Instrumentation::Predicate_Instrumentation(::language_uit & manager) :
+	m_manager(manager)
 {
 }
 
@@ -58,15 +55,17 @@ target_graph_t::edge_t const& Predicate_Instrumentation::get(target_graph_t::nod
 	return entry2->second;
 }
 
-void Predicate_Instrumentation::insert_predicate(node_set_t const& nodes, 
-		Predicate const* pred, CFA::edges_t & pred_edges) {
+void Predicate_Instrumentation::insert_predicate(::goto_functionst & gf,
+		node_set_t const& nodes, Predicate const* pred, CFA::edges_t & pred_edges) {
 	using ::fshell2::instrumentation::GOTO_Transformation;
+	
+	::fshell2::instrumentation::GOTO_Transformation inserter(m_manager, gf);
 
 	for (::std::set< target_graph_t::node_t >::iterator n_iter(nodes.begin());
 			n_iter != nodes.end(); ++n_iter)
 		if (m_node_to_pred_instr[ *n_iter ].end() ==
 				m_node_to_pred_instr[ *n_iter ].find(pred)) {
-			GOTO_Transformation::inserted_t const & res(m_inserter.insert_predicate_at(
+			GOTO_Transformation::inserted_t const & res(inserter.insert_predicate_at(
 						*n_iter, pred->get_expr()));
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == res.size());
 			goto_programt::targett next(res.front().second);

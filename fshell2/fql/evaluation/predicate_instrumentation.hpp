@@ -60,16 +60,17 @@ class Predicate_Instrumentation
 	typedef ::std::map< Predicate const*, target_graph_t::edge_t > pred_instrumentation_map_t;
 	typedef ::std::map< target_graph_t::node_t, pred_instrumentation_map_t > node_to_pred_instrumentation_map_t;
 
-	Predicate_Instrumentation(::goto_functionst & gf, ::language_uit & manager);
+	Predicate_Instrumentation(::language_uit & manager);
+
+	inline void clear();
 
 	target_graph_t::edge_t const& get(target_graph_t::node_t const& node, Predicate const* pred) const;
 
-	void insert_predicate(node_set_t const& nodes, Predicate const* pred, CFA::edges_t & pred_edges);
+	void insert_predicate(::goto_functionst & gf, node_set_t const& nodes,
+			Predicate const* pred, CFA::edges_t & pred_edges);
 
 	private:
-	::goto_functionst & m_gf;
 	::language_uit & m_manager;
-	::fshell2::instrumentation::GOTO_Transformation m_inserter;
 	node_to_pred_instrumentation_map_t m_node_to_pred_instr;
 
 	/*! \copydoc copy_constructor
@@ -80,6 +81,10 @@ class Predicate_Instrumentation
 	 */
 	Self& operator=( Self const& rhs );
 };
+	
+inline void Predicate_Instrumentation::clear() {
+	m_node_to_pred_instr.clear();
+}
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;

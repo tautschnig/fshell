@@ -36,8 +36,10 @@
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
 
 #include <fshell2/instrumentation/cfg.hpp>
+#include <fshell2/fql/ast/edgecov.hpp>
 #include <fshell2/fql/ast/filter_function.hpp>
 #include <fshell2/fql/ast/predicate.hpp>
+#include <fshell2/fql/ast/query.hpp>
 
 #include <fstream>
 
@@ -92,10 +94,12 @@ void test( Test_Data & data )
 	::goto_convert(l.context, options, gf, l.ui_message_handler);
 	::fshell2::instrumentation::CFG cfg;
 	cfg.compute_edges(gf);
-	Evaluate_Filter eval(gf, cfg, l);
+	Evaluate_Filter eval(l);
 	
 	Filter_Expr * id(FQL_CREATE_FF0(F_IDENTITY));
-	id->accept(&eval);
+	Query * q(FQL_CREATE3(Query, 0, FQL_CREATE1(Edgecov, id),
+				FQL_CREATE1(Edgecov, id)));
+	eval.do_query(gf, cfg, *q);
 	target_graph_t const& id_entries(eval.get(*id));
 	TEST_ASSERT_RELATION(5, ==, id_entries.get_edges().size());
 	
@@ -116,9 +120,9 @@ void test( Test_Data & data )
 	dummy->move_to_operands(num);
 	
 	::fshell2::fql::Predicate * pred(FQL_CREATE1(Predicate, dummy));
-	::fshell2::fql::Predicate_Instrumentation pi(gf, l);
+	::fshell2::fql::Predicate_Instrumentation pi(l);
 	CFA::edges_t edges;
-	pi.insert_predicate(nodes, pred, edges);
+	pi.insert_predicate(gf, nodes, pred, edges);
 	// gf.output(namespacet(l.context), ::std::cerr);
 
 	for (target_graph_t::edges_t::const_iterator e_iter(id_entries.get_edges().begin());

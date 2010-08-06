@@ -34,17 +34,29 @@
 #include <fshell2/fql/ast/ast_visitor.hpp>
 #include <fshell2/fql/ast/standard_ast_visitor_aspect.hpp>
 #include <fshell2/fql/concepts/trace_automaton.hpp>
-#include <fshell2/fql/evaluation/evaluate_coverage_pattern.hpp>
+#include <fshell2/fql/evaluation/automaton_inserter.hpp>
 
 #include <cbmc/src/cbmc/bmc.h>
 #include <cbmc/src/cbmc/bv_cbmc.h>
 #include <cbmc/src/solvers/sat/cnf_clause_list.h>
 
 FSHELL2_NAMESPACE_BEGIN;
+
+class Smart_Printer {
+	public:
+		Smart_Printer(::language_uit & manager);
+		~Smart_Printer();
+		void print_now();
+		::std::ostream & get_ostream();
+	private:
+		::language_uit & m_manager;
+		::std::ostringstream m_oss;
+};
+
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 class Evaluate_Path_Pattern;
-class Automaton_Inserter;
+class Evaluate_Coverage_Pattern;
 
 /*! \brief TODO
 */
@@ -112,43 +124,37 @@ inline ::namespacet const& CNF_Conversion::get_ns() const {
 
 /*! \brief TODO
 */
-class Compute_Test_Goals_From_Instrumentation : public Standard_AST_Visitor_Aspect<AST_Visitor>
+class Compute_Test_Goals_From_Instrumentation : private Standard_AST_Visitor_Aspect<AST_Visitor>
 {
 	/*! \copydoc doc_self
 	*/
 	typedef Compute_Test_Goals_From_Instrumentation Self;
 
 	public:
-	Compute_Test_Goals_From_Instrumentation(CNF_Conversion & equation,
-			Evaluate_Coverage_Pattern const& cp_eval,
-			Automaton_Inserter const& a_i);
+	Compute_Test_Goals_From_Instrumentation(::goto_functionst const& gf,
+			::language_uit & manager, ::optionst const& opts);
 
 	virtual ~Compute_Test_Goals_From_Instrumentation();
 
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Query
-	 * \param  n Query
-	 */
-	virtual void visit(Query const* n);
-	/*! \} */
+	CNF_Conversion & do_query(Query const& query);
 
 	private:
-	CNF_Conversion & m_equation;
-	Evaluate_Coverage_Pattern const& m_cp_eval;
-	Automaton_Inserter const& m_aut_insert;
-	Evaluate_Coverage_Pattern::Test_Goal_States const* m_test_goal_states;
-	/*typedef ::std::map< ta_state_t, 
-		::std::map< ::goto_programt::const_targett, test_goal_t > > state_context_tg_t;
-	state_context_tg_t m_state_context_tg_map;*/
 	typedef ::std::map< ::goto_programt::const_targett,
 				::std::map< ::goto_programt::const_targett, 
 					::std::set< ::literalt > > > pc_to_context_and_guards_t;
-	pc_to_context_and_guards_t m_pc_to_guard;
-	CNF_Conversion::test_goals_t m_test_goals;
 	typedef ::std::map< ::goto_programt::const_targett,
 				::std::set< ::goto_programt::const_targett > > context_to_pcs_t;
+	
+	::goto_functionst const& m_gf;
+	::language_uit & m_manager;
+	::optionst const& m_opts;
+	Automaton_Inserter m_aut_insert;
+	CNF_Conversion m_equation;
+	Evaluate_Coverage_Pattern::Test_Goal_States const* m_test_goal_states;
+	pc_to_context_and_guards_t m_pc_to_guard;
+	CNF_Conversion::test_goals_t m_test_goals;
 
-	bool find_all_contexts(context_to_pcs_t & context_to_pcs) const;
+	bool find_all_contexts(context_to_pcs_t & context_to_pcs);
 
 	void context_to_literals(::goto_programt::const_targett const& context,
 		::std::set< ::goto_programt::const_targett > const& pcs, ::bvt & test_goal_literals) const;
@@ -200,6 +206,13 @@ class Compute_Test_Goals_From_Instrumentation : public Standard_AST_Visitor_Aspe
 	 * \param  n Predicate
 	 */
 	virtual void visit(Predicate const* n);
+	/*! \} */
+
+	/*! \{
+	 * \brief Visit a @ref fshell2::fql::Query
+	 * \param  n Query
+	 */
+	virtual void visit(Query const* n);
 	/*! \} */
 
 	/*! \{

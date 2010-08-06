@@ -51,14 +51,10 @@
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Automaton_Inserter::Automaton_Inserter(Evaluate_Path_Pattern const& pp_eval,
-			Evaluate_Coverage_Pattern const& cp_eval, ::goto_functionst & gf,
-			::fshell2::instrumentation::CFG & cfg,
-			::language_uit & manager) :
-	m_pp_eval(pp_eval), m_cp_eval(cp_eval), m_gf(gf),
+Automaton_Inserter::Automaton_Inserter(::language_uit & manager) :
 	m_manager(manager),
-	m_cfg(cfg),
-	m_inserter(m_manager, m_gf)
+	m_cp_eval(m_manager),
+	m_pp_eval(m_cp_eval.get_pp_eval())
 {
 }
 
@@ -80,9 +76,11 @@ CFA::edge_t const& Automaton_Inserter::get_target_graph_edge(::goto_programt::co
 }
 */
 
-void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& aut,
-		::exprt & final_cond, bool map_tg) {
+void Automaton_Inserter::insert(::goto_functionst & gf,
+		::fshell2::instrumentation::CFG const& cfg, char const * suffix,
+		trace_automaton_t const& aut, ::exprt & final_cond, bool map_tg) {
 	using ::fshell2::instrumentation::CFG;
+	::fshell2::instrumentation::GOTO_Transformation inserter(m_manager, gf);
 
 	// traverse the automaton and collect relevant target graphs; for each
 	// target graph build a map< state_t, set< state_t > >
@@ -128,7 +126,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 	state_init->code = ::code_assignt(::symbol_expr(state_symb), ::from_integer(
 				initial, state_symb.type));
 
-	m_inserter.insert("main", ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::FUNCTION_CALL, defs);
+	inserter.insert("main", ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::FUNCTION_CALL, defs);
 
 	// we only need a subset of the target graphs and we should better know which ones
 	typedef ::std::map< target_graph_t const*, int > target_graph_to_int_t;
@@ -159,8 +157,8 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 	}
 
 	// insert function calls
-	for (::goto_functionst::function_mapt::iterator iter(m_gf.function_map.begin());
-			iter != m_gf.function_map.end(); ++iter) {
+	for (::goto_functionst::function_mapt::iterator iter(gf.function_map.begin());
+			iter != gf.function_map.end(); ++iter) {
 		if (Evaluate_Filter::ignore_function(iter->second)) continue;
 		::goto_programt::instructionst::iterator end_func_iter(iter->second.body.instructions.end());
 		--end_func_iter;
@@ -169,8 +167,8 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 		if (::fshell2::instrumentation::GOTO_Transformation::is_instrumented(end_func_iter)) continue;
 		// maybe this function is never called, then there is no successor,
 		// and we can skip this function altogether
-		CFG::entries_t::iterator cfg_node_for_end_func(m_cfg.find(end_func_iter));
-		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_cfg.end() != cfg_node_for_end_func);
+		CFG::entries_t::const_iterator cfg_node_for_end_func(cfg.find(end_func_iter));
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg.end() != cfg_node_for_end_func);
 		if (cfg_node_for_end_func->second.successors.empty()) continue;
 		
 		//// int i(0);
@@ -203,8 +201,8 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 				call->code = fct;
 		
 				/* see get_target_graph_edge
-				CFG::entries_t::iterator cfg_node(m_cfg.find(i_iter));
-				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_cfg.end() != cfg_node);
+				CFG::entries_t::iterator cfg_node(cfg.find(i_iter));
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg.end() != cfg_node);
 				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !cfg_node->second.successors.empty());
 				CFA::edge_t edge(::std::make_pair(&(iter->second.body), i_iter),
 							cfg_node->second.successors.front().first);
@@ -212,9 +210,9 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 						tmp_iter != tmp.instructions.end(); ++tmp_iter)
 					m_target_edge_map.insert(::std::make_pair(tmp_iter, edge));
 			
-				m_inserter.insert_at(edge.first, tmp);
+				inserter.insert_at(edge.first, tmp);
 				*/
-				m_inserter.insert_at(::std::make_pair(&(iter->second.body), i_iter), tmp);
+				inserter.insert_at(::std::make_pair(&(iter->second.body), i_iter), tmp);
 			} else if (::fshell2::instrumentation::GOTO_Transformation::is_instrumented(i_iter)) {
 				// statement has been added by earlier instrumentation, but
 				// we care about it! It must be a predicate-edge
@@ -238,7 +236,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 			
 				::goto_programt tmp;
 				::fshell2::instrumentation::GOTO_Transformation::inserted_t & targets(
-						m_inserter.make_nondet_choice(tmp, target_graphs.size() + 1));
+						inserter.make_nondet_choice(tmp, target_graphs.size() + 1));
 				::fshell2::instrumentation::GOTO_Transformation::inserted_t::iterator t_iter(
 						targets.begin());
 				for (::std::set< int >::const_iterator f_iter(target_graphs.begin()); f_iter != target_graphs.end(); 
@@ -259,16 +257,16 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 					m_target_edge_map.insert(::std::make_pair(tmp_iter, edge));
 				*/
 
-				m_inserter.insert_at(edge.first, tmp);
+				inserter.insert_at(edge.first, tmp);
 			} else {
-				CFG::entries_t::iterator cfg_node(m_cfg.find(i_iter));
-				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_cfg.end() != cfg_node);
+				CFG::entries_t::const_iterator cfg_node(cfg.find(i_iter));
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg.end() != cfg_node);
 				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !cfg_node->second.successors.empty());
 				
 				edge_to_target_graphs_t const& entry(n_t_g_entry->second);
 				FSHELL2_PROD_ASSERT(::diagnostics::Not_Implemented, (cfg_node->second.successors.size() == 1) ||
 						i_iter->is_goto());
-				for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
+				for (CFG::successors_t::const_iterator s_iter(cfg_node->second.successors.begin());
 						s_iter != cfg_node->second.successors.end(); ++s_iter) {
 					CFA::edge_t edge(::std::make_pair(&(iter->second.body), i_iter), s_iter->first);
 					edge_to_target_graphs_t::const_iterator edge_map_iter(entry.find(edge));
@@ -285,7 +283,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 					//::goto_programt tg_record;
 					::goto_programt tmp;
 					::fshell2::instrumentation::GOTO_Transformation::inserted_t & targets(
-							m_inserter.make_nondet_choice(tmp, target_graphs.size() + 1));
+							inserter.make_nondet_choice(tmp, target_graphs.size() + 1));
 					::fshell2::instrumentation::GOTO_Transformation::inserted_t::iterator t_iter(
 							targets.begin());
 					for (::std::set< int >::const_iterator f_iter(target_graphs.begin()); f_iter != target_graphs.end(); 
@@ -349,7 +347,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 						m_target_edge_map.insert(::std::make_pair(tmp_iter, edge));
 					*/
 
-					m_inserter.insert_at(edge.first, tmp);
+					inserter.insert_at(edge.first, tmp);
 				}
 			}
 		}
@@ -365,7 +363,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 		::std::string const func_name(::diagnostics::internal::to_string("c::filter_trans$", suffix, "$",
 					iter->first));
 		::std::pair< ::goto_functionst::function_mapt::iterator, bool > entry(
-				m_gf.function_map.insert(::std::make_pair(func_name, ::goto_functionst::goto_functiont())));
+				gf.function_map.insert(::std::make_pair(func_name, ::goto_functionst::goto_functiont())));
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, entry.second);
 		entry.first->second.body_available = true;
 		entry.first->second.type.return_type() = ::empty_typet();
@@ -394,7 +392,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 			// is not yet in body
 			::goto_programt tmp_nd;
 			::fshell2::instrumentation::GOTO_Transformation::inserted_t & targets(
-					m_inserter.make_nondet_choice(tmp_nd, tr_iter->second.size()));
+					inserter.make_nondet_choice(tmp_nd, tr_iter->second.size()));
 			body.destructive_append(tmp_nd);
 			::fshell2::instrumentation::GOTO_Transformation::inserted_t::iterator t_iter(
 					targets.begin());
@@ -451,7 +449,7 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 			::std::string const func_name(::diagnostics::internal::to_string("c::tg_record$", suffix, "$",
 						iter->first));
 			::std::pair< ::goto_functionst::function_mapt::iterator, bool > entry(
-					m_gf.function_map.insert(::std::make_pair(func_name, ::goto_functionst::goto_functiont())));
+					gf.function_map.insert(::std::make_pair(func_name, ::goto_functionst::goto_functiont())));
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, entry.second);
 			entry.first->second.body_available = true;
 			entry.first->second.type.return_type() = ::empty_typet();
@@ -517,17 +515,27 @@ void Automaton_Inserter::insert(char const * suffix, trace_automaton_t const& au
 	}
 }
 
-void Automaton_Inserter::insert(Query const& query) {
+Evaluate_Coverage_Pattern::Test_Goal_States const& Automaton_Inserter::do_query(
+		::goto_functionst & gf, ::fshell2::instrumentation::CFG & cfg, Query const& query) {
+	m_tg_instrumentation_map.clear();
+	m_target_edge_map.clear();
+	m_node_to_target_graphs_map.clear();
+	// compute trace automata for coverage and path patterns
+	Evaluate_Coverage_Pattern::Test_Goal_States const& tgs(m_cp_eval.do_query(gf, cfg, query));
+
 	::exprt t_g_final_cond, obs_final_cond;
-	insert("t_g", m_cp_eval.get(), t_g_final_cond, true);
-	insert("obs", m_pp_eval.get(query.get_passing()), obs_final_cond, false);
+	insert(gf, cfg, "t_g", m_cp_eval.get(), t_g_final_cond, true);
+	insert(gf, cfg, "obs", m_pp_eval.get(query.get_passing()), obs_final_cond, false);
 	
 	::goto_programt tmp;
 	::goto_programt::targett as(tmp.add_instruction(ASSERT));
 	as->make_assertion(::and_exprt(t_g_final_cond, obs_final_cond));
 	as->guard.make_not();
 	
-	m_inserter.insert("main", ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::END_FUNCTION, tmp);
+	::fshell2::instrumentation::GOTO_Transformation inserter(m_manager, gf);
+	inserter.insert("main", ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::END_FUNCTION, tmp);
+
+	return tgs;
 }
 
 

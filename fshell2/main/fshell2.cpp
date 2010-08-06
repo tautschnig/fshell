@@ -36,15 +36,10 @@
 #include <fshell2/exception/command_processing_error.hpp>
 #include <fshell2/exception/macro_processing_error.hpp>
 #include <fshell2/exception/query_processing_error.hpp>
-#include <fshell2/instrumentation/cfg.hpp>
-#include <fshell2/fql/normalize/normalization_visitor.hpp>
-#include <fshell2/fql/evaluation/evaluate_filter.hpp>
-#include <fshell2/fql/evaluation/evaluate_path_pattern.hpp>
-#include <fshell2/fql/evaluation/evaluate_coverage_pattern.hpp>
-#include <fshell2/fql/evaluation/automaton_inserter.hpp>
-#include <fshell2/fql/evaluation/compute_test_goals.hpp>
-#include <fshell2/fql/ast/query.hpp>
 #include <fshell2/exception/fshell2_error.hpp>
+#include <fshell2/fql/ast/query.hpp>
+#include <fshell2/fql/normalize/normalization_visitor.hpp>
+#include <fshell2/fql/evaluation/compute_test_goals.hpp>
 #include <fshell2/tc_generation/constraint_strengthening.hpp>
 #include <fshell2/tc_generation/test_suite_minimization.hpp>
 #include <fshell2/tc_generation/test_suite_output.hpp>
@@ -67,13 +62,6 @@ auto_ptr<char>::~auto_ptr()
 } 
 
 FSHELL2_NAMESPACE_BEGIN;
-
-FSHELL2_FQL_NAMESPACE_BEGIN;
-
-class Query;
-class Abstraction;
-
-FSHELL2_FQL_NAMESPACE_END;
 
 FShell2::FShell2(::optionst const& opts, ::goto_functionst & gf) :
 	m_opts(opts), m_gf(gf), m_cmd(opts, gf), m_first_run(true) {
@@ -130,34 +118,6 @@ Context_Backup::~Context_Backup() {
 	m_manager.context.swap(m_context);
 }
 
-class Smart_Printer {
-	public:
-		Smart_Printer(::language_uit & manager);
-		~Smart_Printer();
-		void print_now();
-		::std::ostream & get_ostream();
-	private:
-		::language_uit & m_manager;
-		::std::ostringstream m_oss;
-};
-
-Smart_Printer::Smart_Printer(::language_uit & manager) :
-	m_manager(manager) {
-}
-
-Smart_Printer::~Smart_Printer() {
-	if (!m_oss.str().empty()) m_manager.print(m_oss.str());
-}
-
-void Smart_Printer::print_now() {
-	if (!m_oss.str().empty()) m_manager.print(m_oss.str());
-	m_oss.str("");
-}
-
-::std::ostream & Smart_Printer::get_ostream() {
-	return m_oss;
-}
-
 void FShell2::try_query(::language_uit & manager, char const * line) {
 	::std::string query(m_macro.expand(line));
 	if (query.empty()) return;
@@ -192,44 +152,10 @@ void FShell2::try_query(::language_uit & manager, char const * line) {
 		m_first_run = false;
 	}
 	
-	// copy goto program, it will be modified
-	::goto_functionst gf_copy;
-	gf_copy.copy_from(m_gf);
-	// build a CFG to have forward and backward edges
-	::fshell2::instrumentation::CFG cfg;
-	cfg.compute_edges(gf_copy);
-
-	// prepare filter evaluation
-	::fshell2::fql::Evaluate_Filter filter_eval(gf_copy, cfg, manager);
-	// evaluate all filters before instrumenting automata
-	// may create a predicated CFA and add predicate edges
-	Context_Backup context_backup(manager);
-	query_ast->accept(&filter_eval);
-
-	// build automata from path monitor expressions
-	::fshell2::fql::Evaluate_Path_Pattern pp_eval(filter_eval, cfg);
-	query_ast->accept(&pp_eval);
-	// create a test goal automaton from the coverage sequence
-	::fshell2::fql::Evaluate_Coverage_Pattern cp_eval(filter_eval, pp_eval);
-	query_ast->accept(&cp_eval);
-
-	// do automaton instrumentation
-	::fshell2::fql::Automaton_Inserter aut(pp_eval, cp_eval, gf_copy, cfg, manager);
-	aut.insert(*query_ast);
-
-	if (m_opts.get_bool_option("show-goto-functions")) {
-		::namespacet const ns(manager.context);
-		Smart_Printer smp(manager);
-		gf_copy.output(ns, smp.get_ostream());
-	}
-	
-	// convert CFA to CNF
-	::fshell2::fql::CNF_Conversion equation(manager, m_opts);
-	equation.convert(gf_copy);
-
 	// compute test goals
-	::fshell2::fql::Compute_Test_Goals_From_Instrumentation goals(equation, cp_eval, aut);
-	query_ast->accept(&goals);
+	Context_Backup context_backup(manager);
+	::fshell2::fql::Compute_Test_Goals_From_Instrumentation goals(m_gf, manager, m_opts);
+	::fshell2::fql::CNF_Conversion & equation(goals.do_query(*query_ast));
 
 	// do the enumeration
 	::fshell2::Constraint_Strengthening cs(equation);

@@ -33,6 +33,7 @@
 
 #include <fshell2/instrumentation/goto_transformation.hpp>
 #include <fshell2/fql/concepts/trace_automaton.hpp>
+#include <fshell2/fql/evaluation/evaluate_coverage_pattern.hpp>
 
 #include <list>
 #include <map>
@@ -52,7 +53,6 @@ FSHELL2_FQL_NAMESPACE_BEGIN;
 
 class Query;
 class Evaluate_Path_Pattern;
-class Evaluate_Coverage_Pattern;
 
 /*! \brief TODO
 */
@@ -69,28 +69,28 @@ class Automaton_Inserter
 	typedef ::std::map< target_graph_t::edge_t, ::std::set< target_graph_t const* > > edge_to_target_graphs_t;
 	typedef ::std::map< ::goto_programt::const_targett, edge_to_target_graphs_t > node_to_target_graphs_t; 
 
-	Automaton_Inserter(Evaluate_Path_Pattern const& pp_eval,
-			Evaluate_Coverage_Pattern const& cp_eval,
-			::goto_functionst & gf,
-			::fshell2::instrumentation::CFG & cfg, ::language_uit & manager);
+	explicit Automaton_Inserter(::language_uit & manager);
 
-	void insert(Query const& query);
+	Evaluate_Coverage_Pattern::Test_Goal_States const& do_query(
+			::goto_functionst & gf, ::fshell2::instrumentation::CFG & cfg, Query const& query);
 
 	instrumentation_points_t const& get_test_goal_instrumentation(ta_state_t const& state) const;
 	// CFA::edge_t const& get_target_graph_edge(::goto_programt::const_targett const& node) const;
 
+	inline bool is_test_goal_state(ta_state_t const& s) const;
+	inline trace_automaton_t const& get_tg_aut() const;
+
 	private:
-	Evaluate_Path_Pattern const& m_pp_eval;
-	Evaluate_Coverage_Pattern const& m_cp_eval;
-	::goto_functionst & m_gf;
 	::language_uit & m_manager;
-	::fshell2::instrumentation::CFG & m_cfg;
-	::fshell2::instrumentation::GOTO_Transformation m_inserter;
+	Evaluate_Coverage_Pattern m_cp_eval;
+	Evaluate_Path_Pattern const& m_pp_eval;
 	instrumentation_map_t m_tg_instrumentation_map;
 	::std::map< ::goto_programt::const_targett, CFA::edge_t > m_target_edge_map;
 	node_to_target_graphs_t m_node_to_target_graphs_map;
 
-	void insert(char const * suffix, trace_automaton_t const& aut, ::exprt & final_cond, bool map_tg);
+	void insert(::goto_functionst & gf, ::fshell2::instrumentation::CFG const&
+			cfg, char const * suffix, trace_automaton_t const& aut,
+			::exprt & final_cond, bool map_tg);
 
 	/*! \copydoc copy_constructor
 	*/
@@ -100,6 +100,14 @@ class Automaton_Inserter
 	 */
 	Self& operator=( Self const& rhs );
 };
+	
+inline bool Automaton_Inserter::is_test_goal_state(ta_state_t const& s) const {
+	return m_cp_eval.is_test_goal_state(s);
+}
+
+inline trace_automaton_t const& Automaton_Inserter::get_tg_aut() const {
+	return m_cp_eval.get();
+}
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;

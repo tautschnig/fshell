@@ -31,20 +31,34 @@
 
 #include <diagnostics/basic_exceptions/violated_invariance.hpp>
 #include <diagnostics/basic_exceptions/invalid_argument.hpp>
+#include <diagnostics/basic_exceptions/invalid_protocol.hpp>
 
 #include <limits>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Target_Graph_Index::Target_Graph_Index(
-		target_graph_t const* id_tgg) :
-	m_next_index(0) {
+Target_Graph_Index::Target_Graph_Index() :
+	m_initialized(false),
+	m_next_index(0)
+{
+}
+	
+void Target_Graph_Index::init(target_graph_t const* id_tgg) {
+	m_initialized = true;
 	to_index(id_tgg);
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == m_next_index);
 }
 
+void Target_Graph_Index::clear() {
+	m_initialized = false;
+	m_next_index = 0;
+	m_target_graph_to_int.clear();
+	m_int_to_target_graph.clear();
+}
+
 int Target_Graph_Index::to_index(target_graph_t const* f) {
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Invalid_Protocol, m_initialized);
 	::std::map< target_graph_t const*, int >::iterator entry(m_target_graph_to_int.find(f));
 	if (m_target_graph_to_int.end() == entry) {
 		FSHELL2_PROD_CHECK(::diagnostics::Violated_Invariance,
@@ -56,12 +70,14 @@ int Target_Graph_Index::to_index(target_graph_t const* f) {
 }
 
 target_graph_t const* Target_Graph_Index::lookup_index(int index) const {
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Invalid_Protocol, m_initialized);
 	::std::map< int, target_graph_t const* >::const_iterator entry(m_int_to_target_graph.find(index));
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_int_to_target_graph.end() != entry);
 	return entry->second;
 }
 
 int Target_Graph_Index::lookup_target_graph(target_graph_t const* f) const {
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Invalid_Protocol, m_initialized);
 	::std::map< target_graph_t const*, int >::const_iterator entry(m_target_graph_to_int.find(f));
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_target_graph_to_int.end() != entry);
 	return entry->second;

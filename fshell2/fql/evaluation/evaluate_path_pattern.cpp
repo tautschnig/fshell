@@ -52,14 +52,32 @@
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 		
-Evaluate_Path_Pattern::Evaluate_Path_Pattern(Evaluate_Filter const& filter_eval,
-			::fshell2::instrumentation::CFG const& cfg) :
+Evaluate_Path_Pattern::Evaluate_Path_Pattern(Evaluate_Filter const& filter_eval) :
 	m_eval_filter(filter_eval),
-	m_cfg(cfg),
-	m_target_graph_index(&(m_eval_filter.get(*(Filter_Function::Factory::get_instance().create<F_IDENTITY>())))) {
+	m_cfg(0),
+	m_pp_map(),
+	m_entry(m_pp_map.end(), false)
+{
 }
 
 Evaluate_Path_Pattern::~Evaluate_Path_Pattern() {
+}
+	
+void Evaluate_Path_Pattern::do_query(::fshell2::instrumentation::CFG const& cfg,
+		Query const& query) {
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !m_cfg);
+	m_cfg = &cfg;
+	m_pp_map.clear();
+	m_entry = ::std::make_pair(m_pp_map.end(), false);
+	m_target_graph_index.clear();
+	m_more_target_graphs.clear();
+	
+	m_target_graph_index.init(&(m_eval_filter.get(*(Filter_Function::Factory::get_instance().create<F_IDENTITY>()))));
+	query.accept(this);
+
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+			m_pp_map.end() != m_pp_map.find(query.get_passing()));
+	m_cfg = 0;
 }
 
 trace_automaton_t const& Evaluate_Path_Pattern::get(Path_Pattern_Expr const* pm) const {
@@ -73,8 +91,9 @@ void Evaluate_Path_Pattern::dfs_build(trace_automaton_t & ta, ta_state_t const& 
 		target_graph_t::node_t const& root, int const bound,
 		node_counts_t const& nc, target_graph_t const& tgg) {
 	
-	::fshell2::instrumentation::CFG::entries_t::const_iterator cfg_node(m_cfg.find(root.second));
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg.end());
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_cfg);
+	::fshell2::instrumentation::CFG::entries_t::const_iterator cfg_node(m_cfg->find(root.second));
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg->end());
 	// the end? that's ok as well
 	if (cfg_node->second.successors.empty()) {
 		ta.final(state) = 1;

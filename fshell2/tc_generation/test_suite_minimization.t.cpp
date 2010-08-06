@@ -33,12 +33,6 @@
 
 #include <fshell2/tc_generation/test_suite_minimization.hpp>
 
-#include <fshell2/instrumentation/cfg.hpp>
-#include <fshell2/fql/evaluation/evaluate_filter.hpp>
-#include <fshell2/fql/evaluation/predicate_instrumentation.hpp>
-#include <fshell2/fql/evaluation/evaluate_path_pattern.hpp>
-#include <fshell2/fql/evaluation/evaluate_coverage_pattern.hpp>
-#include <fshell2/fql/evaluation/automaton_inserter.hpp>
 #include <fshell2/fql/evaluation/compute_test_goals.hpp>
 #include <fshell2/tc_generation/constraint_strengthening.hpp>
 
@@ -104,39 +98,19 @@ void test( Test_Data & data )
 	TEST_CHECK(!l.final());
     
 	::goto_convert(l.context, options, gf, l.ui_message_handler);
-	::fshell2::instrumentation::CFG cfg;
-	cfg.compute_edges(gf);
-		
-	fql::Evaluate_Filter eval(gf, cfg, l);
 	
 	fql::Path_Pattern_Expr * id_kleene(FQL_CREATE3(Repeat, FQL_CREATE1(Edgecov,
 					FQL_CREATE_FF0(F_IDENTITY)), 0, -1));
 	fql::Coverage_Pattern_Expr * id_kleene_q(FQL_CREATE1(Quote, id_kleene));
-		
 	fql::Filter_Expr * bb(FQL_CREATE_FF0(F_BASICBLOCKENTRY));
 	fql::Edgecov * e(FQL_CREATE1(Edgecov, bb));
 	fql::Coverage_Pattern_Expr * c(FQL_CREATE2(CP_Concat, id_kleene_q,
 				FQL_CREATE2(CP_Concat, e, id_kleene_q)));
-
 	fql::Query * q(FQL_CREATE3(Query, 0, c, id_kleene));
-	q->accept(&eval);
-	fql::target_graph_t const& bb_entries(eval.get(*bb));
-	TEST_CHECK_RELATION(6, ==, bb_entries.get_edges().size());
-
-	::fshell2::fql::Evaluate_Path_Pattern pp_eval(eval, cfg);
-	q->accept(&pp_eval);
-	::fshell2::fql::Evaluate_Coverage_Pattern cp_eval(eval, pp_eval);
-	q->accept(&cp_eval);
-	TEST_CHECK_RELATION(1, ==, cp_eval.get_test_goal_states().m_children.back().m_children.front().m_tg_states.size());
-
-	::fshell2::fql::Automaton_Inserter aut(pp_eval, cp_eval, gf, cfg, l);
-	aut.insert(*q);
-
-	fql::CNF_Conversion eq(l, options);
-	eq.convert(gf);
-
-	fql::Compute_Test_Goals_From_Instrumentation goals(eq, cp_eval, aut);
-	q->accept(&goals);
+	
+	fql::Compute_Test_Goals_From_Instrumentation goals(gf, l, options);
+	fql::CNF_Conversion & eq(goals.do_query(*q));
+	TEST_CHECK_RELATION(6, ==, eq.get_test_goal_literals().size());
 
 	Constraint_Strengthening cs(eq);
 	Constraint_Strengthening::test_cases_t test_suite;

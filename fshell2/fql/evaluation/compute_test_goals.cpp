@@ -35,6 +35,8 @@
 
 #include <fshell2/exception/fshell2_error.hpp>
 
+#include <fshell2/instrumentation/cfg.hpp>
+
 #include <fshell2/fql/evaluation/evaluate_filter.hpp>
 #include <fshell2/fql/evaluation/evaluate_path_pattern.hpp>
 #include <fshell2/fql/evaluation/evaluate_coverage_pattern.hpp>
@@ -59,6 +61,24 @@
 #include <cbmc/src/goto-symex/slice_by_trace.h>
 
 FSHELL2_NAMESPACE_BEGIN;
+
+Smart_Printer::Smart_Printer(::language_uit & manager) :
+	m_manager(manager) {
+}
+
+Smart_Printer::~Smart_Printer() {
+	if (!m_oss.str().empty()) m_manager.print(m_oss.str());
+}
+
+void Smart_Printer::print_now() {
+	if (!m_oss.str().empty()) m_manager.print(m_oss.str());
+	m_oss.str("");
+}
+
+::std::ostream & Smart_Printer::get_ostream() {
+	return m_oss;
+}
+
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 CNF_Conversion::CNF_Conversion(::language_uit & manager, ::optionst const& opts) :
@@ -105,13 +125,46 @@ void CNF_Conversion::convert(::goto_functionst const& gf) {
 			"Failed to build Boolean program representation");
 }
 	
+Compute_Test_Goals_From_Instrumentation::Compute_Test_Goals_From_Instrumentation(
+		::goto_functionst const& gf, ::language_uit & manager, ::optionst const& opts) :
+	m_gf(gf),
+	m_manager(manager),
+	m_opts(opts),
+	m_aut_insert(m_manager),
+	m_equation(m_manager, m_opts),
+	m_test_goal_states(0)
+{
+}
 
-Compute_Test_Goals_From_Instrumentation::Compute_Test_Goals_From_Instrumentation(CNF_Conversion & equation,
-		Evaluate_Coverage_Pattern const& cp_eval, Automaton_Inserter const& a_i) :
-	m_equation(equation), m_cp_eval(cp_eval), m_aut_insert(a_i), m_test_goal_states(&(m_cp_eval.get_test_goal_states())) {
+Compute_Test_Goals_From_Instrumentation::~Compute_Test_Goals_From_Instrumentation() {
+}
+
+CNF_Conversion & Compute_Test_Goals_From_Instrumentation::do_query(Query const& query) {
+	m_pc_to_guard.clear();
+	m_test_goals.clear();
 	
-	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Protocol, !m_equation.get_equation().SSA_steps.empty());
+	// copy goto program, it will be modified
+	::goto_functionst gf_copy;
+	gf_copy.copy_from(m_gf);
 	
+	// build a CFG to have forward and backward edges
+	::fshell2::instrumentation::CFG cfg;
+	cfg.compute_edges(gf_copy);
+	
+	// do automata instrumentation
+	m_test_goal_states = &(m_aut_insert.do_query(gf_copy, cfg, query));
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_test_goal_states);
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_test_goal_states->m_cp == query.get_cover());
+
+	// print instrumented program, if requested
+	if (m_opts.get_bool_option("show-goto-functions")) {
+		Smart_Printer smp(m_manager);
+		gf_copy.output(m_equation.get_ns(), smp.get_ostream());
+	}
+
+	// convert CFA to CNF
+	m_equation.convert(gf_copy);
+
 	// build a map from GOTO instructions to guard literals by walking the
 	// equation; group them by calling points
 	::goto_programt::const_targett most_recent_caller(m_equation.get_equation().SSA_steps.front().source.pc);
@@ -128,22 +181,23 @@ Compute_Test_Goals_From_Instrumentation::Compute_Test_Goals_From_Instrumentation
 		m_pc_to_guard[ iter->source.pc ][ most_recent_caller ].insert(iter->guard_literal);
 		// ::std::cerr << "Added guard " << iter->guard_literal.dimacs() << ::std::endl;
 	}
+	
+	query.accept(this);
+
+	return m_equation;
 }
 
-Compute_Test_Goals_From_Instrumentation::~Compute_Test_Goals_From_Instrumentation() {
-}
-
-bool Compute_Test_Goals_From_Instrumentation::find_all_contexts(context_to_pcs_t & context_to_pcs) const {
+bool Compute_Test_Goals_From_Instrumentation::find_all_contexts(context_to_pcs_t & context_to_pcs) {
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !m_test_goal_states->m_tg_states.empty());
 	
 	bool includes_initial_state(false);
 	for (ta_state_set_t::const_iterator iter(m_test_goal_states->m_tg_states.begin());
 			iter != m_test_goal_states->m_tg_states.end(); ++iter) {
-		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_cp_eval.is_test_goal_state(*iter));
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_aut_insert.is_test_goal_state(*iter));
 		// ignore states without incoming edges, unless initial
-		if (m_cp_eval.get().initial().end() != m_cp_eval.get().initial().find(*iter))
+		if (m_aut_insert.get_tg_aut().initial().end() != m_aut_insert.get_tg_aut().initial().find(*iter))
 			includes_initial_state = true;
-		if (m_cp_eval.get().delta2_backwards(*iter).empty()) continue;
+		if (m_aut_insert.get_tg_aut().delta2_backwards(*iter).empty()) continue;
 		// ::std::cerr << "Test goal state (unmapped): " << *iter << ::std::endl;
 		Automaton_Inserter::instrumentation_points_t const& nodes(
 				m_aut_insert.get_test_goal_instrumentation(*iter));
@@ -350,9 +404,6 @@ void Compute_Test_Goals_From_Instrumentation::visit(Predicate const* n) {
 }
 
 void Compute_Test_Goals_From_Instrumentation::visit(Query const* n) {
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_test_goal_states->m_cp == n->get_cover());
-	
-	// print_trace_automaton(m_cp_eval.get(), ::std::cerr);
 	n->get_cover()->accept(this);
 
 	for (CNF_Conversion::test_goals_t::const_iterator iter(m_test_goals.begin());

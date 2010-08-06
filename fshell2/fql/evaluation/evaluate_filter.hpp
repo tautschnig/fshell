@@ -49,7 +49,7 @@ FSHELL2_FQL_NAMESPACE_BEGIN;
 
 /*! \brief TODO
 */
-class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
+class Evaluate_Filter : private Standard_AST_Visitor_Aspect<AST_Visitor>
 {
 	/*! \copydoc doc_self
 	*/
@@ -59,18 +59,26 @@ class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	typedef ::std::map< Filter_Expr const*, target_graph_t > filter_value_t;
 	typedef ::std::map< Predicate const*, target_graph_t > pred_to_filter_value_t;
 
-	Evaluate_Filter(::goto_functionst & ts,
-			::fshell2::instrumentation::CFG & cfg,
-			::language_uit & manager);
+	explicit Evaluate_Filter(::language_uit & manager);
 
 	virtual ~Evaluate_Filter();
+
+	void do_query(::goto_functionst & gf, ::fshell2::instrumentation::CFG & cfg,
+			Query const& query);
 
 	static bool ignore_function(::goto_functionst::goto_functiont const& fct);
 	static bool ignore_instruction(::goto_programt::instructiont const& e);
 
 	target_graph_t const& get(Filter_Expr const& f) const;
 	target_graph_t const& get(Predicate const& p) const;
-
+		
+	private:
+	::fshell2::fql::Predicate_Instrumentation m_pred_instr;
+	::goto_functionst * m_gf;
+	::fshell2::instrumentation::CFG * m_cfg;
+	filter_value_t m_filter_map;
+	pred_to_filter_value_t m_predicate_map;
+	
 	/*! \{
 	 * \brief Visit a @ref fshell2::fql::CP_Alternative
 	 * \param  n CP_Alternative
@@ -196,13 +204,6 @@ class Evaluate_Filter : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	 */
 	virtual void visit(Transform_Pred const* n);
 	/*! \} */
-		
-	private:
-	::goto_functionst & m_gf;
-	::fshell2::instrumentation::CFG & m_cfg;
-	::fshell2::fql::Predicate_Instrumentation m_pred_instr;
-	filter_value_t m_filter_map;
-	pred_to_filter_value_t m_predicate_map;
 
 	/*! \copydoc copy_constructor
 	*/
