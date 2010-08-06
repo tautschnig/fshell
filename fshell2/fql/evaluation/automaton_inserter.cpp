@@ -148,8 +148,8 @@ void Automaton_Inserter::insert(::goto_functionst & gf,
 			if (local_target_graph_map.end() == local_target_graph_map.find(&tgg)) {
 				local_target_graph_map[ &tgg ] = e_iter->first;
 				// store the mapping from edges to target graphs
-				for (target_graph_t::edges_t::const_iterator e_iter(tgg.get_edges().begin());
-						e_iter != tgg.get_edges().end(); ++e_iter) {
+				for (target_graph_t::edges_t::const_iterator e_iter(tgg.get_E().begin());
+						e_iter != tgg.get_E().end(); ++e_iter) {
 					m_node_to_target_graphs_map[ e_iter->first.second ][ *e_iter ].insert(&tgg);
 				}
 			}

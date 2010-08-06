@@ -101,11 +101,11 @@ void test( Test_Data & data )
 				FQL_CREATE1(Edgecov, id)));
 	eval.do_query(gf, cfg, *q);
 	target_graph_t const& id_entries(eval.get(*id));
-	TEST_ASSERT_RELATION(5, ==, id_entries.get_edges().size());
+	TEST_ASSERT_RELATION(5, ==, id_entries.get_E().size());
 	
 	Predicate_Instrumentation::node_set_t nodes;
-	for (target_graph_t::edges_t::const_iterator e_iter(id_entries.get_edges().begin());
-			e_iter != id_entries.get_edges().end(); ++e_iter)
+	for (target_graph_t::edges_t::const_iterator e_iter(id_entries.get_E().begin());
+			e_iter != id_entries.get_E().end(); ++e_iter)
 		nodes.insert(e_iter->first);
 
 	::exprt sym(ID_symbol);
@@ -125,8 +125,8 @@ void test( Test_Data & data )
 	pi.insert_predicate(gf, nodes, pred, edges);
 	// gf.output(namespacet(l.context), ::std::cerr);
 
-	for (target_graph_t::edges_t::const_iterator e_iter(id_entries.get_edges().begin());
-			e_iter != id_entries.get_edges().end(); ++e_iter)
+	for (target_graph_t::edges_t::const_iterator e_iter(id_entries.get_E().begin());
+			e_iter != id_entries.get_E().end(); ++e_iter)
 		pi.get(e_iter->first, pred);
 }
 

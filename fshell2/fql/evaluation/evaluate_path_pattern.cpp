@@ -120,7 +120,7 @@ void Evaluate_Path_Pattern::dfs_build(trace_automaton_t & ta, ta_state_t const& 
 		}
 		target_graph_t::edge_t new_edge(::std::make_pair(root, s_iter->first));
 		// check target graph
-		if (tgg.get_edges().end() == tgg.get_edges().find(new_edge)) {
+		if (tgg.get_E().end() == tgg.get_E().find(new_edge)) {
 			ta.final(state) = 1;
 			continue;
 		}
@@ -129,7 +129,7 @@ void Evaluate_Path_Pattern::dfs_build(trace_automaton_t & ta, ta_state_t const& 
 		m_more_target_graphs.push_back(target_graph_t());
 		target_graph_t::edges_t e;
 		e.insert(new_edge);
-		m_more_target_graphs.back().set_edges(e);
+		m_more_target_graphs.back().set_E(e);
 		// make new node count map
 		node_counts_t nc_next(nc);
 		if (nc.end() == nc_iter)
@@ -272,7 +272,7 @@ void Evaluate_Path_Pattern::visit(Pathcov const* n) {
 
 	int const bound(n->get_bound());
 	target_graph_t const& tgg(m_eval_filter.get(*(n->get_filter_expr())));
-	target_graph_t::initial_states_t const& i_states(tgg.get_initial_states());
+	target_graph_t::initial_states_t const& i_states(tgg.get_I());
 	
 	for (target_graph_t::initial_states_t::const_iterator iter(i_states.begin());
 			iter != i_states.end(); ++iter) {

@@ -185,15 +185,13 @@ void Evaluate_Filter::visit(Filter_Compose const* n) {
 	filter_value_t::const_iterator b_set(m_filter_map.find(n->get_filter_expr_b()));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, b_set != m_filter_map.end());
 
-	CFA::edges_t edges;
-	::std::set_intersection(a_set->second.get_edges().begin(), a_set->second.get_edges().end(),
-			b_set->second.get_edges().begin(), b_set->second.get_edges().end(),
-			::std::inserter(edges, edges.begin()));
-	entry.first->second.set_edges(edges);
+	entry.first->second = a_set->second;
+	entry.first->second.setintersection(b_set->second);
+	CFA::nodes_t const L(entry.first->second.get_L());
 	CFA::initial_states_t initial;
-	::std::copy(a_set->second.get_initial_states().begin(), a_set->second.get_initial_states().end(),
-			::std::inserter(initial, initial.begin()));
-	entry.first->second.set_initial_states(initial);
+	::std::set_intersection(a_set->second.get_I().begin(), a_set->second.get_I().end(),
+			L.begin(), L.end(), ::std::inserter(initial, initial.begin()));
+	entry.first->second.set_I(initial);
 }
 
 void Evaluate_Filter::visit(Filter_Function const* n) {
@@ -219,15 +217,16 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 						f_iter != iter->second.body.instructions.end(); ++f_iter) {
 					if (ignore_instruction(*f_iter)) continue;
 					if (GOTO_Transformation::is_instrumented(f_iter)) continue;
-					if (first && iter->first == (prefix + ::config.main)) {
-						initial.insert(::std::make_pair(&(iter->second.body), f_iter));
-						first = false;
-					}
 					::fshell2::instrumentation::CFG::entries_t::iterator cfg_node(m_cfg->find(f_iter));
 					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg->end());
 					for (::fshell2::instrumentation::CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
-							s_iter != cfg_node->second.successors.end(); ++s_iter)
+							s_iter != cfg_node->second.successors.end(); ++s_iter) {
+						if (first && iter->first == (prefix + ::config.main)) {
+							initial.insert(::std::make_pair(&(iter->second.body), f_iter));
+							first = false;
+						}
 						edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), s_iter->first));
+					}
 				}
 			}
 			break;
@@ -245,15 +244,16 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 							f_iter != iter->second.body.instructions.end(); ++f_iter) {
 						if (ignore_instruction(*f_iter)) continue;
 						if (GOTO_Transformation::is_instrumented(f_iter)) continue;
-						if (first) {
-							initial.insert(::std::make_pair(&(iter->second.body), f_iter));
-							first = false;
-						}
 						CFG::entries_t::iterator cfg_node(m_cfg->find(f_iter));
 						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg->end());
 						for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
-								s_iter != cfg_node->second.successors.end(); ++s_iter)
+								s_iter != cfg_node->second.successors.end(); ++s_iter) {
+							if (first) {
+								initial.insert(::std::make_pair(&(iter->second.body), f_iter));
+								first = false;
+							}
 							edges.insert(::std::make_pair(::std::make_pair(&(iter->second.body), f_iter), s_iter->first));
+						}
 					}
 				}
 			}
@@ -318,16 +318,16 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 						f_iter != fct->second.body.instructions.end(); ++f_iter) {
 					if (ignore_instruction(*f_iter)) continue;
 					if (GOTO_Transformation::is_instrumented(f_iter)) continue;
-					if (first) {
-						initial.insert(::std::make_pair(&(fct->second.body), f_iter));
-						first = false;
-					}
 					CFG::entries_t::iterator cfg_node(m_cfg->find(f_iter));
 					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg->end());
 					for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
 							s_iter != cfg_node->second.successors.end(); ++s_iter) {
 						// cover edges leaving the function? yes.
 						// if (s_iter->first != &(fct->second.body)) continue;
+						if (first) {
+							initial.insert(::std::make_pair(&(fct->second.body), f_iter));
+							first = false;
+						}
 						edges.insert(::std::make_pair(::std::make_pair(&(fct->second.body), f_iter), s_iter->first));
 					}
 				}
@@ -601,8 +601,8 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 			break;
 	}
 				
-	entry.first->second.set_edges(edges);
-	entry.first->second.set_initial_states(initial);
+	entry.first->second.set_E(edges);
+	entry.first->second.set_I(initial);
 }
 
 void Evaluate_Filter::visit(Filter_Intersection const* n) {
@@ -618,16 +618,8 @@ void Evaluate_Filter::visit(Filter_Intersection const* n) {
 	filter_value_t::const_iterator b_set(m_filter_map.find(n->get_filter_expr_b()));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, b_set != m_filter_map.end());
 
-	CFA::edges_t edges;
-	::std::set_intersection(a_set->second.get_edges().begin(), a_set->second.get_edges().end(),
-			b_set->second.get_edges().begin(), b_set->second.get_edges().end(),
-			::std::inserter(edges, edges.begin()));
-	entry.first->second.set_edges(edges);
-	CFA::initial_states_t initial;
-	::std::set_intersection(a_set->second.get_initial_states().begin(), a_set->second.get_initial_states().end(),
-			b_set->second.get_initial_states().begin(), b_set->second.get_initial_states().end(),
-			::std::inserter(initial, initial.begin()));
-	entry.first->second.set_initial_states(initial);
+	entry.first->second = a_set->second;
+	entry.first->second.setintersection(b_set->second);
 }
 
 void Evaluate_Filter::visit(Filter_Setminus const* n) {
@@ -643,16 +635,8 @@ void Evaluate_Filter::visit(Filter_Setminus const* n) {
 	filter_value_t::const_iterator b_set(m_filter_map.find(n->get_filter_expr_b()));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, b_set != m_filter_map.end());
 
-	CFA::edges_t edges;
-	::std::set_difference(a_set->second.get_edges().begin(), a_set->second.get_edges().end(),
-			b_set->second.get_edges().begin(), b_set->second.get_edges().end(),
-			::std::inserter(edges, edges.begin()));
-	entry.first->second.set_edges(edges);
-	CFA::initial_states_t initial;
-	::std::set_difference(a_set->second.get_initial_states().begin(), a_set->second.get_initial_states().end(),
-			b_set->second.get_initial_states().begin(), b_set->second.get_initial_states().end(),
-			::std::inserter(initial, initial.begin()));
-	entry.first->second.set_initial_states(initial);
+	entry.first->second = a_set->second;
+	entry.first->second.setsubtract(b_set->second);
 }
 
 void Evaluate_Filter::visit(Filter_Union const* n) {
@@ -668,16 +652,8 @@ void Evaluate_Filter::visit(Filter_Union const* n) {
 	filter_value_t::const_iterator b_set(m_filter_map.find(n->get_filter_expr_b()));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, b_set != m_filter_map.end());
 
-	CFA::edges_t edges;
-	::std::set_union(a_set->second.get_edges().begin(), a_set->second.get_edges().end(),
-			b_set->second.get_edges().begin(), b_set->second.get_edges().end(),
-			::std::inserter(edges, edges.begin()));
-	entry.first->second.set_edges(edges);
-	CFA::initial_states_t initial;
-	::std::set_union(a_set->second.get_initial_states().begin(), a_set->second.get_initial_states().end(),
-			b_set->second.get_initial_states().begin(), b_set->second.get_initial_states().end(),
-			::std::inserter(initial, initial.begin()));
-	entry.first->second.set_initial_states(initial);
+	entry.first->second = a_set->second;
+	entry.first->second.setunion(b_set->second);
 }
 
 void Evaluate_Filter::visit(Nodecov const* n) {
@@ -707,18 +683,18 @@ void Evaluate_Filter::visit(Predicate const* n) {
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, id_set != m_filter_map.end());
 	
 	Predicate_Instrumentation::node_set_t nodes;
-	for (target_graph_t::edges_t::const_iterator e_iter(id_set->second.get_edges().begin());
-			e_iter != id_set->second.get_edges().end(); ++e_iter)
+	for (target_graph_t::edges_t::const_iterator e_iter(id_set->second.get_E().begin());
+			e_iter != id_set->second.get_E().end(); ++e_iter)
 		nodes.insert(e_iter->first);
 
 	CFA::edges_t edges;
 	m_pred_instr.insert_predicate(*m_gf, nodes, n, edges);
 	
-	entry.first->second.set_edges(edges);
+	entry.first->second.set_E(edges);
 	CFA::initial_states_t initial;
 	for (CFA::edges_t::const_iterator iter(edges.begin()); iter != edges.end(); ++iter)
 		initial.insert(iter->first);
-	entry.first->second.set_initial_states(initial);
+	entry.first->second.set_I(initial);
 }
 
 void Evaluate_Filter::visit(Query const* n) {
