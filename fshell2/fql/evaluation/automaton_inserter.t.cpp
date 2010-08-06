@@ -48,6 +48,7 @@
 
 #include <cbmc/src/util/config.h>
 #include <cbmc/src/util/tempfile.h>
+#include <cbmc/src/util/type_eq.h>
 #include <cbmc/src/langapi/language_ui.h>
 #include <cbmc/src/goto-programs/goto_convert_functions.h>
 #include <cbmc/src/langapi/mode.h>
@@ -115,8 +116,13 @@ void test( Test_Data & data )
 	
 	::fshell2::fql::Automaton_Inserter aut(l);
 	aut.do_query(gf, cfg, *q);
-
+	
 	trace_automaton_t const& ta(aut.get_tg_aut());
+	TEST_CHECK_RELATION(ta.state_count(), ==, 4);
+	::namespacet const ns(l.context);
+	::symbolt const& sym(ns.lookup("c::$fshell2$state$t_g"));
+	TEST_ASSERT(::type_eq(sym.type, ::unsignedbv_typet(3), ns));
+	
 	for (trace_automaton_t::const_iterator iter(ta.begin()); iter != ta.end(); ++iter) {
 		if (!aut.is_test_goal_state(*iter) || ta.delta2_backwards(*iter).empty()) {
 #if FSHELL2_DEBUG__LEVEL__ >= 1

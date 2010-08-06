@@ -73,25 +73,41 @@ bool GOTO_Transformation::is_instrumented(::goto_programt::const_targett inst) {
 	return (inst->location.get_property() == "fshell2_instrumentation");
 }
 	
-::symbolt const& GOTO_Transformation::new_bool_var(char const* name) {
-	static int var_count(-1);
-
-	++var_count;
-	FSHELL2_PROD_CHECK1(Instrumentation_Error, var_count >= 0, "Too many nondet choices required");
+void GOTO_Transformation::make_function_call(::goto_programt::targett ins,
+			::std::string const& func_name) {
+	ins->type = FUNCTION_CALL;
+	::code_function_callt fct;
+	fct.function() = ::exprt("symbol");
+	fct.function().set("identifier", func_name);
+	ins->code = fct;
+}
 	
-	::std::string const var_name(::diagnostics::internal::to_string("c::$fshell2$", name, var_count));
-	::symbolt cond_symbol;
-	cond_symbol.mode = "C";
-	cond_symbol.name = var_name;
-	cond_symbol.base_name = var_name.substr(3, ::std::string::npos);
-	cond_symbol.type = ::typet("bool");
-	cond_symbol.lvalue = true;
-	cond_symbol.static_lifetime = false;
-	m_manager.context.move(cond_symbol);
-	
+::symbolt const& GOTO_Transformation::new_var(::std::string const& name,
+		::typet const& type, bool global) {
+	::std::string const var_name("c::" + name);
 	::symbolst::const_iterator symb_entry(m_manager.context.symbols.find(var_name));
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, symb_entry == m_manager.context.symbols.end());
+	
+	::symbolt symbol;
+	symbol.mode = "C";
+	symbol.name = var_name;
+	symbol.base_name = name;
+	symbol.type = type;
+	symbol.lvalue = true;
+	symbol.static_lifetime = global;
+	m_manager.context.move(symbol);
+	
+	symb_entry = m_manager.context.symbols.find(var_name);
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, symb_entry != m_manager.context.symbols.end());
 	return symb_entry->second;
+}
+	
+::symbolt const& GOTO_Transformation::new_bool_var(char const* name) {
+	static int var_count(-1);
+	++var_count;
+	FSHELL2_PROD_CHECK1(Instrumentation_Error, var_count >= 0, "Too many nondet choices required");
+	::std::string const var_name(::diagnostics::internal::to_string("$fshell2$", name, var_count));
+	return new_var(var_name, ::typet("bool"), false);
 }
 
 GOTO_Transformation::inserted_t const& GOTO_Transformation::insert(::std::string const& f,

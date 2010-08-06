@@ -93,10 +93,14 @@ class Target_Graph_Index
 typedef ::astl::NFA_mmap_backedge< Target_Graph_Index > trace_automaton_t;
 typedef trace_automaton_t::state_type ta_state_t;
 typedef ::std::set< ta_state_t > ta_state_set_t;
+typedef ::std::map< ta_state_t, ta_state_t > ta_state_map_t;
 
 ::std::pair< ta_state_set_t, ta_state_set_t > copy_automaton(trace_automaton_t const& src, trace_automaton_t & dest);
 
 void simplify_automaton(trace_automaton_t & aut, bool compact);
+
+void compact_state_numbers(trace_automaton_t const& aut, ta_state_map_t & s_map,
+		ta_state_map_t & reverse_s_map, ta_state_set_t & finals);
 
 ::std::ostream & print_trace_automaton(trace_automaton_t const& aut, ::std::ostream & os);
 

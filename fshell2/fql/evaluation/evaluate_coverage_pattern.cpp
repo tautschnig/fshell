@@ -49,8 +49,7 @@ FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 	
 Evaluate_Coverage_Pattern::Evaluate_Coverage_Pattern(::language_uit & manager) :
-	m_eval_filter(manager), 
-	m_pp_eval(m_eval_filter), 
+	m_pp_eval(manager), 
 	m_test_goal_states(0),
 	m_current_tg_states(&m_test_goal_states)
 {
@@ -76,12 +75,8 @@ Evaluate_Coverage_Pattern::Test_Goal_States const& Evaluate_Coverage_Pattern::do
 		m_test_goal_automaton.del_state(*iter);
 	m_current_final.clear();
 	
-	// prepare filter evaluation
-	// may create a predicated CFA and add predicate edges
-	m_eval_filter.do_query(gf, cfg, query);
-	
 	// build automata from path patterns
-	m_pp_eval.do_query(cfg, query);
+	m_pp_eval.do_query(gf, cfg, query);
 
 	query.accept(this);
 	
@@ -99,6 +94,55 @@ bool Evaluate_Coverage_Pattern::is_test_goal_state(Test_Goal_States const& tgs, 
 		if (is_test_goal_state(*iter, state)) return true;
 	
 	return false;
+}
+	
+void Evaluate_Coverage_Pattern::copy_from_path_pattern(Path_Pattern_Expr const* n) {
+	ta_state_set_t prev_final;
+	prev_final.swap(m_current_final);
+	
+	trace_automaton_t const& ta(m_pp_eval.get(n));
+	
+	// handle case of single edge automaton (edgecov, predicate, nodecov) more
+	// efficiently
+	if (2 == ta.state_count() && 1 == ta.trans_count()) {
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == ta.initial().size());
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, *ta.begin() == *ta.initial().begin());
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == ta.delta2(*ta.begin()).size());
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !ta.final(*ta.initial().begin()));
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, ta.final(*(++ta.begin())));
+		
+		ta_state_t const new_state(m_test_goal_automaton.new_state());
+		m_current_final.insert(new_state);
+		m_test_goal_automaton.final(new_state) = 1;
+		m_current_tg_states->m_tg_states.insert(new_state);
+		int const idx(ta.delta2(*ta.begin()).begin()->first);
+
+		for (ta_state_set_t::const_iterator iter(prev_final.begin());
+				iter != prev_final.end(); ++iter) {
+			m_test_goal_automaton.set_trans(*iter, idx, new_state);
+			m_test_goal_automaton.final(*iter) = 0;
+		}
+	} else {
+		::std::pair< ta_state_set_t, ta_state_set_t > ta_init_final(
+				copy_automaton(ta, m_test_goal_automaton));
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == ta_init_final.first.size());
+		for (ta_state_set_t::const_iterator iter(prev_final.begin());
+				iter != prev_final.end(); ++iter) {
+			m_test_goal_automaton.set_trans(*iter, m_pp_eval.epsilon_index(), *ta_init_final.first.begin());
+			m_test_goal_automaton.final(*iter) = 0;
+		}
+		
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !dynamic_cast<ECP_Atom const*>(n) ||
+				(ta_init_final.second.end() == ta_init_final.second.find(*ta_init_final.first.begin())));
+		for (ta_state_set_t::const_iterator iter(ta_init_final.second.begin());
+				iter != ta_init_final.second.end(); ++iter)
+			m_test_goal_automaton.final(*iter) = 1;
+		simplify_automaton(m_test_goal_automaton, false);
+		for (trace_automaton_t::const_iterator iter(m_test_goal_automaton.begin());
+				iter != m_test_goal_automaton.end(); ++iter)
+			if (m_test_goal_automaton.final(*iter)) m_current_final.insert(*iter);
+		m_current_tg_states->m_tg_states = m_current_final;
+	}
 }
 
 void Evaluate_Coverage_Pattern::visit(CP_Alternative const* n) {
@@ -139,99 +183,19 @@ void Evaluate_Coverage_Pattern::visit(Depcov const* n) {
 }
 			
 void Evaluate_Coverage_Pattern::visit(Edgecov const* n) {
-	ta_state_set_t prev_final;
-	prev_final.swap(m_current_final);
-			
-	ta_state_t const new_state(m_test_goal_automaton.new_state());
-	m_current_final.insert(new_state);
-	m_test_goal_automaton.final(new_state) = 1;
-	m_current_tg_states->m_tg_states.insert(new_state);
-	int const idx(m_pp_eval.to_index(m_eval_filter.get(*(n->get_filter_expr()))));
-			
-	for (ta_state_set_t::const_iterator iter(prev_final.begin());
-			iter != prev_final.end(); ++iter) {
-		m_test_goal_automaton.set_trans(*iter, idx, new_state);
-		m_test_goal_automaton.final(*iter) = 0;
-	}
+	copy_from_path_pattern(n);
 }
 
 void Evaluate_Coverage_Pattern::visit(Nodecov const* n) {
-	FSHELL2_PROD_ASSERT(::diagnostics::Not_Implemented, false);
-
-#if 0
-	old crap from edgecov
-	for (test_goal_states_t::const_iterator iter(prev_final.begin());
-			iter != prev_final.end(); ++iter) {
-		ta_state_t pred(0);
-		if (1 == iter->size()) pred = *(iter->begin());
-		else {
-			pred = m_test_goal_automaton.new_state();
-		}
-		for (::std::vector< int >::const_iterator v_iter(new_tggs.begin());
-				v_iter != new_tggs.end(); ++v_iter) {
-			ta_state_t const new_state(m_test_goal_automaton.new_state());
-			m_test_goal_automaton.set_trans(pred, *v_iter, new_state);
-			ta_state_set_t tmp;
-			tmp.insert(new_state);
-			m_current_final.insert(tmp);
-		}
-	}
-	
-	target_graph_t const& tgg(m_eval_filter.get(*(n->get_filter_expr())));
-	::std::vector< int > new_tggs;
-	new_tggs.reserve(tgg.get_edges().size());
-	for (target_graph_t::edges_t::const_iterator e_iter(tgg.get_edges().begin());
-			e_iter != tgg.get_edges().end(); ++e_iter) {
-		m_more_target_graphs.push_back(target_graph_t());
-		target_graph_t::edges_t e;
-		e.insert(*e_iter);
-		m_more_target_graphs.back().set_edges(e);
-		new_tggs.push_back(m_pp_eval.to_index(m_more_target_graphs.back()));
-	}
-#endif
+	copy_from_path_pattern(n);
 }
 			
 void Evaluate_Coverage_Pattern::visit(Pathcov const* n) {
-	ta_state_set_t prev_final;
-	prev_final.swap(m_current_final);
-	
-	trace_automaton_t const& ta(m_pp_eval.get(n));
-	::std::pair< ta_state_set_t, ta_state_set_t > ta_init_final(
-			copy_automaton(ta, m_test_goal_automaton));
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == ta_init_final.first.size());
-	for (ta_state_set_t::const_iterator iter(prev_final.begin());
-			iter != prev_final.end(); ++iter) {
-		m_test_goal_automaton.set_trans(*iter, m_pp_eval.epsilon_index(), *ta_init_final.first.begin());
-		m_test_goal_automaton.final(*iter) = 0;
-	}
-	
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-			ta_init_final.second.end() == ta_init_final.second.find(*ta_init_final.first.begin()));
-	for (ta_state_set_t::const_iterator iter(ta_init_final.second.begin());
-			iter != ta_init_final.second.end(); ++iter)
-		m_test_goal_automaton.final(*iter) = 1;
-	simplify_automaton(m_test_goal_automaton, false);
-	for (trace_automaton_t::const_iterator iter(m_test_goal_automaton.begin());
-			iter != m_test_goal_automaton.end(); ++iter)
-		if (m_test_goal_automaton.final(*iter)) m_current_final.insert(*iter);
-	m_current_tg_states->m_tg_states = m_current_final;
+	copy_from_path_pattern(n);
 }
 
 void Evaluate_Coverage_Pattern::visit(Predicate const* n) {
-	ta_state_set_t prev_final;
-	prev_final.swap(m_current_final);
-			
-	ta_state_t const new_state(m_test_goal_automaton.new_state());
-	m_current_final.insert(new_state);
-	m_test_goal_automaton.final(new_state) = 1;
-	m_current_tg_states->m_tg_states.insert(new_state);
-	int const idx(m_pp_eval.to_index(m_eval_filter.get(*n)));
-			
-	for (ta_state_set_t::const_iterator iter(prev_final.begin());
-			iter != prev_final.end(); ++iter) {
-		m_test_goal_automaton.set_trans(*iter, idx, new_state);
-		m_test_goal_automaton.final(*iter) = 0;
-	}
+	copy_from_path_pattern(n);
 }
 
 void Evaluate_Coverage_Pattern::visit(Query const* n) {
@@ -244,27 +208,7 @@ void Evaluate_Coverage_Pattern::visit(Query const* n) {
 }
 
 void Evaluate_Coverage_Pattern::visit(Quote const* n) {
-	ta_state_set_t prev_final;
-	prev_final.swap(m_current_final);
-	
-	trace_automaton_t const& pp(m_pp_eval.get(n->get_pp()));
-	::std::pair< ta_state_set_t, ta_state_set_t > pp_init_final(
-			copy_automaton(pp, m_test_goal_automaton));
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == pp_init_final.first.size());
-	for (ta_state_set_t::const_iterator iter(prev_final.begin());
-			iter != prev_final.end(); ++iter) {
-		m_test_goal_automaton.set_trans(*iter, m_pp_eval.epsilon_index(), *pp_init_final.first.begin());
-		m_test_goal_automaton.final(*iter) = 0;
-	}
-	
-	for (ta_state_set_t::const_iterator iter(pp_init_final.second.begin());
-			iter != pp_init_final.second.end(); ++iter)
-		m_test_goal_automaton.final(*iter) = 1;
-	simplify_automaton(m_test_goal_automaton, false);
-	for (trace_automaton_t::const_iterator iter(m_test_goal_automaton.begin());
-			iter != m_test_goal_automaton.end(); ++iter)
-		if (m_test_goal_automaton.final(*iter)) m_current_final.insert(*iter);
-	m_current_tg_states->m_tg_states = m_current_final;
+	copy_from_path_pattern(n->get_pp());
 }
 
 FSHELL2_FQL_NAMESPACE_END;

@@ -232,6 +232,18 @@ void simplify_automaton(trace_automaton_t & aut, bool compact) {
 #endif
 }
 
+void compact_state_numbers(trace_automaton_t const& aut, ta_state_map_t & s_map,
+		ta_state_map_t & reverse_s_map, ta_state_set_t & finals) {
+	ta_state_t idx(0);
+	for (trace_automaton_t::const_iterator iter(aut.begin());
+			iter != aut.end(); ++iter) {
+		ta_state_t const cur_idx(idx++);
+		s_map.insert(::std::make_pair(*iter, cur_idx));
+		reverse_s_map.insert(::std::make_pair(cur_idx, *iter));
+		if (aut.final(*iter)) finals.insert(cur_idx);
+	}
+}
+
 ::std::ostream & print_trace_automaton(trace_automaton_t const& aut, ::std::ostream & os) {
 	for (trace_automaton_t::const_iterator iter(aut.begin()); iter != aut.end(); ++iter) {
 		trace_automaton_t::edges_type out_edges(aut.delta2(*iter));

@@ -34,6 +34,7 @@
 #include <fshell2/fql/ast/ast_visitor.hpp>
 #include <fshell2/fql/ast/standard_ast_visitor_aspect.hpp>
 #include <fshell2/fql/concepts/trace_automaton.hpp>
+#include <fshell2/fql/evaluation/evaluate_filter.hpp>
 
 #include <map>
 
@@ -46,8 +47,6 @@ FSHELL2_INSTRUMENTATION_NAMESPACE_END;
 
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
-class Evaluate_Filter;
-
 /*! \brief TODO
 */
 class Evaluate_Path_Pattern : private Standard_AST_Visitor_Aspect<AST_Visitor>
@@ -59,11 +58,12 @@ class Evaluate_Path_Pattern : private Standard_AST_Visitor_Aspect<AST_Visitor>
 	public:
 	typedef ::std::map< Path_Pattern_Expr const*, trace_automaton_t > pp_value_t;
 
-	explicit Evaluate_Path_Pattern(Evaluate_Filter const& filter_eval);
+	explicit Evaluate_Path_Pattern(::language_uit & manager);
 
 	virtual ~Evaluate_Path_Pattern();
 
-	void do_query(::fshell2::instrumentation::CFG const& cfg, Query const& query);
+	void do_query(::goto_functionst & gf, ::fshell2::instrumentation::CFG & cfg,
+			Query const& query);
 
 	trace_automaton_t const& get(Path_Pattern_Expr const* pp) const;
 
@@ -76,7 +76,7 @@ class Evaluate_Path_Pattern : private Standard_AST_Visitor_Aspect<AST_Visitor>
 	private:
 	typedef ::std::map< target_graph_t::node_t, int > node_counts_t;
 
-	Evaluate_Filter const& m_eval_filter;
+	Evaluate_Filter m_eval_filter;
 	::fshell2::instrumentation::CFG const* m_cfg;
 	pp_value_t m_pp_map;
 	::std::pair< pp_value_t::iterator, bool > m_entry;

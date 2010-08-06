@@ -34,7 +34,6 @@
 #include <fshell2/fql/ast/ast_visitor.hpp>
 #include <fshell2/fql/ast/standard_ast_visitor_aspect.hpp>
 #include <fshell2/fql/concepts/trace_automaton.hpp>
-#include <fshell2/fql/evaluation/evaluate_filter.hpp>
 #include <fshell2/fql/evaluation/evaluate_path_pattern.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
@@ -73,7 +72,6 @@ class Evaluate_Coverage_Pattern : private Standard_AST_Visitor_Aspect<AST_Visito
 	inline Evaluate_Path_Pattern const& get_pp_eval() const;
 
 	private:
-	Evaluate_Filter m_eval_filter;
 	Evaluate_Path_Pattern m_pp_eval;
 	Test_Goal_States m_test_goal_states;
 	Test_Goal_States * m_current_tg_states;
@@ -81,7 +79,8 @@ class Evaluate_Coverage_Pattern : private Standard_AST_Visitor_Aspect<AST_Visito
 	ta_state_set_t m_current_final;
 	
 	static bool is_test_goal_state(Test_Goal_States const& tgs, ta_state_t const& state);
-	
+	void copy_from_path_pattern(Path_Pattern_Expr const* n);
+
 	/*! \{
 	 * \brief Visit a @ref fshell2::fql::CP_Alternative
 	 * \param  n CP_Alternative

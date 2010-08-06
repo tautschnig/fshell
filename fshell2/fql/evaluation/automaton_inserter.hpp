@@ -66,31 +66,47 @@ class Automaton_Inserter
 	typedef ::std::list< ::fshell2::instrumentation::GOTO_Transformation::goto_node_t > instrumentation_points_t;
 	typedef ::std::map< ta_state_t, instrumentation_points_t > instrumentation_map_t;
 	
-	typedef ::std::map< target_graph_t::edge_t, ::std::set< target_graph_t const* > > edge_to_target_graphs_t;
-	typedef ::std::map< ::goto_programt::const_targett, edge_to_target_graphs_t > node_to_target_graphs_t; 
-
 	explicit Automaton_Inserter(::language_uit & manager);
 
 	Evaluate_Coverage_Pattern::Test_Goal_States const& do_query(
 			::goto_functionst & gf, ::fshell2::instrumentation::CFG & cfg, Query const& query);
 
 	instrumentation_points_t const& get_test_goal_instrumentation(ta_state_t const& state) const;
-	// CFA::edge_t const& get_target_graph_edge(::goto_programt::const_targett const& node) const;
 
 	inline bool is_test_goal_state(ta_state_t const& s) const;
 	inline trace_automaton_t const& get_tg_aut() const;
 
 	private:
+	typedef ::std::map< target_graph_t::edge_t, ::std::set< target_graph_t const* > > edge_to_target_graphs_t;
+	typedef ::std::map< target_graph_t::node_t, ::std::set< target_graph_t const* > > node_to_target_graphs_t;
+	typedef ::std::map< ::goto_programt::const_targett, edge_to_target_graphs_t > loc_to_edge_target_graphs_t; 
+	typedef ::std::map< ::goto_programt::const_targett, node_to_target_graphs_t > loc_to_node_target_graphs_t; 
+	typedef ::std::map< ta_state_t, ta_state_set_t > symbol_transition_map_t;
+	typedef ::std::map< int, symbol_transition_map_t > transition_map_t;
+	typedef ::std::map< target_graph_t const*, int > target_graph_to_int_t;
+
 	::language_uit & m_manager;
 	Evaluate_Coverage_Pattern m_cp_eval;
 	Evaluate_Path_Pattern const& m_pp_eval;
 	instrumentation_map_t m_tg_instrumentation_map;
 	::std::map< ::goto_programt::const_targett, CFA::edge_t > m_target_edge_map;
-	node_to_target_graphs_t m_node_to_target_graphs_map;
+	loc_to_node_target_graphs_t m_loc_to_node_target_graphs_map;
+	loc_to_edge_target_graphs_t m_loc_to_edge_target_graphs_map;
 
 	void insert(::goto_functionst & gf, ::fshell2::instrumentation::CFG const&
 			cfg, char const * suffix, trace_automaton_t const& aut,
-			::exprt & final_cond, bool map_tg);
+			::exprt & final_cond, bool const map_tg);
+
+	void insert_function_calls(::goto_functionst & gf, ::goto_programt & body,
+			::fshell2::instrumentation::CFG const& cfg, char const * suffix,
+			bool const map_tg, target_graph_to_int_t const& local_target_graph_map);
+
+	static void prepare_assertion(ta_state_set_t const& compact_final,
+			::exprt & final_cond, ::symbolt const& state_symb);
+
+	void add_transition_function(::goto_functionst & gf, ::std::string const& func_name,
+			symbol_transition_map_t const& map, ::symbolt const& state_symb,
+			ta_state_map_t const& reverse_state_map, bool const map_tg);
 
 	/*! \copydoc copy_constructor
 	*/

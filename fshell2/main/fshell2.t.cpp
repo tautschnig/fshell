@@ -169,6 +169,7 @@ of
 	TEST_ASSERT(!fshell.process_line(l, "cover @label(L2).{x>=0}"));
 	TEST_ASSERT(!fshell.process_line(l, "cover @label(L2).{x>0}"));
 	TEST_ASSERT(!fshell.process_line(l, "cover {x>0}.@label(L2)"));
+	TEST_ASSERT(!fshell.process_line(l, "cover nodes(id)"));
 	TEST_ASSERT(fshell.process_line(l, "QUIT"));
 }	
 

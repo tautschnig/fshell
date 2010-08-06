@@ -70,6 +70,11 @@ class GOTO_Transformation
 	static bool is_instrumented(::goto_programt::const_targett inst);
 	static void mark_instrumented(::goto_programt & target);
 
+	static void make_function_call(::goto_programt::targett ins,
+			::std::string const& func_name);
+	
+	::symbolt const& new_var(::std::string const& name, ::typet const& type, bool global);
+
 	private:
 	::language_uit & m_manager;
 	::goto_functionst & m_goto;

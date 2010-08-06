@@ -34,7 +34,6 @@
 #include <fshell2/fql/evaluation/evaluate_path_pattern.hpp>
 
 #include <fshell2/instrumentation/cfg.hpp>
-#include <fshell2/fql/evaluation/evaluate_filter.hpp>
 #include <fshell2/fql/ast/cp_concat.hpp>
 #include <fshell2/fql/ast/edgecov.hpp>
 #include <fshell2/fql/ast/filter_function.hpp>
@@ -113,10 +112,8 @@ void test( Test_Data & data )
 				FQL_CREATE2(PP_Concat, e, id_kleene)));
 	Query * q(Query::Factory::get_instance().create(0, c, pp));
 
-	Evaluate_Filter eval(l);
-	eval.do_query(gf, cfg, *q);
-	Evaluate_Path_Pattern pp_eval(eval);
-	pp_eval.do_query(cfg, *q);
+	Evaluate_Path_Pattern pp_eval(l);
+	pp_eval.do_query(gf, cfg, *q);
 	
 	TEST_ASSERT_RELATION(4, ==, pp_eval.get(pp).state_count());
 }

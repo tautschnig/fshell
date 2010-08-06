@@ -52,8 +52,8 @@
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 		
-Evaluate_Path_Pattern::Evaluate_Path_Pattern(Evaluate_Filter const& filter_eval) :
-	m_eval_filter(filter_eval),
+Evaluate_Path_Pattern::Evaluate_Path_Pattern(::language_uit & manager) :
+	m_eval_filter(manager),
 	m_cfg(0),
 	m_pp_map(),
 	m_entry(m_pp_map.end(), false)
@@ -63,14 +63,18 @@ Evaluate_Path_Pattern::Evaluate_Path_Pattern(Evaluate_Filter const& filter_eval)
 Evaluate_Path_Pattern::~Evaluate_Path_Pattern() {
 }
 	
-void Evaluate_Path_Pattern::do_query(::fshell2::instrumentation::CFG const& cfg,
-		Query const& query) {
+void Evaluate_Path_Pattern::do_query(::goto_functionst & gf,
+		::fshell2::instrumentation::CFG & cfg, Query const& query) {
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !m_cfg);
 	m_cfg = &cfg;
 	m_pp_map.clear();
 	m_entry = ::std::make_pair(m_pp_map.end(), false);
 	m_target_graph_index.clear();
 	m_more_target_graphs.clear();
+	
+	// prepare filter evaluation
+	// may create a predicated CFA and add predicate edges
+	m_eval_filter.do_query(gf, cfg, query);
 	
 	m_target_graph_index.init(&(m_eval_filter.get(*(Filter_Function::Factory::get_instance().create<F_IDENTITY>()))));
 	query.accept(this);
@@ -174,8 +178,6 @@ void Evaluate_Path_Pattern::visit(Edgecov const* n) {
 }
 	
 void Evaluate_Path_Pattern::visit(Nodecov const* n) {
-	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false); // (use nodes only -> build new target graph without edges);
-#if 0
 	m_entry = m_pp_map.insert(::std::make_pair(n, trace_automaton_t()));
 	if (!m_entry.second) return;
 	trace_automaton_t & current_aut(m_entry.first->second);
@@ -184,11 +186,14 @@ void Evaluate_Path_Pattern::visit(Nodecov const* n) {
 	current_aut.initial().insert(current_initial);
 	ta_state_t const current_final(current_aut.new_state());
 	current_aut.final(current_final) = 1;
+		
+	m_more_target_graphs.push_back(target_graph_t());
+	target_graph_t::nodes_t nodes(m_eval_filter.get(*(n->get_filter_expr())).get_L());
+	m_more_target_graphs.back().set_disconnected_nodes(nodes);
 
 	current_aut.set_trans(current_initial,
-			m_target_graph_index.to_index(&(m_eval_filter.get(*(n->get_filter_expr())))),
+			m_target_graph_index.to_index(&(m_more_target_graphs.back())),
 			current_final);
-#endif
 }
 	
 void Evaluate_Path_Pattern::visit(PP_Alternative const* n) {

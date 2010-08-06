@@ -158,6 +158,8 @@ class Compute_Test_Goals_From_Instrumentation : private Standard_AST_Visitor_Asp
 
 	void context_to_literals(::goto_programt::const_targett const& context,
 		::std::set< ::goto_programt::const_targett > const& pcs, ::bvt & test_goal_literals) const;
+
+	void do_atom(Coverage_Pattern_Expr const* n, bool epsilon_permitted, bool make_single);
 	
 	/*! \{
 	 * \brief Visit a @ref fshell2::fql::CP_Alternative
