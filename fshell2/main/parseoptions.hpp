@@ -46,7 +46,7 @@
   "(16)(32)(64)(little-endian)(big-endian)" \
   "(show-goto-functions)(show-loops)" \
   "(verbosity):(no-library)" \
-  "(version)" \
+  "(version)(outfile):" \
   "(i386-linux)(i386-macos)(i386-win32)(winx64)" \
   "(ppc-macos)(unsigned-char)" \
   "(no-arch)(query-file):(statistics)"

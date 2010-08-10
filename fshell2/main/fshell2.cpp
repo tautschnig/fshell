@@ -143,6 +143,15 @@ void FShell2::try_query(::language_uit & manager, char const * line) {
 		m_first_run = false;
 	}
 
+	::std::string const& output(m_opts.get_option("outfile"));
+	::std::ofstream of;
+	if (!output.empty() && output != "-") {
+		of.open(output.c_str(), ::std::ios::out | ::std::ios::app);
+		FSHELL2_PROD_CHECK1(::fshell2::FShell2_Error, of.is_open(),
+				"Failed to open output file " + output);
+	}
+	::std::ostream & os((output.empty() || output == "-") ? ::std::cout : of); 
+
 	// collect per-query statistics
 	::fshell2::statistics::Statistics stats;
 	NEW_STAT(stats, CPU_Timer, timer, "Query CPU time");
@@ -169,7 +178,8 @@ void FShell2::try_query(::language_uit & manager, char const * line) {
 
 	// output
 	::fshell2::Test_Suite_Output out(equation);
-	out.print_ts(test_suite, ::std::cout, manager.ui_message_handler.get_ui());
+	out.print_ts(test_suite, os, manager.ui_message_handler.get_ui());
+	of.close();
 
 	timer.stop_timer();
 	if (m_opts.get_bool_option("statistics"))

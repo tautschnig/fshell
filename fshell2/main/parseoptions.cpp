@@ -140,6 +140,9 @@ bool Parseoptions::get_command_line_options()
 	m_options.set_option("arrays-uf", "auto");
 	m_options.set_option("pretty-names", true);
 
+	if(cmdline.isset("outfile"))
+		m_options.set_option("outfile", cmdline.getval("outfile"));
+
 	if(cmdline.isset("show-goto-functions"))
 		m_options.set_option("show-goto-functions", true);
 
@@ -326,6 +329,7 @@ void Parseoptions::help()
 		" --verbosity level            set verbosity of status reports (0-9)\n"
 		" --statistics                 display statistics (implied by --verbosity > 2)\n"
 		" --xml-ui                     use XML-formatted output\n"
+		" --outfile Filename           write test inputs to Filename (appends)\n"
 		"\n";
 }
 
