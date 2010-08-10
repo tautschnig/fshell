@@ -138,9 +138,6 @@ void test( Test_Data & data )
 	es2.insert(e3);
 	es2.insert(e4);
 
-	CFA::nodes_t ns1;
-	ns1.insert(n1);
-	
 	CFA cfa1, cfa2;
 	cfa1.set_E(es1);
 	TEST_CHECK(cfa1.get_E().size() == 3);
@@ -152,12 +149,12 @@ void test( Test_Data & data )
 	TEST_ASSERT(cfa1.get_disconnected_nodes().size() == 0);
 	
 	cfa1.setsubtract(cfa2);
-	TEST_ASSERT(cfa1.get_E().size() == 1);
-	TEST_ASSERT(cfa1.get_disconnected_nodes().size() == 1);
+	TEST_ASSERT(cfa1.get_E().size() == 3);
+	TEST_ASSERT(cfa1.get_disconnected_nodes().size() == 0);
 	
 	cfa1.setintersection(cfa2);
 	TEST_ASSERT(cfa1.get_E().size() == 0);
-	TEST_ASSERT(cfa1.get_disconnected_nodes().size() == 0);
+	TEST_ASSERT(cfa1.get_disconnected_nodes().size() == 2);
 }
 
 /** @cond */

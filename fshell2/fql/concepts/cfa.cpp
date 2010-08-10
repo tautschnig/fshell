@@ -160,24 +160,22 @@ CFA& CFA::setsubtract(Self const& other) {
 			other.m_edges.begin(), other.m_edges.end(),
 			::std::inserter(m_edges, m_edges.begin()));
 	// remove edges where at least one of the nodes is not in L anymore
-	for (edges_t::iterator iter(m_edges.begin()); iter != m_edges.end();) {
-		if ((m_disconnected_nodes.end() == m_disconnected_nodes.find(iter->first)) ||
-				(m_disconnected_nodes.end() == m_disconnected_nodes.find(iter->second))) {
-			edges_t::iterator del_iter(iter++);
-			m_edges.erase(del_iter);
-			continue;
-		}
-		++iter;
-	}
+	// NO, don't do that, ASE paper says these nodes stay
+	// for (edges_t::iterator iter(m_edges.begin()); iter != m_edges.end();) {
+	// 	if ((m_disconnected_nodes.end() == m_disconnected_nodes.find(iter->first)) ||
+	// 			(m_disconnected_nodes.end() == m_disconnected_nodes.find(iter->second))) {
+	// 		edges_t::iterator del_iter(iter++);
+	// 		m_edges.erase(del_iter);
+	// 		continue;
+	// 	}
+	// 	++iter;
+	// }
 	
-	initial_states_t tmp_initial;
-	::std::set_difference(m_initial.begin(), m_initial.end(),
-			other.m_initial.begin(), other.m_initial.end(),
-			::std::inserter(tmp_initial, tmp_initial.begin()));
-	// limit to L
-	m_initial.clear();
+	// limit initial states to L
+	initial_states_t old_initial;
+	old_initial.swap(m_initial);
 	::std::set_intersection(m_disconnected_nodes.begin(), m_disconnected_nodes.end(),
-			tmp_initial.begin(), tmp_initial.end(),
+			old_initial.begin(), old_initial.end(),
 			::std::inserter(m_initial, m_initial.begin()));
 
 	// remove now non-disconnected nodes
