@@ -29,8 +29,6 @@
 #include <fshell2/main/fshell2.hpp>
 #include <fshell2/config/annotations.hpp>
 
-#include <diagnostics/frame/logging_config.hpp>
-#include <diagnostics/logger/file_logger.hpp>
 #include <diagnostics/basic_exceptions/violated_invariance.hpp>
 
 #include <fshell2/exception/command_processing_error.hpp>
@@ -65,9 +63,6 @@ FSHELL2_NAMESPACE_BEGIN;
 
 FShell2::FShell2(::optionst const& opts, ::goto_functionst & gf) :
 	m_opts(opts), m_gf(gf), m_cmd(opts, gf), m_first_run(true) {
-#if FSHELL2_DEBUG__LEVEL__ >= 2
-	::diagnostics::Logging_Config::register_logger( new ::diagnostics::File_Logger("test/main.log") );
-#endif
 	// try to read history from file, ignore errors
 	::read_history(".fshell2_history"); errno = 0;
 }
@@ -75,8 +70,7 @@ FShell2::FShell2(::optionst const& opts, ::goto_functionst & gf) :
 FShell2::~FShell2() {
 	// write the history and truncate it to 200 lines
 	::write_history(".fshell2_history"); 
-	// not yet available on OS X, thus left out for now
-	// ::history_truncate_lines(".fshell2_history", 200);
+	::history_truncate_file(".fshell2_history", 200);
 }
 
 class Query_Cleanup {
