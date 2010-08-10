@@ -103,11 +103,6 @@ void test( Test_Data & data )
 	target_graph_t const& id_entries(eval.get(*id));
 	TEST_ASSERT_RELATION(5, ==, id_entries.get_E().size());
 	
-	Predicate_Instrumentation::node_set_t nodes;
-	for (target_graph_t::edges_t::const_iterator e_iter(id_entries.get_E().begin());
-			e_iter != id_entries.get_E().end(); ++e_iter)
-		nodes.insert(e_iter->first);
-
 	::exprt sym(ID_symbol);
 	sym.set(ID_base_name, "argc");
 	sym.set(ID_identifier, "argc");
@@ -121,6 +116,7 @@ void test( Test_Data & data )
 	
 	::fshell2::fql::Predicate * pred(FQL_CREATE1(Predicate, dummy));
 	::fshell2::fql::Predicate_Instrumentation pi(l);
+	Predicate_Instrumentation::node_set_t nodes(id_entries.get_L());
 	CFA::edges_t edges;
 	pi.insert_predicate(gf, nodes, pred, edges);
 	// gf.output(namespacet(l.context), ::std::cerr);

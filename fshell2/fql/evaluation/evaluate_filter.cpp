@@ -682,11 +682,7 @@ void Evaluate_Filter::visit(Predicate const* n) {
 	filter_value_t::const_iterator id_set(m_filter_map.find(FQL_CREATE_FF0(F_IDENTITY)));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, id_set != m_filter_map.end());
 	
-	Predicate_Instrumentation::node_set_t nodes;
-	for (target_graph_t::edges_t::const_iterator e_iter(id_set->second.get_E().begin());
-			e_iter != id_set->second.get_E().end(); ++e_iter)
-		nodes.insert(e_iter->first);
-
+	Predicate_Instrumentation::node_set_t nodes(id_set->second.get_L());
 	CFA::edges_t edges;
 	m_pred_instr.insert_predicate(*m_gf, nodes, n, edges);
 	
