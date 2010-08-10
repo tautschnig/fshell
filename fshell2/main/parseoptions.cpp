@@ -1,0 +1,319 @@
+/* -*- Mode: C++; tab-width: 4 -*- */
+/* vi: set ts=4 sw=4 noexpandtab: */
+
+/*******************************************************************************
+ * FShell 2
+ * Copyright 2009 Michael Tautschnig, tautschnig@forsyte.de
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *******************************************************************************/
+
+/*! \file fshell2/main/parseoptions.cpp
+ * \brief TODO
+ *
+ * $Id$
+ * \author Michael Tautschnig <tautschnig@forsyte.de>
+ * \date   Mon Aug  9 12:39:08 CEST 2010
+*/
+
+#include <fshell2/main/parseoptions.hpp>
+#include <fshell2/config/features.hpp>
+
+#include <fshell2/main/fshell2.hpp>
+#include <fshell2/command/command_processing.hpp>
+
+#include <fstream>
+
+#include <cbmc/src/util/config.h>
+#include <cbmc/src/goto-programs/goto_convert_functions.h>
+#include <cbmc/src/goto-programs/read_goto_binary.h>
+#include <cbmc/src/ansi-c/ansi_c_language.h>
+#include <cbmc/src/cbmc/version.h>
+#include <cbmc/src/langapi/mode.h>
+
+FSHELL2_NAMESPACE_BEGIN;
+
+Parseoptions::Parseoptions(int argc, const char **argv) :
+	::parseoptions_baset(FSHELL2_OPTIONS, argc, argv),
+	::language_uit("FShell 2 " FSHELL2_VERSION, cmdline)
+{
+}
+
+Parseoptions::Parseoptions(int argc, const char **argv,
+		::std::string const& extra_options) :
+	::parseoptions_baset(FSHELL2_OPTIONS + extra_options, argc, argv),
+	::language_uit("FShell 2 " FSHELL2_VERSION, cmdline)
+{
+}
+
+Parseoptions::~Parseoptions() {
+}
+
+void Parseoptions::set_verbosity(::messaget &message)
+{
+	int v(8);
+
+	if(cmdline.isset("verbosity"))
+	{
+		v=::atoi(cmdline.getval("verbosity"));
+		if(v<0)
+			v=0;
+		else if(v>9)
+			v=9;
+	}
+
+	message.set_verbosity(v);
+}
+
+bool Parseoptions::get_command_line_options(::optionst &options)
+{
+	if(::config.set(cmdline))
+	{
+		usage_error();
+		return true;
+	}
+
+	if(cmdline.isset("no-simplify"))
+		options.set_option("simplify", false);
+	else
+		options.set_option("simplify", true);
+
+	options.set_option("all-claims", false);
+
+	if(cmdline.isset("unwind"))
+		options.set_option("unwind", cmdline.getval("unwind"));
+
+	if(cmdline.isset("depth"))
+		options.set_option("depth", cmdline.getval("depth"));
+
+	if(cmdline.isset("slice-by-trace"))
+		options.set_option("slice-by-trace", cmdline.getval("slice-by-trace"));
+
+	if(cmdline.isset("unwindset"))
+		options.set_option("unwindset", cmdline.getval("unwindset"));
+
+	options.set_option("substitution", true);
+
+	options.set_option("bounds-check", false);
+	options.set_option("div-by-zero-check", false);
+	options.set_option("overflow-check", false);
+	options.set_option("nan-check", false);
+	options.set_option("pointer-check", false);
+	options.set_option("assertions", false);
+
+	// generate unwinding assertions
+	options.set_option("unwinding-assertions",
+			!cmdline.isset("no-unwinding-assertions"));
+
+	// generate unwinding assumptions otherwise
+	options.set_option("partial-loops",
+			cmdline.isset("partial-loops"));
+
+	// remove unused equations
+	options.set_option("slice-formula",
+			cmdline.isset("slice-formula"));
+
+	options.set_option("simplify-if", true);
+	options.set_option("arrays-uf", "auto");
+	options.set_option("pretty-names", 
+			!cmdline.isset("no-pretty-names"));
+
+	if(cmdline.isset("show-goto-functions"))
+		options.set_option("show-goto-functions", true);
+
+	if(cmdline.isset("show-loops"))
+		options.set_option("show-loops", true);
+
+	set_verbosity(*this);
+
+	return false;
+}
+
+int Parseoptions::doit()
+{
+	if(cmdline.isset("version"))
+	{
+		std::cout << FSHELL2_VERSION << std::endl;
+		return 0;
+	}
+
+	// we only support ANSI C at the moment
+	::register_language(::new_ansi_c_language);
+
+	::optionst options;
+	if (get_command_line_options(options)) return 1;
+
+	goto_functionst goto_functions;
+
+	try
+	{
+		if(cmdline.args.size()==1 &&
+				is_goto_binary(cmdline.args[0]))
+		{
+			status("Reading GOTO program from file");
+
+			if(read_goto_binary(cmdline.args[0],
+						context, goto_functions, get_message_handler()))
+				return 1;
+
+			config.ansi_c.set_from_context(context);
+		}
+		else if(0!=cmdline.args.size())
+		{
+			if(parse()) return 1;
+			if(typecheck()) return 1;
+			if(final()) return 1;
+
+			status("Generating GOTO Program");
+
+			goto_convert(
+					context, options, goto_functions,
+					ui_message_handler);
+		}
+
+		if(0!=cmdline.args.size()) {
+			::fshell2::command::Command_Processing proc(options, goto_functions);
+			proc.finalize_goto_program(*this);
+		}
+
+		::fshell2::FShell2 fshell(options, goto_functions);
+
+		if(cmdline.isset("query-file"))
+		{
+			// open the input file
+			::std::ifstream query(cmdline.getval("query-file"));
+			if(!query.is_open()) {
+				::std::ostringstream ostr;
+				ostr << "Failed to open query file " << cmdline.getval("query-file");
+				error(ostr.str());
+				return 1;
+			}
+			::std::string line;
+			while(!::std::getline(query, line).eof() &&
+					!fshell.process_line(*this, line.c_str()));
+		} else {
+			fshell.interactive(*this);
+		}
+	}
+
+	catch(const char *e)
+	{
+		error(e);
+		return 2;
+	}
+
+	catch(const std::string e)
+	{
+		error(e);
+		return 2;
+	}
+
+	catch(int)
+	{
+		return 2;
+	}
+
+	catch(std::bad_alloc)
+	{
+		error("Out of memory");
+		return 2;
+	}
+
+	return 0;
+}
+
+void Parseoptions::help()
+{
+	std::cout <<
+		"FShell 2, release " FSHELL2_VERSION "\n"
+		"\n"
+		"(C) 2008, 2009, 2010 Michael Tautschnig, " FSHELL2_PACKAGE_BUGREPORT "\n"
+		"\n"
+		"Licensed under the Apache License, Version 2.0 (the 'License');\n"
+		"you may not use this file except in compliance with the License.\n"
+		"You may obtain a copy of the License at\n"
+		"\n"
+		"    http://www.apache.org/licenses/LICENSE-2.0\n"
+		"\n"
+		"Unless required by applicable law or agreed to in writing, software\n"
+		"distributed under the License is distributed on an 'AS IS' BASIS,\n"
+		"WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n"
+		"See the License for the specific language governing permissions and\n"
+		"limitations under the License.\n"
+		"\n"
+		"FShell 2 links to components of CBMC " CBMC_VERSION ":\n"
+		"\n"
+		"* *            CBMC " CBMC_VERSION " - Copyright (C) 2001-2008           * *\n"
+		"* *              Daniel Kroening, Edmund Clarke             * *\n"
+		"* * Carnegie Mellon University, Computer Science Department * *\n"
+		"* *                 kroening@kroening.com                   * *\n"
+		"* *        Protected in part by U.S. patent 7,225,417       * *\n"
+		"\n"
+		"Usage:                       Purpose:\n"
+		"\n"
+		" fshell [-?] [-h] [--help]    show help\n"
+		" fshell file.c ...            source file names\n"
+		"\n"
+		"Frontend options:\n"
+		" -I path                      set include path (C/C++)\n"
+		" -D macro                     define preprocessor macro (C/C++)\n"
+		" --16, --32, --64             set width of machine word\n"
+		" --little-endian              allow little-endian word-byte conversions\n"
+		" --big-endian                 allow big-endian word-byte conversions\n"
+		" --unsigned-char              make \"char\" unsigned by default\n"
+		" --ppc-macos                  set MACOS/PPC architecture\n"
+#ifdef _WIN32
+		" --i386-macos                 set MACOS/I386 architecture\n"
+		" --i386-linux                 set Linux/I386 architecture\n"
+		" --i386-win32                 set Windows/I386 architecture (default)\n"
+#else
+#ifdef __APPLE__
+		" --i386-macos                 set MACOS/I386 architecture (default)\n"
+		" --i386-linux                 set Linux/I386 architecture\n"
+		" --i386-win32                 set Windows/I386 architecture\n"
+#else
+		" --i386-macos                 set MACOS/I386 architecture\n"
+		" --i386-linux                 set Linux/I386 architecture (default)\n"
+		" --i386-win32                 set Windows/I386 architecture\n"
+#endif
+#endif
+		" --winx64                     set Windows/X64 architecture\n"
+		" --no-arch                    don't set up an architecture\n"
+		" --no-library                 disable built-in abstract C library\n"
+		"\n"
+		"Program instrumentation options:\n"
+		" --show-goto-functions        show goto program\n"
+		" --show-loops                 show the loops in the program\n"
+		" --no-simplify                UNDOCUMENTED\n"
+		" --partial-loops              don't generate unwinding assumptions (also implies --no-unwinding-assertions)\n"
+		"\n"
+		"BMC options:\n"
+		" --function name              set main function name\n"
+		" --depth nr                   limit search depth\n"
+		" --unwind nr                  unwind nr times\n"
+		" --unwindset L:B,...          unwind loop L with a bound of B\n"
+		"                              (use --show-loops to get the loop IDs)\n"
+		" --no-unwinding-assertions    do not generate unwinding assertions\n"
+		" --slice-formula              remove assignments unrelated to property\n"
+		" --slice-by-trace             UNDOCUMENTED\n"
+		"\n"
+		"Other options:\n"
+		" --query-file Filename        read FShell query from Filename\n"
+		" --version                    show version and exit\n"
+		" --verbosity level            Set verbosity of status reports (0-9)\n"
+		" --xml-ui                     use XML-formatted output\n"
+		"\n";
+}
+
+FSHELL2_NAMESPACE_END;
+

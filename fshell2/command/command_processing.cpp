@@ -39,6 +39,7 @@
 #include <cbmc/src/pointer-analysis/add_failed_symbols.h>
 #include <cbmc/src/goto-programs/goto_function_pointers.h>
 #include <cbmc/src/goto-programs/goto_inline.h>
+#include <cbmc/src/goto-programs/loop_numbers.h>
 
 #include <cerrno>
 #include <fstream>
@@ -363,6 +364,10 @@ void Command_Processing::finalize_goto_program(::language_uit & manager) {
 
 	// add loop ids
 	m_gf.compute_loop_numbers();
+
+	// show loops, if requested
+	if (m_opts.get_bool_option("show-loops"))
+		::show_loop_numbers(manager.get_ui(), m_gf);
 }
 
 FSHELL2_COMMAND_NAMESPACE_END;

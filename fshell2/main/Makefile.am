@@ -8,6 +8,22 @@ include $(top_srcdir)/model.am
 # SUBDIRS = dir1 dir2 dirX
 SUBDIRS =
 
+# NO_UPDATE_MAKEFILES
+bin_PROGRAMS = fshell
+fshell_SOURCES = main.cpp
+fshell_LDADD = libmain.la \
+								../command/libcommand.la \
+								../macro/libmacro.la \
+								../tc_generation/libtc_generation.la \
+								../fql/evaluation/libevaluation.la \
+								../fql/normalize/libnormalize.la \
+								../fql/parser/libparser.la \
+								../fql/ast/libast.la \
+								../fql/concepts/libconcepts.la \
+								../instrumentation/libinstrumentation.la \
+								../exception/libexception.la \
+								$(CBMC_OBJS)
+
 CBMC_OBJS = $(top_builddir)/cbmc/src/goto-programs/goto-programs.o \
 						$(top_builddir)/cbmc/src/pointer-analysis/pointer-analysis.o \
 						$(top_builddir)/cbmc/src/util/util.o \
@@ -33,8 +49,8 @@ $(top_builddir)/cbmc/src/util/irep_ids.h:
 
 include_fshell2_maindir = $(includedir)/fshell2/main
 noinst_LTLIBRARIES = libmain.la
-libmain_la_SOURCES = fshell2.cpp
-include_fshell2_main_HEADERS = fshell2.hpp
+libmain_la_SOURCES = fshell2.cpp parseoptions.cpp
+include_fshell2_main_HEADERS = fshell2.hpp parseoptions.hpp
 check_PROGRAMS = fshell2
 fshell2_SOURCES = fshell2.t.cpp
 # add additional objects required to build fshell2 here, like

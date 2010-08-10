@@ -2,7 +2,7 @@
 
 cd `dirname $0`
 
-CBMC=../../cbmc/src/cbmc/cbmc
+FSHELL=../../fshell2/main/fshell
 query=`mktemp`
 results=`mktemp`
 
@@ -11,7 +11,7 @@ run_query() {
   shift
   opts=$@
   rm -f .fshell_history
-  ( time $CBMC --fshell --query-file $query $opts ) > $results 2>&1
+  ( time $FSHELL --query-file $query $opts ) > $results 2>&1
   if [ $? -ne 0 ] ; then exit 1 ; fi 
   echo -n "$bm"
   echo -n " #tg=`grep "#Possibly feasible test goals:" $results | cut -f5 -d" "`"

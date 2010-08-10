@@ -81,6 +81,7 @@ class Command_Processing
 	static ::std::ostream & help(::std::ostream & os);
 
 	bool finalize(::language_uit & manager);
+	void finalize_goto_program(::language_uit & manager);
 	
 	private:
 	::optionst const& m_opts;
@@ -93,8 +94,6 @@ class Command_Processing
 
 	void add_sourcecode(::language_uit & manager, char const * file,
 			::std::list< ::std::pair< char*, char* > > const& defines);
-
-	void finalize_goto_program(::language_uit & manager);
 
 	/*! \copydoc copy_constructor
 	*/
