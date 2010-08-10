@@ -14,11 +14,10 @@ run_query() {
   ( time $FSHELL --query-file $query $opts ) > $results 2>&1
   if [ $? -ne 0 ] ; then exit 1 ; fi 
   echo -n "$bm"
-  echo -n " #tg=`grep "#Possibly feasible test goals:" $results | cut -f5 -d" "`"
-  echo -n " #iftg=`grep "#Infeasible test goals:" $results | cut -f4 -d" "`"
-  echo -n " #tc=`grep "#Test cases:" $results | cut -f3 -d" "`"
-  echo -n " "
-  grep ^real $results | awk '{ print $2 }'
+  echo -n " #tg=`grep "Possibly feasible test goals:" $results | cut -f5 -d" "`"
+  echo -n " #iftg=`grep "Test goals not fulfilled:" $results | cut -f5 -d" "`"
+  echo -n " #tc=`grep "Test cases:" $results | cut -f3 -d" "`"
+  echo " `grep "Query CPU time:" $results | cut -f4 -d" "`s"
 }
 
 cat > $query <<EOF

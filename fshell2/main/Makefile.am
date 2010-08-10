@@ -12,6 +12,7 @@ SUBDIRS =
 bin_PROGRAMS = fshell
 fshell_SOURCES = main.cpp
 fshell_LDADD = libmain.la \
+							  ../util/libutil.la \
 								../command/libcommand.la \
 								../macro/libmacro.la \
 								../tc_generation/libtc_generation.la \
@@ -56,6 +57,7 @@ fshell2_SOURCES = fshell2.t.cpp
 # add additional objects required to build fshell2 here, like
 # fshell2_LDADD = ../base/libbase.la libbla.la
 fshell2_LDADD = libmain.la \
+							  ../util/libutil.la \
 								../command/libcommand.la \
 								../macro/libmacro.la \
 								../tc_generation/libtc_generation.la \

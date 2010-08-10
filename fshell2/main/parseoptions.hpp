@@ -31,10 +31,11 @@
 
 #include <fshell2/config/config.hpp>
 
+#include <fshell2/util/statistics.hpp>
+
 #include <cbmc/src/langapi/language_ui.h>
 #include <cbmc/src/util/parseoptions.h>
-
-class optionst;
+#include <cbmc/src/util/options.h>
 
 #define FSHELL2_OPTIONS \
   "(function):(slice-by-trace):" \
@@ -48,7 +49,7 @@ class optionst;
   "(version)" \
   "(i386-linux)(i386-macos)(i386-win32)(winx64)" \
   "(ppc-macos)(unsigned-char)" \
-  "(no-arch)(query-file):"
+  "(no-arch)(query-file):(statistics)"
 
 FSHELL2_NAMESPACE_BEGIN;
 
@@ -72,8 +73,12 @@ class Parseoptions :
 		virtual void help();
 
 	private:
+		::fshell2::statistics::Statistics m_stats;
+		::fshell2::statistics::CPU_Timer * m_timer;
+		::optionst m_options;
+
 		void set_verbosity(::messaget &message);
-		bool get_command_line_options(::optionst &options);
+		bool get_command_line_options();
 
 		/*! \copydoc copy_constructor
 		*/

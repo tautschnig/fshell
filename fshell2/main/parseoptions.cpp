@@ -45,18 +45,31 @@ FSHELL2_NAMESPACE_BEGIN;
 
 Parseoptions::Parseoptions(int argc, const char **argv) :
 	::parseoptions_baset(FSHELL2_OPTIONS, argc, argv),
-	::language_uit("FShell 2 " FSHELL2_VERSION, cmdline)
+	::language_uit("FShell 2 " FSHELL2_VERSION, cmdline),
+	m_stats(),
+	m_timer(0)
 {
+	NEW_STAT(m_stats, CPU_Timer, timer, "Total CPU time");
+	timer.start_timer();
+	m_timer = &timer;
 }
 
 Parseoptions::Parseoptions(int argc, const char **argv,
 		::std::string const& extra_options) :
 	::parseoptions_baset(FSHELL2_OPTIONS + extra_options, argc, argv),
-	::language_uit("FShell 2 " FSHELL2_VERSION, cmdline)
+	::language_uit("FShell 2 " FSHELL2_VERSION, cmdline),
+	m_stats(),
+	m_timer(0)
 {
+	NEW_STAT(m_stats, CPU_Timer, timer, "Total CPU time");
+	timer.start_timer();
+	m_timer = &timer;
 }
 
 Parseoptions::~Parseoptions() {
+	m_timer->stop_timer();
+	if (m_options.get_bool_option("statistics"))
+		m_stats.print(*this);
 }
 
 void Parseoptions::set_verbosity(::messaget &message)
@@ -75,7 +88,7 @@ void Parseoptions::set_verbosity(::messaget &message)
 	message.set_verbosity(v);
 }
 
-bool Parseoptions::get_command_line_options(::optionst &options)
+bool Parseoptions::get_command_line_options()
 {
 	if(::config.set(cmdline))
 	{
@@ -84,57 +97,59 @@ bool Parseoptions::get_command_line_options(::optionst &options)
 	}
 
 	if(cmdline.isset("no-simplify"))
-		options.set_option("simplify", false);
+		m_options.set_option("simplify", false);
 	else
-		options.set_option("simplify", true);
+		m_options.set_option("simplify", true);
 
-	options.set_option("all-claims", false);
+	m_options.set_option("all-claims", false);
 
 	if(cmdline.isset("unwind"))
-		options.set_option("unwind", cmdline.getval("unwind"));
+		m_options.set_option("unwind", cmdline.getval("unwind"));
 
 	if(cmdline.isset("depth"))
-		options.set_option("depth", cmdline.getval("depth"));
+		m_options.set_option("depth", cmdline.getval("depth"));
 
 	if(cmdline.isset("slice-by-trace"))
-		options.set_option("slice-by-trace", cmdline.getval("slice-by-trace"));
+		m_options.set_option("slice-by-trace", cmdline.getval("slice-by-trace"));
 
 	if(cmdline.isset("unwindset"))
-		options.set_option("unwindset", cmdline.getval("unwindset"));
+		m_options.set_option("unwindset", cmdline.getval("unwindset"));
 
-	options.set_option("substitution", true);
+	m_options.set_option("substitution", true);
 
-	options.set_option("bounds-check", false);
-	options.set_option("div-by-zero-check", false);
-	options.set_option("overflow-check", false);
-	options.set_option("nan-check", false);
-	options.set_option("pointer-check", false);
-	options.set_option("assertions", false);
+	m_options.set_option("bounds-check", false);
+	m_options.set_option("div-by-zero-check", false);
+	m_options.set_option("overflow-check", false);
+	m_options.set_option("nan-check", false);
+	m_options.set_option("pointer-check", false);
+	m_options.set_option("assertions", false);
 
 	// generate unwinding assertions
-	options.set_option("unwinding-assertions",
+	m_options.set_option("unwinding-assertions",
 			!cmdline.isset("no-unwinding-assertions"));
 
 	// generate unwinding assumptions otherwise
-	options.set_option("partial-loops",
+	m_options.set_option("partial-loops",
 			cmdline.isset("partial-loops"));
 
 	// remove unused equations
-	options.set_option("slice-formula",
+	m_options.set_option("slice-formula",
 			cmdline.isset("slice-formula"));
 
-	options.set_option("simplify-if", true);
-	options.set_option("arrays-uf", "auto");
-	options.set_option("pretty-names", 
-			!cmdline.isset("no-pretty-names"));
+	m_options.set_option("simplify-if", true);
+	m_options.set_option("arrays-uf", "auto");
+	m_options.set_option("pretty-names", true);
 
 	if(cmdline.isset("show-goto-functions"))
-		options.set_option("show-goto-functions", true);
+		m_options.set_option("show-goto-functions", true);
 
 	if(cmdline.isset("show-loops"))
-		options.set_option("show-loops", true);
+		m_options.set_option("show-loops", true);
 
 	set_verbosity(*this);
+
+	if(cmdline.isset("statistics") || get_verbosity() > 2)
+		m_options.set_option("statistics", true);
 
 	return false;
 }
@@ -146,17 +161,15 @@ int Parseoptions::doit()
 		std::cout << FSHELL2_VERSION << std::endl;
 		return 0;
 	}
+	if (get_command_line_options()) return 1;
 
 	// we only support ANSI C at the moment
 	::register_language(::new_ansi_c_language);
 
-	::optionst options;
-	if (get_command_line_options(options)) return 1;
-
-	goto_functionst goto_functions;
-
 	try
 	{
+		goto_functionst goto_functions;
+		
 		if(cmdline.args.size()==1 &&
 				is_goto_binary(cmdline.args[0]))
 		{
@@ -177,16 +190,16 @@ int Parseoptions::doit()
 			status("Generating GOTO Program");
 
 			goto_convert(
-					context, options, goto_functions,
+					context, m_options, goto_functions,
 					ui_message_handler);
 		}
 
 		if(0!=cmdline.args.size()) {
-			::fshell2::command::Command_Processing proc(options, goto_functions);
+			::fshell2::command::Command_Processing proc(m_options, goto_functions);
 			proc.finalize_goto_program(*this);
 		}
 
-		::fshell2::FShell2 fshell(options, goto_functions);
+		::fshell2::FShell2 fshell(m_options, goto_functions);
 
 		if(cmdline.isset("query-file"))
 		{
@@ -310,7 +323,8 @@ void Parseoptions::help()
 		"Other options:\n"
 		" --query-file Filename        read FShell query from Filename\n"
 		" --version                    show version and exit\n"
-		" --verbosity level            Set verbosity of status reports (0-9)\n"
+		" --verbosity level            set verbosity of status reports (0-9)\n"
+		" --statistics                 display statistics (implied by --verbosity > 2)\n"
 		" --xml-ui                     use XML-formatted output\n"
 		"\n";
 }

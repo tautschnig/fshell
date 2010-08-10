@@ -35,6 +35,7 @@
 #include <fshell2/exception/macro_processing_error.hpp>
 #include <fshell2/exception/query_processing_error.hpp>
 #include <fshell2/exception/fshell2_error.hpp>
+#include <fshell2/util/statistics.hpp>
 #include <fshell2/fql/ast/query.hpp>
 #include <fshell2/fql/normalize/normalization_visitor.hpp>
 #include <fshell2/fql/evaluation/compute_test_goals.hpp>
@@ -124,11 +125,6 @@ void FShell2::try_query(::language_uit & manager, char const * line) {
 	}
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, query_ast != 0);
 	Query_Cleanup cleanup(query_ast);
-
-	// normalize the input query
-	::fshell2::fql::Normalization_Visitor norm;
-	norm.normalize(&query_ast);
-	cleanup.set_object(query_ast);
 	
 	// query parse succeeded, make sure the CFA is prepared
 	bool const mod(m_cmd.finalize(manager));
@@ -145,6 +141,16 @@ void FShell2::try_query(::language_uit & manager, char const * line) {
 				"Program has failing assertions, cannot proceed.");
 		m_first_run = false;
 	}
+
+	// collect per-query statistics
+	::fshell2::statistics::Statistics stats;
+	NEW_STAT(stats, CPU_Timer, timer, "Query CPU time");
+	timer.start_timer();
+
+	// normalize the input query
+	::fshell2::fql::Normalization_Visitor norm;
+	norm.normalize(&query_ast);
+	cleanup.set_object(query_ast);
 	
 	// compute test goals
 	Context_Backup context_backup(manager);
@@ -152,7 +158,7 @@ void FShell2::try_query(::language_uit & manager, char const * line) {
 	::fshell2::fql::CNF_Conversion & equation(goals.do_query(*query_ast));
 
 	// do the enumeration
-	::fshell2::Constraint_Strengthening cs(equation);
+	::fshell2::Constraint_Strengthening cs(equation, stats);
 	::fshell2::Constraint_Strengthening::test_cases_t test_suite;
 	cs.generate(test_suite);
 
@@ -163,6 +169,10 @@ void FShell2::try_query(::language_uit & manager, char const * line) {
 	// output
 	::fshell2::Test_Suite_Output out(equation);
 	out.print_ts(test_suite, ::std::cout, manager.ui_message_handler.get_ui());
+
+	timer.stop_timer();
+	if (m_opts.get_bool_option("statistics"))
+		stats.print(manager);
 }
 
 bool FShell2::process_line(::language_uit & manager, char const * line) {

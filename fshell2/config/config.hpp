@@ -116,6 +116,23 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 /**
+ * @brief Use this macro to start the @ref fshell2_statistics_namespace "statistics" 
+ * namespace.
+ *
+ * @namespace fshell2::statistics @anchor fshell2_statistics_namespace
+ *
+*/
+#define FSHELL2_STATISTICS_NAMESPACE_BEGIN namespace statistics { DUMMY_FUNC
+
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * @brief statistics to end the @ref fshell2_statistics_namespace "statistics" namespace.
+ *
+*/
+#define FSHELL2_STATISTICS_NAMESPACE_END } DUMMY_FUNC
+
+////////////////////////////////////////////////////////////////////////////////
+/**
  * @brief Use this macro to start the @ref fshell2_fql_namespace "fql" 
  * namespace.
  *

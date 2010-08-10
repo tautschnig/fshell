@@ -31,6 +31,7 @@
 
 #include <diagnostics/basic_exceptions/violated_invariance.hpp>
 
+#include <fshell2/util/statistics.hpp>
 #include <fshell2/fql/evaluation/compute_test_goals.hpp>
 
 #include <cbmc/src/util/config.h>
@@ -40,8 +41,10 @@
 
 FSHELL2_NAMESPACE_BEGIN;
 
-Constraint_Strengthening::Constraint_Strengthening(::fshell2::fql::CNF_Conversion & equation) :
-	m_equation(equation) {
+Constraint_Strengthening::Constraint_Strengthening(::fshell2::fql::CNF_Conversion & equation,
+		::fshell2::statistics::Statistics & stats) :
+	m_equation(equation), m_stats(stats)
+{
 }
 
 void Constraint_Strengthening::generate(test_cases_t & tcs) {
@@ -54,7 +57,8 @@ void Constraint_Strengthening::generate(test_cases_t & tcs) {
 	::fshell2::fql::CNF_Conversion::test_goals_t const& goal_set(m_equation.get_test_goal_literals());
 	::cnf_clause_list_assignmentt & cnf(m_equation.get_cnf());
 
-	::std::map< ::literalt, ::literalt > aux_var_map;
+	typedef ::std::map< ::literalt, ::literalt > aux_var_map_t;
+	aux_var_map_t aux_var_map;
 
 	::bvt goal_cl;
 	for (::fshell2::fql::CNF_Conversion::test_goals_t::const_iterator iter(goal_set.begin());
@@ -64,6 +68,8 @@ void Constraint_Strengthening::generate(test_cases_t & tcs) {
 		goal_cl.push_back(cnf.land(*iter, s));
 	}
 	cnf.lcnf(goal_cl);
+	NEW_STAT(m_stats, Counter< aux_var_map_t::size_type >, feasible_cnt, "Possibly feasible test goals");
+	feasible_cnt.inc(aux_var_map.size());
 
 	/*
 	::dimacs_cnft dimacs;
@@ -84,7 +90,6 @@ void Constraint_Strengthening::generate(test_cases_t & tcs) {
 	
 	cnf.copy_to(minisat);
 
-	::std::cerr << "#Possibly feasible test goals: " << aux_var_map.size() << ::std::endl;
 	::bvt goals_done;
 	bool max_tcs_reached(false);
 	while (!aux_var_map.empty()) {
@@ -112,7 +117,7 @@ void Constraint_Strengthening::generate(test_cases_t & tcs) {
 		// deactivate test goals
 		/*::fshell2::fql::Compute_Test_Goals_From_Instrumentation::test_goals_t const& satisfied_tg(m_equation.get_satisfied_test_goals());
 		::std::cerr << "NOT IMPLEMENTED" << ::std::endl;*/
-		unsigned const size1(aux_var_map.size());
+		// unsigned const size1(aux_var_map.size());
 		::bvt fixed_literals;
 		::boolbvt const& bv(m_equation.get_bv());
 		for (::boolbv_mapt::mappingt::const_iterator iter(bv.map.mapping.begin());
@@ -124,7 +129,7 @@ void Constraint_Strengthening::generate(test_cases_t & tcs) {
 							m_iter->l.sign() ? !minisat.l_get(m_iter->l).is_false() : minisat.l_get(m_iter->l).is_false()));
 		}
 		fixed_literals.insert(fixed_literals.end(), goals_done.begin(), goals_done.end());
-		for (::std::map< ::literalt, ::literalt >::iterator iter(aux_var_map.begin());
+		for (aux_var_map_t::iterator iter(aux_var_map.begin());
 				iter != aux_var_map.end();) {
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, minisat.l_get(iter->first).is_known());
 			if (minisat.l_get(iter->first).is_false()) {
@@ -145,7 +150,7 @@ void Constraint_Strengthening::generate(test_cases_t & tcs) {
 			tmp_minisat.set_assumptions(fixed_literals);
 			if (::propt::P_UNSATISFIABLE == tmp_minisat.prop_solve()) break;
 			
-			for (::std::map< ::literalt, ::literalt >::iterator iter(aux_var_map.begin());
+			for (aux_var_map_t::iterator iter(aux_var_map.begin());
 					iter != aux_var_map.end();) {
 				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, tmp_minisat.l_get(iter->first).is_known());
 				if (tmp_minisat.l_get(iter->first).is_false()) {
@@ -160,14 +165,16 @@ void Constraint_Strengthening::generate(test_cases_t & tcs) {
 			}
 		}
 
-		::std::cerr << "covers " << (size1 - aux_var_map.size()) << " test goals" << ::std::endl;
+		// ::std::cerr << "covers " << (size1 - aux_var_map.size()) << " test goals" << ::std::endl;
 	}
-	::std::cerr << "#Test cases: " << tcs.size() << ::std::endl;
-	if (max_tcs_reached) {
-		::std::cerr << "Stopped as requested" << ::std::endl;
-	} else {
-		::std::cerr << "#Infeasible test goals: " << aux_var_map.size() << ::std::endl;
-	}
+	NEW_STAT(m_stats, Counter< test_cases_t::size_type >, tcs_cnt, "Test cases");
+	tcs_cnt.inc(tcs.size());
+	NEW_STAT(m_stats, Counter< aux_var_map_t::size_type >, missing_cnt, "Test goals not fulfilled");
+	missing_cnt.inc(aux_var_map.size());
+	
+	if (max_tcs_reached)
+		m_equation.warning(::diagnostics::internal::to_string("Stopped after ",
+					::config.fshell.max_test_cases, " as requested"));
 }
 
 FSHELL2_NAMESPACE_END;

@@ -156,6 +156,8 @@ of
 	::optionst options;
 	::goto_functionst gf;
 
+	options.set_option("statistics", true);
+	l.set_verbosity(0);
 	::fshell2::FShell2 fshell(options, gf);
 	
 	TEST_ASSERT(!fshell.process_line(l, ::diagnostics::internal::to_string("add sourcecode '", tempname_str, "'").c_str()));

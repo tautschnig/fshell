@@ -45,6 +45,8 @@
 #include <fshell2/fql/ast/query.hpp>
 #include <fshell2/fql/ast/quote.hpp>
 
+#include <fshell2/util/statistics.hpp>
+
 #include <fstream>
 #include <sys/stat.h>
 
@@ -116,7 +118,8 @@ void test( Test_Data & data )
 	fql::CNF_Conversion & eq(goals.do_query(*q));
 	TEST_CHECK_RELATION(6, ==, eq.get_test_goal_literals().size());
 
-	Constraint_Strengthening cs(eq);
+	statistics::Statistics stats;
+	Constraint_Strengthening cs(eq, stats);
 	Constraint_Strengthening::test_cases_t test_suite;
 	cs.generate(test_suite);
 	Constraint_Strengthening::test_cases_t::size_type const size(test_suite.size());

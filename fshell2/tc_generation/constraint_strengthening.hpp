@@ -37,6 +37,12 @@ class cnf_clause_list_assignmentt;
 
 FSHELL2_NAMESPACE_BEGIN;
 
+FSHELL2_STATISTICS_NAMESPACE_BEGIN;
+
+class Statistics;
+
+FSHELL2_STATISTICS_NAMESPACE_END;
+
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 class CNF_Conversion;
@@ -54,12 +60,14 @@ class Constraint_Strengthening
 	public:
 	typedef ::std::list< ::cnf_clause_list_assignmentt > test_cases_t;
 	
-	explicit Constraint_Strengthening(::fshell2::fql::CNF_Conversion & equation);
+	Constraint_Strengthening(::fshell2::fql::CNF_Conversion & equation,
+			::fshell2::statistics::Statistics & stats);
 
 	void generate(test_cases_t & tcs);
 
 	private:
 	::fshell2::fql::CNF_Conversion & m_equation;
+	::fshell2::statistics::Statistics & m_stats;
 
 	/*! \copydoc copy_constructor
 	*/
