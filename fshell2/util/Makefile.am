@@ -19,8 +19,8 @@ $(top_builddir)/cbmc/src/util/irep_ids.h:
 
 include_fshell2_utildir = $(includedir)/fshell2/util
 noinst_LTLIBRARIES = libutil.la
-libutil_la_SOURCES = statistics.cpp
-include_fshell2_util_HEADERS = statistics.hpp
+libutil_la_SOURCES = statistics.cpp smart_printer.cpp
+include_fshell2_util_HEADERS = statistics.hpp smart_printer.hpp
 TESTS = statistics
 check_PROGRAMS = statistics
 statistics_SOURCES = statistics.t.cpp

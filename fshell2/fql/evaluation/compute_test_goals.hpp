@@ -41,18 +41,6 @@
 #include <cbmc/src/solvers/sat/cnf_clause_list.h>
 
 FSHELL2_NAMESPACE_BEGIN;
-
-class Smart_Printer {
-	public:
-		Smart_Printer(::language_uit & manager);
-		~Smart_Printer();
-		void print_now();
-		::std::ostream & get_ostream();
-	private:
-		::language_uit & m_manager;
-		::std::ostringstream m_oss;
-};
-
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 class Evaluate_Path_Pattern;

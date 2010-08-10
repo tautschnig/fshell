@@ -46,7 +46,7 @@ evaluate_filter_LDADD = libevaluation.la ../ast/libast.la ../concepts/libconcept
 compute_test_goals_SOURCES = compute_test_goals.t.cpp
 # add additional objects required to build compute_test_goals here, like
 # compute_test_goals_LDADD = ../base/libbase.la libbla.la
-compute_test_goals_LDADD = libevaluation.la ../ast/libast.la ../concepts/libconcepts.la ../../instrumentation/libinstrumentation.la ../../exception/libexception.la $(CBMC_OBJS)
+compute_test_goals_LDADD = libevaluation.la ../../util/libutil.la ../ast/libast.la ../concepts/libconcepts.la ../../instrumentation/libinstrumentation.la ../../exception/libexception.la $(CBMC_OBJS)
 # note that this entry (compute_test_goals_SOURCES, compute_test_goals_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually

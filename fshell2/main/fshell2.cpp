@@ -35,6 +35,7 @@
 #include <fshell2/exception/macro_processing_error.hpp>
 #include <fshell2/exception/query_processing_error.hpp>
 #include <fshell2/exception/fshell2_error.hpp>
+#include <fshell2/util/smart_printer.hpp>
 #include <fshell2/util/statistics.hpp>
 #include <fshell2/fql/ast/query.hpp>
 #include <fshell2/fql/normalize/normalization_visitor.hpp>

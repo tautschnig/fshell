@@ -33,6 +33,8 @@
 #include <diagnostics/basic_exceptions/invalid_protocol.hpp>
 #include <diagnostics/basic_exceptions/not_implemented.hpp>
 
+#include <fshell2/util/smart_printer.hpp>
+
 #include <fshell2/exception/fshell2_error.hpp>
 
 #include <fshell2/instrumentation/cfg.hpp>
@@ -61,24 +63,6 @@
 #include <cbmc/src/goto-symex/slice_by_trace.h>
 
 FSHELL2_NAMESPACE_BEGIN;
-
-Smart_Printer::Smart_Printer(::language_uit & manager) :
-	m_manager(manager) {
-}
-
-Smart_Printer::~Smart_Printer() {
-	if (!m_oss.str().empty()) m_manager.print(m_oss.str());
-}
-
-void Smart_Printer::print_now() {
-	if (!m_oss.str().empty()) m_manager.print(m_oss.str());
-	m_oss.str("");
-}
-
-::std::ostream & Smart_Printer::get_ostream() {
-	return m_oss;
-}
-
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 CNF_Conversion::CNF_Conversion(::language_uit & manager, ::optionst const& opts) :
