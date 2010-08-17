@@ -173,8 +173,8 @@ void Constraint_Strengthening::generate(test_cases_t & tcs) {
 	missing_cnt.inc(aux_var_map.size());
 	
 	if (max_tcs_reached)
-		m_equation.warning(::diagnostics::internal::to_string("Stopped after ",
-					::config.fshell.max_test_cases, " as requested"));
+		m_equation.warning(::diagnostics::internal::to_string("Stopped after computing ",
+					::config.fshell.max_test_cases, " test cases as requested"));
 }
 
 FSHELL2_NAMESPACE_END;
