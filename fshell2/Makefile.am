@@ -10,19 +10,3 @@ SUBDIRS = config exception util command macro instrumentation fql tc_generation 
 
 include_fshell2dir = $(includedir)/fshell2
 
-# NO_UPDATE_MAKEFILES
-
-lib_LTLIBRARIES = libfshell2.la
-libfshell2_la_SOURCES =
-libfshell2_la_LIBADD = main/libmain.la \
-											 exception/libexception.la \
-											 command/libcommand.la \
-											 macro/libmacro.la \
-											 tc_generation/libtc_generation.la \
-											 instrumentation/libinstrumentation.la \
-											 fql/evaluation/libevaluation.la \
-											 fql/normalize/libnormalize.la \
-											 fql/parser/libparser.la \
-											 fql/concepts/libconcepts.la \
-											 fql/ast/libast.la
-libfshell2_la_LDFLAGS = -version-info 0:0:0
