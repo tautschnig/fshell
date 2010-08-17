@@ -261,6 +261,7 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::Test_Input & ti) const 
 
 			Test_Input::program_variable_t iv;
 			bool iv_in_use(false);
+			::exprt const * nondet_expr(0);
 		
 			Symbol_Identifier var(*(v_iter->first));
 			// ::std::cerr << "Analyzing " << var.m_identifier << "(" << var.m_var_name << ") [" << var.m_vt << "]" << ::std::endl;
@@ -278,35 +279,39 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::Test_Input & ti) const 
 				case Symbol_Identifier::LOCAL_STATIC:
 				case Symbol_Identifier::GLOBAL:
 				case Symbol_Identifier::GLOBAL_STATIC:
-					if (is_lhs && iter->rhs.id() == "nondet_symbol" && ::symex_targett::HIDDEN != iter->assignment_type) {
+					if (v_iter->second && ID_with == v_iter->second->id() && v_iter->second->op2().id() == "nondet_symbol") {
+						// array/struct element assignment using undefined
+						// function; we do not add the array/struct variable at
+						// this point as reads to other indices may require the
+						// entire array/struct to be added
+						nondet_expr = &(v_iter->second->op2());
+					} else if (is_lhs && iter->rhs.id() == "nondet_symbol" && ::symex_targett::HIDDEN != iter->assignment_type) {
+						// assignment to simple variable using undef function
+						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+								vars.end() == vars.find(var.m_identifier));
+						vars.insert(var.m_identifier);
+						nondet_expr = &(iter->rhs);
+						// ::std::cerr << "Added LHS var " << var.m_identifier << " [" << var.m_vt << "]" << ::std::endl;
+						if (Symbol_Identifier::CBMC_TMP_RETURN_VALUE != var.m_vt) vars.insert(var.m_var_name + "@" + var.m_level1);
+						// ::std::cerr << "Also added var " << (var.m_var_name + "@" + var.m_level1) << " [" << var.m_vt << "]" << ::std::endl;
+					} else if (!is_lhs && var.m_level2 == "0") {
+						// reading use of undefined variable
 						if (!vars.insert(var.m_identifier).second) break;
-						// ::std::cerr << "Added var " << var.m_identifier << " [" << var.m_vt << "]" << ::std::endl;
-						if (Symbol_Identifier::CBMC_TMP_RETURN_VALUE != var.m_vt) vars.insert(var.m_var_name + var.m_level1).second;
-						// ::std::cerr << "Also added var " << (var.m_var_name + var.m_level1) << " [" << var.m_vt << "]" << ::std::endl;
+						// ::std::cerr << "Added #0 var " << var.m_identifier << " [" << var.m_vt << "]" << ::std::endl;
+						vars.insert(var.m_var_name + "@" + var.m_level1);
+						// ::std::cerr << "Also added var " << (var.m_var_name + "@" + var.m_level1) << " [" << var.m_vt << "]" << ::std::endl;
 					} else {
-						if (!vars.insert(var.m_var_name + var.m_level1).second) break;
-						// ::std::cerr << "Added var " << (var.m_var_name + var.m_level1) << " [" << var.m_vt << "]" << ::std::endl;
+						if (!vars.insert(var.m_var_name + "@" + var.m_level1).second) break;
+						// ::std::cerr << "Added var " << (var.m_var_name + "@" + var.m_level1) << " [" << var.m_vt << "]" << ::std::endl;
 					}
-					if (!is_lhs || Symbol_Identifier::PARAMETER == var.m_vt) {
-						if (Symbol_Identifier::PARAMETER == var.m_vt &&
-								0 != var.m_var_name.compare(0, start_proc_prefix.size(), start_proc_prefix)) break;
-						iv_in_use = true;
-						iv.m_name = v_iter->first;
-						// @ comes before #, also strip off possible $object
-						// (failed symbols)
-						iv.m_pretty_name = var.m_var_name;
-						iv.m_value = v_iter->first;
-						iv.m_symbol = 0;
-						m_equation.get_ns().lookup(iv.m_pretty_name, iv.m_symbol);
-						FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, iv.m_symbol);
-						iv.m_location = &(iv.m_symbol->location);
-					}
-					else if (is_lhs && iter->rhs.id() == "nondet_symbol" && iter->source.pc->is_function_call()) {
+					
+					if (Symbol_Identifier::PARAMETER != var.m_vt &&
+							nondet_expr && iter->source.pc->is_function_call()) {
 						iv_in_use = true;
 						::code_function_callt const& fct(::to_code_function_call(iter->source.pc->code));
 						iv.m_name = &(fct.function());
 						iv.m_pretty_name = fct.function().get("identifier").as_string();
-						iv.m_value = v_iter->first;
+						iv.m_value = is_lhs ? v_iter->first : nondet_expr;
 						iv.m_symbol = 0;
 						m_equation.get_ns().lookup(iv.m_pretty_name, iv.m_symbol);
 						FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, iv.m_symbol);
@@ -325,6 +330,27 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::Test_Input & ti) const 
 						 ::std::cerr << "LHS: " << iter->lhs << ::std::endl;
 						 ::std::cerr << "ORIG_LHS: " << iter->original_lhs << ::std::endl;
 						 ::std::cerr << "RHS: " << iter->rhs << ::std::endl; */
+					} else if (!is_lhs || Symbol_Identifier::PARAMETER == var.m_vt) {
+						if (Symbol_Identifier::PARAMETER == var.m_vt &&
+								0 != var.m_var_name.compare(0, start_proc_prefix.size(), start_proc_prefix)) break;
+						// it may happen that the value is not even known to the
+						// mapping, which happens for the following code (and
+						// variable s):
+						//   char * buffer;
+						//   unsigned s;
+						//   buffer=(char*)malloc(s);
+						if (!is_lhs && iter->original_lhs.get(ID_identifier) == "c::__CPROVER_alloc_size" &&
+								bv.map.mapping.end() == bv.map.mapping.find(v_iter->first->get(ID_identifier))) break;
+						iv_in_use = true;
+						iv.m_name = v_iter->first;
+						// @ comes before #, also strip off possible $object
+						// (failed symbols)
+						iv.m_pretty_name = var.m_var_name;
+						iv.m_value = v_iter->first;
+						iv.m_symbol = 0;
+						m_equation.get_ns().lookup(iv.m_pretty_name, iv.m_symbol);
+						FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, iv.m_symbol);
+						iv.m_location = &(iv.m_symbol->location);
 					}
 					break;
 				case Symbol_Identifier::UNKNOWN:
@@ -342,7 +368,8 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::Test_Input & ti) const 
 				//// ::std::cerr << "Fetching value for " << iv.m_value->pretty() << ::std::endl;
 				if (ID_bool == iv.m_symbol->type.id()) {
 					iv.m_value_str = ::from_expr(m_equation.get_ns(), iv.m_name->get("identifier"), bv.get(*iv.m_value));
-				} else if (::std::string::npos == iv.m_value->get("identifier").as_string().rfind("#")) {
+				} else if (iv.m_value->id() != "nondet_symbol" &&
+						::std::string::npos == iv.m_value->get("identifier").as_string().rfind("#")) {
 					::exprt new_sym("symbol");
 					new_sym.set("identifier", ::diagnostics::internal::to_string(iv.m_value->get("identifier"), "#0"));
 					// not sure whether this is needed
@@ -353,8 +380,9 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::Test_Input & ti) const 
 							bv.map.mapping.find(new_sym.get("identifier")));
 					iv.m_value_str = ::from_expr(m_equation.get_ns(), iv.m_name->get("identifier"), bv.get(new_sym));
 				} else {
-					FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, bv.map.mapping.end() !=
-							bv.map.mapping.find(iv.m_value->get("identifier")));
+					FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, bv.map.mapping.end() !=
+							bv.map.mapping.find(iv.m_value->get("identifier")),
+							::diagnostics::internal::to_string("Failed to lookup ", iv.m_value->get("identifier")));
 					iv.m_value_str = ::from_expr(m_equation.get_ns(), iv.m_name->get("identifier"), bv.get(*iv.m_value));
 				}
 				/* // beautify dynamic_X_name

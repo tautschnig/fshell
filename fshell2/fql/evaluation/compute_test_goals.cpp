@@ -110,8 +110,7 @@ void CNF_Conversion::convert(::goto_functionst const& gf) {
 }
 	
 Compute_Test_Goals_From_Instrumentation::Compute_Test_Goals_From_Instrumentation(
-		::goto_functionst const& gf, ::language_uit & manager, ::optionst const& opts) :
-	m_gf(gf),
+		::language_uit & manager, ::optionst const& opts) :
 	m_manager(manager),
 	m_opts(opts),
 	m_aut_insert(m_manager),
@@ -123,31 +122,27 @@ Compute_Test_Goals_From_Instrumentation::Compute_Test_Goals_From_Instrumentation
 Compute_Test_Goals_From_Instrumentation::~Compute_Test_Goals_From_Instrumentation() {
 }
 
-CNF_Conversion & Compute_Test_Goals_From_Instrumentation::do_query(Query const& query) {
+CNF_Conversion & Compute_Test_Goals_From_Instrumentation::do_query(::goto_functionst & gf, Query const& query) {
 	m_pc_to_guard.clear();
 	m_test_goals.clear();
 	
-	// copy goto program, it will be modified
-	::goto_functionst gf_copy;
-	gf_copy.copy_from(m_gf);
-	
 	// build a CFG to have forward and backward edges
 	::fshell2::instrumentation::CFG cfg;
-	cfg.compute_edges(gf_copy);
+	cfg.compute_edges(gf);
 	
 	// do automata instrumentation
-	m_test_goal_states = &(m_aut_insert.do_query(gf_copy, cfg, query));
+	m_test_goal_states = &(m_aut_insert.do_query(gf, cfg, query));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_test_goal_states);
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_test_goal_states->m_cp == query.get_cover());
 
 	// print instrumented program, if requested
 	if (m_opts.get_bool_option("show-goto-functions")) {
 		Smart_Printer smp(m_manager);
-		gf_copy.output(m_equation.get_ns(), smp.get_ostream());
+		gf.output(m_equation.get_ns(), smp.get_ostream());
 	}
 
 	// convert CFA to CNF
-	m_equation.convert(gf_copy);
+	m_equation.convert(gf);
 
 	// build a map from GOTO instructions to guard literals by walking the
 	// equation; group them by calling points

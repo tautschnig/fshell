@@ -119,12 +119,12 @@ class Compute_Test_Goals_From_Instrumentation : private Standard_AST_Visitor_Asp
 	typedef Compute_Test_Goals_From_Instrumentation Self;
 
 	public:
-	Compute_Test_Goals_From_Instrumentation(::goto_functionst const& gf,
-			::language_uit & manager, ::optionst const& opts);
+	Compute_Test_Goals_From_Instrumentation(::language_uit & manager,
+			::optionst const& opts);
 
 	virtual ~Compute_Test_Goals_From_Instrumentation();
 
-	CNF_Conversion & do_query(Query const& query);
+	CNF_Conversion & do_query(::goto_functionst & gf, Query const& query);
 
 	private:
 	typedef ::std::map< ::goto_programt::const_targett,
@@ -133,7 +133,6 @@ class Compute_Test_Goals_From_Instrumentation : private Standard_AST_Visitor_Asp
 	typedef ::std::map< ::goto_programt::const_targett,
 				::std::set< ::goto_programt::const_targett > > context_to_pcs_t;
 	
-	::goto_functionst const& m_gf;
 	::language_uit & m_manager;
 	::optionst const& m_opts;
 	Automaton_Inserter m_aut_insert;

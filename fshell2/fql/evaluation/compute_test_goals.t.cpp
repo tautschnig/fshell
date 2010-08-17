@@ -107,8 +107,8 @@ void test_instr( Test_Data & data )
 				FQL_CREATE2(CP_Concat, e, id_kleene_q)));
 	Query * q(Query::Factory::get_instance().create(0, c, id_kleene));
 	
-	Compute_Test_Goals_From_Instrumentation goals(gf, l, options);
-	CNF_Conversion & eq(goals.do_query(*q));
+	Compute_Test_Goals_From_Instrumentation goals(l, options);
+	CNF_Conversion & eq(goals.do_query(gf, *q));
 	
 	CNF_Conversion::test_goals_t const& bb_goals(eq.get_test_goal_literals());
 	TEST_ASSERT_RELATION(6, ==, bb_goals.size());

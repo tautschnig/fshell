@@ -2,11 +2,10 @@ top_builddir = ../
 fshell = $(top_builddir)/fshell2/main/fshell 
 params = --verbosity 0 --statistics --outfile /dev/null
 
-# nohup currently fails, needs investigation
-# busybox-1.14.0_nohup.c_BB busybox-1.14.0_nohup.c_CC busybox-1.14.0_nohup.c_BB^2
 
 ASE_SCALE_s = busybox-1.14.0_cat.c_BB busybox-1.14.0_cat.c_CC busybox-1.14.0_cat.c_BB^2 \
 						  busybox-1.14.0_echo.c_BB busybox-1.14.0_echo.c_CC busybox-1.14.0_echo.c_BB^2 \
+							busybox-1.14.0_nohup.c_BB busybox-1.14.0_nohup.c_CC busybox-1.14.0_nohup.c_BB^2 \
 						  busybox-1.14.0_seq.c_BB busybox-1.14.0_seq.c_CC busybox-1.14.0_seq.c_BB^2 \
 						  busybox-1.14.0_tee.c_BB busybox-1.14.0_tee.c_CC busybox-1.14.0_tee.c_BB^2 \
 						  nt-drivers_kbfiltr.c_BB nt-drivers_kbfiltr.c_CC nt-drivers_kbfiltr.c_BB^2 \

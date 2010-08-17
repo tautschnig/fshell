@@ -110,8 +110,8 @@ void test( Test_Data & data )
 				FQL_CREATE2(CP_Concat, e, id_kleene_q)));
 	fql::Query * q(FQL_CREATE3(Query, 0, c, id_kleene));
 	
-	fql::Compute_Test_Goals_From_Instrumentation goals(gf, l, options);
-	fql::CNF_Conversion & eq(goals.do_query(*q));
+	fql::Compute_Test_Goals_From_Instrumentation goals(l, options);
+	fql::CNF_Conversion & eq(goals.do_query(gf, *q));
 	TEST_CHECK_RELATION(6, ==, eq.get_test_goal_literals().size());
 
 	statistics::Statistics stats;
