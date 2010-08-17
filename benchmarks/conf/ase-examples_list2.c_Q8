@@ -1,0 +1,11 @@
+# vi: set ft=sh:
+
+source="ase-examples"
+extra_params="--unwind 3 code/ase-examples/list2.c"
+prepare=""
+query="cover @DEF(t) . \"NOT(@DEF(t))*\" . @USE(t)"
+tg=4
+unsat=2
+tc=1
+cputime=4
+

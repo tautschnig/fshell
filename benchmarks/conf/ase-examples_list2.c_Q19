@@ -1,0 +1,11 @@
+# vi: set ft=sh:
+
+source="ase-examples"
+extra_params="--unwind 3 code/ase-examples/list2.c"
+prepare=""
+query="cover @BASICBLOCKENTRY->@BASICBLOCKENTRY->@BASICBLOCKENTRY"
+tg=1100
+unsat=829
+tc=4
+cputime=14
+

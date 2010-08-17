@@ -1,5 +1,7 @@
 include $(top_srcdir)/model.am
 
+include $(top_srcdir)/performance.am
+
 AM_MAKEFLAGS = CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS)"
 
 # add further subdirectories here

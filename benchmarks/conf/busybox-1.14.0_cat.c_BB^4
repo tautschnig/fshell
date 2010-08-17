@@ -1,0 +1,12 @@
+# vi: set ft=sh:
+
+source="busybox-1.14.0"
+extra_params="-Icode/busybox-1.14.0/include --unwind 10 --no-unwinding-assertions"
+prepare="add sourcecode 'code/busybox-1.14.0/coreutils/cat.c'
+set entry cat_main"
+query="edges(@basicblockentry)->edges(@basicblockentry)->edges(@basicblockentry)->edges(@basicblockentry)"
+tg=43904
+unsat=43344
+tc=5
+cputime=200.087
+

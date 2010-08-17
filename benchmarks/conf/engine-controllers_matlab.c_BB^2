@@ -1,0 +1,11 @@
+# vi: set ft=sh:
+
+source="engine-controllers"
+extra_params=""
+prepare="add sourcecode 'code/engine-controllers/cs2/AL_expanded.c'"
+query="cover edges(@basicblockentry)->edges(@basicblockentry)"
+tg=812
+unsat=441
+tc=10
+cputime=64.557
+

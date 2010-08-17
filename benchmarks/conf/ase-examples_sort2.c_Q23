@@ -1,0 +1,11 @@
+# vi: set ft=sh:
+
+source="ase-examples"
+extra_params="--unwind 4 --no-unwinding-assertions code/ase-examples/sort2.c"
+prepare=""
+query="cover @BASICBLOCKENTRY & @FUNC(eval) passing ^NOT(@LABEL(init))*$"
+tg=4
+unsat=0
+tc=1
+cputime=1
+

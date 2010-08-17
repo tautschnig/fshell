@@ -1,0 +1,41 @@
+diff -urN nt-drivers.old/kbfiltr.i.cil.c nt-drivers/kbfiltr.i.cil.c
+--- nt-drivers.old/kbfiltr.i.cil.c	2010-08-10 23:20:19.000000000 +0200
++++ nt-drivers/kbfiltr.i.cil.c	2009-08-03 17:00:40.000000000 +0200
+@@ -1634,8 +1634,8 @@
+ { 
+ 
+   {
+-  ERROR: 
+-  goto ERROR;
++  //ERROR: 
++  //goto ERROR;
+ }
+ }
+ int s  ;
+@@ -2031,7 +2031,7 @@
+                                               {
+                                               irpSp = Irp->Tail.Overlay.__annonCompField17.__annonCompField16.CurrentStackLocation;
+                                               nextIrpSp = Irp->Tail.Overlay.__annonCompField17.__annonCompField16.CurrentStackLocation - 1;
+-                                              memcpy(nextIrpSp, irpSp, (long )(& ((IO_STACK_LOCATION *)0)->CompletionRoutine));
++                                              //memcpy(nextIrpSp, irpSp, (long )(& ((IO_STACK_LOCATION *)0)->CompletionRoutine));
+                                               nextIrpSp->Control = 0;
+ /*                                               KeInitializeEvent(& event, 0, 0); */ /* INLINED */
+                                               }
+@@ -2549,17 +2549,6 @@
+ }
+ }
+ char _SLAM_alloc_dummy  ;
+-char *malloc(int i ) 
+-{ int __BLAST_NONDET ;
+-
+-  {
+-  if (__BLAST_NONDET) {
+-    return ((char *)0);
+-  } else {
+-    return ((char *)1);
+-  }
+-}
+-}
+   void ExAcquireFastMutex(PFAST_MUTEX FastMutex ) ;
+ void ExAcquireFastMutex(PFAST_MUTEX FastMutex ) 
+ { 

@@ -1,0 +1,12 @@
+# vi: set ft=sh:
+
+source="busybox-1.14.0"
+extra_params="-Icode/busybox-1.14.0/include --unwind 10 --no-unwinding-assertions"
+prepare="add sourcecode 'code/busybox-1.14.0/coreutils/nohup.c'
+set entry nohup_main"
+query="cover edges(@conditionedge)"
+tg=14
+unsat=0
+tc=6
+cputime=1.397
+

@@ -1,0 +1,53 @@
+# vi: set ft=automake:
+
+PROF_FILES = $(top_srcdir)/test/basic/labels.c
+PROF_CLIENT = $(top_builddir)/fshell2/main/fshell --verbosity 0 --statistics --outfile /dev/null
+
+# -fno-inline avoids any inlining, -finline-limit=4 allows for inlining very
+# small functions
+profile: CXXFLAGS += -finline-limit=4 -pg
+profile:
+	mkdir -p profiling
+	$(MAKE) $(AM_MAKEFLAGS) -C $(top_builddir) clean
+	$(MAKE) $(AM_MAKEFLAGS) -C $(top_builddir) CXXFLAGS="$(CXXFLAGS)"
+	if [ -d $(top_srcdir)/.svn ] ; then \
+    rev="SVN.`svn info | grep ^Revision | cut -f2 -d" "`" ; \
+  elif [ -d $(top_srcdir)/.git ] ; then \
+    rev="GIT.`git show --pretty=format:%H | head -n1`" ; \
+  else \
+    echo "Could not determine revision" 1>&2 ; \
+    exit 1 ; \
+  fi ; \
+	for i in $(PROF_FILES) ; do \
+		ident=`date +%Y-%m-%d_%H%M%S` ; \
+		echo "PROFILE: profiling/$$rev.$$ident.gz" >> profiling/NOTES ; \
+		echo "REV: $$rev" >> profiling/NOTES ; \
+		printf "HOST: " >> profiling/NOTES ; \
+		hostname >> profiling/NOTES ; \
+		printf "CXX: " >> profiling/NOTES ; \
+		$(CXX) --version | head -n1 >> profiling/NOTES ; \
+		echo "MAKE: $(MAKE) $(MAKEFLAGS) -C $(top_srcdir) CXXFLAGS=\"$(CXXFLAGS)\"" >> profiling/NOTES ; \
+		echo "INPUT: $$i" >> profiling/NOTES ; \
+		echo >> profiling/NOTES ; \
+		time ( printf "cover ID\\nquit\\n" | $(PROF_CLIENT) $$i ) ; \
+		gprof $(PROF_CLIENT) > profiling/$$rev.$$ident ; \
+		gzip profiling/$$rev.$$ident ; \
+	done
+
+benchmark-%:
+	@echo "Running benchmarking script: `echo $@ | tr 'a-z' 'A-Z'`"
+	echo $(MAKE) $(AM_MAKEFLAGS) -C $(top_builddir) clean
+	echo $(MAKE) $(AM_MAKEFLAGS) -C $(top_builddir)
+	if [ -d $(top_srcdir)/.svn ] ; then \
+    rev="SVN.`svn info | grep ^Revision | cut -f2 -d" "`" ; \
+  elif [ -d $(top_srcdir)/.git ] ; then \
+    rev="GIT.`git show --pretty=format:%H | head -n1`" ; \
+  else \
+    echo "Could not determine revision" 1>&2 ; \
+    exit 1 ; \
+  fi ; \
+	ident=`date +%Y-%m-%d_%H%M%S` ; \
+	hname=`hostname` ; \
+	fname="$$rev.$$ident.$$hname" ; \
+	$(MAKE) $(AM_MAKEFLAGS) -C $(top_srcdir)/benchmarks $(subst benchmark-,,$@) top_builddir=`pwd`/$(top_builddir) LOG=$$fname
+	

@@ -1,0 +1,11 @@
+# vi: set ft=sh:
+
+source="ase-examples"
+extra_params="--unwind 3 code/ase-examples/list2.c"
+prepare=""
+query="in @FUNC(partition) cover @CONDITIONEDGE passing @7"
+tg=8
+unsat=3
+tc=1
+cputime=4
+

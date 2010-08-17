@@ -1,0 +1,27 @@
+- busybox-1.14.0: http://busybox.net/downloads/busybox-1.14.0.tar.bz2
+
+- engine-controllers: We were told that this is code generated from
+  MATLAB/Simulink models describing engine controllers from Magna/Steyr. Raimund
+  Kirner may have more information on this.
+
+- joplift: C version of Java code used as benchmark and in real application of a
+  Java optimized processor. Java code available at
+  http://www.soc.tuwien.ac.at/trac/jop/browser/java/target/src/bench/jbe/lift
+  (benchmark) and
+  http://www.soc.tuwien.ac.at/trac/jop/browser/java/target/src/app/tal
+  (application); it is described in http://www.jopdesign.com/doc/jopcmp_tecs.pdf
+  as "[...]  Lift is a real-world example with an industrial background - this
+  embedded application is a lift controller used in an automation factory. Lift
+  is part of an embedded Java benchmark suite called JavaBenchEmbedded." C
+  version was created by Benedikt Huber <benedikt@vmars.tuwien.ac.at>.
+
+- memory-manager: Dynamic memory manager developed by Boris Budweg (Diehl
+  Aerospace) for the InteCo project and possibly other helicopter applications.
+
+- nt-drivers: kbfiltr.i.cil.c: cpachecker SVN repository,
+  trunk/test/programs/ntdrivers/kbfiltr.i.cil.c 
+
+- picosat-913: Picosat SAT solver, version 913, see http://fmv.jku.at/picosat/
+
+- vfs-model: http://research.nianet.org/~radu/VFS/, presented at VMCAI'09.
+

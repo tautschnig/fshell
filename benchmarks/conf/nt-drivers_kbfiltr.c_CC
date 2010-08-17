@@ -1,0 +1,11 @@
+# vi: set ft=sh:
+
+source="nt-drivers"
+extra_params="--unwind 10 --no-unwinding-assertions"
+prepare="add sourcecode 'code/nt-drivers/kbfiltr.i.cil.c'"
+query="cover edges(@conditionedge)"
+tg=197
+unsat=191
+tc=2
+cputime=139.251
+

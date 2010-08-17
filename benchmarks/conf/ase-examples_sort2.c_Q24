@@ -1,0 +1,11 @@
+# vi: set ft=sh:
+
+source="ase-examples"
+extra_params="--unwind 4 --no-unwinding-assertions code/ase-examples/sort2.c"
+prepare=""
+query="cover @ENTRY(main) passing @ENTRY(main)->{precondition_holds()}.@41.{!postcondition_holds()}->@EXIT(main)"
+tg=2
+unsat=2
+tc=0
+cputime=1
+

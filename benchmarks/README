@@ -1,0 +1,26 @@
+** Running and Extending Benchmark Suites **
+
+A benchmark suite consists of a set of configurations; such a configuration
+describes which source code to run on and which parameters and queries should be
+passed to FShell.
+
+- Adding a new benchmark suite:
+  * Add a make variable FOO to benchmarks/Makefile that lists the configurations.
+  * Create the corresponding configuration files in benchmarks/conf.
+  * If necessary, add additional source code in benchmarks/code; source code
+    should be given as an archive of original source code (foo.tar.gz or
+    foo.tar.bz2). You may add a patch foo.patch, if necessary. In case you do
+    add code, add the corresponding basename to the BENCHMARKS variable in
+    code/Makefile to ensure proper cleanup.
+
+- Running a benchmark suite:
+  * Run make benchmark-FOO.suite in the top build directory or run make
+    FOO.suite in the benchmarks/ directory. The former allows running vpath
+    builds, such as those in build/audit or the like.
+
+- Running a single benchmark, debugging:
+  * Run make benchmark-foo.only, benchmark-foo.debug, or benchmark-foo.gdb,
+    depending on which level of debugging you need.
+
+The logs of all benchmark runs are left in benchmarks/logs/.
+

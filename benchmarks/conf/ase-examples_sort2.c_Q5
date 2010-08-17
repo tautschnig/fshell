@@ -1,0 +1,11 @@
+# vi: set ft=sh:
+
+source="ase-examples"
+extra_params="--unwind 4 --no-unwinding-assertions code/ase-examples/sort2.c"
+prepare=""
+query="cover PATHS(@FUNC(main) | @FUNC(insert),2)"
+tg=20
+unsat=7
+tc=4
+cputime=10
+

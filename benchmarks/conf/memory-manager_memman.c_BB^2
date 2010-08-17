@@ -1,0 +1,11 @@
+# vi: set ft=sh:
+
+source="memory-manager"
+extra_params="-Icode/memory-manager/inc code/memory-manager/main.c code/memory-manager/src/*.c --function memman --unwind 5 --no-unwinding-assertions"
+prepare=""
+query="cover edges(@basicblockentry)->edges(@basicblockentry)"
+tg=2756
+unsat=1961
+tc=4
+cputime=71.252
+

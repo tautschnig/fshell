@@ -1,0 +1,11 @@
+# vi: set ft=sh:
+
+source="vfs-model"
+extra_params="-Icode/vfs-model"
+prepare="add sourcecode 'code/vfs-model/pseudo_main.c'"
+query="cover edges(@basicblockentry)"
+tg=10
+unsat=0
+tc=3
+cputime=0.447
+

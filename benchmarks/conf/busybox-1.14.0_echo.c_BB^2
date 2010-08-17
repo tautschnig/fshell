@@ -1,0 +1,12 @@
+# vi: set ft=sh:
+
+source="busybox-1.14.0"
+extra_params="-Icode/busybox-1.14.0/include --unwind 3 --no-unwinding-assertions"
+prepare="add sourcecode 'code/busybox-1.14.0/coreutils/echo.c'
+set entry echo_main"
+query="cover edges(@basicblockentry)->edges(@basicblockentry)"
+tg=675
+unsat=605
+tc=3
+cputime=27.704
+
