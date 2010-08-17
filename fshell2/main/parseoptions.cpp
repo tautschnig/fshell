@@ -124,6 +124,12 @@ bool Parseoptions::get_command_line_options()
 	m_options.set_option("pointer-check", false);
 	m_options.set_option("assertions", false);
 
+	// use assumptions
+	if(cmdline.isset("no-assumptions"))
+		m_options.set_option("assumptions", false);
+	else
+		m_options.set_option("assumptions", true);
+
 	// generate unwinding assertions
 	m_options.set_option("unwinding-assertions",
 			!cmdline.isset("no-unwinding-assertions"));
@@ -310,6 +316,7 @@ void Parseoptions::help()
 		"Program instrumentation options:\n"
 		" --show-goto-functions        show goto program\n"
 		" --show-loops                 show the loops in the program\n"
+		" --no-assumptions             ignore user assumptions\n"
 		" --no-simplify                UNDOCUMENTED\n"
 		" --partial-loops              don't generate unwinding assumptions (also implies --no-unwinding-assertions)\n"
 		"\n"

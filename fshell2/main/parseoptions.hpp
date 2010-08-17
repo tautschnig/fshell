@@ -41,7 +41,7 @@
   "(function):(slice-by-trace):" \
   "(no-simplify)(unwind):(unwindset):(slice-formula)" \
   "D:I:(depth):" \
-  "(no-unwinding-assertions)" \
+  "(no-assumptions)(no-unwinding-assertions)" \
   "(partial-loops)(xml-ui)" \
   "(16)(32)(64)(little-endian)(big-endian)" \
   "(show-goto-functions)(show-loops)" \
