@@ -42,8 +42,8 @@
 FSHELL2_NAMESPACE_BEGIN;
 
 Constraint_Strengthening::Constraint_Strengthening(::fshell2::fql::CNF_Conversion & equation,
-		::fshell2::statistics::Statistics & stats) :
-	m_equation(equation), m_stats(stats)
+		::fshell2::statistics::Statistics & stats, ::optionst const& opts) :
+	m_equation(equation), m_stats(stats), m_opts(opts)
 {
 }
 
@@ -137,7 +137,7 @@ void Constraint_Strengthening::generate(test_cases_t & tcs) {
 				continue;
 			}
 			// test goal is done
-			// ::std::cerr << "Goal " << iter->first.var_no() << " sat" << ::std::endl;
+			// ::std::cerr << "Goal " << iter->first.dimacs() << " sat" << ::std::endl;
 			goals_done.push_back(::neg(iter->second));
 			fixed_literals.push_back(::neg(iter->second));
 			aux_var_map.erase(iter++);
@@ -158,7 +158,7 @@ void Constraint_Strengthening::generate(test_cases_t & tcs) {
 					continue;
 				}
 				// test goal is done
-				// ::std::cerr << "Goal " << iter->first.var_no() << " sat" << ::std::endl;
+				// ::std::cerr << "Goal " << iter->first.dimacs() << " sat" << ::std::endl;
 				goals_done.push_back(::neg(iter->second));
 				fixed_literals.push_back(::neg(iter->second));
 				aux_var_map.erase(iter++);
@@ -175,6 +175,18 @@ void Constraint_Strengthening::generate(test_cases_t & tcs) {
 	if (max_tcs_reached)
 		m_equation.warning(::diagnostics::internal::to_string("Stopped after computing ",
 					::config.fshell.max_test_cases, " test cases as requested"));
+	
+	if (!aux_var_map.empty()) {
+		::std::ostringstream oss;
+		oss << "Unsatisfied test goal ids:";
+		for (aux_var_map_t::const_iterator iter(aux_var_map.begin());
+				iter != aux_var_map.end(); ++iter)
+			oss << " " << iter->first.dimacs();
+		if (m_opts.get_bool_option("show-test-goals"))
+			m_equation.print(0, oss.str());
+		else
+			m_equation.warning(oss.str());
+	}
 }
 
 FSHELL2_NAMESPACE_END;

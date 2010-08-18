@@ -96,11 +96,7 @@ bool Parseoptions::get_command_line_options()
 		return true;
 	}
 
-	if(cmdline.isset("no-simplify"))
-		m_options.set_option("simplify", false);
-	else
-		m_options.set_option("simplify", true);
-
+	m_options.set_option("simplify", !cmdline.isset("no-simplify"));
 	m_options.set_option("all-claims", false);
 
 	if(cmdline.isset("unwind"))
@@ -125,22 +121,17 @@ bool Parseoptions::get_command_line_options()
 	m_options.set_option("assertions", false);
 
 	// use assumptions
-	if(cmdline.isset("no-assumptions"))
-		m_options.set_option("assumptions", false);
-	else
-		m_options.set_option("assumptions", true);
+	m_options.set_option("assumptions", !cmdline.isset("no-assumptions"));
 
 	// generate unwinding assertions
 	m_options.set_option("unwinding-assertions",
 			!cmdline.isset("no-unwinding-assertions"));
 
 	// generate unwinding assumptions otherwise
-	m_options.set_option("partial-loops",
-			cmdline.isset("partial-loops"));
+	m_options.set_option("partial-loops", cmdline.isset("partial-loops"));
 
 	// remove unused equations
-	m_options.set_option("slice-formula",
-			cmdline.isset("slice-formula"));
+	m_options.set_option("slice-formula", cmdline.isset("slice-formula"));
 
 	m_options.set_option("simplify-if", true);
 	m_options.set_option("arrays-uf", "auto");
@@ -149,11 +140,9 @@ bool Parseoptions::get_command_line_options()
 	if(cmdline.isset("outfile"))
 		m_options.set_option("outfile", cmdline.getval("outfile"));
 
-	if(cmdline.isset("show-goto-functions"))
-		m_options.set_option("show-goto-functions", true);
-
-	if(cmdline.isset("show-loops"))
-		m_options.set_option("show-loops", true);
+	m_options.set_option("show-goto-functions", cmdline.isset("show-goto-functions"));
+	m_options.set_option("show-test-goals", cmdline.isset("show-test-goals"));
+	m_options.set_option("show-loops", cmdline.isset("show-loops"));
 
 	set_verbosity(*this);
 
@@ -337,6 +326,7 @@ void Parseoptions::help()
 		" --statistics                 display statistics (implied by --verbosity > 2)\n"
 		" --xml-ui                     use XML-formatted output\n"
 		" --outfile Filename           write test inputs to Filename (appends)\n"
+		" --show-test-goals            print test goals derived from query\n"
 		"\n";
 }
 

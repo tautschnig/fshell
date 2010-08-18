@@ -40,6 +40,10 @@
 #include <cbmc/src/cbmc/bv_cbmc.h>
 #include <cbmc/src/solvers/sat/cnf_clause_list.h>
 
+#include <vector>
+#include <set>
+#include <map>
+
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
@@ -132,6 +136,9 @@ class Compute_Test_Goals_From_Instrumentation : private Standard_AST_Visitor_Asp
 					::std::set< ::literalt > > > pc_to_context_and_guards_t;
 	typedef ::std::map< ::goto_programt::const_targett,
 				::std::set< ::goto_programt::const_targett > > context_to_pcs_t;
+	typedef ::std::map< ::literalt, ::std::pair< ::literalt, ::literalt > > and_map_t;
+	typedef ::std::vector< ::goto_programt::const_targett > ctx_coll_t;
+	typedef ::std::map< ::literalt, ctx_coll_t > tg_to_ctx_map_t;
 	
 	::language_uit & m_manager;
 	::optionst const& m_opts;
@@ -140,6 +147,14 @@ class Compute_Test_Goals_From_Instrumentation : private Standard_AST_Visitor_Asp
 	Evaluate_Coverage_Pattern::Test_Goal_States const* m_test_goal_states;
 	pc_to_context_and_guards_t m_pc_to_guard;
 	CNF_Conversion::test_goals_t m_test_goals;
+	and_map_t m_and_map;
+	tg_to_ctx_map_t m_tg_to_ctx_map;
+
+	void print_test_goal(::literalt const& tg, ::std::ostream & os) const;
+	void store_mapping(::literalt const& tg,
+			::goto_programt::const_targett const& context);
+	void store_mapping(::literalt const& tg,
+			context_to_pcs_t const& context_to_pcs);
 
 	bool find_all_contexts(context_to_pcs_t & context_to_pcs);
 

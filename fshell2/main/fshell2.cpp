@@ -171,7 +171,7 @@ void FShell2::try_query(::language_uit & manager, char const * line) {
 	::fshell2::fql::CNF_Conversion & equation(goals.do_query(gf_copy, *query_ast));
 
 	// do the enumeration
-	::fshell2::Constraint_Strengthening cs(equation, stats);
+	::fshell2::Constraint_Strengthening cs(equation, stats, m_opts);
 	::fshell2::Constraint_Strengthening::test_cases_t test_suite;
 	cs.generate(test_suite);
 

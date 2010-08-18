@@ -114,7 +114,7 @@ void test( Test_Data & data )
 	TEST_CHECK_RELATION(6, ==, eq.get_test_goal_literals().size());
 
 	statistics::Statistics stats;
-	Constraint_Strengthening cs(eq, stats);
+	Constraint_Strengthening cs(eq, stats, options);
 	Constraint_Strengthening::test_cases_t test_suite;
 	cs.generate(test_suite);
 	TEST_ASSERT_RELATION(test_suite.size(), >=, 2);

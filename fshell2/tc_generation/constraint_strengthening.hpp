@@ -34,6 +34,7 @@
 #include <list>
 
 class cnf_clause_list_assignmentt;
+class optionst;
 
 FSHELL2_NAMESPACE_BEGIN;
 
@@ -61,13 +62,14 @@ class Constraint_Strengthening
 	typedef ::std::list< ::cnf_clause_list_assignmentt > test_cases_t;
 	
 	Constraint_Strengthening(::fshell2::fql::CNF_Conversion & equation,
-			::fshell2::statistics::Statistics & stats);
+			::fshell2::statistics::Statistics & stats, ::optionst const& opts);
 
 	void generate(test_cases_t & tcs);
 
 	private:
 	::fshell2::fql::CNF_Conversion & m_equation;
 	::fshell2::statistics::Statistics & m_stats;
+	::optionst const& m_opts;
 
 	/*! \copydoc copy_constructor
 	*/

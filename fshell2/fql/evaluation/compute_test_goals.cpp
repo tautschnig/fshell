@@ -125,6 +125,8 @@ Compute_Test_Goals_From_Instrumentation::~Compute_Test_Goals_From_Instrumentatio
 CNF_Conversion & Compute_Test_Goals_From_Instrumentation::do_query(::goto_functionst & gf, Query const& query) {
 	m_pc_to_guard.clear();
 	m_test_goals.clear();
+	m_and_map.clear();
+	m_tg_to_ctx_map.clear();
 	
 	// build a CFG to have forward and backward edges
 	::fshell2::instrumentation::CFG cfg;
@@ -165,6 +167,72 @@ CNF_Conversion & Compute_Test_Goals_From_Instrumentation::do_query(::goto_functi
 
 	return m_equation;
 }
+	
+void Compute_Test_Goals_From_Instrumentation::store_mapping(::literalt const& tg,
+			::goto_programt::const_targett const& context) {
+	context_to_pcs_t tmp;
+	tmp[ context ] = ::std::set< ::goto_programt::const_targett >();
+	store_mapping(tg, tmp);
+}
+
+void Compute_Test_Goals_From_Instrumentation::store_mapping(::literalt const& tg,
+			context_to_pcs_t const& context_to_pcs) {
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+			::literalt::unused_var_no() != tg.var_no());
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+			m_tg_to_ctx_map.end() == m_tg_to_ctx_map.find(tg));
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+			m_and_map.end() == m_and_map.find(tg));
+	
+	if (!tg.is_true() && !tg.is_false()) {
+		ctx_coll_t & ctxs(m_tg_to_ctx_map.insert(
+			::std::make_pair(tg, ctx_coll_t())).first->second);
+		ctxs.reserve(context_to_pcs.size());
+		for (context_to_pcs_t::const_iterator c_iter(context_to_pcs.begin()); 
+				c_iter != context_to_pcs.end(); ++c_iter)
+			ctxs.push_back(c_iter->first);
+	}
+}
+	
+void Compute_Test_Goals_From_Instrumentation::print_test_goal(::literalt const& tg,
+		::std::ostream & os) const {
+	if (tg.is_true()) {
+		os << "<TRUE>";
+		return;
+	} else if (tg.is_false()) {
+		os << "<FALSE>";
+		return;
+	}
+
+	and_map_t::const_iterator a_iter(m_and_map.find(tg));
+	if (m_and_map.end() != a_iter) {
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+				m_tg_to_ctx_map.end() == m_tg_to_ctx_map.find(tg));
+		print_test_goal(a_iter->second.first, os);
+		os << "...";
+		print_test_goal(a_iter->second.second, os);
+	} else {
+		tg_to_ctx_map_t::const_iterator entry(m_tg_to_ctx_map.find(tg));
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+				m_tg_to_ctx_map.end() != entry);
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !entry->second.empty());
+		if (1 == entry->second.size()) {
+			if (entry->second.front()->location.is_nil()) os << "NO_LOCATION";
+			else os << entry->second.front()->location.get_file() << ":"
+				<< entry->second.front()->location.get_line();
+		} else {
+			os << "(";
+			for (ctx_coll_t::const_iterator iter(entry->second.begin());
+					iter != entry->second.end(); ++iter) {
+				if (entry->second.begin() != iter) os << "|";
+				if ((*iter)->location.is_nil()) os << "NO_LOCATION";
+				else os << (*iter)->location.get_file() << ":"
+					<< (*iter)->location.get_line();
+			}
+			os << ")";
+		}
+	}
+}
 
 bool Compute_Test_Goals_From_Instrumentation::find_all_contexts(context_to_pcs_t & context_to_pcs) {
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !m_test_goal_states->m_tg_states.empty());
@@ -177,10 +245,8 @@ bool Compute_Test_Goals_From_Instrumentation::find_all_contexts(context_to_pcs_t
 		if (m_aut_insert.get_tg_aut().initial().end() != m_aut_insert.get_tg_aut().initial().find(*iter))
 			includes_initial_state = true;
 		if (m_aut_insert.get_tg_aut().delta2_backwards(*iter).empty()) continue;
-		// ::std::cerr << "Test goal state (unmapped): " << *iter << ::std::endl;
 		Automaton_Inserter::instrumentation_points_t const& nodes(
 				m_aut_insert.get_test_goal_instrumentation(*iter));
-		// ::std::cerr << "#instrumentation points: " << nodes.size() << ::std::endl;
 		for (Automaton_Inserter::instrumentation_points_t::const_iterator n_iter(
 					nodes.begin()); n_iter != nodes.end(); ++n_iter) {
 			//FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, n_iter->second->is_location());
@@ -253,20 +319,12 @@ void Compute_Test_Goals_From_Instrumentation::do_atom(Coverage_Pattern_Expr cons
 	// forall calling contexts
 	for (context_to_pcs_t::const_iterator c_iter(context_to_pcs.begin()); 
 			c_iter != context_to_pcs.end(); ++c_iter) {
-		// ::std::cerr << "Next context." << ::std::endl;
 		context_to_literals(c_iter->first, c_iter->second, set);
 		if (!make_single && !set.empty()) {
 			// ::std::cerr << "Adding subgoal composed of " << set.size() << " guards" << ::std::endl;
 			::literalt const tg(m_equation.get_cnf().lor(set));
-			// if (tg.is_true()) ::std::cerr << "TRUE!" << ::std::endl;
-			// if (tg.is_false()) ::std::cerr << "FALSE!" << ::std::endl;
-			// if (tg.var_no() == ::literalt::unused_var_no()) ::std::cerr << "INVALID!" << ::std::endl;
-			// ::std::cerr << "Atom-Subgoal " << tg.dimacs() << " for ctx " << c_iter->first->location << ::std::endl;
+			store_mapping(tg, c_iter->first);
 			m_test_goals.insert(tg);
-			/*for (Evaluate_Path_Monitor::test_goal_states_t::const_iterator s_iter(
-			  states.begin()); s_iter != states.end(); ++s_iter)
-			  m_state_context_tg_map[ *s_iter ].insert(::std::make_pair(c_iter->first, tg));
-			  */
 			set.clear();
 		}
 	}
@@ -274,12 +332,8 @@ void Compute_Test_Goals_From_Instrumentation::do_atom(Coverage_Pattern_Expr cons
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, make_single);
 		// ::std::cerr << "Adding subgoal composed of " << set.size() << " guards" << ::std::endl;
 		::literalt const tg(m_equation.get_cnf().lor(set));
-		// ::std::cerr << "Quote-Subgoal " << tg.var_no() << ::std::endl;
+		store_mapping(tg, context_to_pcs);
 		m_test_goals.insert(tg);
-		/*for (Evaluate_Path_Monitor::test_goal_states_t::const_iterator s_iter(
-		  states.begin()); s_iter != states.end(); ++s_iter)
-		  m_state_context_tg_map[ *s_iter ].insert(::std::make_pair(c_iter->first, tg));
-		  */
 	}
 }
 	
@@ -314,7 +368,10 @@ void Compute_Test_Goals_From_Instrumentation::visit(CP_Concat const* n) {
 		for (CNF_Conversion::test_goals_t::const_iterator bgi(backup2.begin());
 				bgi != backup2.end(); ++bgi) {
 			::literalt const sg(m_equation.get_cnf().land(*agi, *bgi));
-			// ::std::cerr << "Concat-Subgoal " << sg.dimacs() << " == " << agi->dimacs() << " AND " << bgi->dimacs() << ::std::endl;
+			// if (agi->is_true()) ::std::cerr << agi->dimacs() << " is TRUE" << ::std::endl;
+			// if (agi->is_false()) ::std::cerr << agi->dimacs() << " is FALSE" << ::std::endl;
+			// ::std::cerr << sg.dimacs() << " == " << agi->dimacs() << " AND " << bgi->dimacs() << ::std::endl;
+			m_and_map.insert(::std::make_pair(sg, ::std::make_pair(*agi, *bgi)));
 			m_test_goals.insert(sg);
 		}
 }
@@ -344,9 +401,16 @@ void Compute_Test_Goals_From_Instrumentation::visit(Predicate const* n) {
 void Compute_Test_Goals_From_Instrumentation::visit(Query const* n) {
 	n->get_cover()->accept(this);
 
+	bool const do_print(m_opts.get_bool_option("show-test-goals"));
+
 	for (CNF_Conversion::test_goals_t::const_iterator iter(m_test_goals.begin());
 			iter != m_test_goals.end(); ++iter) {
-		// ::std::cerr << "Adding test goal marker for " << iter->dimacs() << ::std::endl;
+		if (do_print) {
+			::std::ostringstream oss;
+			oss << "Test goal " << iter->dimacs() << ": ";
+			print_test_goal(*iter, oss);
+			m_manager.print(0, oss.str());
+		}
 		m_equation.mark_as_test_goal(*iter);
 	}
 }
