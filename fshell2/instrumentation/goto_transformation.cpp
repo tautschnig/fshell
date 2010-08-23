@@ -202,30 +202,21 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 		}
 
 		::std::list< ::exprt > alt_names;
-		::goto_functionst::function_mapt::iterator main_entry(m_goto.function_map.end()),
-			fct_entry(m_goto.function_map.end());
+		::goto_functionst::function_mapt::iterator fct_entry(m_goto.function_map.end());
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !node.first->instructions.empty());
 		// walk the function map to check for matching function names
 		for (::goto_functionst::function_mapt::iterator fmap_entry(m_goto.function_map.begin());
 				fmap_entry != m_goto.function_map.end(); ++fmap_entry) {
-			if (fmap_entry->first == "main") main_entry = fmap_entry;
 			if (fmap_entry->first == node.first->instructions.front().function) fct_entry = fmap_entry;
 			::symbolt const& symb(ns.lookup(fmap_entry->first));
 			if ((*iter)->get("identifier") == symb.base_name) alt_names.push_back(::symbol_expr(symb));
 		}
 		// check globals
-		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, main_entry != m_goto.function_map.end());
-		for (::goto_programt::instructionst::const_iterator f_iter(main_entry->second.body.instructions.begin());
-				f_iter != main_entry->second.body.instructions.end(); ++f_iter) {
-			if (!f_iter->is_decl()) continue;
-			::std::list< ::exprt const* > decl_symbols;
-			find_symbols(f_iter->code, decl_symbols);
-			for (::std::list< ::exprt const* >::const_iterator s_iter(decl_symbols.begin());
-					s_iter != decl_symbols.end(); ++s_iter) {
-				::symbolt const& symb(ns.lookup((*s_iter)->get("identifier")));
-				if ((*iter)->get("identifier") == symb.base_name) alt_names.push_back(**s_iter);
-			}
-		}
+		symbolst::const_iterator global_symb(
+				m_manager.context.symbols.find(::diagnostics::internal::to_string(
+						"c::",(*iter)->get("identifier"))));
+		if (global_symb != m_manager.context.symbols.end() && global_symb->second.static_lifetime)
+			alt_names.push_back(::symbol_expr(global_symb->second));
 		// function arguments
 		FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, fct_entry != m_goto.function_map.end(),
 				::diagnostics::internal::to_string("Function ",
