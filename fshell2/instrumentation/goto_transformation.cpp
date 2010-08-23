@@ -73,6 +73,23 @@ bool GOTO_Transformation::is_instrumented(::goto_programt::const_targett inst) {
 	return (inst->location.get_property() == "fshell2_instrumentation");
 }
 	
+bool GOTO_Transformation::is_goto_edge(goto_edge_t const& edge) {
+	if (!edge.first.second->is_goto()) return false;
+	if (edge.first.second->guard.is_true()) return true;
+	// if it is a backward edge then it must be the goto edge; check
+	// the other case
+	if (edge.first.second->location_number >
+			edge.second.second->location_number) return true;
+	// a forward goto; if there are only newly instrumented edges
+	// between source and target of this edge, it cannot be the goto
+	// edge (given that the guard is not trivially true)
+	bool instrumentation_only(true);
+	::goto_programt::const_targett iter(edge.first.second);
+	for (++iter; iter != edge.second.second && instrumentation_only; ++iter)
+		instrumentation_only = is_instrumented(iter);
+	return !instrumentation_only;
+}
+	
 void GOTO_Transformation::make_function_call(::goto_programt::targett ins,
 			::std::string const& func_name) {
 	ins->type = FUNCTION_CALL;

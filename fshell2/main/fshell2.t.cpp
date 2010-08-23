@@ -121,12 +121,7 @@ void test_interactive( Test_Data & data )
 	::unlink(tempname_str.c_str());
 }
 
-////////////////////////////////////////////////////////////////////////////////
-/**
- * @test A test of FShell2
- *
- */
-void test_single2( Test_Data & data )
+void do_test_single2( Test_Data & data, bool const use_instrumentation )
 {
 	::std::string const tempname_str(::get_temporary_file("tmp.src", ".c"));
 	::std::ofstream of(tempname_str.c_str());
@@ -156,6 +151,7 @@ of
 	::optionst options;
 	options.set_option("show-test-goals", true);
 	options.set_option("statistics", true);
+	options.set_option("use-instrumentation", use_instrumentation);
 	l.set_verbosity(0);
 	::goto_functionst gf;
 
@@ -176,6 +172,27 @@ of
 	TEST_ASSERT(fshell.process_line(l, "QUIT"));
 }	
 
+
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * @test A test of FShell2
+ *
+ */
+void test_single2( Test_Data & data )
+{
+	do_test_single2(data, false);
+}	
+
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * @test A test of FShell2
+ *
+ */
+void test_single2_instrumentation( Test_Data & data )
+{
+	do_test_single2(data, true);
+}	
+
 /** @cond */
 TEST_COMPONENT_TEST_NAMESPACE_END;
 TEST_NAMESPACE_END;
@@ -190,6 +207,7 @@ TEST_NORMAL_CASE( &test_single, LEVEL_PROD );
 TEST_NORMAL_CASE( &test_interactive, LEVEL_PROD );
 #endif
 TEST_NORMAL_CASE( &test_single2, LEVEL_PROD );
+TEST_NORMAL_CASE( &test_single2_instrumentation, LEVEL_PROD );
 TEST_SUITE_END;
 
 STREAM_TEST_SYSTEM_MAIN;

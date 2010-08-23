@@ -45,6 +45,13 @@
 #include <map>
 
 FSHELL2_NAMESPACE_BEGIN;
+
+FSHELL2_STATISTICS_NAMESPACE_BEGIN;
+
+class Statistics;
+
+FSHELL2_STATISTICS_NAMESPACE_END;
+
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 class Evaluate_Path_Pattern;
@@ -116,36 +123,29 @@ inline ::namespacet const& CNF_Conversion::get_ns() const {
 
 /*! \brief TODO
 */
-class Compute_Test_Goals_From_Instrumentation : private Standard_AST_Visitor_Aspect<AST_Visitor>
+class Compute_Test_Goals : protected Standard_AST_Visitor_Aspect<AST_Visitor>
 {
 	/*! \copydoc doc_self
 	*/
-	typedef Compute_Test_Goals_From_Instrumentation Self;
+	typedef Compute_Test_Goals Self;
 
 	public:
-	Compute_Test_Goals_From_Instrumentation(::language_uit & manager,
+	Compute_Test_Goals(::language_uit & manager,
 			::optionst const& opts);
 
-	virtual ~Compute_Test_Goals_From_Instrumentation();
+	virtual ~Compute_Test_Goals();
 
-	CNF_Conversion & do_query(::goto_functionst & gf, Query const& query);
+	virtual CNF_Conversion & do_query(::goto_functionst & gf, Query const& query) = 0;
 
-	private:
-	typedef ::std::map< ::goto_programt::const_targett,
-				::std::map< ::goto_programt::const_targett, 
-					::std::set< ::literalt > > > pc_to_context_and_guards_t;
-	typedef ::std::map< ::goto_programt::const_targett,
-				::std::set< ::goto_programt::const_targett > > context_to_pcs_t;
+	protected:
 	typedef ::std::map< ::literalt, ::std::pair< ::literalt, ::literalt > > and_map_t;
 	typedef ::std::vector< ::goto_programt::const_targett > ctx_coll_t;
 	typedef ::std::map< ::literalt, ctx_coll_t > tg_to_ctx_map_t;
 	
 	::language_uit & m_manager;
 	::optionst const& m_opts;
-	Automaton_Inserter m_aut_insert;
 	CNF_Conversion m_equation;
 	Evaluate_Coverage_Pattern::Test_Goal_States const* m_test_goal_states;
-	pc_to_context_and_guards_t m_pc_to_guard;
 	CNF_Conversion::test_goals_t m_test_goals;
 	and_map_t m_and_map;
 	tg_to_ctx_map_t m_tg_to_ctx_map;
@@ -153,15 +153,9 @@ class Compute_Test_Goals_From_Instrumentation : private Standard_AST_Visitor_Asp
 	void print_test_goal(::literalt const& tg, ::std::ostream & os) const;
 	void store_mapping(::literalt const& tg,
 			::goto_programt::const_targett const& context);
-	void store_mapping(::literalt const& tg,
-			context_to_pcs_t const& context_to_pcs);
+	void store_mapping(::literalt const& tg, ctx_coll_t const& contexts);
 
-	bool find_all_contexts(context_to_pcs_t & context_to_pcs);
-
-	void context_to_literals(::goto_programt::const_targett const& context,
-		::std::set< ::goto_programt::const_targett > const& pcs, ::bvt & test_goal_literals) const;
-
-	void do_atom(Coverage_Pattern_Expr const* n, bool epsilon_permitted, bool make_single);
+	virtual void do_atom(Coverage_Pattern_Expr const* n, bool epsilon_permitted, bool make_single) = 0;
 	
 	/*! \{
 	 * \brief Visit a @ref fshell2::fql::CP_Alternative
@@ -229,6 +223,49 @@ class Compute_Test_Goals_From_Instrumentation : private Standard_AST_Visitor_Asp
 
 	/*! \copydoc copy_constructor
 	*/
+	Compute_Test_Goals( Self const& rhs );
+
+	/*! \copydoc assignment_op
+	 */
+	Self& operator=( Self const& rhs );
+};
+
+
+/*! \brief TODO
+*/
+class Compute_Test_Goals_From_Instrumentation : public Compute_Test_Goals
+{
+	/*! \copydoc doc_self
+	*/
+	typedef Compute_Test_Goals_From_Instrumentation Self;
+
+	public:
+	Compute_Test_Goals_From_Instrumentation(::language_uit & manager,
+			::optionst const& opts);
+
+	virtual ~Compute_Test_Goals_From_Instrumentation();
+
+	CNF_Conversion & do_query(::goto_functionst & gf, Query const& query);
+
+	private:
+	typedef ::std::map< ::goto_programt::const_targett,
+				::std::map< ::goto_programt::const_targett, 
+					::std::set< ::literalt > > > pc_to_context_and_guards_t;
+	typedef ::std::map< ::goto_programt::const_targett,
+				::std::set< ::goto_programt::const_targett > > context_to_pcs_t;
+	
+	Automaton_Inserter m_aut_insert;
+	pc_to_context_and_guards_t m_pc_to_guard;
+
+	bool find_all_contexts(context_to_pcs_t & context_to_pcs);
+
+	void context_to_literals(::goto_programt::const_targett const& context,
+		::std::set< ::goto_programt::const_targett > const& pcs, ::bvt & test_goal_literals) const;
+
+	virtual void do_atom(Coverage_Pattern_Expr const* n, bool epsilon_permitted, bool make_single);
+	
+	/*! \copydoc copy_constructor
+	*/
 	Compute_Test_Goals_From_Instrumentation( Self const& rhs );
 
 	/*! \copydoc assignment_op
@@ -238,32 +275,55 @@ class Compute_Test_Goals_From_Instrumentation : private Standard_AST_Visitor_Asp
 
 /*! \brief TODO
 */
-class Compute_Test_Goals_Boolean
+class Compute_Test_Goals_Boolean : public Compute_Test_Goals
 {
 	/*! \copydoc doc_self
 	*/
 	typedef Compute_Test_Goals_Boolean Self;
 
 	public:
-	Compute_Test_Goals_Boolean(CNF_Conversion & equation,
-			Evaluate_Path_Pattern const& pp_eval,
-			Evaluate_Coverage_Pattern const& cp_eval);
+	Compute_Test_Goals_Boolean(::language_uit & manager, ::optionst const& opts,
+			::fshell2::statistics::Statistics & stats);
 
 	virtual ~Compute_Test_Goals_Boolean();
 
-	void compute(Query const& query);
+	CNF_Conversion & do_query(::goto_functionst & gf, Query const& query);
 
 	private:
-	CNF_Conversion & m_equation;
-	Evaluate_Path_Pattern const& m_pp_eval;
-	Evaluate_Coverage_Pattern const& m_cp_eval;
-	/*typedef ::std::map< ta_state_t, 
-		::std::map< ::goto_programt::const_targett, test_goal_t > > state_context_tg_t;
-	state_context_tg_t m_state_context_tg_map;*/
-	typedef ::std::map< ::goto_programt::const_targett,
-				::std::map< ::goto_programt::const_targett, 
-					::std::set< ::literalt > > > pc_to_context_and_guards_t;
-	pc_to_context_and_guards_t m_pc_to_guard;
+	typedef ::std::map< target_graph_t::edge_t, ::std::set< target_graph_t const* > > edge_to_target_graphs_t;
+	typedef ::std::map< target_graph_t::node_t, ::std::set< target_graph_t const* > > node_to_target_graphs_t;
+	typedef ::std::map< ::goto_programt::const_targett, edge_to_target_graphs_t > loc_to_edge_target_graphs_t; 
+	typedef ::std::map< ::goto_programt::const_targett, node_to_target_graphs_t > loc_to_node_target_graphs_t; 
+	typedef ::std::map< ta_state_t, ta_state_set_t > symbol_transition_map_t;
+	typedef ::std::map< int, symbol_transition_map_t > transition_map_t;
+	typedef ::std::map< target_graph_t const*, int > target_graph_to_int_t;
+	typedef ::std::map< ta_state_t, ::bvt > bv_cache_t;
+	typedef ::std::map< ta_state_t, ::literalt > eq_cache_t;
+	typedef ::std::map< target_graph_t::edge_t, ::std::set< ::literalt > > edge_to_literal_map_t; 
+	typedef ::std::map< ta_state_t, edge_to_literal_map_t > state_edge_lit_map_t;
+
+	::fshell2::statistics::Statistics & m_stats;
+	Evaluate_Coverage_Pattern m_cp_eval;
+	loc_to_node_target_graphs_t m_loc_to_node_target_graphs_map;
+	loc_to_edge_target_graphs_t m_loc_to_edge_target_graphs_map;
+	state_edge_lit_map_t m_tg_to_lit_map;
+	
+	::bvt const& state_to_bvt_lookup(::bv_utilst & bv_utils, bv_cache_t & bv_cache,
+			ta_state_t const& state, unsigned const width);
+	::literalt const& make_equals(::bv_utilst & bv_utils, eq_cache_t & eq_cache,
+			::bvt const& state_vec, bv_cache_t & bv_cache, ta_state_t const&
+			state, unsigned const width);
+	void build(trace_automaton_t const& aut, bool map_tg);
+	void do_step(::cnf_clause_list_assignmentt & cnf, ::bv_utilst & bv_utils,
+			bv_cache_t & bv_cache, eq_cache_t & prev_eq_cache, eq_cache_t & next_eq_cache,
+			::bvt & prev_state, ta_state_set_t & possibly_reached_states,
+			unsigned const width,
+			::symex_target_equationt::SSA_stepst::const_iterator const step,
+			target_graph_to_int_t const& local_target_graph_map, bool map_tg,
+			transition_map_t const& transitions, ta_state_map_t const&
+			reverse_state_map);
+	
+	virtual void do_atom(Coverage_Pattern_Expr const* n, bool epsilon_permitted, bool make_single);
 
 	/*! \copydoc copy_constructor
 	*/

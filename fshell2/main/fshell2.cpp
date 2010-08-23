@@ -164,11 +164,15 @@ void FShell2::try_query(::language_uit & manager, char const * line) {
 	
 	// compute test goals
 	Context_Backup context_backup(manager);
-	::fshell2::fql::Compute_Test_Goals_From_Instrumentation goals(manager, m_opts);
+	::std::auto_ptr< ::fshell2::fql::Compute_Test_Goals > goals(0);
+	if (m_opts.get_bool_option("use-instrumentation"))
+		goals.reset(new ::fshell2::fql::Compute_Test_Goals_From_Instrumentation(manager, m_opts));
+	else
+		goals.reset(new ::fshell2::fql::Compute_Test_Goals_Boolean(manager, m_opts, stats));
 	// copy goto program, it will be modified
 	::goto_functionst gf_copy;
 	gf_copy.copy_from(m_gf);
-	::fshell2::fql::CNF_Conversion & equation(goals.do_query(gf_copy, *query_ast));
+	::fshell2::fql::CNF_Conversion & equation(goals->do_query(gf_copy, *query_ast));
 
 	// do the enumeration
 	::fshell2::Constraint_Strengthening cs(equation, stats, m_opts);

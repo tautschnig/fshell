@@ -113,6 +113,10 @@ void Constraint_Strengthening::generate(test_cases_t & tcs) {
 		tcs.push_back(::cnf_clause_list_assignmentt());
 		tcs.back().set_no_variables(cnf.no_variables());
 		tcs.back().copy_assignment_from(minisat);
+		/*
+		for (unsigned i(0); i != cnf.no_variables()-1; ++i)
+			::std::cerr << (i+1) << ": " << (minisat.l_get(::literalt(i+1,false)).is_false() ? "FALSE" : "TRUE") << ::std::endl;
+		*/
 
 		// deactivate test goals
 		/*::fshell2::fql::Compute_Test_Goals_From_Instrumentation::test_goals_t const& satisfied_tg(m_equation.get_satisfied_test_goals());

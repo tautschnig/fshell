@@ -143,6 +143,7 @@ bool Parseoptions::get_command_line_options()
 	m_options.set_option("show-goto-functions", cmdline.isset("show-goto-functions"));
 	m_options.set_option("show-test-goals", cmdline.isset("show-test-goals"));
 	m_options.set_option("show-loops", cmdline.isset("show-loops"));
+	m_options.set_option("use-instrumentation", cmdline.isset("use-instrumentation"));
 
 	set_verbosity(*this);
 
@@ -327,6 +328,7 @@ void Parseoptions::help()
 		" --xml-ui                     use XML-formatted output\n"
 		" --outfile Filename           write test inputs to Filename (appends)\n"
 		" --show-test-goals            print test goals derived from query\n"
+		" --use-instrumentation        instrument trace automata into GOTO program\n"
 		"\n";
 }
 

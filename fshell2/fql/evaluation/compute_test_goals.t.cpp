@@ -42,6 +42,8 @@
 #include <fshell2/fql/ast/query.hpp>
 #include <fshell2/fql/ast/quote.hpp>
 
+#include <fshell2/util/statistics.hpp>
+
 #include <fstream>
 
 #include <cbmc/src/util/config.h>
@@ -148,37 +150,22 @@ void test_boolean( Test_Data & data )
 	TEST_CHECK(!l.final());
     
 	::goto_convert(l.context, options, gf, l.ui_message_handler);
-	::fshell2::instrumentation::CFG cfg;
-	cfg.compute_edges(gf);
 	
 	Path_Pattern_Expr * id_kleene(FQL_CREATE3(Repeat, FQL_CREATE1(Edgecov,
 					FQL_CREATE_FF0(F_IDENTITY)), 0, -1));
 	Coverage_Pattern_Expr * id_kleene_q(FQL_CREATE1(Quote, id_kleene));
-		
 	Filter_Expr * bb(FQL_CREATE_FF0(F_BASICBLOCKENTRY));
 	Edgecov * e(FQL_CREATE1(Edgecov, bb));
 	Coverage_Pattern_Expr * c(FQL_CREATE2(CP_Concat, id_kleene_q,
 				FQL_CREATE2(CP_Concat, e, id_kleene_q)));
-
 	Query * q(Query::Factory::get_instance().create(0, c, id_kleene));
 	
-	::fshell2::fql::Evaluate_Coverage_Pattern cp_eval(l);
-	cp_eval.do_query(gf, cfg, *q);
+	statistics::Statistics stats;
+	Compute_Test_Goals_Boolean goals(l, options, stats);
+	CNF_Conversion & eq(goals.do_query(gf, *q));
 	
-	::goto_programt tmp;
-	::goto_programt::targett as(tmp.add_instruction(ASSERT));
-	as->make_assertion(::false_exprt());
-	::fshell2::instrumentation::GOTO_Transformation inserter(l, gf);
-	inserter.insert("main", ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::END_FUNCTION, tmp);
-
-	CNF_Conversion eq(l, options);
-	eq.convert(gf);
-
-	Compute_Test_Goals_Boolean goals(eq, cp_eval.get_pp_eval(), cp_eval);
-	goals.compute(*q);
 	CNF_Conversion::test_goals_t const& bb_goals(eq.get_test_goal_literals());
-
-	// TEST_ASSERT_RELATION(6, ==, bb_goals.size());
+	TEST_ASSERT_RELATION(6, ==, bb_goals.size());
 }
 
 /** @cond */
