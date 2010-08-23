@@ -151,6 +151,13 @@ void test_use_case( Test_Data & data )
 	os << *q;
 	TEST_ASSERT(data.compare("parsed_use_case_query_5", os.str()));
 	q->destroy();
+	
+	qp.parse(os, "in @file('bla.c') cover id passing nodes(id)", &q);
+	TEST_ASSERT(q != 0);
+	os.str("");
+	os << *q;
+	TEST_ASSERT(data.compare("parsed_use_case_query_6", os.str()));
+	q->destroy();
 }
 
 /** @cond */

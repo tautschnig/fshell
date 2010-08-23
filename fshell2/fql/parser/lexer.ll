@@ -228,10 +228,10 @@ TOK_NAT_NUMBER          [0-9]+
                                         return TOK_ARBITRARY_PRED; 
                                       }
 
-<query_cover>{TOK_NODECOV}   { return TOK_NODECOV; }
-<query_cover>{TOK_EDGECOV}   { return TOK_EDGECOV; }
-<query_cover>{TOK_PATHCOV}   { return TOK_PATHCOV; }
-<query_cover>{TOK_DEPCOV}   { return TOK_DEPCOV; }
+<query_cover,query_passing>{TOK_NODECOV}   { return TOK_NODECOV; }
+<query_cover,query_passing>{TOK_EDGECOV}   { return TOK_EDGECOV; }
+<query_cover,query_passing>{TOK_PATHCOV}   { return TOK_PATHCOV; }
+<query_cover,query_passing>{TOK_DEPCOV}   { return TOK_DEPCOV; }
 
 <query_cover,query_passing>{TOK_NEXT}   { return TOK_NEXT; }
 <query_cover,query_passing>{TOK_CONCAT}   { return TOK_CONCAT; }
