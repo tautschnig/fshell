@@ -31,6 +31,7 @@
 #include <fshell2/config/config.hpp>
 #include <fshell2/config/annotations.hpp>
 
+#include <fshell2/util/statistics.hpp>
 #include <fshell2/main/fshell2.hpp>
 
 #include <cerrno>
@@ -121,6 +122,16 @@ void test_interactive( Test_Data & data )
 	::unlink(tempname_str.c_str());
 }
 
+#define QUERY(dataname, querystr) \
+	{ \
+		::fshell2::statistics::Statistics stats; \
+		TEST_ASSERT(!fshell.process_line(l, querystr, stats)); \
+		oss.str(""); \
+		stats.print(msg); \
+		oss.str(oss.str().substr(oss.str().find("Possibly feasible test goals:"))); \
+		TEST_ASSERT(data.compare(dataname ":" querystr, oss.str())); \
+	} DUMMY_FUNC
+
 void do_test_single2( Test_Data & data, bool const use_instrumentation )
 {
 	::std::string const tempname_str(::get_temporary_file("tmp.src", ".c"));
@@ -159,16 +170,22 @@ of
 	
 	TEST_ASSERT(!fshell.process_line(l, ::diagnostics::internal::to_string("add sourcecode '", tempname_str, "'").c_str()));
 	::unlink(tempname_str.c_str());
-	TEST_ASSERT(!fshell.process_line(l, "cover edges(@basicblockentry)"));
-	TEST_ASSERT(!fshell.process_line(l, "cover edges(@basicblockentry) passing @func(main)*.@label(L1)->@label(L2).@func(main)*"));
-	TEST_ASSERT(!fshell.process_line(l, "cover edges(@basicblockentry) passing @func(main)*.@label(L2)->@label(L1).@func(main)*"));
-	TEST_ASSERT(!fshell.process_line(l, "cover edges(@conditionedge)->edges(@conditionedge)"));
-	TEST_ASSERT(!fshell.process_line(l, "cover edges(@basicblockentry). \"@func(main)*\" .edges(@basicblockentry)"));
-	TEST_ASSERT(!fshell.process_line(l, "cover paths(id,1)"));
-	TEST_ASSERT(!fshell.process_line(l, "cover @label(L2).{x>=0}"));
-	TEST_ASSERT(!fshell.process_line(l, "cover @label(L2).{x>0}"));
-	TEST_ASSERT(!fshell.process_line(l, "cover {x>0}.@label(L2)"));
-	TEST_ASSERT(!fshell.process_line(l, "cover nodes(id)"));
+	
+	::std::ostringstream oss;
+	::stream_message_handlert mh(oss);
+	::messaget msg(mh);
+
+	QUERY("query1", "cover edges(@basicblockentry)");
+	QUERY("query2", "cover edges(@basicblockentry) passing @func(main)*.@label(L1)->@label(L2).@func(main)*");
+	QUERY("query3", "cover edges(@basicblockentry) passing @func(main)*.@label(L2)->@label(L1).@func(main)*");
+	QUERY("query4", "cover edges(@conditionedge)->edges(@conditionedge)");
+	QUERY("query5", "cover edges(@basicblockentry). \"@func(main)*\" .edges(@basicblockentry)");
+	QUERY("query6", "cover paths(id,1)");
+	QUERY("query7", "cover @label(L2).{x>=0}");
+	QUERY("query8", "cover @label(L2).{x>0}");
+	QUERY("query9", "cover {x>0}.@label(L2)");
+	QUERY("query10", "cover nodes(id)");
+	
 	TEST_ASSERT(fshell.process_line(l, "QUIT"));
 }	
 

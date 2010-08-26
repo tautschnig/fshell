@@ -44,6 +44,12 @@ class optionst;
 
 FSHELL2_NAMESPACE_BEGIN;
 
+FSHELL2_STATISTICS_NAMESPACE_BEGIN;
+
+class Statistics;
+
+FSHELL2_STATISTICS_NAMESPACE_END;
+
 /*! \brief TODO
 */
 class FShell2
@@ -56,6 +62,8 @@ class FShell2
 	FShell2(::optionst const& opts, ::goto_functionst & gf);
 
 	bool process_line(::language_uit & manager, char const * line);
+	bool process_line(::language_uit & manager, char const * line,
+			::fshell2::statistics::Statistics & stats);
 
 	void interactive(::language_uit & manager);
 
@@ -69,7 +77,8 @@ class FShell2
 	::fshell2::fql::Query_Parser m_fql_parser;
 	bool m_first_run;
 
-	void try_query(::language_uit & manager, char const * line);
+	void try_query(::language_uit & manager, char const * line,
+			::fshell2::statistics::Statistics & stats);
 
 	/*! \copydoc copy_constructor
 	*/

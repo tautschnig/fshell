@@ -114,7 +114,9 @@ Context_Backup::~Context_Backup() {
 	m_manager.context.swap(m_context);
 }
 
-void FShell2::try_query(::language_uit & manager, char const * line) {
+void FShell2::try_query(::language_uit & manager, char const * line,
+		::fshell2::statistics::Statistics & stats)
+{
 	::std::string query(m_macro.expand(line));
 	if (query.empty()) return;
 
@@ -153,7 +155,6 @@ void FShell2::try_query(::language_uit & manager, char const * line) {
 	::std::ostream & os((output.empty() || output == "-") ? ::std::cout : of); 
 
 	// collect per-query statistics
-	::fshell2::statistics::Statistics stats;
 	NEW_STAT(stats, CPU_Timer, timer, "Query CPU time");
 	timer.start_timer();
 
@@ -189,11 +190,20 @@ void FShell2::try_query(::language_uit & manager, char const * line) {
 	of.close();
 
 	timer.stop_timer();
+}
+	
+bool FShell2::process_line(::language_uit & manager, char const * line)
+{
+	::fshell2::statistics::Statistics stats;
+	bool const result(process_line(manager, line, stats));
 	if (m_opts.get_bool_option("statistics"))
 		stats.print(manager);
+	return result;
 }
 
-bool FShell2::process_line(::language_uit & manager, char const * line) {
+bool FShell2::process_line(::language_uit & manager, char const * line,
+			::fshell2::statistics::Statistics & stats)
+{
 	using ::fshell2::command::Command_Processing;
 
 	Smart_Printer smp(manager);
@@ -211,7 +221,7 @@ bool FShell2::process_line(::language_uit & manager, char const * line) {
 			return false;
 		case Command_Processing::NO_CONTROL_COMMAND:
 			smp.print_now();
-			try_query(manager, line);
+			try_query(manager, line, stats);
 			return false;
 	}
 
