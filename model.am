@@ -12,7 +12,7 @@ vpath %.ll $(srcdir)
 
 DIAGNOSTICSLEVEL ?= @DIAGNOSTICSLEVEL@
 
-AM_CPPFLAGS = -I$(top_builddir) -I$(top_srcdir) -I$(top_builddir)/cbmc/src/ -I$(top_builddir)/cbmc/src/util/ -I$(top_srcdir)/astl/include -DFSHELL2_DEBUG__LEVEL__=$(DIAGNOSTICSLEVEL)
+AM_CPPFLAGS = -I$(top_builddir) -I$(top_srcdir) -I$(top_builddir)/cbmc/src/ -I$(top_builddir)/cbmc/src/util/ -I$(top_srcdir)/astl/include -I$(top_srcdir)/minisat-2.2.0 -DFSHELL2_DEBUG__LEVEL__=$(DIAGNOSTICSLEVEL)
 
 MAINTAINERCLEANFILES = Makefile.in
 MOSTLYCLEANFILES = diag_stamp_*

@@ -32,7 +32,7 @@
 #include <diagnostics/basic_exceptions/invalid_protocol.hpp>
 
 #include <cbmc/src/util/message.h>
-#include <MiniSat-p_v1.14/Global.h>
+#include <minisat-2.2.0/utils/System.h>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_STATISTICS_NAMESPACE_BEGIN;
@@ -102,14 +102,14 @@ void CPU_Timer::start_timer()
 {
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Protocol, !m_timer_running);
 	m_timer_running = true;
-	m_time = -::cpuTime();
+	m_time = -::Minisat::cpuTime();
 }
 
 void CPU_Timer::stop_timer()
 {
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Protocol, m_timer_running);
 	m_timer_running = false;
-	m_time += ::cpuTime();
+	m_time += ::Minisat::cpuTime();
 }
 
 Wallclock_Timer::Wallclock_Timer(::std::string const& name) :

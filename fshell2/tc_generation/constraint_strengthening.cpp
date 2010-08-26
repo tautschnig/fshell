@@ -35,7 +35,7 @@
 #include <fshell2/fql/evaluation/compute_test_goals.hpp>
 
 #include <cbmc/src/util/config.h>
-#include <cbmc/src/solvers/sat/satcheck_minisat.h>
+#include <cbmc/src/solvers/sat/satcheck_minisat2.h>
 // #include <cbmc/src/goto-symex/build_goto_trace.h>
 // #include <cbmc/src/solvers/sat/dimacs_cnf.h>
 

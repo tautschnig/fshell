@@ -5,7 +5,7 @@ include $(top_srcdir)/performance.am
 AM_MAKEFLAGS = CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS)"
 
 # add further subdirectories here
-SUBDIRS = . test doc MiniSat-p_v1.14 fshell2 cbmc/src
+SUBDIRS = . test doc minisat-2.2.0 fshell2 cbmc/src
 
 # just a hint for autoproject
 # _SOURCES = model.am ChangeLog NEWS README TODO
@@ -55,9 +55,12 @@ all-local:
 	fi
 	$(MAKE) -C $(top_builddir)/cbmc/src/util irep_ids.h
 	if [ "$(top_srcdir)" != "." ] ; then \
-		mkdir -p MiniSat-p_v1.14 ; \
-		cp -p $(top_srcdir)/MiniSat-p_v1.14/{Makefile,*.C,*.h} MiniSat-p_v1.14 ; \
-		perl -p -i -e 's{-I(\.\./\.\./\.\./)(\s+|$$)}{-I$(top_srcdir)/$$1$$2}' cbmc/src/cbmc/Makefile ; \
+		mkdir -p minisat-2.2.0/{core,mtl,simp,utils} ; \
+		cp -p $(top_srcdir)/minisat-2.2.0/Makefile minisat-2.2.0 ; \
+		cp -p $(top_srcdir)/minisat-2.2.0/core/{Makefile,*.cc,*.h} minisat-2.2.0/core ; \
+		cp -p $(top_srcdir)/minisat-2.2.0/mtl/{*.h,*.mk} minisat-2.2.0/mtl ; \
+		cp -p $(top_srcdir)/minisat-2.2.0/simp/{Makefile,*.cc,*.h} minisat-2.2.0/simp ; \
+		cp -p $(top_srcdir)/minisat-2.2.0/utils/{Makefile,*.cc,*.h} minisat-2.2.0/utils ; \
 	fi
 
 cbmc-src.tar.gz: $(shell find cbmc -name "*.cpp" -o -name "*.h")
