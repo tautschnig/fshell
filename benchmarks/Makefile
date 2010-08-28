@@ -27,6 +27,12 @@ ASE_QUERIES = ase-examples_list2.c_Q1 ase-examples_list2.c_Q2 ase-examples_list2
 
 OTHER = joplift_BB
 
+all install install-strip uninstall check installcheck dist:
+
+clean distclean maintainer-clean:
+	$(MAKE) -C code clean
+	rm -f .fshell2_history
+
 prepare: $(fshell)
 	[ -n $(LOG) ]
 	mkdir -p logs
@@ -49,4 +55,5 @@ prepare: $(fshell)
 	logf=logs/$(LOG).$@ fshell="$(strip $(fshell))" params="$(params)" \
 			 scripts/run_bench.sh $(filter-out $<, $^)
 
-.PHONY: prepare
+.PHONY: prepare all install install-strip uninstall check installcheck dist clean distclean maintainer-clean
+

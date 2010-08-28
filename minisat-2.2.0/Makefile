@@ -1,10 +1,10 @@
-all:
+all check:
 	$(MAKE) MROOT=$$PWD -C simp s
 
-maintainer-clean distclean clean:
+install install-strip uninstall check installcheck dist:
+
+clean distclean maintainer-clean:
 	$(MAKE) MROOT=$$PWD -C simp clean
 
-check: all
-
-.PHONY: all maintainer-clean distclean clean check
+.PHONY: all install install-strip uninstall check installcheck dist clean distclean maintainer-clean
 
