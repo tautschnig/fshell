@@ -171,9 +171,19 @@ void Evaluate_Path_Pattern::visit(Edgecov const* n) {
 	current_aut.initial().insert(current_initial);
 	ta_state_t const current_final(current_aut.new_state());
 	current_aut.final(current_final) = 1;
+		
+	target_graph_t const* tgg(&(m_eval_filter.get(*(n->get_filter_expr()))));
+	// discard disconnected nodes, if any
+	if (!tgg->get_disconnected_nodes().empty()) {
+		m_more_target_graphs.push_back(target_graph_t());
+		target_graph_t::edges_t e(tgg->get_E());
+		target_graph_t::initial_states_t is(tgg->get_I());
+		m_more_target_graphs.back().set_E(e);
+		m_more_target_graphs.back().set_I(is);
+		tgg = &(m_more_target_graphs.back());
+	}
 
-	current_aut.set_trans(current_initial,
-			m_target_graph_index.to_index(&(m_eval_filter.get(*(n->get_filter_expr())))),
+	current_aut.set_trans(current_initial, m_target_graph_index.to_index(tgg),
 			current_final);
 }
 	
