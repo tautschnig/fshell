@@ -232,6 +232,8 @@ void test_use_case_extended_invariants( Test_Data & data )
 	TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, "set limit count 27"));
 	TEST_ASSERT(27 == ::config.fshell.max_test_cases);
 
+	TEST_CHECK(cfg.function_map.end() == cfg.function_map.find("c::foo"));
+	TEST_ASSERT(cmd.finalize(l));
 	TEST_CHECK(cfg.function_map.end() != cfg.function_map.find("c::foo"));
 	TEST_CHECK(!cfg.function_map.find("c::foo")->second.body_available);
 	

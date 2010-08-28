@@ -259,7 +259,6 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 				::config.main = arg;
 				if (m_finalized) manager.context.remove("main");
 				m_finalized = false;
-				finalize(manager);
 			}
 			return DONE;
 		case CMD_SET_LIMIT_COUNT:
@@ -270,9 +269,7 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 			return DONE;
 		case CMD_SET_NO_ZERO_INIT:
 			m_remove_zero_init = true;	
-			if (m_finalized) manager.context.remove("main");
 			m_finalized = false;
-			finalize(manager);
 			return DONE;
 	}
 			
@@ -294,9 +291,8 @@ bool Command_Processing::finalize(::language_uit & manager) {
 	
 	if (m_finalized) return false;
 	
-	FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,
-			!manager.language_files.filemap.empty(),
-			"No files available for manipulation!");
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+			!manager.language_files.filemap.empty());
 	m_finalized = ! manager.final();
 	// this must never fail, given all the previous sanity checks
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_finalized);
@@ -325,15 +321,15 @@ bool Command_Processing::finalize(::language_uit & manager) {
 	}
     
 
-	::goto_convert_functionst converter(manager.context, m_opts, m_gf,
-			manager.ui_message_handler);
-
 	// convert all symbols; iterators are unstable, copy symbol names first
 	::std::vector< ::irep_idt > symbols;
 	for(::symbolst::iterator iter(manager.context.symbols.begin()); iter !=
 			manager.context.symbols.end(); ++iter)
 		if(iter->second.type.id() == "code")
 			symbols.push_back(iter->first);
+	
+	::goto_convert_functionst converter(manager.context, m_opts, m_gf,
+			manager.ui_message_handler);
 	for(::std::vector< ::irep_idt >::const_iterator iter(symbols.begin());
 			iter != symbols.end(); ++iter) {
 		::goto_functionst::function_mapt::iterator fct(m_gf.function_map.find(*iter));
