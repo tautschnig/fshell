@@ -8,8 +8,8 @@ PROF_CLIENT_OPTS = --verbosity 0 --statistics --outfile /dev/null
 
 # -fno-inline avoids any inlining, -finline-limit=4 allows for inlining very
 # small functions
-# profile: CXXFLAGS += -finline-limit=4 -pg
-profile: CXXFLAGS += -pg
+# profile: CXXFLAGS := $(filter-out -O1 -O2 -O3 -Os,$(CXXFLAGS)) -O2 -finline-limit=4 -pg
+profile: CXXFLAGS := $(filter-out -O1 -O2 -O3 -Os,$(CXXFLAGS)) -O2 -pg
 profile:
 	mkdir -p benchmarks/profiling
 	[ -n "$(no_clean)" ] || $(MAKE) $(AM_MAKEFLAGS) -C $(top_builddir) clean
