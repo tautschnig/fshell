@@ -25,12 +25,6 @@ CBMC_OBJS = $(top_builddir)/cbmc/src/goto-programs/goto-programs.o \
 						$(top_builddir)/cbmc/src/langapi/langapi.o \
 						$(top_builddir)/cbmc/src/ansi-c/ansi-c.o
 
-$(CBMC_OBJS):
-	-$(MAKE) -C $(top_builddir)/cbmc/src
-
-$(top_builddir)/cbmc/src/util/irep_ids.h:
-	$(MAKE) -C $(top_builddir)/cbmc/src/util irep_ids.h
-
 noinst_LTLIBRARIES = libtc_generation.la
 libtc_generation_la_SOURCES = constraint_strengthening.cpp test_suite_minimization.cpp test_suite_output.cpp
 include_fshell2_tc_generationdir = $(includedir)/fshell2/tc_generation

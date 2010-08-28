@@ -26,13 +26,6 @@ CBMC_OBJS = $(top_builddir)/cbmc/src/goto-programs/goto-programs.o \
 						$(top_builddir)/cbmc/src/langapi/langapi.o \
 						$(top_builddir)/cbmc/src/ansi-c/ansi-c.o
 
-$(CBMC_OBJS):
-	$(MAKE) -C $(top_builddir)/cbmc/src util.dir big-int.dir goto-programs.dir \
-		pointer-analysis.dir langapi.dir ansi-c.dir
-
-$(top_builddir)/cbmc/src/util/irep_ids.h:
-	$(MAKE) -C $(top_builddir)/cbmc/src/util irep_ids.h
-
 noinst_LTLIBRARIES = libcommand.la
 libcommand_la_SOURCES = command_processing.cpp lexer.ll parser.yy
 include_fshell2_commanddir = $(includedir)/fshell2/command

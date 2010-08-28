@@ -12,12 +12,6 @@ CBMC_OBJS = $(top_builddir)/cbmc/src/util/util.o \
 						$(top_builddir)/cbmc/src/big-int/bigint.o \
 						$(top_builddir)/cbmc/src/ansi-c/ansi-c.o
 
-$(CBMC_OBJS):
-	$(MAKE) -C $(top_builddir)/cbmc/src util.dir big-int.dir ansi-c.dir
-
-$(top_builddir)/cbmc/src/util/irep_ids.h:
-	$(MAKE) -C $(top_builddir)/cbmc/src/util irep_ids.h
-
 include_fshell2_fql_astdir = $(includedir)/fshell2/fql/ast
 noinst_LTLIBRARIES = libast.la
 libast_la_SOURCES = ast_visitor.cpp fql_node.cpp pathcov.cpp predicate.cpp  query.cpp        edgecov.cpp    filter_intersection.cpp filter_setminus.cpp filter_union.cpp filter_compose.cpp filter_function.cpp  filter_expr.cpp     nodecov.cpp path_pattern_expr.cpp  repeat.cpp transform_pred.cpp   coverage_pattern_expr.cpp depcov.cpp pp_alternative.cpp pp_concat.cpp cp_alternative.cpp cp_concat.cpp ecp_atom.cpp fql_ast_printer.cpp fql_node_lt_visitor.cpp quote.cpp

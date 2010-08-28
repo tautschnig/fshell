@@ -12,12 +12,6 @@ CBMC_OBJS = $(top_builddir)/cbmc/src/util/util.o \
 						$(top_builddir)/cbmc/src/big-int/bigint.o \
 						$(top_builddir)/cbmc/src/ansi-c/ansi-c.o
 
-$(CBMC_OBJS):
-	$(MAKE) -C $(top_builddir)/cbmc/src util.dir big-int.dir ansi-c.dir
-
-$(top_builddir)/cbmc/src/util/irep_ids.h:
-	$(MAKE) -C $(top_builddir)/cbmc/src/util irep_ids.h
-
 include_fshell2_fql_normalizedir = $(includedir)/fshell2/fql/normalize
 noinst_LTLIBRARIES = libnormalize.la
 libnormalize_la_SOURCES = normalization_visitor.cpp

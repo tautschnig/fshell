@@ -25,12 +25,6 @@ CBMC_OBJS = $(top_builddir)/cbmc/src/goto-programs/goto-programs.o \
 						$(top_builddir)/cbmc/src/langapi/langapi.o \
 						$(top_builddir)/cbmc/src/ansi-c/ansi-c.o
 
-$(CBMC_OBJS):
-	-$(MAKE) -C $(top_builddir)/cbmc/src
-
-$(top_builddir)/cbmc/src/util/irep_ids.h:
-	$(MAKE) -C $(top_builddir)/cbmc/src/util irep_ids.h
-
 noinst_LTLIBRARIES = libevaluation.la
 libevaluation_la_SOURCES =  evaluate_filter.cpp predicate_instrumentation.cpp evaluate_path_pattern.cpp evaluate_coverage_pattern.cpp automaton_inserter.cpp compute_test_goals.cpp
 include_fshell2_fql_evaluationdir = $(includedir)/fshell2/fql/evaluation

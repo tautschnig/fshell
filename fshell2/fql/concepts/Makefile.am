@@ -15,13 +15,6 @@ CBMC_OBJS = $(top_builddir)/cbmc/src/goto-programs/goto-programs.o \
 						$(top_builddir)/cbmc/src/langapi/langapi.o \
 						$(top_builddir)/cbmc/src/ansi-c/ansi-c.o
 
-$(CBMC_OBJS):
-	$(MAKE) -C $(top_builddir)/cbmc/src util.dir big-int.dir goto-programs.dir \
-		pointer-analysis.dir langapi.dir ansi-c.dir
-
-$(top_builddir)/cbmc/src/util/irep_ids.h:
-	$(MAKE) -C $(top_builddir)/cbmc/src/util irep_ids.h
-
 noinst_LTLIBRARIES = libconcepts.la
 libconcepts_la_SOURCES = cfa.cpp path_predicate.cpp path_set_predicate.cpp state_predicate.cpp trace_automaton.cpp
 include_fshell2_fql_conceptsdir = $(includedir)/fshell2/fql/concepts

@@ -25,12 +25,6 @@ CBMC_OBJS = $(top_builddir)/cbmc/src/goto-programs/goto-programs.o \
 						$(top_builddir)/cbmc/src/langapi/langapi.o \
 						$(top_builddir)/cbmc/src/ansi-c/ansi-c.o
 
-$(CBMC_OBJS):
-	-$(MAKE) -C $(top_builddir)/cbmc/src
-
-$(top_builddir)/cbmc/src/util/irep_ids.h:
-	$(MAKE) -C $(top_builddir)/cbmc/src/util irep_ids.h
-
 include_fshell2_instrumentationdir = $(includedir)/fshell2/instrumentation
 noinst_LTLIBRARIES = libinstrumentation.la
 libinstrumentation_la_SOURCES = goto_transformation.cpp cfg.cpp goto_utils.cpp
