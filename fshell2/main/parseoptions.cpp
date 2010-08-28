@@ -144,6 +144,8 @@ bool Parseoptions::get_command_line_options()
 	m_options.set_option("show-test-goals", cmdline.isset("show-test-goals"));
 	m_options.set_option("show-loops", cmdline.isset("show-loops"));
 	m_options.set_option("use-instrumentation", cmdline.isset("use-instrumentation"));
+	m_options.set_option("sat-subsumption", cmdline.isset("sat-subsumption") ||
+			m_options.get_bool_option("use-instrumentation"));
 
 	set_verbosity(*this);
 
@@ -329,6 +331,7 @@ void Parseoptions::help()
 		" --outfile Filename           write test inputs to Filename (appends)\n"
 		" --show-test-goals            print test goals derived from query\n"
 		" --use-instrumentation        instrument trace automata into GOTO program\n"
+		" --sat-subsumption            use SAT solver for subsumption analysis (implied by --use-instrumentation)\n"
 		"\n";
 }
 

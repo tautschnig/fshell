@@ -47,6 +47,7 @@ FSHELL2_STATISTICS_NAMESPACE_END;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 class CNF_Conversion;
+class Compute_Test_Goals;
 
 FSHELL2_FQL_NAMESPACE_END;
 
@@ -64,7 +65,7 @@ class Constraint_Strengthening
 	Constraint_Strengthening(::fshell2::fql::CNF_Conversion & equation,
 			::fshell2::statistics::Statistics & stats, ::optionst const& opts);
 
-	void generate(test_cases_t & tcs);
+	void generate(::fshell2::fql::Compute_Test_Goals const& ctg, test_cases_t & tcs);
 
 	private:
 	::fshell2::fql::CNF_Conversion & m_equation;

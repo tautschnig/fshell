@@ -113,15 +113,15 @@ Compute_Test_Goals::Compute_Test_Goals(
 Compute_Test_Goals::~Compute_Test_Goals() {
 }
 
-void Compute_Test_Goals::store_mapping(::literalt const& tg,
-			::goto_programt::const_targett const& context)
+void Compute_Test_Goals::store_mapping(::literalt const& tg, ::bvt const& or_set,
+		::goto_programt::const_targett const& context)
 {
 	ctx_coll_t tmp;
 	tmp.push_back(context);
-	store_mapping(tg, tmp);
+	store_mapping(tg, or_set, tmp);
 }
 
-void Compute_Test_Goals::store_mapping(::literalt const& tg,
+void Compute_Test_Goals::store_mapping(::literalt const& tg, ::bvt const& or_set,
 		ctx_coll_t const& contexts)
 {
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
@@ -130,6 +130,11 @@ void Compute_Test_Goals::store_mapping(::literalt const& tg,
 			m_tg_to_ctx_map.end() == m_tg_to_ctx_map.find(tg));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 			m_and_map.end() == m_and_map.find(tg));
+
+	for (::bvt::const_iterator iter(or_set.begin()); iter != or_set.end(); ++iter) {
+		//// ::std::cerr << "OR-reverse: " << tg.dimacs() << " = OR(... " << iter->dimacs() << " ...)" << ::std::endl;
+		m_reverse_or_map[*iter].insert(tg);
+	}
 	
 	if (!tg.is_true() && !tg.is_false()) {
 		ctx_coll_t & ctxs(m_tg_to_ctx_map.insert(
@@ -141,13 +146,8 @@ void Compute_Test_Goals::store_mapping(::literalt const& tg,
 	
 void Compute_Test_Goals::print_test_goal(::literalt const& tg,
 		::std::ostream & os) const {
-	if (tg.is_true()) {
-		os << "<TRUE>";
-		return;
-	} else if (tg.is_false()) {
-		os << "<FALSE>";
-		return;
-	}
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+			!tg.is_true() && !tg.is_false());
 
 	and_map_t::const_iterator a_iter(m_and_map.find(tg));
 	if (m_and_map.end() != a_iter) {
@@ -213,7 +213,14 @@ void Compute_Test_Goals::visit(CP_Concat const* n) {
 			// if (agi->is_true()) ::std::cerr << agi->dimacs() << " is TRUE" << ::std::endl;
 			// if (agi->is_false()) ::std::cerr << agi->dimacs() << " is FALSE" << ::std::endl;
 			// ::std::cerr << sg.dimacs() << " == " << agi->dimacs() << " AND " << bgi->dimacs() << ::std::endl;
-			m_and_map.insert(::std::make_pair(sg, ::std::make_pair(*agi, *bgi)));
+			if (!agi->is_true() && !agi->is_false() && !bgi->is_true() && !bgi->is_false()) {
+				m_and_map.insert(::std::make_pair(sg, ::std::make_pair(*agi, *bgi)));
+				//// ::std::cerr << "reverse-AND: " << sg.dimacs() << " == " << agi->dimacs() << " AND " << bgi->dimacs() << ::std::endl;
+			}
+			//// else
+			////	::std::cerr << "Not adding " << sg.dimacs() << " == " << agi->dimacs() << " AND " << bgi->dimacs() << ::std::endl;
+			m_reverse_and_map[*agi].insert(::std::make_pair(sg, *bgi));
+			m_reverse_and_map[*bgi].insert(::std::make_pair(sg, *agi));
 			m_test_goals.insert(sg);
 		}
 }
@@ -272,10 +279,13 @@ Compute_Test_Goals_From_Instrumentation::~Compute_Test_Goals_From_Instrumentatio
 }
 
 CNF_Conversion & Compute_Test_Goals_From_Instrumentation::do_query(::goto_functionst & gf, Query const& query) {
-	m_pc_to_guard.clear();
 	m_test_goals.clear();
 	m_and_map.clear();
 	m_tg_to_ctx_map.clear();
+	m_reverse_and_map.clear();
+	m_reverse_or_map.clear();
+	
+	m_pc_to_guard.clear();
 	
 	// build a CFG to have forward and backward edges
 	::fshell2::instrumentation::CFG cfg;
@@ -406,7 +416,7 @@ void Compute_Test_Goals_From_Instrumentation::do_atom(Coverage_Pattern_Expr cons
 		if (!make_single && !set.empty()) {
 			// ::std::cerr << "Adding subgoal composed of " << set.size() << " guards" << ::std::endl;
 			::literalt const tg(m_equation.get_cnf().lor(set));
-			store_mapping(tg, c_iter->first);
+			store_mapping(tg, set, c_iter->first);
 			m_test_goals.insert(tg);
 			set.clear();
 		}
@@ -420,119 +430,18 @@ void Compute_Test_Goals_From_Instrumentation::do_atom(Coverage_Pattern_Expr cons
 		for (context_to_pcs_t::const_iterator c_iter(context_to_pcs.begin()); 
 				c_iter != context_to_pcs.end(); ++c_iter)
 			contexts.push_back(c_iter->first);
-		store_mapping(tg, contexts);
+		store_mapping(tg, set, contexts);
 		m_test_goals.insert(tg);
 	}
 }
 	
-#if 0
-Compute_Test_Goals_From_Instrumentation::test_goals_t const& Compute_Test_Goals_From_Instrumentation::get_satisfied_test_goals() {
-	m_satisfied_goals.clear();
-	Evaluate_Path_Monitor::trace_automaton_t const& aut(m_pp_eval.get_cov_seq_aut());
-	typedef Evaluate_Path_Monitor::trace_automaton_t::state_type state_t;
-	::std::list< ::std::list< state_t > > exec_sequences;
-	::std::list< ::goto_programt::const_targett > path;
-	for (::std::set< state_t >::const_iterator iter(aut.initial().begin());
-			iter != aut.initial().end(); ++iter) {
-		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 
-				!m_pp_eval.is_test_goal_state(*iter));
-		exec_sequences.push_back(::std::list< state_t >(1, *iter));
-	}
-	// walk the steps and compare all non-instrumented and non-hidden PCs to
-	// the cov seq automaton; do forall current states, try all transitions
-	// and record new state-set; all test-goal-states must be recorded and
-	// mapped back to literals
-	for (::symex_target_equationt::SSA_stepst::const_iterator iter( 
-				_equation.SSA_steps.begin() ); iter != _equation.SSA_steps.end(); ++iter)
-	{
-		if (m_cnf.l_get(iter->guard_literal) != ::tvt(true)) continue;
-		if (iter->is_assignment() && iter->assignment_type == ::symex_targett::HIDDEN) continue;
-		if (::fshell2::instrumentation::GOTO_Transformation::is_instrumented(iter->source.pc)) continue;
-		path.push_back(iter->source.pc);
-		Evaluate_Filter::edge_to_filters_t const& edge_map(m_eval_filter.get(iter->source.pc));
-		for (::std::list< ::std::list< state_t > >::iterator s_iter(exec_sequences.begin());
-				s_iter != exec_sequences.end();) {
-			Evaluate_Path_Monitor::trace_automaton_t::edges_type const out_edges(aut.delta2(s_iter->back()));
-			bool succ_found(false);
-			for (Evaluate_Path_Monitor::trace_automaton_t::edges_type::const_iterator o_iter(
-						out_edges.begin()); o_iter != out_edges.end(); ++o_iter) {
-				if (m_pp_eval.id_index() == o_iter->first) {
-					if (succ_found) {
-						exec_sequences.insert(s_iter, *s_iter);
-					} else {
-						succ_found = true;
-					}
-					s_iter->push_back(o_iter->second);
-				} else {
-					for (Evaluate_Filter::edge_to_filters_t::const_iterator e_f_iter(
-								edge_map.begin()); e_f_iter != edge_map.end(); ++e_f_iter) {
-						// must handle goto here
-						for (::std::set< Filter const* >::const_iterator f_iter(e_f_iter->second.begin());
-								f_iter != e_f_iter->second.end(); ++f_iter) {
-							if (m_pp_eval.lookup_filter(*f_iter) == o_iter->first) {
-								if (succ_found) {
-									exec_sequences.insert(s_iter, *s_iter);
-								} else {
-									succ_found = true;
-								}
-								s_iter->push_back(o_iter->second);
-							}
-						}
-					}
-				}
-			}
-			if (succ_found) {
-				++s_iter;
-			} else {
-				::std::list< ::std::list< state_t > >::iterator s_iter_bak(s_iter);
-				++s_iter;
-				exec_sequences.erase(s_iter_bak);
-			}
-		}
-	}
-
-	/*
-	for (::std::list< ::std::list< state_t > >::const_iterator s_iter(exec_sequences.begin());
-			s_iter != exec_sequences.end(); ++s_iter) {
-		if (!aut.final(s_iter->back())) continue;
-		::std::cerr << "TG reached!" << ::std::endl;
-		::std::list< ::goto_programt::const_targett >::const_iterator p_iter(path.begin());
-		::std::vector< ::literalt > goals;
-		for (::std::list< state_t >::const_iterator iter(++(s_iter->begin())); iter != s_iter->end();
-				++iter, ++p_iter) {
-			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, path.end() != p_iter);
-			if (m_pp_eval.is_test_goal_state(*iter)) {
-				state_context_tg_t::const_iterator tg_map_entry(m_state_context_tg_map.find(*iter));
-				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_state_context_tg_map.end() != tg_map_entry);
-				FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, !tg_map_entry->second.empty(),
-						::diagnostics::internal::to_string("No contexts for state ", *iter));
-				::std::map< ::goto_programt::const_targett, test_goal_t >::const_iterator entry(tg_map_entry->second.end());
-				for (::std::map< ::goto_programt::const_targett, test_goal_t >::const_iterator c_iter(
-							tg_map_entry->second.begin()); c_iter != tg_map_entry->second.end(); ++c_iter) {
-					CFA::edge_t const& edge(m_aut_insert.get_target_graph_edge(c_iter->first));
-					// handle goto!!
-					::goto_programt tmp;
-					::std::cerr << "Comparing" << ::std::endl;
-					tmp.output_instruction(this->ns, "", ::std::cerr, edge.first.second);
-					::std::cerr << "and" << ::std::endl;
-					tmp.output_instruction(this->ns, "", ::std::cerr, *p_iter);
-					if (edge.first.second == *p_iter) {
-						entry = c_iter;
-						break;
-					}
-				}
-				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, tg_map_entry->second.end() != entry);
-				goals.push_back(entry->second);
-			}
-		}
-		// somehow lookup goals
-	}
-	*/
-
-	return m_satisfied_goals;
+bool Compute_Test_Goals_From_Instrumentation::get_satisfied_test_goals(
+		::cnf_clause_list_assignmentt const& cnf,
+		CNF_Conversion::test_goals_t & tgs) const
+{
+	return false;
 }
-#endif
-	
+
 
 Compute_Test_Goals_Boolean::Compute_Test_Goals_Boolean(::language_uit & manager,
 		::optionst const& opts, ::fshell2::statistics::Statistics & stats) :
@@ -550,9 +459,15 @@ CNF_Conversion & Compute_Test_Goals_Boolean::do_query(::goto_functionst & gf, Qu
 	m_test_goals.clear();
 	m_and_map.clear();
 	m_tg_to_ctx_map.clear();
+	m_reverse_and_map.clear();
+	m_reverse_or_map.clear();
+	
 	m_loc_to_node_target_graphs_map.clear();
 	m_loc_to_edge_target_graphs_map.clear();
 	m_tg_to_lit_map.clear();
+	m_step_to_trans.clear();
+	m_node_step_to_trans.clear();
+	m_node_rep_map.clear();
 	
 	// build a CFG to have forward and backward edges
 	::fshell2::instrumentation::CFG cfg;
@@ -718,12 +633,12 @@ void Compute_Test_Goals_Boolean::build(trace_automaton_t const& aut, bool map_tg
 		// examples of such are:
 		// function calls (assignment of parameters)
 		// returns (assignment of return values)
-		// goto + assume produced by unwinding loops
+		// goto + assume/assert produced by unwinding loops
 		if ((m_equation.get_equation().SSA_steps.end() == previous_pc) ||
 				(iter->source.pc != previous_pc->source.pc))
 			previous_pc = iter;
 		else if ((iter->is_assignment() && previous_pc->is_location()) ||
-				(iter->is_assume() && iter->source.pc->is_goto() && previous_pc->is_location()))
+				((iter->is_assume() || iter->is_assert()) && iter->source.pc->is_goto() && previous_pc->is_location()))
 				continue;
 
 		do_step(cnf, bv_utils, bv_cache, prev_eq_cache, next_eq_cache,
@@ -778,14 +693,9 @@ void Compute_Test_Goals_Boolean::do_step(::cnf_clause_list_assignmentt & cnf,
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == l_n_t_g_entry->second.size());
 		// this node appears in any of the two automata
 		node_to_target_graphs_t const& entry(l_n_t_g_entry->second);
-		
-		// prepare next state
-		::bvt next_state;
-		next_state.reserve(width);
-		for (::bvt::size_type i(0); i != width; ++i)
-			next_state.push_back(cnf.new_variable());
-		::bvt edge_guards;
-
+	
+		// we could do a bunch of transitions, count their number
+		ta_state_set_t sources;
 		// find the target graphs it could belong to
 		::std::set< int > target_graphs;
 		for (::std::set< target_graph_t const* >::const_iterator iter(entry.begin()->second.begin());
@@ -795,76 +705,80 @@ void Compute_Test_Goals_Boolean::do_step(::cnf_clause_list_assignmentt & cnf,
 			target_graph_to_int_t::const_iterator int_entry(local_target_graph_map.find(*iter));
 			if (local_target_graph_map.end() != int_entry) target_graphs.insert(int_entry->second);
 		}
-		
-		// collect all possible transitions; we can actually do the transitive
-		// closure of all NODES() transitions
-		::bvt trans;
-		for (::std::set< int >::const_iterator tgg_iter(target_graphs.begin());
-				tgg_iter != target_graphs.end(); ++tgg_iter) {
-			transition_map_t::const_iterator t_entry(transitions.find(*tgg_iter));
-			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, transitions.end() != t_entry);
+		if (!target_graphs.empty()) {
+			for (::std::set< int >::const_iterator tgg_iter(target_graphs.begin());
+					tgg_iter != target_graphs.end(); ++tgg_iter) {
+				transition_map_t::const_iterator t_entry(transitions.find(*tgg_iter));
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, transitions.end() != t_entry);
 
-			symbol_transition_map_t closure;
-			for (symbol_transition_map_t::const_iterator t_iter(t_entry->second.begin());
-					t_iter != t_entry->second.end(); ++t_iter) {
-				symbol_transition_map_t::iterator entry(closure.insert(*t_iter).first);
-				bool inserted(true);
-				while (inserted) {
-					inserted = false;
-					for (ta_state_set_t::const_iterator s_iter(t_iter->second.begin());
-							s_iter != t_iter->second.end(); ++s_iter) {
-						symbol_transition_map_t::const_iterator o_entry(t_entry->second.find(*s_iter));
-						if (t_entry->second.end() == o_entry) continue;
-						for (ta_state_set_t::const_iterator s2_iter(o_entry->second.begin());
-								s2_iter != o_entry->second.end(); ++s2_iter)
-							inserted |= entry->second.insert(*s2_iter).second;
-					}
-				}
+				for (symbol_transition_map_t::const_iterator t_iter(t_entry->second.begin());
+						t_iter != t_entry->second.end(); ++t_iter)
+					sources.insert(t_iter->first);
 			}
 
-			for (symbol_transition_map_t::const_iterator t_iter(closure.begin());
-					t_iter != closure.end(); ++t_iter) {
-				if (possibly_reached_states.end() == possibly_reached_states.find(t_iter->first)) continue;
-				// (state-vec == source-state) -> new-state-vec == (one of dest states)
-				::bvt dests;
-				for (ta_state_set_t::const_iterator s_iter(t_iter->second.begin());
-						s_iter != t_iter->second.end(); ++s_iter) {
-					dests.push_back(make_equals(bv_utils, next_eq_cache,
-								next_state, bv_cache, *s_iter, width));
-					possibly_reached_states.insert(*s_iter);
-					 ::std::cerr << "Adding trans " << t_iter->first << "-[" <<
-						*tgg_iter << "]>" << *s_iter << " next==" << *s_iter << ": " << dests.back().dimacs() << ::std::endl;
-					if (map_tg) {
-						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 
-								reverse_state_map.end() != reverse_state_map.find(*s_iter));
-						ta_state_t const unmapped_state(
-								reverse_state_map.find(*s_iter)->second);
-						if (m_cp_eval.is_test_goal_state(unmapped_state)) {
-							::literalt const land(cnf.land(step->guard_literal, dests.back()));
-							// ::std::cerr << "State " << unmapped_state << " maps to " << land.dimacs() << ::std::endl;
-							m_tg_to_lit_map[ unmapped_state ][ ::std::make_pair(entry.begin()->first, entry.begin()->first) ].insert(land);
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !sources.empty());
+			for (ta_state_set_t::const_iterator cnt(sources.begin()); cnt != sources.end(); ++cnt) {
+				// note that *cnt is not useful, we could be in any of the states
+
+				// prepare next state
+				::bvt next_state;
+				next_state.reserve(width);
+				for (::bvt::size_type i(0); i != width; ++i)
+					next_state.push_back(cnf.new_variable());
+
+				::bvt trans;
+				for (::std::set< int >::const_iterator tgg_iter(target_graphs.begin());
+						tgg_iter != target_graphs.end(); ++tgg_iter) {
+					transition_map_t::const_iterator t_entry(transitions.find(*tgg_iter));
+					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, transitions.end() != t_entry);
+
+					for (symbol_transition_map_t::const_iterator t_iter(t_entry->second.begin());
+							t_iter != t_entry->second.end(); ++t_iter) {
+						if (possibly_reached_states.end() == possibly_reached_states.find(t_iter->first)) continue;
+						// (state-vec == source-state) -> new-state-vec == (one of dest states)
+						::bvt dests;
+						for (ta_state_set_t::const_iterator s_iter(t_iter->second.begin());
+								s_iter != t_iter->second.end(); ++s_iter) {
+							dests.push_back(make_equals(bv_utils, next_eq_cache,
+										next_state, bv_cache, *s_iter, width));
+							possibly_reached_states.insert(*s_iter);
+							// std::cerr << "Adding trans " << t_iter->first << "-[" <<
+							//   *tgg_iter << "]>" << *s_iter << " next==" << *s_iter << ": " << dests.back().dimacs() << ::std::endl;
+							if (map_tg) {
+								FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 
+										reverse_state_map.end() != reverse_state_map.find(*s_iter));
+								ta_state_t const unmapped_state(
+										reverse_state_map.find(*s_iter)->second);
+								::literalt land;
+								FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+										::literalt::unused_var_no() == land.var_no());
+								if (m_cp_eval.is_test_goal_state(unmapped_state)) {
+									land = cnf.land(step->guard_literal, dests.back());
+									// ::std::cerr << "State " << unmapped_state << " maps to " << land.dimacs() << ::std::endl;
+									m_tg_to_lit_map[ unmapped_state ][ ::std::make_pair(entry.begin()->first, entry.begin()->first) ].insert(land);
+								}
+								m_node_step_to_trans.insert(::std::make_pair(step, Edge_Goal(step->guard_literal, land,
+												reverse_state_map.find(t_iter->first)->second, unmapped_state)));
+								m_node_rep_map.insert(::std::make_pair(step, sources.size()));
+							}
 						}
+						::literalt const req_src(make_equals(bv_utils,
+									prev_eq_cache, prev_state, bv_cache,
+									t_iter->first, width));
+						trans.push_back(cnf.land(req_src, cnf.lor(dests)));
+						//// ::std::cerr << req_src.dimacs() << " AND dests" << ::std::endl;
 					}
 				}
-				::literalt const req_src(make_equals(bv_utils,
-							prev_eq_cache, prev_state, bv_cache,
-							t_iter->first, width));
-				trans.push_back(cnf.land(req_src, cnf.lor(dests)));
-				//// ::std::cerr << req_src.dimacs() << " AND dests" << ::std::endl;
+
+				// we can choose to do one of the edge transitions instead or
+				// must make them equal if node is not seen
+				cnf.lcnf(::bvt(1, cnf.lor(bv_utils.equal(prev_state, next_state), cnf.land(step->guard_literal, cnf.lor(trans)))));
+
+				prev_state.swap(next_state);
+				prev_eq_cache.swap(next_eq_cache);
+				next_eq_cache.clear();
 			}
 		}
-
-		// we can choose to skip this node
-		trans.push_back(bv_utils.equal(prev_state, next_state));
-		// if there is no matching target graph and the node was not
-		// added by instrumentation, trans will be empty; lor(trans) is
-		// false
-		cnf.lcnf(::bvt(1, cnf.limplies(step->guard_literal, cnf.lor(trans))));
-		//// ::std::cerr << "CNF: " << al.dimacs() << " -> " << lor2.dimacs() << " (one-of-trans)" << ::std::endl;
-		
-		prev_state.swap(next_state);
-		prev_eq_cache.swap(next_eq_cache);
-		next_eq_cache.clear();
 	}
 
 	loc_to_edge_target_graphs_t::const_iterator l_e_t_g_entry(
@@ -950,11 +864,23 @@ void Compute_Test_Goals_Boolean::do_step(::cnf_clause_list_assignmentt & cnf,
 									reverse_state_map.end() != reverse_state_map.find(*s_iter));
 							ta_state_t const unmapped_state(
 									reverse_state_map.find(*s_iter)->second);
+							::literalt land;
+							FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+									::literalt::unused_var_no() == land.var_no());
 							if (m_cp_eval.is_test_goal_state(unmapped_state)) {
-								::literalt const land(cnf.land(al, dests.back()));
+								land = cnf.land(al, dests.back());
 								// ::std::cerr << "State " << unmapped_state << " maps to " << land.dimacs() << ::std::endl;
 								m_tg_to_lit_map[ unmapped_state ][ e_iter->first ].insert(land);
 							}
+							//// ::std::cerr << "================================================================================" << ::std::endl;
+							//// ::std::cerr << "Storing:" << ::std::endl;
+							//// ::goto_programt tmp;
+							//// tmp.output_instruction(m_equation.get_ns(), "", ::std::cerr, step->source.pc);
+							//// step->output(m_equation.get_ns(), ::std::cerr);
+							//// ::std::cerr << "with guard " << al.dimacs() << " and trans " << reverse_state_map.find(t_iter->first)->second
+							//// 	<< " -> " << unmapped_state << ::std::endl;
+							m_step_to_trans.insert(::std::make_pair(step, Edge_Goal(al, land,
+												reverse_state_map.find(t_iter->first)->second, unmapped_state)));
 						}
 					}
 					::literalt const req_src(make_equals(bv_utils,
@@ -1023,7 +949,7 @@ void Compute_Test_Goals_Boolean::do_atom(Coverage_Pattern_Expr const* n,
 			if (!make_single && !set.empty()) {
 				// ::std::cerr << "Adding1 subgoal composed of " << set.size() << " guards" << ::std::endl;
 				::literalt const tg(m_equation.get_cnf().lor(set));
-				store_mapping(tg, c_iter->first.first.second);
+				store_mapping(tg, set, c_iter->first.first.second);
 				m_test_goals.insert(tg);
 				set.clear();
 			}
@@ -1038,9 +964,239 @@ void Compute_Test_Goals_Boolean::do_atom(Coverage_Pattern_Expr const* n,
 			for (edge_to_literal_map_t::const_iterator c_iter((*iter)->second.begin()); 
 					c_iter != (*iter)->second.end(); ++c_iter)
 				contexts.push_back(c_iter->first.first.second);
-		store_mapping(tg, contexts);
+		store_mapping(tg, set, contexts);
 		m_test_goals.insert(tg);
 	}
+}
+
+bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
+		::cnf_clause_list_assignmentt const& cnf,
+		CNF_Conversion::test_goals_t & tgs) const
+{
+	// simulate cp-automaton according to edge guards
+	// start from initial state and check possible successors - but do not
+	// re-use edge guards
+	// once an accepting state is reached we must determine which test goal we
+	// have satisfied
+
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == m_cp_eval.get().initial().size());
+	typedef ::std::multimap< ta_state_t, ::std::set< ::literalt > > state_vec_t;
+	state_vec_t current_states;
+	current_states.insert(::std::make_pair(*m_cp_eval.get().initial().begin(), ::std::set< ::literalt >()));
+	
+	// int step_count(0);
+	for (::symex_target_equationt::SSA_stepst::const_iterator iter( 
+				m_equation.get_equation().SSA_steps.begin() );
+			iter != m_equation.get_equation().SSA_steps.end(); ++iter)
+	{
+		// ++step_count;
+		// if (0 == step_count % 100) ::std::cerr << "step count: " << step_count << ::std::endl;
+		if (!iter->guard_literal.is_true() && cnf.l_get(iter->guard_literal) != ::tvt(true)) continue;
+		//// ::std::cerr << "--------------------------------------------------------------------------------" << ::std::endl;
+		//// ::goto_programt tmp;
+		//// tmp.output_instruction(m_equation.get_ns(), "", ::std::cerr, iter->source.pc);
+		//// iter->output(m_equation.get_ns(), ::std::cerr);
+		//// ::std::cerr << "Guard literal: " << iter->guard_literal.dimacs() << ::std::endl;
+		// lookup possible transitions in this SSA step and their edge guards
+		node_rep_map_t::const_iterator rep_entry(m_node_rep_map.find(iter));
+		for (unsigned cnt(m_node_rep_map.end() == rep_entry ? 1 : rep_entry->second + 1); cnt > 0; --cnt) {
+			::std::pair< step_to_trans_mmap_t::const_iterator, step_to_trans_mmap_t::const_iterator >
+				iter_pair;
+			if (1 == cnt) {
+				// ::std::cerr << "Doing edges" << ::std::endl;
+				iter_pair = m_step_to_trans.equal_range(iter);
+			} else {
+				// ::std::cerr << "Doing one round of nodes" << ::std::endl;
+				iter_pair = m_node_step_to_trans.equal_range(iter);
+			}
+			// is there an entry for this step?
+			//// ::std::cerr << "Looked up step" << ::std::endl;
+			if (iter_pair.first == iter_pair.second) continue;
+
+			state_vec_t next_states;
+			// we can always choose to skip predicates or (some of) NODES
+			if (1 != cnt || ::fshell2::instrumentation::GOTO_Transformation::is_instrumented(iter->source.pc))
+				next_states.insert(current_states.begin(), current_states.end());
+			for (;iter_pair.first != iter_pair.second; ++(iter_pair.first)) {
+				::literalt const& edge_guard(iter_pair.first->second.m_edge_guard);
+				//// ::std::cerr << "Checking " << edge_guard.dimacs() << ::std::endl;
+				if (!edge_guard.is_true() && cnf.l_get(edge_guard) != ::tvt(true)) continue;
+				ta_state_t const& src(iter_pair.first->second.m_src);
+				ta_state_t const& dest(iter_pair.first->second.m_dest);
+				::std::pair< state_vec_t::const_iterator, state_vec_t::const_iterator >
+					entry(current_states.equal_range(src));
+				// if (entry.first != entry.second)
+				// 	::std::cerr << "trans " << src << " -> " << dest << ::std::endl;
+				for (;entry.first != entry.second; ++(entry.first)) {
+					::std::set< ::literalt > known_sat(entry.first->second);
+					if (m_cp_eval.is_test_goal_state(dest)) {
+
+						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+								::literalt::unused_var_no() != iter_pair.first->second.m_tg.var_no());
+						//// ::std::cerr << "Looking up OR " << i_iter->dimacs() << ::std::endl;
+						reverse_or_lit_map_t::const_iterator or_entry(m_reverse_or_map.find(iter_pair.first->second.m_tg));
+						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_reverse_or_map.end() != or_entry);
+
+						for (::std::set< ::literalt >::const_iterator or_entries(or_entry->second.begin());
+								or_entries != or_entry->second.end(); ++or_entries) {
+							//// ::std::cerr << "SATISFIED OR: " << or_entries->dimacs() << ::std::endl;
+							if (or_entries->is_true()) {
+								//// ::std::cerr << "Skipping TRUE" << ::std::endl;
+								continue;
+							}
+							known_sat.insert(*or_entries);
+						}
+					}
+
+					// it seems we never merge anyhow
+#if 0
+					::std::pair< state_vec_t::const_iterator, state_vec_t::const_iterator >
+						next_entry(next_states.equal_range(dest));
+					bool exists(false);
+					/*::std::cerr << "ours:";
+					  for (::std::set< ::literalt >::const_iterator k_iter(known_sat.begin());
+					  k_iter != known_sat.end(); ++k_iter)
+					  ::std::cerr << " " << k_iter->dimacs();
+					  ::std::cerr << ::std::endl;*/
+					for (;!exists && next_entry.first != next_entry.second; ++(next_entry.first)) {
+						/*::std::cerr << "other's:";
+						  for (::std::set< ::literalt >::const_iterator k_iter(next_entry.first->second.begin());
+						  k_iter != next_entry.first->second.end(); ++k_iter)
+						  ::std::cerr << " " << k_iter->dimacs();
+						  ::std::cerr << ::std::endl;*/
+						exists |= next_entry.first->second == known_sat;
+					}
+
+					if (!exists) {
+						//// ::std::cerr << "curr state ok" << ::std::endl;
+						next_states.insert(::std::make_pair(dest, known_sat));
+					} else {
+						::std::cerr << "Merged!" << ::std::endl;
+					}
+#endif
+					next_states.insert(::std::make_pair(dest, known_sat));
+				}
+			}
+
+			//// ::std::cerr << "Next round to come" << ::std::endl;
+			current_states.swap(next_states);
+		}
+	}
+
+	m_manager.status(::diagnostics::internal::to_string("Need to analyze subsumption of up to ",
+				current_states.size(), " test goals"));
+	::std::set< ::literalt > known_sat_final;
+	// step_count = 0;
+	for (::std::multimap< ta_state_t, ::std::set< ::literalt > >::const_iterator iter(
+				current_states.begin()); iter != current_states.end(); ++iter) {
+		// ++step_count;
+		// ::std::cerr << ".";
+		// if (0 == step_count % 100) ::std::cerr << " state step count: " << step_count << ::std::endl;
+		if (!m_cp_eval.get().final(iter->first)) continue;
+	
+		// ::std::map< ::literalt, ::std::list< ::literalt > > and_missing_one;
+		::std::list< ::std::pair< ::literalt, ::literalt > > and_missing_one;
+		::std::set< ::literalt > known_sat(iter->second);
+		::std::list< ::literalt > new_sat;
+		new_sat.insert(new_sat.end(), known_sat.begin(), known_sat.end());
+		while (!new_sat.empty()) {
+			// ::std::cerr << ",";
+			::literalt const s(new_sat.front());
+			new_sat.pop_front();
+			// ::std::cerr << "KNOWN SAT: " << s.dimacs() << ::std::endl;
+
+			reverse_and_lit_map_t::const_iterator and_entry(m_reverse_and_map.find(s));
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 
+					(m_test_goals.end() != m_test_goals.find(s)) ||
+					(m_reverse_and_map.end() != and_entry));
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 
+					(m_reverse_and_map.end() != and_entry) ||
+					(m_test_goals.end() != m_test_goals.find(s)));
+			if (m_test_goals.end() != m_test_goals.find(s)) continue;
+
+			for (::std::set< ::std::pair< ::literalt, ::literalt > >::const_iterator and_iter(and_entry->second.begin());
+					and_iter != and_entry->second.end(); ++and_iter) {
+				// ::std::cerr << "|";
+				// false will always remain false.
+				if (and_iter->first.is_false()) continue;
+				// s AND true is s
+				if (and_iter->second.is_true()) continue;
+				// already done
+				if (known_sat.end() != known_sat.find(and_iter->first)) continue;
+				// *or_entries AND x is known as *and_iter; value in m_and_map
+				// will be y AND z is known as *and_iter if
+				// or_entries->is_true(); skipped above
+				/// and_map_t::const_iterator and_map_entry(m_and_map.find(*and_iter));
+				/// FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_and_map.end() != and_map_entry);
+				//// ::std::cerr << "AND candidate: " << and_iter->dimacs() << " = " << 
+				//// 	and_map_entry->second.first.dimacs() << " AND " << and_map_entry->second.second.dimacs() << ::std::endl;
+				//// if (and_map_entry->second.first != *or_entries && and_map_entry->second.second != *or_entries) {
+				//// 	::std::cerr << "SATISFIED OR: " << or_entries->dimacs() << ::std::endl;
+				//// 	::std::cerr << "AND candidate: " << and_iter->dimacs() << " = " << 
+				//// 		and_map_entry->second.first.dimacs() << " AND " << and_map_entry->second.second.dimacs() << ::std::endl;
+				//// }
+				/*
+				::literalt const& other(and_iter->second);
+				if (known_sat.end() != known_sat.find(other)) {
+					// ::std::cerr << "+";
+					if (known_sat.insert(and_iter->first).second) {
+						new_sat.push_back(and_iter->first);
+						// ::std::cerr << "#";
+					}
+				} else {
+					*/
+				// ::std::cerr << "AND candidate: " << and_iter->first.dimacs() << " == " << s.dimacs() << " AND " << and_iter->second.dimacs() << ::std::endl;
+					and_missing_one.push_back(*and_iter);
+					// and_missing_one[ other ].push_back(and_iter->first);
+					// ::std::cerr << "-";
+				//}
+			}
+
+			for (::std::list< ::std::pair< ::literalt, ::literalt > >::iterator a_iter(
+						and_missing_one.begin()); a_iter != and_missing_one.end(); ) {
+				if (known_sat.end() != known_sat.find(a_iter->second)) {
+					if (known_sat.insert(a_iter->first).second) {
+						new_sat.push_back(a_iter->first);
+						//// ::std::cerr << "NEWLY SAT and: " << n_iter->dimacs() << ::std::endl;
+					}
+					::std::list< ::std::pair< ::literalt, ::literalt > >::iterator a_iter_bak(a_iter);
+					++a_iter;
+					and_missing_one.erase(a_iter_bak);
+				} else {
+					++a_iter;
+				}
+			}
+			/*
+			::std::map< ::literalt, ::std::list< ::literalt > >::iterator entry(
+					and_missing_one.find(s));
+			if (and_missing_one.end() != entry) {
+				for (::std::list< ::literalt >::const_iterator n_iter(entry->second.begin());
+						n_iter != entry->second.end(); ++n_iter)
+					if (known_sat.insert(*n_iter).second) {
+						new_sat.push_back(*n_iter);
+						//// ::std::cerr << "NEWLY SAT and: " << n_iter->dimacs() << ::std::endl;
+					}
+				and_missing_one.erase(entry);
+			}
+			*/
+		}
+		known_sat_final.insert(known_sat.begin(), known_sat.end());
+	}
+
+	// ::std::cerr << "Known SAT1-final:";
+	for (::std::set< ::literalt >::const_iterator iter(known_sat_final.begin());
+			iter != known_sat_final.end(); ++iter)
+		if (m_test_goals.end() != m_test_goals.find(*iter)) {
+			// ::std::cerr << " " << iter->dimacs() << "(!TG!)";
+			tgs.insert(*iter);
+		}
+		/* else
+			::std::cerr << " " << iter->dimacs() << "(N)";
+	::std::cerr << ::std::endl;
+	::std::cerr << "SAT1-size: " << tgs.size() << ::std::endl;
+	*/
+	
+	return true;
 }
 	
 FSHELL2_FQL_NAMESPACE_END;

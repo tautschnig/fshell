@@ -78,6 +78,7 @@ class CNF_Conversion : public ::bmct
 	inline test_goals_t const& get_test_goal_literals() const;
 
 	inline ::cnf_clause_list_assignmentt & get_cnf();
+	inline ::cnf_clause_list_assignmentt const& get_cnf() const;
 
 	inline ::boolbvt const& get_bv() const;
 	inline ::symex_target_equationt const& get_equation() const;
@@ -105,6 +106,10 @@ inline CNF_Conversion::test_goals_t const& CNF_Conversion::get_test_goal_literal
 }
 	
 inline ::cnf_clause_list_assignmentt & CNF_Conversion::get_cnf() {
+	return m_cnf;
+}
+	
+inline ::cnf_clause_list_assignmentt const& CNF_Conversion::get_cnf() const {
 	return m_cnf;
 }
 	
@@ -137,8 +142,13 @@ class Compute_Test_Goals : protected Standard_AST_Visitor_Aspect<AST_Visitor>
 
 	virtual CNF_Conversion & do_query(::goto_functionst & gf, Query const& query) = 0;
 
+	virtual bool get_satisfied_test_goals(::cnf_clause_list_assignmentt const& cnf,
+			CNF_Conversion::test_goals_t & tgs) const = 0;
+
 	protected:
 	typedef ::std::map< ::literalt, ::std::pair< ::literalt, ::literalt > > and_map_t;
+	typedef ::std::map< ::literalt, ::std::set< ::literalt > > reverse_or_lit_map_t;
+	typedef ::std::map< ::literalt, ::std::set< ::std::pair< ::literalt, ::literalt > > > reverse_and_lit_map_t;
 	typedef ::std::vector< ::goto_programt::const_targett > ctx_coll_t;
 	typedef ::std::map< ::literalt, ctx_coll_t > tg_to_ctx_map_t;
 	
@@ -149,11 +159,14 @@ class Compute_Test_Goals : protected Standard_AST_Visitor_Aspect<AST_Visitor>
 	CNF_Conversion::test_goals_t m_test_goals;
 	and_map_t m_and_map;
 	tg_to_ctx_map_t m_tg_to_ctx_map;
+	reverse_and_lit_map_t m_reverse_and_map;
+	reverse_or_lit_map_t m_reverse_or_map;
 
 	void print_test_goal(::literalt const& tg, ::std::ostream & os) const;
-	void store_mapping(::literalt const& tg,
+	void store_mapping(::literalt const& tg, ::bvt const& or_set,
 			::goto_programt::const_targett const& context);
-	void store_mapping(::literalt const& tg, ctx_coll_t const& contexts);
+	void store_mapping(::literalt const& tg, ::bvt const& or_set,
+			ctx_coll_t const& contexts);
 
 	virtual void do_atom(Coverage_Pattern_Expr const* n, bool epsilon_permitted, bool make_single) = 0;
 	
@@ -247,6 +260,9 @@ class Compute_Test_Goals_From_Instrumentation : public Compute_Test_Goals
 
 	CNF_Conversion & do_query(::goto_functionst & gf, Query const& query);
 
+	virtual bool get_satisfied_test_goals(::cnf_clause_list_assignmentt const& cnf,
+			CNF_Conversion::test_goals_t & tgs) const;
+
 	private:
 	typedef ::std::map< ::goto_programt::const_targett,
 				::std::map< ::goto_programt::const_targett, 
@@ -273,6 +289,8 @@ class Compute_Test_Goals_From_Instrumentation : public Compute_Test_Goals
 	Self& operator=( Self const& rhs );
 };
 
+class Run_Tree;
+
 /*! \brief TODO
 */
 class Compute_Test_Goals_Boolean : public Compute_Test_Goals
@@ -289,6 +307,9 @@ class Compute_Test_Goals_Boolean : public Compute_Test_Goals
 
 	CNF_Conversion & do_query(::goto_functionst & gf, Query const& query);
 
+	virtual bool get_satisfied_test_goals(::cnf_clause_list_assignmentt const& cnf,
+			CNF_Conversion::test_goals_t & tgs) const;
+
 	private:
 	typedef ::std::map< target_graph_t::edge_t, ::std::set< target_graph_t const* > > edge_to_target_graphs_t;
 	typedef ::std::map< target_graph_t::node_t, ::std::set< target_graph_t const* > > node_to_target_graphs_t;
@@ -302,11 +323,34 @@ class Compute_Test_Goals_Boolean : public Compute_Test_Goals
 	typedef ::std::map< target_graph_t::edge_t, ::std::set< ::literalt > > edge_to_literal_map_t; 
 	typedef ::std::map< ta_state_t, edge_to_literal_map_t > state_edge_lit_map_t;
 
+	class Edge_Goal {
+		public:
+			Edge_Goal(::literalt const& edge_guard, ::literalt const& tg,
+					ta_state_t const& src, ta_state_t const& dest) :
+				m_edge_guard(edge_guard), m_tg(tg), m_src(src), m_dest(dest) {}
+
+			Edge_Goal(Edge_Goal const& other) :
+				m_edge_guard(other.m_edge_guard), m_tg(other.m_tg),
+				m_src(other.m_src), m_dest(other.m_dest) {}
+
+			::literalt const m_edge_guard;
+			::literalt const m_tg;
+			ta_state_t const m_src;
+			ta_state_t const m_dest;
+	};
+	typedef	::std::multimap< ::symex_target_equationt::SSA_stepst::const_iterator,
+				Edge_Goal > step_to_trans_mmap_t;
+	typedef ::std::map< ::symex_target_equationt::SSA_stepst::const_iterator,
+				unsigned > node_rep_map_t;
+
 	::fshell2::statistics::Statistics & m_stats;
 	Evaluate_Coverage_Pattern m_cp_eval;
 	loc_to_node_target_graphs_t m_loc_to_node_target_graphs_map;
 	loc_to_edge_target_graphs_t m_loc_to_edge_target_graphs_map;
 	state_edge_lit_map_t m_tg_to_lit_map;
+	step_to_trans_mmap_t m_step_to_trans;
+	step_to_trans_mmap_t m_node_step_to_trans;
+	node_rep_map_t m_node_rep_map;
 	
 	::bvt const& state_to_bvt_lookup(::bv_utilst & bv_utils, bv_cache_t & bv_cache,
 			ta_state_t const& state, unsigned const width);
