@@ -58,11 +58,31 @@ Evaluate_Coverage_Pattern::Evaluate_Coverage_Pattern(::language_uit & manager) :
 Evaluate_Coverage_Pattern::~Evaluate_Coverage_Pattern() {
 }
 
+bool Evaluate_Coverage_Pattern::is_test_goal_state_rec(Test_Goal_States const& tgs, ta_state_t const& state) {
+	if (tgs.m_tg_states.end() != tgs.m_tg_states.find(state)) return true;
+	if (tgs.m_children.empty()) return false;
+	
+	for (::std::list< Test_Goal_States >::const_iterator iter(tgs.m_children.begin());
+			iter != tgs.m_children.end(); ++iter)
+		if (is_test_goal_state_rec(*iter, state)) return true;
+	
+	return false;
+}
+	
+#if FSHELL2_DEBUG__LEVEL__ >= 1
+bool Evaluate_Coverage_Pattern::is_test_goal_state(ta_state_t const& state) const {
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+		is_test_goal_state_rec(m_test_goal_states, state) ==
+		(m_all_test_goal_states.end() != m_all_test_goal_states.find(state)));
+	return (m_all_test_goal_states.end() != m_all_test_goal_states.find(state));
+}
+
 trace_automaton_t const& Evaluate_Coverage_Pattern::get() const {
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Protocol,
 			m_test_goal_automaton.state_count() > 0);
 	return m_test_goal_automaton;
 }
+#endif
 
 Evaluate_Coverage_Pattern::Test_Goal_States const& Evaluate_Coverage_Pattern::do_query(
 		::goto_functionst & gf, ::fshell2::instrumentation::CFG & cfg, Query const& query) {
@@ -74,6 +94,7 @@ Evaluate_Coverage_Pattern::Test_Goal_States const& Evaluate_Coverage_Pattern::do
 			iter != m_test_goal_automaton.end(); ++iter)
 		m_test_goal_automaton.del_state(*iter);
 	m_current_final.clear();
+	m_all_test_goal_states.clear();
 	
 	// build automata from path patterns
 	m_pp_eval.do_query(gf, cfg, query);
@@ -84,18 +105,6 @@ Evaluate_Coverage_Pattern::Test_Goal_States const& Evaluate_Coverage_Pattern::do
 	return m_test_goal_states;
 }
 
-
-bool Evaluate_Coverage_Pattern::is_test_goal_state(Test_Goal_States const& tgs, ta_state_t const& state) {
-	if (tgs.m_tg_states.end() != tgs.m_tg_states.find(state)) return true;
-	if (tgs.m_children.empty()) return false;
-	
-	for (::std::list< Test_Goal_States >::const_iterator iter(tgs.m_children.begin());
-			iter != tgs.m_children.end(); ++iter)
-		if (is_test_goal_state(*iter, state)) return true;
-	
-	return false;
-}
-	
 void Evaluate_Coverage_Pattern::copy_from_path_pattern(Path_Pattern_Expr const* n) {
 	ta_state_set_t prev_final;
 	prev_final.swap(m_current_final);
@@ -115,6 +124,7 @@ void Evaluate_Coverage_Pattern::copy_from_path_pattern(Path_Pattern_Expr const* 
 		m_current_final.insert(new_state);
 		m_test_goal_automaton.final(new_state) = 1;
 		m_current_tg_states->m_tg_states.insert(new_state);
+		m_all_test_goal_states.insert(new_state);
 		int const idx(ta.delta2(*ta.begin()).begin()->first);
 
 		for (ta_state_set_t::const_iterator iter(prev_final.begin());
@@ -142,6 +152,7 @@ void Evaluate_Coverage_Pattern::copy_from_path_pattern(Path_Pattern_Expr const* 
 				iter != m_test_goal_automaton.end(); ++iter)
 			if (m_test_goal_automaton.final(*iter)) m_current_final.insert(*iter);
 		m_current_tg_states->m_tg_states = m_current_final;
+		m_all_test_goal_states.insert(m_current_final.begin(), m_current_final.end());
 	}
 }
 
@@ -161,6 +172,7 @@ void Evaluate_Coverage_Pattern::visit(CP_Alternative const* n) {
 
 	m_current_tg_states = m_current_tg_states_bak;
 	m_current_tg_states->m_tg_states = m_current_final;
+	m_all_test_goal_states.insert(m_current_final.begin(), m_current_final.end());
 }
 
 void Evaluate_Coverage_Pattern::visit(CP_Concat const* n) {
@@ -176,6 +188,7 @@ void Evaluate_Coverage_Pattern::visit(CP_Concat const* n) {
 	
 	m_current_tg_states = m_current_tg_states_bak;
 	m_current_tg_states->m_tg_states = m_current_final;
+	m_all_test_goal_states.insert(m_current_final.begin(), m_current_final.end());
 }
 
 void Evaluate_Coverage_Pattern::visit(Depcov const* n) {

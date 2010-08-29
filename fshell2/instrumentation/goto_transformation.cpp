@@ -69,10 +69,6 @@ void GOTO_Transformation::mark_instrumented(::goto_programt & target) {
 		mark_instrumented(iter);
 }
 
-bool GOTO_Transformation::is_instrumented(::goto_programt::const_targett inst) {
-	return (inst->location.get_property() == "fshell2_instrumentation");
-}
-	
 bool GOTO_Transformation::is_goto_edge(goto_edge_t const& edge) {
 	if (!edge.first.second->is_goto()) return false;
 	if (edge.first.second->guard.is_true()) return true;

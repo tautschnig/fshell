@@ -621,8 +621,8 @@ void Compute_Test_Goals_Boolean::build(trace_automaton_t const& aut, bool map_tg
 		
 		// if (Evaluate_Filter::ignore_function(lookup function of *(iter->source.pc))) continue;
 		if (!iter->source.pc->location.is_nil() &&
-			(iter->source.pc->location.get_file() == "<builtin-library>") ||
-			(iter->source.pc->location.get_file() == "<built-in>")) continue;
+			((iter->source.pc->location.get_file() == "<builtin-library>") ||
+			(iter->source.pc->location.get_file() == "<built-in>"))) continue;
 		if (iter->source.pc->function == "main") continue;
 		if (iter->source.pc->function == "c::__CPROVER_initialize") continue;
 		if (Evaluate_Filter::ignore_instruction(*(iter->source.pc))) continue;
@@ -980,9 +980,10 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 	// have satisfied
 
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == m_cp_eval.get().initial().size());
-	typedef ::std::multimap< ta_state_t, ::std::set< ::literalt > > state_vec_t;
+	typedef ::std::multimap< ta_state_t, ::std::vector< ::literalt > > state_vec_t;
 	state_vec_t current_states;
-	current_states.insert(::std::make_pair(*m_cp_eval.get().initial().begin(), ::std::set< ::literalt >()));
+	current_states.insert(::std::make_pair(*m_cp_eval.get().initial().begin(),
+				::std::vector< ::literalt >()));
 	
 	// int step_count(0);
 	for (::symex_target_equationt::SSA_stepst::const_iterator iter( 
@@ -1028,7 +1029,8 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 				// if (entry.first != entry.second)
 				// 	::std::cerr << "trans " << src << " -> " << dest << ::std::endl;
 				for (;entry.first != entry.second; ++(entry.first)) {
-					::std::set< ::literalt > known_sat(entry.first->second);
+					::std::vector< ::literalt > & known_sat(
+							next_states.insert(::std::make_pair(dest, entry.first->second))->second);
 					if (m_cp_eval.is_test_goal_state(dest)) {
 
 						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
@@ -1040,41 +1042,9 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 						for (::std::set< ::literalt >::const_iterator or_entries(or_entry->second.begin());
 								or_entries != or_entry->second.end(); ++or_entries) {
 							//// ::std::cerr << "SATISFIED OR: " << or_entries->dimacs() << ::std::endl;
-							if (or_entries->is_true()) {
-								//// ::std::cerr << "Skipping TRUE" << ::std::endl;
-								continue;
-							}
-							known_sat.insert(*or_entries);
+							if (!or_entries->is_true()) known_sat.push_back(*or_entries);
 						}
 					}
-
-					// it seems we never merge anyhow
-#if 0
-					::std::pair< state_vec_t::const_iterator, state_vec_t::const_iterator >
-						next_entry(next_states.equal_range(dest));
-					bool exists(false);
-					/*::std::cerr << "ours:";
-					  for (::std::set< ::literalt >::const_iterator k_iter(known_sat.begin());
-					  k_iter != known_sat.end(); ++k_iter)
-					  ::std::cerr << " " << k_iter->dimacs();
-					  ::std::cerr << ::std::endl;*/
-					for (;!exists && next_entry.first != next_entry.second; ++(next_entry.first)) {
-						/*::std::cerr << "other's:";
-						  for (::std::set< ::literalt >::const_iterator k_iter(next_entry.first->second.begin());
-						  k_iter != next_entry.first->second.end(); ++k_iter)
-						  ::std::cerr << " " << k_iter->dimacs();
-						  ::std::cerr << ::std::endl;*/
-						exists |= next_entry.first->second == known_sat;
-					}
-
-					if (!exists) {
-						//// ::std::cerr << "curr state ok" << ::std::endl;
-						next_states.insert(::std::make_pair(dest, known_sat));
-					} else {
-						::std::cerr << "Merged!" << ::std::endl;
-					}
-#endif
-					next_states.insert(::std::make_pair(dest, known_sat));
 				}
 			}
 
@@ -1087,7 +1057,7 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 				current_states.size(), " test goals"));
 	::std::set< ::literalt > known_sat_final;
 	// step_count = 0;
-	for (::std::multimap< ta_state_t, ::std::set< ::literalt > >::const_iterator iter(
+	for (::std::multimap< ta_state_t, ::std::vector< ::literalt > >::const_iterator iter(
 				current_states.begin()); iter != current_states.end(); ++iter) {
 		// ++step_count;
 		// ::std::cerr << ".";
@@ -1096,7 +1066,8 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 	
 		// ::std::map< ::literalt, ::std::list< ::literalt > > and_missing_one;
 		::std::list< ::std::pair< ::literalt, ::literalt > > and_missing_one;
-		::std::set< ::literalt > known_sat(iter->second);
+		::std::set< ::literalt > known_sat;
+		known_sat.insert(iter->second.begin(), iter->second.end());
 		::std::list< ::literalt > new_sat;
 		new_sat.insert(new_sat.end(), known_sat.begin(), known_sat.end());
 		while (!new_sat.empty()) {

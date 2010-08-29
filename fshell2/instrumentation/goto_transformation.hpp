@@ -67,7 +67,7 @@ class GOTO_Transformation
 
 	inserted_t & make_nondet_choice(::goto_programt & dest, int const num);
 	
-	static bool is_instrumented(::goto_programt::const_targett inst);
+	static inline bool is_instrumented(::goto_programt::const_targett inst);
 	static void mark_instrumented(::goto_programt & target);
 	static bool is_goto_edge(goto_edge_t const& edge);
 
@@ -93,6 +93,11 @@ class GOTO_Transformation
 	 */
 	Self& operator=( Self const& rhs );
 };
+
+inline bool GOTO_Transformation::is_instrumented(::goto_programt::const_targett inst) {
+	return (inst->location.get_property() == "fshell2_instrumentation");
+}
+	
 
 FSHELL2_INSTRUMENTATION_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;

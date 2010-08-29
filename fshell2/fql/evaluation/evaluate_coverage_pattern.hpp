@@ -65,9 +65,13 @@ class Evaluate_Coverage_Pattern : private Standard_AST_Visitor_Aspect<AST_Visito
 	Test_Goal_States const& do_query(::goto_functionst & gf,
 			::fshell2::instrumentation::CFG & cfg, Query const& query);
 	
-	inline bool is_test_goal_state(ta_state_t const& state) const;
-
+#if FSHELL2_DEBUG__LEVEL__ >= 1
+	bool is_test_goal_state(ta_state_t const& state) const;
 	trace_automaton_t const& get() const;
+#else
+	inline bool is_test_goal_state(ta_state_t const& state) const;
+	inline trace_automaton_t const& get() const;
+#endif
 
 	inline Evaluate_Path_Pattern const& get_pp_eval() const;
 
@@ -77,8 +81,9 @@ class Evaluate_Coverage_Pattern : private Standard_AST_Visitor_Aspect<AST_Visito
 	Test_Goal_States * m_current_tg_states;
 	trace_automaton_t m_test_goal_automaton;
 	ta_state_set_t m_current_final;
+	ta_state_set_t m_all_test_goal_states;
 	
-	static bool is_test_goal_state(Test_Goal_States const& tgs, ta_state_t const& state);
+	static bool is_test_goal_state_rec(Test_Goal_States const& tgs, ta_state_t const& state);
 	void copy_from_path_pattern(Path_Pattern_Expr const* n);
 
 	/*! \{
@@ -153,9 +158,15 @@ class Evaluate_Coverage_Pattern : private Standard_AST_Visitor_Aspect<AST_Visito
 	Self& operator=( Self const& rhs );
 };
 
-bool Evaluate_Coverage_Pattern::is_test_goal_state(ta_state_t const& state) const {
-	return is_test_goal_state(m_test_goal_states, state);
+#if FSHELL2_DEBUG__LEVEL__ < 1
+inline bool Evaluate_Coverage_Pattern::is_test_goal_state(ta_state_t const& state) const {
+	return (m_all_test_goal_states.end() != m_all_test_goal_states.find(state));
 }
+	
+inline trace_automaton_t const& Evaluate_Coverage_Pattern::get() const {
+	return m_test_goal_automaton;
+}
+#endif
 	
 inline Evaluate_Path_Pattern const& Evaluate_Coverage_Pattern::get_pp_eval() const {
 	return m_pp_eval;
