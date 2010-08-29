@@ -25,9 +25,13 @@ EXTRA_DIST = $(DX_CONFIG) LICENSE NOTICE Artistic config/runtest.sh $(AUX_DIST) 
 MAINTAINERCLEANFILES += aclocal.m4 configure config.h.in $(AUX_DIST)
 DISTCLEANFILES = config.h.in~ _configs.sed fshell2/config/features.hpp
 
-clean-local distclean-local:
-	$(MAKE) $(AM_MAKEFLAGS) -C astl `echo $@ | @AWK@ -F- '{print $$1}'`
-	$(MAKE) $(AM_MAKEFLAGS) -C cbmc/src `echo $@ | @AWK@ -F- '{print $$1}'`
+clean-local:
+	$(MAKE) $(AM_MAKEFLAGS) -C astl clean
+	$(MAKE) $(AM_MAKEFLAGS) -C cbmc/src clean
+
+distclean-local:
+	$(MAKE) $(AM_MAKEFLAGS) -C astl distclean
+	$(MAKE) $(AM_MAKEFLAGS) -C cbmc/src distclean
 
 maintainer-clean-local:
 	$(MAKE) $(AM_MAKEFLAGS) -C astl maintainer-clean

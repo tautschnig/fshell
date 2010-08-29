@@ -1,8 +1,8 @@
 # vi: set ft=automake:
 
 PROF_BENCH = \
-	"$(MAKE) -C $(top_srcdir)/benchmarks/code joplift.prep":"$(top_srcdir)/benchmarks/code/joplift/*.c --unwind 1 --no-unwinding-assertions --partial-loops --function ctrl_loop":"cover @basicblockentry" \
-	"$(MAKE) -C $(top_srcdir)/benchmarks/code ase-examples.prep":"$(top_srcdir)/benchmarks/code/ase-examples/list2.c --unwind 3":"cover @BASICBLOCKENTRY->@BASICBLOCKENTRY->@BASICBLOCKENTRY->@BASICBLOCKENTRY"
+						 "$(MAKE) -C $(top_srcdir)/benchmarks/code joplift.prep":"$(top_srcdir)/benchmarks/code/joplift/*.c --unwind 1 --partial-loops --function ctrl_loop":"set no_zero_init":"cover @basicblockentry" \
+						 "$(MAKE) -C $(top_srcdir)/benchmarks/code ase-examples.prep":"$(top_srcdir)/benchmarks/code/ase-examples/list2.c --unwind 3":"":"cover @BASICBLOCKENTRY->@BASICBLOCKENTRY->@BASICBLOCKENTRY->@BASICBLOCKENTRY"
 PROF_CLIENT = $(top_builddir)/fshell2/main/fshell
 PROF_CLIENT_OPTS = --verbosity 0 --statistics --outfile /dev/null
 
@@ -34,12 +34,14 @@ profile:
 	  echo "MAKE: $(MAKE) $(MAKEFLAGS) -C $(top_srcdir) CXXFLAGS=\"$(CXXFLAGS)\"" >> benchmarks/profiling/NOTES ; \
 	  prep="`echo $$i | cut -f1 -d:`" ; \
 	  cmdline="`echo $$i | cut -f2 -d:`" ; \
-	  query="`echo $$i | cut -f3 -d:`" ; \
+	  prolog="`echo $$i | cut -f3 -d:`" ; \
+	  query="`echo $$i | cut -f4 -d:`" ; \
 	  echo "CMDLINE: $(PROF_CLIENT) $(PROF_CLIENT_OPTS) $$cmdline" >> benchmarks/profiling/NOTES ; \
+	  echo "PREPARE: $$prolog" >> benchmarks/profiling/NOTES ; \
 	  echo "QUERY: $$query" >> benchmarks/profiling/NOTES ; \
 	  echo >> benchmarks/profiling/NOTES ; \
 	  $$prep && \
-	  time ( printf "$$query\\nquit\\n" | $(PROF_CLIENT) $(PROF_CLIENT_OPTS) $$cmdline ) && \
+	  time ( printf "$$prolog\\n$$query\\nquit\\n" | $(PROF_CLIENT) $(PROF_CLIENT_OPTS) $$cmdline ) && \
 	  gprof $(PROF_CLIENT) > benchmarks/profiling/$$rev.$$ident && \
 	  gzip benchmarks/profiling/$$rev.$$ident || exit 1 ; \
 	done
