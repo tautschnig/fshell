@@ -980,10 +980,10 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 	// have satisfied
 
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == m_cp_eval.get().initial().size());
-	typedef ::std::multimap< ta_state_t, ::std::vector< ::literalt > > state_vec_t;
+	typedef ::std::map< ta_state_t, ::std::list< ::std::vector< ::literalt > > > state_vec_t;
 	state_vec_t current_states;
-	current_states.insert(::std::make_pair(*m_cp_eval.get().initial().begin(),
-				::std::vector< ::literalt >()));
+	current_states[ *m_cp_eval.get().initial().begin() ].push_back(::std::vector< ::literalt >());
+	unsigned current_states_size(0);
 	
 	// int step_count(0);
 	for (::symex_target_equationt::SSA_stepst::const_iterator iter( 
@@ -1023,15 +1023,19 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 				//// ::std::cerr << "Checking " << edge_guard.dimacs() << ::std::endl;
 				if (!edge_guard.is_true() && cnf.l_get(edge_guard) != ::tvt(true)) continue;
 				ta_state_t const& src(iter_pair.first->second.m_src);
+				state_vec_t::const_iterator entry(current_states.find(src));
+				if (current_states.end() == entry) continue;
 				ta_state_t const& dest(iter_pair.first->second.m_dest);
-				::std::pair< state_vec_t::const_iterator, state_vec_t::const_iterator >
-					entry(current_states.equal_range(src));
-				// if (entry.first != entry.second)
-				// 	::std::cerr << "trans " << src << " -> " << dest << ::std::endl;
-				for (;entry.first != entry.second; ++(entry.first)) {
-					::std::vector< ::literalt > & known_sat(
-							next_states.insert(::std::make_pair(dest, entry.first->second))->second);
-					if (m_cp_eval.is_test_goal_state(dest)) {
+				bool const is_tgs(m_cp_eval.is_test_goal_state(dest));
+				// ::std::cerr << "trans " << src << " -> " << dest << ::std::endl;
+				for (::std::list< ::std::vector< ::literalt > >::const_iterator i_iter(entry->second.begin());
+					i_iter != entry->second.end(); ++i_iter) {
+					state_vec_t::iterator next_entry(next_states.insert(::std::make_pair(dest,
+						::std::list< ::std::vector< ::literalt > >())).first);
+					next_entry->second.push_back(*i_iter);
+					::std::vector< ::literalt > & known_sat(next_entry->second.back());
+					++current_states_size;
+					if (is_tgs) {
 
 						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 								::literalt::unused_var_no() != iter_pair.first->second.m_tg.var_no());
@@ -1050,108 +1054,116 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 
 			//// ::std::cerr << "Next round to come" << ::std::endl;
 			current_states.swap(next_states);
+			current_states_size = 0;
 		}
 	}
 
 	m_manager.status(::diagnostics::internal::to_string("Need to analyze subsumption of up to ",
-				current_states.size(), " test goals"));
+				current_states_size, " test goals"));
 	::std::set< ::literalt > known_sat_final;
 	// step_count = 0;
-	for (::std::multimap< ta_state_t, ::std::vector< ::literalt > >::const_iterator iter(
-				current_states.begin()); iter != current_states.end(); ++iter) {
-		// ++step_count;
-		// ::std::cerr << ".";
-		// if (0 == step_count % 100) ::std::cerr << " state step count: " << step_count << ::std::endl;
-		if (!m_cp_eval.get().final(iter->first)) continue;
-	
-		// ::std::map< ::literalt, ::std::list< ::literalt > > and_missing_one;
-		::std::list< ::std::pair< ::literalt, ::literalt > > and_missing_one;
-		::std::set< ::literalt > known_sat;
-		known_sat.insert(iter->second.begin(), iter->second.end());
-		::std::list< ::literalt > new_sat;
-		new_sat.insert(new_sat.end(), known_sat.begin(), known_sat.end());
-		while (!new_sat.empty()) {
-			// ::std::cerr << ",";
-			::literalt const s(new_sat.front());
-			new_sat.pop_front();
-			// ::std::cerr << "KNOWN SAT: " << s.dimacs() << ::std::endl;
-
-			reverse_and_lit_map_t::const_iterator and_entry(m_reverse_and_map.find(s));
-			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 
-					(m_test_goals.end() != m_test_goals.find(s)) ||
-					(m_reverse_and_map.end() != and_entry));
-			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 
-					(m_reverse_and_map.end() != and_entry) ||
-					(m_test_goals.end() != m_test_goals.find(s)));
-			if (m_test_goals.end() != m_test_goals.find(s)) continue;
-
-			for (::std::set< ::std::pair< ::literalt, ::literalt > >::const_iterator and_iter(and_entry->second.begin());
-					and_iter != and_entry->second.end(); ++and_iter) {
-				// ::std::cerr << "|";
-				// false will always remain false.
-				if (and_iter->first.is_false()) continue;
-				// s AND true is s
-				if (and_iter->second.is_true()) continue;
-				// already done
-				if (known_sat.end() != known_sat.find(and_iter->first)) continue;
-				// *or_entries AND x is known as *and_iter; value in m_and_map
-				// will be y AND z is known as *and_iter if
-				// or_entries->is_true(); skipped above
-				/// and_map_t::const_iterator and_map_entry(m_and_map.find(*and_iter));
-				/// FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_and_map.end() != and_map_entry);
-				//// ::std::cerr << "AND candidate: " << and_iter->dimacs() << " = " << 
-				//// 	and_map_entry->second.first.dimacs() << " AND " << and_map_entry->second.second.dimacs() << ::std::endl;
-				//// if (and_map_entry->second.first != *or_entries && and_map_entry->second.second != *or_entries) {
-				//// 	::std::cerr << "SATISFIED OR: " << or_entries->dimacs() << ::std::endl;
-				//// 	::std::cerr << "AND candidate: " << and_iter->dimacs() << " = " << 
-				//// 		and_map_entry->second.first.dimacs() << " AND " << and_map_entry->second.second.dimacs() << ::std::endl;
-				//// }
-				/*
-				::literalt const& other(and_iter->second);
-				if (known_sat.end() != known_sat.find(other)) {
-					// ::std::cerr << "+";
-					if (known_sat.insert(and_iter->first).second) {
-						new_sat.push_back(and_iter->first);
-						// ::std::cerr << "#";
-					}
-				} else {
-					*/
-				// ::std::cerr << "AND candidate: " << and_iter->first.dimacs() << " == " << s.dimacs() << " AND " << and_iter->second.dimacs() << ::std::endl;
-					and_missing_one.push_back(*and_iter);
-					// and_missing_one[ other ].push_back(and_iter->first);
-					// ::std::cerr << "-";
-				//}
-			}
-
-			for (::std::list< ::std::pair< ::literalt, ::literalt > >::iterator a_iter(
-						and_missing_one.begin()); a_iter != and_missing_one.end(); ) {
-				if (known_sat.end() != known_sat.find(a_iter->second)) {
-					if (known_sat.insert(a_iter->first).second) {
-						new_sat.push_back(a_iter->first);
-						//// ::std::cerr << "NEWLY SAT and: " << n_iter->dimacs() << ::std::endl;
-					}
-					::std::list< ::std::pair< ::literalt, ::literalt > >::iterator a_iter_bak(a_iter);
-					++a_iter;
-					and_missing_one.erase(a_iter_bak);
-				} else {
-					++a_iter;
-				}
-			}
-			/*
-			::std::map< ::literalt, ::std::list< ::literalt > >::iterator entry(
-					and_missing_one.find(s));
-			if (and_missing_one.end() != entry) {
-				for (::std::list< ::literalt >::const_iterator n_iter(entry->second.begin());
-						n_iter != entry->second.end(); ++n_iter)
-					if (known_sat.insert(*n_iter).second) {
-						new_sat.push_back(*n_iter);
-						//// ::std::cerr << "NEWLY SAT and: " << n_iter->dimacs() << ::std::endl;
-					}
-				and_missing_one.erase(entry);
-			}
-			*/
+	for (state_vec_t::const_iterator iter(current_states.begin());
+			iter != current_states.end(); ++iter) {
+		if (!m_cp_eval.get().final(iter->first)) {
+			// step_count += iter->second.size();
+			continue;
 		}
-		known_sat_final.insert(known_sat.begin(), known_sat.end());
+		
+		for (::std::list< ::std::vector< ::literalt > >::const_iterator i_iter(iter->second.begin());
+			i_iter != iter->second.end(); ++i_iter) {
+			// ++step_count;
+			// ::std::cerr << ".";
+			// if (0 == step_count % 100) ::std::cerr << " state step count: " << step_count << ::std::endl;
+		
+			// ::std::map< ::literalt, ::std::list< ::literalt > > and_missing_one;
+			::std::list< ::std::pair< ::literalt, ::literalt > > and_missing_one;
+			::std::set< ::literalt > known_sat;
+			known_sat.insert(i_iter->begin(), i_iter->end());
+			::std::list< ::literalt > new_sat;
+			new_sat.insert(new_sat.end(), known_sat.begin(), known_sat.end());
+			while (!new_sat.empty()) {
+				// ::std::cerr << ",";
+				::literalt const s(new_sat.front());
+				new_sat.pop_front();
+				// ::std::cerr << "KNOWN SAT: " << s.dimacs() << ::std::endl;
+
+				reverse_and_lit_map_t::const_iterator and_entry(m_reverse_and_map.find(s));
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 
+						(m_test_goals.end() != m_test_goals.find(s)) ||
+						(m_reverse_and_map.end() != and_entry));
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 
+						(m_reverse_and_map.end() != and_entry) ||
+						(m_test_goals.end() != m_test_goals.find(s)));
+				if (m_test_goals.end() != m_test_goals.find(s)) continue;
+
+				for (::std::set< ::std::pair< ::literalt, ::literalt > >::const_iterator and_iter(and_entry->second.begin());
+						and_iter != and_entry->second.end(); ++and_iter) {
+					// ::std::cerr << "|";
+					// false will always remain false.
+					if (and_iter->first.is_false()) continue;
+					// s AND true is s
+					if (and_iter->second.is_true()) continue;
+					// already done
+					if (known_sat.end() != known_sat.find(and_iter->first)) continue;
+					// *or_entries AND x is known as *and_iter; value in m_and_map
+					// will be y AND z is known as *and_iter if
+					// or_entries->is_true(); skipped above
+					/// and_map_t::const_iterator and_map_entry(m_and_map.find(*and_iter));
+					/// FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_and_map.end() != and_map_entry);
+					//// ::std::cerr << "AND candidate: " << and_iter->dimacs() << " = " << 
+					//// 	and_map_entry->second.first.dimacs() << " AND " << and_map_entry->second.second.dimacs() << ::std::endl;
+					//// if (and_map_entry->second.first != *or_entries && and_map_entry->second.second != *or_entries) {
+					//// 	::std::cerr << "SATISFIED OR: " << or_entries->dimacs() << ::std::endl;
+					//// 	::std::cerr << "AND candidate: " << and_iter->dimacs() << " = " << 
+					//// 		and_map_entry->second.first.dimacs() << " AND " << and_map_entry->second.second.dimacs() << ::std::endl;
+					//// }
+					/*
+					::literalt const& other(and_iter->second);
+					if (known_sat.end() != known_sat.find(other)) {
+						// ::std::cerr << "+";
+						if (known_sat.insert(and_iter->first).second) {
+							new_sat.push_back(and_iter->first);
+							// ::std::cerr << "#";
+						}
+					} else {
+						*/
+					// ::std::cerr << "AND candidate: " << and_iter->first.dimacs() << " == " << s.dimacs() << " AND " << and_iter->second.dimacs() << ::std::endl;
+						and_missing_one.push_back(*and_iter);
+						// and_missing_one[ other ].push_back(and_iter->first);
+						// ::std::cerr << "-";
+					//}
+				}
+
+				for (::std::list< ::std::pair< ::literalt, ::literalt > >::iterator a_iter(
+							and_missing_one.begin()); a_iter != and_missing_one.end(); ) {
+					if (known_sat.end() != known_sat.find(a_iter->second)) {
+						if (known_sat.insert(a_iter->first).second) {
+							new_sat.push_back(a_iter->first);
+							//// ::std::cerr << "NEWLY SAT and: " << n_iter->dimacs() << ::std::endl;
+						}
+						::std::list< ::std::pair< ::literalt, ::literalt > >::iterator a_iter_bak(a_iter);
+						++a_iter;
+						and_missing_one.erase(a_iter_bak);
+					} else {
+						++a_iter;
+					}
+				}
+				/*
+				::std::map< ::literalt, ::std::list< ::literalt > >::iterator entry(
+						and_missing_one.find(s));
+				if (and_missing_one.end() != entry) {
+					for (::std::list< ::literalt >::const_iterator n_iter(entry->second.begin());
+							n_iter != entry->second.end(); ++n_iter)
+						if (known_sat.insert(*n_iter).second) {
+							new_sat.push_back(*n_iter);
+							//// ::std::cerr << "NEWLY SAT and: " << n_iter->dimacs() << ::std::endl;
+						}
+					and_missing_one.erase(entry);
+				}
+				*/
+			}
+			known_sat_final.insert(known_sat.begin(), known_sat.end());
+		}
 	}
 
 	// ::std::cerr << "Known SAT1-final:";
