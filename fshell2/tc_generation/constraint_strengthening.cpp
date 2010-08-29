@@ -167,7 +167,8 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 					aux_var_map.erase(tg);
 				}
 			}
-			// ::std::cerr << "Satisfies " << test_goal_set.size() << " additional test goals" << ::std::endl;
+			m_equation.status(::diagnostics::internal::to_string("Satisfies ",
+						test_goal_set.size(), " additional test goals"));
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !test_goal_set.empty());
 		}
 		timer1.stop_timer();
@@ -206,7 +207,8 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 
 		timer2.stop_timer();
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, num_sat > 0);
-		// ::std::cerr << "covers " << num_sat << " test goals" << ::std::endl;
+		m_equation.status(::diagnostics::internal::to_string("Satisfies ",
+					num_sat, " test goals"));
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, test_goal_set.empty());
 		if (use_sat && has_internal_check) i_stats.print(m_equation);
 	}
