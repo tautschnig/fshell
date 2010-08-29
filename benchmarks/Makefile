@@ -25,7 +25,7 @@ ASE_QUERIES = ase-examples_list2.c_Q1 ase-examples_list2.c_Q2 ase-examples_list2
 							ase-examples_list2.c_Q19 ase-examples_list2.c_Q20 ase-examples_sort1.c_Q21 \
 							ase-examples_sort1.c_Q22 ase-examples_sort2.c_Q23 ase-examples_sort2.c_Q24
 
-OTHER = joplift_BB
+JOPLIFT = joplift_BB joplift_PATHS_ctrl_loop
 
 all install install-strip uninstall check installcheck dist:
 
