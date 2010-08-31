@@ -232,7 +232,8 @@ void Compute_Test_Goals::visit(CP_Concat const* n) {
 void Compute_Test_Goals::visit(Depcov const* n) {
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_test_goal_states->m_cp == n);
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_test_goal_states->m_children.empty());
-	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+	
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, false);
 }
 
 void Compute_Test_Goals::visit(Edgecov const* n) {

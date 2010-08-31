@@ -446,11 +446,11 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 			break;
 		case F_EXPR:
 			n->get_string_arg<F_EXPR>();
-			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, false);
 			break;
 		case F_REGEXP:
 			n->get_string_arg<F_REGEXP>();
-			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, false);
 			break;
 		case F_BASICBLOCKENTRY:
 			for (::goto_functionst::function_mapt::iterator iter(m_gf->function_map.begin());
@@ -495,10 +495,10 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 			}
 			break;
 		case F_DECISIONEDGE:
-			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, false);
 			break;
 		case F_CONDITIONGRAPH:
-			FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, false);
 			break;
 		case F_DEF:
 			{
@@ -718,7 +718,7 @@ void Evaluate_Filter::visit(Transform_Pred const* n) {
 	filter_value_t::const_iterator filt_set(m_filter_map.find(n->get_filter_expr()));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, filt_set != m_filter_map.end());
 
-	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, false);
 }
 
 FSHELL2_FQL_NAMESPACE_END;

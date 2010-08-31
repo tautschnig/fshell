@@ -416,6 +416,7 @@ ECP_Atom: Predicate
 	      IN_USE($3);
  	      needs_cleanup.insert($$);
 	    }
+		/*
 		| TOK_DEPCOV TOK_L_PARENTHESIS Filter TOK_COMMA Filter TOK_COMMA Filter TOK_R_PARENTHESIS
 	    {
 		  $$ = FQL_CREATE3(Depcov, $3, $5, $7);
@@ -424,6 +425,7 @@ ECP_Atom: Predicate
 	      IN_USE($7);
  	      needs_cleanup.insert($$);
 	    }
+		*/
 		;
 
 Predicate: TOK_ARBITRARY_PRED
@@ -514,12 +516,14 @@ Filter: Filter_Function
 	 	IN_USE($5);
 	    needs_cleanup.insert($$);
 	  }
+	  /*
 	  | TOK_PRED TOK_L_PARENTHESIS Filter TOK_COMMA Predicates TOK_R_PARENTHESIS
 	  {
 	    $$ = FQL_CREATE2(Transform_Pred, $3, $5);
 	 	IN_USE($3);
 	    needs_cleanup.insert($$);
 	  }
+	  */
 	  ;
 	  
 Filter_Function: TOK_IDENTITY
@@ -577,6 +581,7 @@ Filter_Function: TOK_IDENTITY
 			     $$ = FQL_CREATE_FF1(F_EXIT, $3);
 	    	     needs_cleanup.insert($$);
 			   }
+			   /*
 			   | TOK_EXPR TOK_L_PARENTHESIS TOK_QUOTED_STRING TOK_R_PARENTHESIS
 			   {
 			     $$ = FQL_CREATE_FF1(F_EXPR, $3);
@@ -587,6 +592,7 @@ Filter_Function: TOK_IDENTITY
 			     $$ = FQL_CREATE_FF1(F_REGEXP, $3);
 	    	     needs_cleanup.insert($$);
 			   }
+			   */
 			   | TOK_BASICBLOCKENTRY
 			   {
 			     $$ = FQL_CREATE_FF0(F_BASICBLOCKENTRY);
@@ -597,6 +603,7 @@ Filter_Function: TOK_IDENTITY
 			     $$ = FQL_CREATE_FF0(F_CONDITIONEDGE);
 	    	     needs_cleanup.insert($$);
 			   }
+			   /*
 			   | TOK_DECISIONEDGE
 			   {
 			     $$ = FQL_CREATE_FF0(F_DECISIONEDGE);
@@ -607,6 +614,7 @@ Filter_Function: TOK_IDENTITY
 			     $$ = FQL_CREATE_FF0(F_CONDITIONGRAPH);
 	    	     needs_cleanup.insert($$);
 			   }
+			   */
 			   | TOK_DEF TOK_L_PARENTHESIS TOK_C_IDENT TOK_R_PARENTHESIS
 			   {
 			     $$ = FQL_CREATE_FF1(F_DEF, $3);

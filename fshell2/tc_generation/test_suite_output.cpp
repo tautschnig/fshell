@@ -185,8 +185,8 @@ Symbol_Identifier::Symbol_Identifier(::exprt const& sym) :
 	else if (string::npos != m_var_name.find("::", m_var_name.find("::", m_var_name.find("::", 3) + 2) + 2))
 		m_vt = (m_level1 != "") ? LOCAL : LOCAL_STATIC;
 	
-	FSHELL2_PROD_CHECK1(::diagnostics::Not_Implemented, UNKNOWN != m_vt,
-			::diagnostics::internal::to_string("Cannot determine variable type of ", m_identifier));
+	FSHELL2_PROD_ASSERT1(::diagnostics::Not_Implemented, UNKNOWN != m_vt,
+			::std::string("Cannot determine variable type of ") + m_identifier);
 }
 		
 Test_Suite_Output::Test_Input::Test_Input(::symbolt const& main_sym,

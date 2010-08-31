@@ -192,7 +192,7 @@ void Evaluate_Coverage_Pattern::visit(CP_Concat const* n) {
 }
 
 void Evaluate_Coverage_Pattern::visit(Depcov const* n) {
-	FSHELL2_PROD_CHECK(::diagnostics::Not_Implemented, false);
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, false);
 }
 			
 void Evaluate_Coverage_Pattern::visit(Edgecov const* n) {
