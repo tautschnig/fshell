@@ -147,7 +147,11 @@ void Compute_Test_Goals::store_mapping(::literalt const& tg, ::bvt const& or_set
 void Compute_Test_Goals::print_test_goal(::literalt const& tg,
 		::std::ostream & os) const {
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-			!tg.is_true() && !tg.is_false());
+			!tg.is_false());
+	if (tg.is_true()) {
+		os << "<TRUE>";
+		return;
+	}
 
 	and_map_t::const_iterator a_iter(m_and_map.find(tg));
 	if (m_and_map.end() != a_iter) {
@@ -1014,6 +1018,7 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 			//// ::std::cerr << "Looked up step" << ::std::endl;
 			if (iter_pair.first == iter_pair.second) continue;
 
+			current_states_size = 0;
 			state_vec_t next_states;
 			// we can always choose to skip predicates or (some of) NODES
 			if (1 != cnt || ::fshell2::instrumentation::GOTO_Transformation::is_instrumented(iter->source.pc))
@@ -1029,9 +1034,9 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 				bool const is_tgs(m_cp_eval.is_test_goal_state(dest));
 				// ::std::cerr << "trans " << src << " -> " << dest << ::std::endl;
 				for (::std::list< ::std::vector< ::literalt > >::const_iterator i_iter(entry->second.begin());
-					i_iter != entry->second.end(); ++i_iter) {
+						i_iter != entry->second.end(); ++i_iter) {
 					state_vec_t::iterator next_entry(next_states.insert(::std::make_pair(dest,
-						::std::list< ::std::vector< ::literalt > >())).first);
+									::std::list< ::std::vector< ::literalt > >())).first);
 					next_entry->second.push_back(*i_iter);
 					::std::vector< ::literalt > & known_sat(next_entry->second.back());
 					++current_states_size;
@@ -1054,13 +1059,14 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 
 			//// ::std::cerr << "Next round to come" << ::std::endl;
 			current_states.swap(next_states);
-			current_states_size = 0;
 		}
 	}
 
-	m_manager.status(::diagnostics::internal::to_string("Need to analyze subsumption of up to ",
-				current_states_size, " test goals"));
+	m_manager.status(::diagnostics::internal::to_string("Need to analyze ",
+				current_states_size, " candidates for subsumption"));
 	::std::set< ::literalt > known_sat_final;
+	if (m_test_goals.end() != m_test_goals.find(::const_literal(true)))
+		known_sat_final.insert(::const_literal(true));
 	// step_count = 0;
 	for (state_vec_t::const_iterator iter(current_states.begin());
 			iter != current_states.end(); ++iter) {
@@ -1068,13 +1074,13 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 			// step_count += iter->second.size();
 			continue;
 		}
-		
+
 		for (::std::list< ::std::vector< ::literalt > >::const_iterator i_iter(iter->second.begin());
-			i_iter != iter->second.end(); ++i_iter) {
+				i_iter != iter->second.end(); ++i_iter) {
 			// ++step_count;
 			// ::std::cerr << ".";
 			// if (0 == step_count % 100) ::std::cerr << " state step count: " << step_count << ::std::endl;
-		
+
 			// ::std::map< ::literalt, ::std::list< ::literalt > > and_missing_one;
 			::std::list< ::std::pair< ::literalt, ::literalt > > and_missing_one;
 			::std::set< ::literalt > known_sat;
@@ -1118,19 +1124,19 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 					//// 		and_map_entry->second.first.dimacs() << " AND " << and_map_entry->second.second.dimacs() << ::std::endl;
 					//// }
 					/*
-					::literalt const& other(and_iter->second);
-					if (known_sat.end() != known_sat.find(other)) {
-						// ::std::cerr << "+";
-						if (known_sat.insert(and_iter->first).second) {
-							new_sat.push_back(and_iter->first);
-							// ::std::cerr << "#";
-						}
+					   ::literalt const& other(and_iter->second);
+					   if (known_sat.end() != known_sat.find(other)) {
+					// ::std::cerr << "+";
+					if (known_sat.insert(and_iter->first).second) {
+					new_sat.push_back(and_iter->first);
+					// ::std::cerr << "#";
+					}
 					} else {
-						*/
+					*/
 					// ::std::cerr << "AND candidate: " << and_iter->first.dimacs() << " == " << s.dimacs() << " AND " << and_iter->second.dimacs() << ::std::endl;
-						and_missing_one.push_back(*and_iter);
-						// and_missing_one[ other ].push_back(and_iter->first);
-						// ::std::cerr << "-";
+					and_missing_one.push_back(*and_iter);
+					// and_missing_one[ other ].push_back(and_iter->first);
+					// ::std::cerr << "-";
 					//}
 				}
 
@@ -1149,16 +1155,16 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 					}
 				}
 				/*
-				::std::map< ::literalt, ::std::list< ::literalt > >::iterator entry(
-						and_missing_one.find(s));
-				if (and_missing_one.end() != entry) {
-					for (::std::list< ::literalt >::const_iterator n_iter(entry->second.begin());
-							n_iter != entry->second.end(); ++n_iter)
-						if (known_sat.insert(*n_iter).second) {
-							new_sat.push_back(*n_iter);
-							//// ::std::cerr << "NEWLY SAT and: " << n_iter->dimacs() << ::std::endl;
-						}
-					and_missing_one.erase(entry);
+				   ::std::map< ::literalt, ::std::list< ::literalt > >::iterator entry(
+				   and_missing_one.find(s));
+				   if (and_missing_one.end() != entry) {
+				   for (::std::list< ::literalt >::const_iterator n_iter(entry->second.begin());
+				   n_iter != entry->second.end(); ++n_iter)
+				   if (known_sat.insert(*n_iter).second) {
+				   new_sat.push_back(*n_iter);
+				//// ::std::cerr << "NEWLY SAT and: " << n_iter->dimacs() << ::std::endl;
+				}
+				and_missing_one.erase(entry);
 				}
 				*/
 			}
@@ -1173,11 +1179,11 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 			// ::std::cerr << " " << iter->dimacs() << "(!TG!)";
 			tgs.insert(*iter);
 		}
-		/* else
-			::std::cerr << " " << iter->dimacs() << "(N)";
-	::std::cerr << ::std::endl;
-	::std::cerr << "SAT1-size: " << tgs.size() << ::std::endl;
-	*/
+	/* else
+	   ::std::cerr << " " << iter->dimacs() << "(N)";
+	   ::std::cerr << ::std::endl;
+	   ::std::cerr << "SAT1-size: " << tgs.size() << ::std::endl;
+	   */
 	
 	return true;
 }

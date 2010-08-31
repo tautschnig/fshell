@@ -186,6 +186,7 @@ of
 	QUERY("query8", "cover @label(L2).{x>0}");
 	QUERY("query9", "cover {x>0}.@label(L2)");
 	QUERY("query10", "cover nodes(id)");
+	QUERY("query11", "cover \"ID*\"");
 	
 	TEST_ASSERT(fshell.process_line(l, "QUIT"));
 }	
