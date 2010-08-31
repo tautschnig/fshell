@@ -41,6 +41,9 @@ location of and build in audit level, add
 
   --with-diagnostics=,audit
 
+If you intend to build with CXXFLAGS="-Wall -Werror -pedantic", which is
+recommended, you need to add -Wno-long-long and, with recent versions of GCC,
+-Wno-deprecated to work around use of non-standard hash maps.
 
 Re-compiling later on
 ---------------------

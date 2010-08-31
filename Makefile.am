@@ -78,7 +78,7 @@ all-local:
 			$(MAKE) $(AM_MAKEFLAGS) -C cbmc/src/ clean ; \
 		fi ; \
 	fi
-	$(MAKE) $(AM_MAKEFLAGS) -C cbmc/src
+	$(MAKE) $(filter-out CXXFLAGS="$(CXXFLAGS)", $(AM_MAKEFLAGS)) CXXFLAGS="$(CXXFLAGS) -Wno-parentheses -Wno-sign-compare" -C cbmc/src
 
 cbmc-src.tar.gz: $(shell find cbmc -name "*.cpp" -o -name "*.h")
 	rm -f $@
