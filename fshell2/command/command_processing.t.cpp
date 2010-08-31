@@ -181,8 +181,9 @@ void test_use_case( Test_Data & data )
 	TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, "set entry main"));
 	TEST_ASSERT(::config.main == "main");
 
+	TEST_ASSERT(0 == cmd.get_limit());
 	TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, "set limit count 27"));
-	TEST_ASSERT(27 == ::config.fshell.max_test_cases);
+	TEST_ASSERT(27 == cmd.get_limit());
 
 	::unlink(tempname_str.c_str());
 }
@@ -228,9 +229,9 @@ void test_use_case_extended_invariants( Test_Data & data )
 	// do it once again
 	TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, "set entry main"));
 
-	TEST_ASSERT(0 == ::config.fshell.max_test_cases);
+	TEST_ASSERT(0 == cmd.get_limit());
 	TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, "set limit count 27"));
-	TEST_ASSERT(27 == ::config.fshell.max_test_cases);
+	TEST_ASSERT(27 == cmd.get_limit());
 
 	TEST_CHECK(cfg.function_map.end() == cfg.function_map.find("c::foo"));
 	TEST_ASSERT(cmd.finalize(l));

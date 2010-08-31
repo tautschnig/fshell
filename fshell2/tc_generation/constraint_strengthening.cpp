@@ -36,7 +36,6 @@
 #include <fshell2/util/statistics.hpp>
 #include <fshell2/fql/evaluation/compute_test_goals.hpp>
 
-#include <cbmc/src/util/config.h>
 #include <cbmc/src/solvers/sat/satcheck_minisat2.h>
 // #include <cbmc/src/goto-symex/build_goto_trace.h>
 // #include <cbmc/src/solvers/sat/dimacs_cnf.h>
@@ -84,7 +83,7 @@ static int find_sat_test_goals(::satcheck_minisatt const& minisat,
 
 
 void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const& ctg,
-		test_cases_t & tcs)
+		test_cases_t & tcs, unsigned const limit)
 {
 	/*
 	// find proper strategy
@@ -121,13 +120,8 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 	cnf.copy_to(minisat);
 
 	::bvt goals_done;
-	bool max_tcs_reached(false);
 	bool const use_sat(m_opts.get_bool_option("sat-subsumption"));
-	while (!aux_var_map.empty()) {
-		if (::config.fshell.max_test_cases > 0 && tcs.size() == ::config.fshell.max_test_cases) {
-			max_tcs_reached = true;
-			break;
-		}
+	while (!aux_var_map.empty() && (limit == 0 || tcs.size() < limit)) {
 		
 		minisat.set_assumptions(goals_done);
 		if (::propt::P_UNSATISFIABLE == minisat.prop_solve()) break;
@@ -222,10 +216,9 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 	NEW_STAT(m_stats, Counter< aux_var_map_t::size_type >, missing_cnt, "Test goals not fulfilled");
 	missing_cnt.inc(aux_var_map.size());
 	
-	if (max_tcs_reached) {
+	if (limit > 0 && tcs.size() == limit) {
 		::std::ostringstream warn;
-		warn << "Stopped after computing " << ::config.fshell.max_test_cases
-			<< " test cases as requested";
+		warn << "Stopped after computing " << limit << " test cases as requested";
 		m_equation.warning(warn.str());
 	}
 	

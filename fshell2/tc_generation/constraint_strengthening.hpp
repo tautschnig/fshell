@@ -65,7 +65,8 @@ class Constraint_Strengthening
 	Constraint_Strengthening(::fshell2::fql::CNF_Conversion & equation,
 			::fshell2::statistics::Statistics & stats, ::optionst const& opts);
 
-	void generate(::fshell2::fql::Compute_Test_Goals const& ctg, test_cases_t & tcs);
+	void generate(::fshell2::fql::Compute_Test_Goals const& ctg, test_cases_t & tcs,
+			unsigned const limit);
 
 	private:
 	::fshell2::fql::CNF_Conversion & m_equation;

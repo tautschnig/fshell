@@ -123,7 +123,7 @@ Cleanup::~Cleanup() {
 
 Command_Processing::Command_Processing(::optionst const& opts, ::goto_functionst & gf) :
 	m_opts(opts), m_gf(gf), m_finalized(true),
-	m_remove_zero_init(false) {
+	m_remove_zero_init(false), m_limit(0) {
 	if (::config.main.empty()) ::config.main = "main";
 }
 
@@ -267,7 +267,7 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, numeric_arg >= 0);
 			FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error, numeric_arg > 0,
 					"Limit must be greater than 0");
-			::config.fshell.max_test_cases = numeric_arg;
+			m_limit = numeric_arg;
 			return DONE;
 		case CMD_SET_NO_ZERO_INIT:
 			m_remove_zero_init = true;	

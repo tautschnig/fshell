@@ -80,6 +80,8 @@ class Command_Processing
 
 	static ::std::ostream & help(::std::ostream & os);
 
+	inline unsigned get_limit() const;
+
 	bool finalize(::language_uit & manager);
 	void finalize_goto_program(::language_uit & manager);
 	
@@ -89,6 +91,7 @@ class Command_Processing
 	::std::map< ::std::string, time_t > m_parse_time;
 	bool m_finalized;
 	bool m_remove_zero_init;
+	unsigned m_limit;
 	
 	::std::ostream & print_file_contents(::std::ostream & os, char const * name) const;
 
@@ -104,6 +107,10 @@ class Command_Processing
 	Self& operator=( Self const& rhs );
 };
 	
+inline unsigned Command_Processing::get_limit() const {
+	return m_limit;
+}
+
 ::std::ostream & operator<<(::std::ostream & os, Command_Processing::status_t const& s);
 
 FSHELL2_COMMAND_NAMESPACE_END;
