@@ -31,7 +31,7 @@
 FSHELL2_NAMESPACE_BEGIN;
 
 FShell2_Error::FShell2_Error( ::std::string const& what )
-: ::diagnostics::Low_Level_Exception( what )
+: Base_Exception( what )
 {
 }
 
@@ -40,7 +40,7 @@ FShell2_Error::~FShell2_Error() FSHELL2_NO_THROW
 }
 
 FShell2_Error::FShell2_Error( Self const& rhs )
-: ::diagnostics::Low_Level_Exception( rhs )
+: Base_Exception( rhs )
 {
 }
 

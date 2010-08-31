@@ -32,7 +32,9 @@
 #include <fshell2/config/config.hpp>
 #include <fshell2/config/annotations.hpp>
 
-#include <diagnostics/basic_exceptions/invalid_argument.hpp>
+#if FSHELL2_DEBUG__LEVEL__ > -1
+#  include <diagnostics/basic_exceptions/invalid_argument.hpp>
+#endif
 
 #include <set>
 #include <list>

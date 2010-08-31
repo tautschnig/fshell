@@ -66,7 +66,7 @@ does; this breaks compilation with -pedantic */
 #include <fshell2/command/parser.h>
 
 #include <fshell2/config/annotations.hpp>
-#include <diagnostics/basic_exceptions/parse_error.hpp>
+#include <fshell2/exception/command_processing_error.hpp>>
 
 %}
 
@@ -125,7 +125,7 @@ TOK_NAT_NUMBER          [0-9]+
 
 <command,options>{TOK_C_IDENT}  { 
                                         yylval.STRING = strdup( yytext );
-                                        FSHELL2_PROD_ASSERT1(::diagnostics::Parse_Error,
+                                        FSHELL2_PROD_ASSERT1(::fshell2::Command_Processing_Error,
                                           yylval.STRING != 0, "Out of memory" );
                                         return TOK_C_IDENT; 
                                       }
@@ -133,7 +133,7 @@ TOK_NAT_NUMBER          [0-9]+
                                         /* only return the string between the quotes */
                                         int len = strlen( yytext );
                                         yylval.STRING = static_cast<char*>(malloc((len - 1)*sizeof(char)));
-                                        FSHELL2_PROD_ASSERT1(::diagnostics::Parse_Error,
+                                        FSHELL2_PROD_ASSERT1(::fshell2::Command_Processing_Error,
                                           yylval.STRING != 0, "Out of memory" );
                                         strncpy( yylval.STRING, yytext + sizeof(char), (len - 2)*sizeof(char) ); 
                                         yylval.STRING[ len - 2 ] = '\0';
@@ -141,9 +141,9 @@ TOK_NAT_NUMBER          [0-9]+
                                       }
 <options>{TOK_NAT_NUMBER}				  { 
                                         yylval.NUMBER = strtol( yytext, 0, 10 );
-                                        FSHELL2_PROD_CHECK1(::diagnostics::Parse_Error, 
+                                        FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error, 
                                           EINVAL != errno, "Invalid number" );
-                                        FSHELL2_PROD_CHECK1(::diagnostics::Parse_Error, 
+                                        FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error, 
                                           ERANGE != errno, "Number out of range" );
                                         return TOK_NAT_NUMBER; 
                                       }

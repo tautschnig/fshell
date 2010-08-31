@@ -29,9 +29,11 @@
 #include <fshell2/tc_generation/test_suite_output.hpp>
 #include <fshell2/config/annotations.hpp>
 
-#include <diagnostics/basic_exceptions/violated_invariance.hpp>
-#include <diagnostics/basic_exceptions/invalid_argument.hpp>
-#include <diagnostics/basic_exceptions/not_implemented.hpp>
+#if FSHELL2_DEBUG__LEVEL__ > -1
+#  include <diagnostics/basic_exceptions/violated_invariance.hpp>
+#  include <diagnostics/basic_exceptions/invalid_argument.hpp>
+#  include <diagnostics/basic_exceptions/not_implemented.hpp>
+#endif
 
 #include <fshell2/instrumentation/goto_utils.hpp>
 #include <fshell2/fql/evaluation/compute_test_goals.hpp>
@@ -117,8 +119,8 @@ Symbol_Identifier::Symbol_Identifier(::exprt const& sym) :
 	m_level2("-1"),
 	m_failed_object_level(-1)
 {
-	FSHELL2_PROD_ASSERT(::diagnostics::Invalid_Argument, sym.id() == ID_symbol);
-	FSHELL2_PROD_ASSERT(::diagnostics::Invalid_Argument, m_identifier.size() > 2);
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Invalid_Argument, sym.id() == ID_symbol);
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Invalid_Argument, m_identifier.size() > 2);
 	
 	using ::std::string;
 
@@ -147,7 +149,7 @@ Symbol_Identifier::Symbol_Identifier(::exprt const& sym) :
 
 	// strip off @xx (level1 renaming/frame numbers)
 	string::size_type const at_start(m_identifier.rfind('@'));
-	FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance,
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 			string::npos == at_start || 
 			string::npos == hash_start ||
 			at_start < hash_start);
@@ -185,7 +187,7 @@ Symbol_Identifier::Symbol_Identifier(::exprt const& sym) :
 	else if (string::npos != m_var_name.find("::", m_var_name.find("::", m_var_name.find("::", 3) + 2) + 2))
 		m_vt = (m_level1 != "") ? LOCAL : LOCAL_STATIC;
 	
-	FSHELL2_PROD_ASSERT1(::diagnostics::Not_Implemented, UNKNOWN != m_vt,
+	FSHELL2_AUDIT_ASSERT1(::diagnostics::Not_Implemented, UNKNOWN != m_vt,
 			::std::string("Cannot determine variable type of ") + m_identifier);
 }
 		
@@ -219,8 +221,8 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::Test_Input & ti) const 
 	seen_vars_t vars;
 	
 	// select the init procedure chosen by the user
-	::std::string const start_proc_prefix(::diagnostics::internal::to_string(
-				"c::", ti.m_main_symbol.module, "::", config.main, "::"));
+	::std::string const start_proc_prefix(::std::string("c::") +
+			ti.m_main_symbol.module.as_string() + "::" + config.main + "::");
 
 	// does a DEF-USE analysis
 	for (::symex_target_equationt::SSA_stepst::const_iterator iter( 
@@ -239,7 +241,7 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::Test_Input & ti) const 
 		
 		::std::map< ::exprt const*, ::exprt const* > stmt_vars_and_parents;
 		::fshell2::instrumentation::collect_expr_with_parents(iter->rhs, stmt_vars_and_parents);
-		FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, iter->lhs.id() == "symbol");
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, iter->lhs.id() == "symbol");
 		stmt_vars_and_parents.insert(::std::make_pair< ::exprt const*, ::exprt const* >(&(iter->lhs), 0));
 			
 		for (::std::map< ::exprt const*, ::exprt const* >::const_iterator
@@ -314,7 +316,7 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::Test_Input & ti) const 
 						iv.m_value = is_lhs ? v_iter->first : nondet_expr;
 						iv.m_symbol = 0;
 						m_equation.get_ns().lookup(iv.m_pretty_name, iv.m_symbol);
-						FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, iv.m_symbol);
+						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, iv.m_symbol);
 						iv.m_location = &(iter->source.pc->location);
 						// remove return values of defined (but inlined) functions
 						if (Symbol_Identifier::CBMC_TMP_RETURN_VALUE == var.m_vt && !iv.m_symbol->value.is_nil()) iv_in_use = false;
@@ -349,18 +351,18 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::Test_Input & ti) const 
 						iv.m_value = v_iter->first;
 						iv.m_symbol = 0;
 						m_equation.get_ns().lookup(iv.m_pretty_name, iv.m_symbol);
-						FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, iv.m_symbol);
+						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, iv.m_symbol);
 						iv.m_location = &(iv.m_symbol->location);
 					}
 					break;
 				case Symbol_Identifier::UNKNOWN:
-					FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, false);
+					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, false);
 					break;
 			}
 		
 			if (iv_in_use) {
 				//// ::std::cerr << "Test input: " << iv.m_pretty_name << ::std::endl;
-				FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, !iv.m_location->is_nil());
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !iv.m_location->is_nil());
 				iv.m_type_str = ::from_type(m_equation.get_ns(), iv.m_name->get("identifier"), iv.m_symbol->type);
 		
 				// obtain the value; if variable was used in pointer context, it will
@@ -371,16 +373,16 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::Test_Input & ti) const 
 				} else if (iv.m_value->id() != "nondet_symbol" &&
 						::std::string::npos == iv.m_value->get("identifier").as_string().rfind("#")) {
 					::exprt new_sym("symbol");
-					new_sym.set("identifier", ::diagnostics::internal::to_string(iv.m_value->get("identifier"), "#0"));
+					new_sym.set("identifier", iv.m_value->get("identifier").as_string() + "#0");
 					// not sure whether this is needed
 					// if (bv.map.mapping.end() == bv.map.mapping.find(new_sym.get("identifier"))) {
 					//   new_sym.set("identifier", ::diagnostics::internal::to_string(iv.m_value->get("identifier"), "$object#0"));
 					// }
-					FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, bv.map.mapping.end() !=
+					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, bv.map.mapping.end() !=
 							bv.map.mapping.find(new_sym.get("identifier")));
 					iv.m_value_str = ::from_expr(m_equation.get_ns(), iv.m_name->get("identifier"), bv.get(new_sym));
 				} else {
-					FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, bv.map.mapping.end() !=
+					FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, bv.map.mapping.end() !=
 							bv.map.mapping.find(iv.m_value->get("identifier")),
 							::diagnostics::internal::to_string("Failed to lookup ", iv.m_value->get("identifier")));
 					iv.m_value_str = ::from_expr(m_equation.get_ns(), iv.m_name->get("identifier"), bv.get(*iv.m_value));
@@ -400,7 +402,7 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::Test_Input & ti) const 
 				   }
 				   */
 					
-				FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, !iv.m_value_str.empty());
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !iv.m_value_str.empty());
 				ti.m_test_inputs.push_back(iv);
 			}
 		}
@@ -417,7 +419,7 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::Test_Input & ti) const 
 		os << "  ";
 		if (iter->m_symbol->type.id() == "code") {
 			::std::string::size_type pos(iter->m_type_str.find('('));
-			FSHELL2_PROD_ASSERT(::diagnostics::Violated_Invariance, pos != ::std::string::npos);
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, pos != ::std::string::npos);
 			os << iter->m_type_str.substr(0, pos) << iter->m_symbol->base_name << iter->m_type_str.substr(pos);
 		} else {
 			os << iter->m_type_str << " " << iter->m_symbol->base_name;

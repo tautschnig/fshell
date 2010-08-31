@@ -47,7 +47,7 @@ void set_initial_loggers(::std::vector<Logger *> & loggers)
 DIAGNOSTICS_NAMESPACE_END;
 
 #else
-#  if SHELL2_DEBUG__LEVEL__ > -1
+#  if FSHELL2_DEBUG__LEVEL__ > -1
 #    include <diagnostics/configuration.hpp>
 #    include <vector>
 

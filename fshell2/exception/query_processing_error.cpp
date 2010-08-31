@@ -31,7 +31,7 @@
 FSHELL2_NAMESPACE_BEGIN;
 
 Query_Processing_Error::Query_Processing_Error( ::std::string const& what )
-: ::diagnostics::Low_Level_Exception( what )
+: Base_Exception( what )
 {
 }
 
@@ -40,7 +40,7 @@ Query_Processing_Error::~Query_Processing_Error() FSHELL2_NO_THROW
 }
 
 Query_Processing_Error::Query_Processing_Error( Self const& rhs )
-: ::diagnostics::Low_Level_Exception( rhs )
+: Base_Exception( rhs )
 {
 }
 

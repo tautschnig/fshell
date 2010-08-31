@@ -18,50 +18,49 @@
  * limitations under the License.
  *******************************************************************************/
 
-/*! \file fshell2/fql/ast/quote.cpp
+/*! \file fshell2/exception/base_exception.cpp
  * \brief TODO
  *
  * $Id$
  * \author Michael Tautschnig <tautschnig@forsyte.de>
- * \date   Sun Aug  2 19:02:04 CEST 2009 
+ * \date   Mon Aug 30 15:26:03 CEST 2010 
 */
 
-#include <fshell2/fql/ast/quote.hpp>
-#include <fshell2/config/annotations.hpp>
-
-#if FSHELL2_DEBUG__LEVEL__ > -1
-#  include <diagnostics/basic_exceptions/invalid_argument.hpp>
-#endif
-
-#include <fshell2/fql/ast/ast_visitor.hpp>
+#include <fshell2/exception/base_exception.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
-FSHELL2_FQL_NAMESPACE_BEGIN;
 
-Quote::Quote(Path_Pattern_Expr * p) :
-	m_pp(p) {
-	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Argument, m_pp);
+Base_Exception::~Base_Exception() FSHELL2_NO_THROW
+{
 }
 
-void Quote::accept(AST_Visitor * v) const {
-	v->visit(this);
+#if FSHELL2_DEBUG__LEVEL__ > -1
+Base_Exception::Base_Exception( ::std::string const& what )
+: ::diagnostics::Low_Level_Exception( what )
+{
 }
 
-void Quote::accept(AST_Visitor const * v) const {
-	v->visit(this);
+Base_Exception::Base_Exception( Self const& rhs )
+: ::diagnostics::Low_Level_Exception( rhs )
+{
 }
 
-bool Quote::destroy() {
-	if (this->m_ref_count) return false;
-	Factory::get_instance().destroy(this);
-	m_pp->decr_ref_count();
-	m_pp->destroy();
-	return true;
+#else
+Base_Exception::Base_Exception( ::std::string const& what )
+: m_what( what )
+{
 }
 
-Quote::~Quote() {
+Base_Exception::Base_Exception( Self const& rhs )
+: m_what( rhs.m_what )
+{
 }
 
-FSHELL2_FQL_NAMESPACE_END;
+char const * Base_Exception::what() const FSHELL2_NO_THROW
+{
+	return m_what.c_str();
+}
+#endif
+
 FSHELL2_NAMESPACE_END;
 

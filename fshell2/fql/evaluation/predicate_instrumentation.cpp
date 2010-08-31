@@ -29,8 +29,10 @@
 #include <fshell2/fql/evaluation/predicate_instrumentation.hpp>
 #include <fshell2/config/annotations.hpp>
 
-#include <diagnostics/basic_exceptions/violated_invariance.hpp>
-#include <diagnostics/basic_exceptions/invalid_protocol.hpp>
+#if FSHELL2_DEBUG__LEVEL__ > -1
+#  include <diagnostics/basic_exceptions/violated_invariance.hpp>
+#  include <diagnostics/basic_exceptions/invalid_protocol.hpp>
+#endif
 
 #include <fshell2/fql/ast/predicate.hpp>
 

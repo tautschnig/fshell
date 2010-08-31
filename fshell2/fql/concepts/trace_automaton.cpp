@@ -29,9 +29,13 @@
 #include <fshell2/fql/concepts/trace_automaton.hpp>
 #include <fshell2/config/annotations.hpp>
 
-#include <diagnostics/basic_exceptions/violated_invariance.hpp>
-#include <diagnostics/basic_exceptions/invalid_argument.hpp>
-#include <diagnostics/basic_exceptions/invalid_protocol.hpp>
+#if FSHELL2_DEBUG__LEVEL__ > -1
+#  include <diagnostics/basic_exceptions/violated_invariance.hpp>
+#  include <diagnostics/basic_exceptions/invalid_argument.hpp>
+#  include <diagnostics/basic_exceptions/invalid_protocol.hpp>
+#endif
+
+#include <fshell2/exception/query_processing_error.hpp>
 
 #include <limits>
 
@@ -61,7 +65,7 @@ int Target_Graph_Index::to_index(target_graph_t const* f) {
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Invalid_Protocol, m_initialized);
 	::std::map< target_graph_t const*, int >::iterator entry(m_target_graph_to_int.find(f));
 	if (m_target_graph_to_int.end() == entry) {
-		FSHELL2_PROD_CHECK(::diagnostics::Violated_Invariance,
+		FSHELL2_PROD_CHECK(::fshell2::Query_Processing_Error,
 				m_next_index < ::std::numeric_limits<int>::max());
 		entry = m_target_graph_to_int.insert(::std::make_pair(f, m_next_index++)).first;
 		m_int_to_target_graph.insert(::std::make_pair(entry->second, f));

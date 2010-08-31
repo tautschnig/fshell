@@ -29,7 +29,9 @@
 #include <fshell2/macro/macro_processing.hpp>
 #include <fshell2/config/annotations.hpp>
 
-#include <diagnostics/basic_exceptions/violated_invariance.hpp>
+#if FSHELL2_DEBUG__LEVEL__ > -1
+#  include <diagnostics/basic_exceptions/violated_invariance.hpp>
+#endif
 
 #include <cstring>
 #include <fstream>
@@ -37,6 +39,7 @@
 #include <unistd.h>
 #include <vector>
 #include <cstdlib>
+#include <sstream>
 
 #include <fshell2/exception/macro_processing_error.hpp>
 
@@ -57,14 +60,14 @@ Macro_Processing::Macro_Processing() :
 {
 	FSHELL2_AUDIT_TRACE("Defines are written to " + m_deffilename);
 	::std::ofstream fs(m_deffilename.c_str());
-	FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, fs.is_open(),
+	FSHELL2_PROD_ASSERT1(::fshell2::Macro_Processing_Error, fs.is_open(),
 			"Failed to open macro expansion file");
 	fs << "// FShell macro list" << ::std::endl;
 	fs.close();
 	
 	::std::ofstream fs2(m_checkfilename.c_str());
-	FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, fs2.is_open(),
-			"Failed to open macro expansion file");
+	FSHELL2_PROD_ASSERT1(::fshell2::Macro_Processing_Error, fs2.is_open(),
+			"Failed to open second macro expansion file");
 	fs2 << "// FShell macro test list" << ::std::endl;
 	fs2.close();
 
@@ -105,7 +108,7 @@ int Macro_Processing::preprocess(::std::ostream & os) const {
 	out = ::popen(cmd.c_str(), "r");
 #endif
 	
-	FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, 0 != out,
+	FSHELL2_PROD_ASSERT1(::fshell2::Macro_Processing_Error, 0 != out,
 			"Failed to open stdout reader");
 	::std::ostringstream out_stream;
 	while (0 != ::fgets(line, 1024, out)) out_stream << line;
@@ -117,7 +120,7 @@ int Macro_Processing::preprocess(::std::ostream & os) const {
 #endif
 	
 	FILE * err(::fopen(stderr_file.c_str(), "r"));
-	FSHELL2_PROD_ASSERT1(::diagnostics::Violated_Invariance, 0 != err,
+	FSHELL2_PROD_ASSERT1(::fshell2::Macro_Processing_Error, 0 != err,
 			"Failed to open stderr reader");
 	::std::ostringstream err_stream;
 	while (0 != ::fgets(line, 1024, err)) err_stream << line;

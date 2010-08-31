@@ -29,7 +29,9 @@
 #include <fshell2/tc_generation/constraint_strengthening.hpp>
 #include <fshell2/config/annotations.hpp>
 
-#include <diagnostics/basic_exceptions/violated_invariance.hpp>
+#if FSHELL2_DEBUG__LEVEL__ > -1
+#  include <diagnostics/basic_exceptions/violated_invariance.hpp>
+#endif
 
 #include <fshell2/util/statistics.hpp>
 #include <fshell2/fql/evaluation/compute_test_goals.hpp>
@@ -167,8 +169,9 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 					aux_var_map.erase(tg);
 				}
 			}
-			m_equation.status(::diagnostics::internal::to_string("Satisfies ",
-						test_goal_set.size(), " additional test goals"));
+			::std::ostringstream status;
+			status << "Satisfies " << test_goal_set.size() << " additional test goals";
+			m_equation.status(status.str());
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !test_goal_set.empty());
 		}
 		timer1.stop_timer();
@@ -207,8 +210,9 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 
 		timer2.stop_timer();
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, num_sat > 0);
-		m_equation.status(::diagnostics::internal::to_string("Satisfies ",
-					num_sat, " test goals"));
+		::std::ostringstream status;
+		status << "Satisfies " << num_sat << " test goals";
+		m_equation.status(status.str());
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, test_goal_set.empty());
 		if (use_sat && has_internal_check) i_stats.print(m_equation);
 	}
@@ -218,9 +222,12 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 	NEW_STAT(m_stats, Counter< aux_var_map_t::size_type >, missing_cnt, "Test goals not fulfilled");
 	missing_cnt.inc(aux_var_map.size());
 	
-	if (max_tcs_reached)
-		m_equation.warning(::diagnostics::internal::to_string("Stopped after computing ",
-					::config.fshell.max_test_cases, " test cases as requested"));
+	if (max_tcs_reached) {
+		::std::ostringstream warn;
+		warn << "Stopped after computing " << ::config.fshell.max_test_cases
+			<< " test cases as requested";
+		m_equation.warning(warn.str());
+	}
 	
 	if (!aux_var_map.empty()) {
 		::std::ostringstream oss;

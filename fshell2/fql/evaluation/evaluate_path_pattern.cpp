@@ -29,9 +29,11 @@
 #include <fshell2/fql/evaluation/evaluate_path_pattern.hpp>
 #include <fshell2/config/annotations.hpp>
 
-#include <diagnostics/basic_exceptions/violated_invariance.hpp>
-#include <diagnostics/basic_exceptions/invalid_protocol.hpp>
-#include <diagnostics/basic_exceptions/not_implemented.hpp>
+#if FSHELL2_DEBUG__LEVEL__ > -1
+#  include <diagnostics/basic_exceptions/violated_invariance.hpp>
+#  include <diagnostics/basic_exceptions/invalid_protocol.hpp>
+#  include <diagnostics/basic_exceptions/not_implemented.hpp>
+#endif
 
 #include <fshell2/instrumentation/cfg.hpp>
 #include <fshell2/fql/ast/cp_alternative.hpp>

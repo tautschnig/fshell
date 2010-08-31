@@ -38,11 +38,15 @@
 #include <FlexLexer.h>
 
 #include <fshell2/config/annotations.hpp>
-#include <diagnostics/basic_exceptions/parse_error.hpp>
-#include <diagnostics/basic_exceptions/violated_invariance.hpp>
+#if FSHELL2_DEBUG__LEVEL__ > -1
+#  include <diagnostics/basic_exceptions/violated_invariance.hpp>
+#endif
+
+#include <fshell2/exception/query_processing_error.hpp>
 
 #include <set>
 #include <list>
+#include <sstream>
 
 #include <fshell2/fql/ast/cp_alternative.hpp>
 #include <fshell2/fql/ast/cp_concat.hpp>
@@ -445,8 +449,8 @@ Predicate: TOK_ARBITRARY_PRED
 		   ansi_c_parser.grammar = ansi_c_parsert::LANGUAGE;
 		   ansi_c_scanner_init();
 		   bool result(ansi_c_parser.parse());
-		   FSHELL2_PROD_CHECK1(::diagnostics::Parse_Error, !result,
-		     ::diagnostics::internal::to_string("Failed to parse predicate ", $1));
+		   FSHELL2_PROD_CHECK1(::fshell2::Query_Processing_Error, !result,
+		     ::std::string("Failed to parse predicate ") + $1);
 		   FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 		     1 == ansi_c_parser.parse_tree.items.size());
 		   FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
@@ -679,8 +683,7 @@ void yyerror(yyFlexLexer *, ::std::ostream *, ::fshell2::fql::Query **, char con
   intermediates.clear();
   needs_cleanup.clear();
   
-  FSHELL2_PROD_CHECK1(::diagnostics::Parse_Error, false,
-  ::diagnostics::internal::to_string( 
-    errstr, "; type \"help\" to get usage information" ));
+  FSHELL2_PROD_CHECK1(::fshell2::Query_Processing_Error, false,
+  	::std::string(errstr) + "; type \"help\" to get usage information");
 }
 

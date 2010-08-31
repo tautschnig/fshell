@@ -80,11 +80,12 @@ FSHELL2_NAMESPACE_END;
 
 #include <set>
 #include <list>
+#include <sstream>
 
 #include <fshell2/fql/parser/parser.h>
 
 #include <fshell2/config/annotations.hpp>
-#include <diagnostics/basic_exceptions/parse_error.hpp>
+#include <fshell2/exception/query_processing_error.hpp>
 
 extern ::std::set< ::fshell2::fql::FQL_Node * > intermediates;
 
@@ -180,9 +181,9 @@ TOK_NAT_NUMBER          [0-9]+
 <query_cover,query_passing>{TOK_LINE}   { return TOK_LINE; }
 <query_cover,query_passing>{TOK_LINE_ABBREV}   { 
                                         yylval.NUMBER = strtol( yytext+1, 0, 10 );
-                                        FSHELL2_PROD_CHECK1(::diagnostics::Parse_Error, 
+                                        FSHELL2_PROD_CHECK1(::fshell2::Query_Processing_Error, 
                                           EINVAL != errno, "Invalid number" );
-                                        FSHELL2_PROD_CHECK1(::diagnostics::Parse_Error, 
+                                        FSHELL2_PROD_CHECK1(::fshell2::Query_Processing_Error, 
                                           ERANGE != errno, "Number out of range" );
                                         return TOK_LINE_ABBREV; 
                                       }
@@ -221,7 +222,7 @@ TOK_NAT_NUMBER          [0-9]+
                                         /* only return the string between { } */
                                         int len = strlen( yytext );
                                         yylval.STRING = static_cast<char*>(malloc((len - 1)*sizeof(char)));
-                                        FSHELL2_PROD_ASSERT1(::diagnostics::Parse_Error,
+                                        FSHELL2_PROD_ASSERT1(::fshell2::Query_Processing_Error,
                                           yylval.STRING != 0, "Out of memory" );
                                         strncpy( yylval.STRING, yytext + sizeof(char), (len - 2)*sizeof(char) ); 
                                         yylval.STRING[ len - 2 ] = '\0';
@@ -250,7 +251,7 @@ TOK_NAT_NUMBER          [0-9]+
 
 <query_scope,query_cover,query_passing>{TOK_C_IDENT}  { 
                                         yylval.STRING = strdup( yytext );
-                                        FSHELL2_PROD_ASSERT1(::diagnostics::Parse_Error,
+                                        FSHELL2_PROD_ASSERT1(::fshell2::Query_Processing_Error,
                                           yylval.STRING != 0, "Out of memory" );
                                         return TOK_C_IDENT; 
                                       }
@@ -258,7 +259,7 @@ TOK_NAT_NUMBER          [0-9]+
                                         /* only return the string between the quotes */
                                         int len = strlen( yytext );
                                         yylval.STRING = static_cast<char*>(malloc((len - 1)*sizeof(char)));
-                                        FSHELL2_PROD_ASSERT1(::diagnostics::Parse_Error,
+                                        FSHELL2_PROD_ASSERT1(::fshell2::Query_Processing_Error,
                                           yylval.STRING != 0, "Out of memory" );
                                         strncpy( yylval.STRING, yytext + sizeof(char), (len - 2)*sizeof(char) ); 
                                         yylval.STRING[ len - 2 ] = '\0';
@@ -266,9 +267,9 @@ TOK_NAT_NUMBER          [0-9]+
                                       }
 <query_cover,query_passing>{TOK_NAT_NUMBER}				  { 
                                         yylval.NUMBER = strtol( yytext, 0, 10 );
-                                        FSHELL2_PROD_CHECK1(::diagnostics::Parse_Error, 
+                                        FSHELL2_PROD_CHECK1(::fshell2::Query_Processing_Error, 
                                           EINVAL != errno, "Invalid number" );
-                                        FSHELL2_PROD_CHECK1(::diagnostics::Parse_Error, 
+                                        FSHELL2_PROD_CHECK1(::fshell2::Query_Processing_Error, 
                                           ERANGE != errno, "Number out of range" );
                                         return TOK_NAT_NUMBER; 
                                       }
@@ -278,9 +279,10 @@ TOK_NAT_NUMBER          [0-9]+
 											iter(intermediates.begin()); iter != intermediates.end(); ++iter)
 										  if (*iter) (*iter)->destroy();
 										intermediates.clear();
-                                        FSHELL2_PROD_CHECK1(::diagnostics::Parse_Error, false,
-                                          ::diagnostics::internal::to_string( "Unexpected character ", yytext, 
-                                          " in line ", yylineno, "; type \"help\" to get usage information" ));
+										::std::ostringstream oss;
+                                        oss << "Unexpected character " << yytext
+											<< " in line " << yylineno << "; type \"help\" to get usage information";
+                                        FSHELL2_PROD_CHECK1(::fshell2::Query_Processing_Error, false, oss.str());
                                       }
 
 %%

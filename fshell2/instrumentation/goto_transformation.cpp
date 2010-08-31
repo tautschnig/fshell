@@ -29,8 +29,10 @@
 #include <fshell2/instrumentation/goto_transformation.hpp>
 #include <fshell2/config/annotations.hpp>
 
-#include <diagnostics/basic_exceptions/violated_invariance.hpp>
-#include <diagnostics/basic_exceptions/invalid_argument.hpp>
+#if FSHELL2_DEBUG__LEVEL__ > -1
+#  include <diagnostics/basic_exceptions/violated_invariance.hpp>
+#  include <diagnostics/basic_exceptions/invalid_argument.hpp>
+#endif
 
 #include <fshell2/exception/instrumentation_error.hpp>
 #include <fshell2/instrumentation/goto_utils.hpp>
@@ -119,8 +121,9 @@ void GOTO_Transformation::make_function_call(::goto_programt::targett ins,
 	static int var_count(-1);
 	++var_count;
 	FSHELL2_PROD_CHECK1(Instrumentation_Error, var_count >= 0, "Too many nondet choices required");
-	::std::string const var_name(::diagnostics::internal::to_string("$fshell2$", name, var_count));
-	return new_var(var_name, ::typet("bool"), false);
+	::std::ostringstream var_name;
+	var_name << "$fshell2$" << name << var_count;
+	return new_var(var_name.str(), ::typet("bool"), false);
 }
 
 GOTO_Transformation::inserted_t const& GOTO_Transformation::insert(::std::string const& f,
@@ -226,8 +229,7 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 		}
 		// check globals
 		symbolst::const_iterator global_symb(
-				m_manager.context.symbols.find(::diagnostics::internal::to_string(
-						"c::",(*iter)->get("identifier"))));
+				m_manager.context.symbols.find(::std::string("c::") + (*iter)->get(ID_identifier).as_string()));
 		if (global_symb != m_manager.context.symbols.end() && global_symb->second.static_lifetime)
 			alt_names.push_back(::symbol_expr(global_symb->second));
 		// function arguments
@@ -295,7 +297,7 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 	}
 
 	FSHELL2_PROD_CHECK1(Instrumentation_Error, pred_copy.type().id() == "bool",
-			::diagnostics::internal::to_string("Predicate ", ::expr2c(*pred, ns), " is not of Boolean type"));
+			::std::string("Predicate ") + ::expr2c(*pred, ns) + " is not of Boolean type");
 
 	::goto_programt::targett if_stmt(tmp.add_instruction());
 	::goto_programt::targett loc(tmp.add_instruction(LOCATION));

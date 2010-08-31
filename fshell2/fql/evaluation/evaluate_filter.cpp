@@ -30,10 +30,12 @@
 #include <fshell2/config/annotations.hpp>
 #include <fshell2/exception/query_processing_error.hpp>
 
-#include <diagnostics/basic_exceptions/violated_invariance.hpp>
-#include <diagnostics/basic_exceptions/invalid_protocol.hpp>
-#include <diagnostics/basic_exceptions/invalid_argument.hpp>
-#include <diagnostics/basic_exceptions/not_implemented.hpp>
+#if FSHELL2_DEBUG__LEVEL__ > -1
+#  include <diagnostics/basic_exceptions/violated_invariance.hpp>
+#  include <diagnostics/basic_exceptions/invalid_protocol.hpp>
+#  include <diagnostics/basic_exceptions/invalid_argument.hpp>
+#  include <diagnostics/basic_exceptions/not_implemented.hpp>
+#endif
 
 #include <fshell2/instrumentation/cfg.hpp>
 #include <fshell2/instrumentation/goto_utils.hpp>
@@ -58,6 +60,7 @@
 
 #include <algorithm>
 #include <iterator>
+#include <sstream>
 
 #include <cbmc/src/util/config.h>
 
@@ -194,6 +197,22 @@ void Evaluate_Filter::visit(Filter_Compose const* n) {
 	entry.first->second.set_I(initial);
 }
 
+template <filter_function_t F>
+static ::goto_functionst::function_mapt::iterator get_funct_entry(::goto_functionst & gf,
+		Filter_Function const* n)
+{
+	::std::string prefix("c::");
+	::goto_functionst::function_mapt::iterator fct(gf.function_map.find(prefix
+				+ n->get_string_arg<F>()));
+	if (fct == gf.function_map.end() || Evaluate_Filter::ignore_function(fct->second)) {
+		::std::ostringstream err;
+		err << "Cannot evaluate " << *n << " (function not available)";
+		FSHELL2_PROD_CHECK1(::fshell2::Query_Processing_Error, false, err.str());
+	}
+
+	return fct;
+}
+
 void Evaluate_Filter::visit(Filter_Function const* n) {
 	using ::fshell2::instrumentation::CFG;
 	using ::fshell2::instrumentation::GOTO_Transformation;
@@ -205,8 +224,6 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 	CFA::edges_t edges;
 	CFA::initial_states_t initial;
 
-	::std::string prefix("c::");
-	
 	switch (n->get_filter_type()) {
 		case F_IDENTITY:
 			for (::goto_functionst::function_mapt::iterator iter(m_gf->function_map.begin());
@@ -221,7 +238,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg->end());
 					for (::fshell2::instrumentation::CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
 							s_iter != cfg_node->second.successors.end(); ++s_iter) {
-						if (first && iter->first == (prefix + ::config.main)) {
+						if (first && iter->first == ("c::" + ::config.main)) {
 							initial.insert(::std::make_pair(&(iter->second.body), f_iter));
 							first = false;
 						}
@@ -260,7 +277,8 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 			break;
 		case F_LINE:
 			{
-				::std::string const& arg(::diagnostics::internal::to_string(n->get_int_arg<F_LINE>()));
+				::std::ostringstream arg_str;
+				arg_str << n->get_int_arg<F_LINE>();
 				for (::goto_functionst::function_mapt::iterator iter(m_gf->function_map.begin());
 						iter != m_gf->function_map.end(); ++iter) {
 					if (ignore_function(iter->second)) continue;
@@ -270,7 +288,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 						if (GOTO_Transformation::is_instrumented(f_iter)) continue;
 						if (f_iter->location.is_nil() ||
 								f_iter->location.get_line().empty() ||
-								f_iter->location.get_line() != arg) continue;
+								f_iter->location.get_line() != arg_str.str()) continue;
 						CFG::entries_t::iterator cfg_node(m_cfg->find(f_iter));
 						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg->end());
 						for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
@@ -284,7 +302,8 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 			break;
 		case F_COLUMN:
 			{
-				::std::string const& arg(::diagnostics::internal::to_string(n->get_int_arg<F_COLUMN>()));
+				::std::ostringstream arg_str;
+				arg_str << n->get_int_arg<F_COLUMN>();
 				for (::goto_functionst::function_mapt::iterator iter(m_gf->function_map.begin());
 						iter != m_gf->function_map.end(); ++iter) {
 					if (ignore_function(iter->second)) continue;
@@ -294,7 +313,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 						if (GOTO_Transformation::is_instrumented(f_iter)) continue;
 						if (f_iter->location.is_nil() ||
 								f_iter->location.get_column().empty() ||
-								f_iter->location.get_column() != arg) continue;
+								f_iter->location.get_column() != arg_str.str()) continue;
 						CFG::entries_t::iterator cfg_node(m_cfg->find(f_iter));
 						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg->end());
 						for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
@@ -308,11 +327,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 			break;
 		case F_FUNC:
 			{
-				::goto_functionst::function_mapt::iterator fct(m_gf->function_map.find(
-							prefix + n->get_string_arg<F_FUNC>()));
-				FSHELL2_PROD_CHECK1(::fshell2::Query_Processing_Error, fct != m_gf->function_map.end() &&
-						!ignore_function(fct->second),
-						::diagnostics::internal::to_string("Cannot evaluate ", *n, " (function not available)"));
+				::goto_functionst::function_mapt::iterator fct(get_funct_entry<F_FUNC>(*m_gf, n));
 				bool first(true);
 				for (::goto_programt::instructionst::iterator f_iter(fct->second.body.instructions.begin());
 						f_iter != fct->second.body.instructions.end(); ++f_iter) {
@@ -401,11 +416,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 			break;
 		case F_ENTRY:
 			{
-				::goto_functionst::function_mapt::iterator fct(m_gf->function_map.find(
-							prefix + n->get_string_arg<F_ENTRY>()));
-				FSHELL2_PROD_CHECK1(::fshell2::Query_Processing_Error, fct != m_gf->function_map.end() &&
-						!ignore_function(fct->second),
-						::diagnostics::internal::to_string("Cannot evaluate ", *n, " (function not available)"));
+				::goto_functionst::function_mapt::iterator fct(get_funct_entry<F_ENTRY>(*m_gf, n));
 				for (::goto_programt::instructionst::iterator f_iter(fct->second.body.instructions.begin());
 						f_iter != fct->second.body.instructions.end(); ++f_iter) {
 					if (ignore_instruction(*f_iter)) continue;
@@ -424,11 +435,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 			break;
 		case F_EXIT:
 			{
-				::goto_functionst::function_mapt::iterator fct(m_gf->function_map.find(
-							prefix + n->get_string_arg<F_EXIT>()));
-				FSHELL2_PROD_CHECK1(::fshell2::Query_Processing_Error, fct != m_gf->function_map.end() &&
-						!ignore_function(fct->second),
-						::diagnostics::internal::to_string("Cannot evaluate ", *n, " (function not available)"));
+				::goto_functionst::function_mapt::iterator fct(get_funct_entry<F_EXIT>(*m_gf, n));
 				for (::goto_programt::instructionst::iterator f_iter(fct->second.body.instructions.begin());
 						f_iter != fct->second.body.instructions.end(); ++f_iter) {
 					if (ignore_instruction(*f_iter)) continue;

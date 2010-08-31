@@ -29,9 +29,11 @@
 #include <fshell2/fql/evaluation/automaton_inserter.hpp>
 #include <fshell2/config/annotations.hpp>
 
-#include <diagnostics/basic_exceptions/violated_invariance.hpp>
-#include <diagnostics/basic_exceptions/invalid_protocol.hpp>
-#include <diagnostics/basic_exceptions/not_implemented.hpp>
+#if FSHELL2_DEBUG__LEVEL__ > -1
+#  include <diagnostics/basic_exceptions/violated_invariance.hpp>
+#  include <diagnostics/basic_exceptions/invalid_protocol.hpp>
+#  include <diagnostics/basic_exceptions/not_implemented.hpp>
+#endif
 
 #include <fshell2/instrumentation/cfg.hpp>
 #include <fshell2/instrumentation/goto_transformation.hpp>
@@ -40,6 +42,7 @@
 #include <fshell2/fql/evaluation/evaluate_path_pattern.hpp>
 #include <fshell2/fql/evaluation/evaluate_coverage_pattern.hpp>
 
+#include <sstream>
 #include <limits>
 
 #include <cbmc/src/util/std_code.h>
@@ -81,7 +84,7 @@ void Automaton_Inserter::insert(::goto_functionst & gf,
 	int num_states(aut.state_count());
 	while (num_states >>= 1) ++log_2_rounded;
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, ::std::numeric_limits< ta_state_t >::min() >= 0);
-	::symbolt const& state_symb(inserter.new_var(::diagnostics::internal::to_string("$fshell2$state$", suffix),
+	::symbolt const& state_symb(inserter.new_var(::std::string("$fshell2$state$") + suffix,
 				::unsignedbv_typet(log_2_rounded), true));
 	
 	::goto_programt defs;
@@ -157,11 +160,12 @@ void Automaton_Inserter::insert(::goto_functionst & gf,
 	// for each map entry add a function later on filter_trans$i with lots of
 	// transitions, some non-det as induced by map; add else assume(false)
 	for (transition_map_t::const_iterator iter(transitions.begin());
-			iter != transitions.end(); ++iter)
-		add_transition_function(gf,
-				::diagnostics::internal::to_string("c::filter_trans$", suffix,
-					"$", iter->first), iter->second, state_symb,
+			iter != transitions.end(); ++iter) {
+		::std::ostringstream fct_name;
+		fct_name << "c::filter_trans$" << suffix << "$" << iter->first;
+		add_transition_function(gf, fct_name.str(), iter->second, state_symb,
 				reverse_state_map, map_tg);
+	}
 	
 	prepare_assertion(compact_final, final_cond, state_symb);
 }
@@ -197,9 +201,10 @@ void Automaton_Inserter::insert_function_calls(::goto_functionst & gf,
 				GOTO_Transformation::inserted_t & targets(inserter.make_nondet_choice(tmp, 2));
 				GOTO_Transformation::inserted_t::iterator t_iter(targets.begin());
 				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 2 == targets.size());
-				
-				GOTO_Transformation::make_function_call(t_iter->second,
-						::diagnostics::internal::to_string("c::filter_trans$", suffix, "$", int_entry->second));
+			
+				::std::ostringstream fct_name;
+				fct_name << "c::filter_trans$" << suffix << "$" << int_entry->second;
+				GOTO_Transformation::make_function_call(t_iter->second, fct_name.str());
 				++t_iter;
 				// may be ignored, non-deterministically
 				t_iter->second->type = SKIP;
@@ -217,8 +222,9 @@ void Automaton_Inserter::insert_function_calls(::goto_functionst & gf,
 
 			::goto_programt tmp;
 			::goto_programt::targett call(tmp.add_instruction(FUNCTION_CALL));
-			GOTO_Transformation::make_function_call(call,
-					::diagnostics::internal::to_string("c::filter_trans$", suffix, "$", m_pp_eval.id_index()));
+			::std::ostringstream fct_name;
+			fct_name << "c::filter_trans$" << suffix << "$" << m_pp_eval.id_index();
+			GOTO_Transformation::make_function_call(call, fct_name.str());
 
 			inserter.insert_at(::std::make_pair(&body, iter), tmp);
 		} else if (GOTO_Transformation::is_instrumented(iter)) {
@@ -247,8 +253,9 @@ void Automaton_Inserter::insert_function_calls(::goto_functionst & gf,
 			GOTO_Transformation::inserted_t::iterator t_iter(targets.begin());
 			for (::std::set< int >::const_iterator f_iter(target_graphs.begin()); f_iter != target_graphs.end(); 
 					++f_iter, ++t_iter) {
-				GOTO_Transformation::make_function_call(t_iter->second,
-						::diagnostics::internal::to_string("c::filter_trans$", suffix, "$", *f_iter));
+				::std::ostringstream fct_name;
+				fct_name << "c::filter_trans$" << suffix << "$" << *f_iter;
+				GOTO_Transformation::make_function_call(t_iter->second, fct_name.str());
 			}
 			// may be ignored, non-deterministically
 			t_iter->second->type = SKIP;
@@ -260,7 +267,7 @@ void Automaton_Inserter::insert_function_calls(::goto_functionst & gf,
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !cfg_node->second.successors.empty());
 
 			edge_to_target_graphs_t const& entry(l_e_t_g_entry->second);
-			FSHELL2_PROD_ASSERT(::diagnostics::Not_Implemented, (cfg_node->second.successors.size() == 1) ||
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, (cfg_node->second.successors.size() == 1) ||
 					iter->is_goto());
 			for (CFG::successors_t::const_iterator s_iter(cfg_node->second.successors.begin());
 					s_iter != cfg_node->second.successors.end(); ++s_iter) {
@@ -282,18 +289,20 @@ void Automaton_Inserter::insert_function_calls(::goto_functionst & gf,
 				GOTO_Transformation::inserted_t::iterator t_iter(targets.begin());
 				for (::std::set< int >::const_iterator f_iter(target_graphs.begin()); f_iter != target_graphs.end(); 
 						++f_iter, ++t_iter) {
-					GOTO_Transformation::make_function_call(t_iter->second,
-						::diagnostics::internal::to_string("c::filter_trans$", suffix, "$", *f_iter));
+					::std::ostringstream fct_name;
+					fct_name << "c::filter_trans$" << suffix << "$" << *f_iter;
+					GOTO_Transformation::make_function_call(t_iter->second, fct_name.str());
 				}
-				GOTO_Transformation::make_function_call(t_iter->second,
-						::diagnostics::internal::to_string("c::filter_trans$", suffix, "$", m_pp_eval.id_index()));
+				::std::ostringstream fct_name;
+				fct_name << "c::filter_trans$" << suffix << "$" << m_pp_eval.id_index();
+				GOTO_Transformation::make_function_call(t_iter->second, fct_name.str());
 
 				if (iter->is_goto()) {
 					// CBMC doesn't support non-det goto statements at the moment, but
 					// just in case it ever does ...
-					FSHELL2_PROD_ASSERT(::diagnostics::Not_Implemented, (cfg_node->second.successors.size() == 1) ||
+					FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, (cfg_node->second.successors.size() == 1) ||
 							(cfg_node->second.successors.size() == 2));
-					FSHELL2_PROD_ASSERT(::diagnostics::Not_Implemented, 1 == iter->targets.size());
+					FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, 1 == iter->targets.size());
 
 					::goto_programt::targett out_target(tmp.add_instruction(SKIP));
 					::goto_programt if_prg;

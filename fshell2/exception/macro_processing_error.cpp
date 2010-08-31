@@ -31,7 +31,7 @@
 FSHELL2_NAMESPACE_BEGIN;
 
 Macro_Processing_Error::Macro_Processing_Error( ::std::string const& what )
-: ::diagnostics::Low_Level_Exception( what )
+: Base_Exception( what )
 {
 }
 
@@ -40,7 +40,7 @@ Macro_Processing_Error::~Macro_Processing_Error() FSHELL2_NO_THROW
 }
 
 Macro_Processing_Error::Macro_Processing_Error( Self const& rhs )
-: ::diagnostics::Low_Level_Exception( rhs )
+: Base_Exception( rhs )
 {
 }
 

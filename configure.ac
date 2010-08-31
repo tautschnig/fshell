@@ -41,6 +41,10 @@ AC_PROG_LIBTOOL
 
 model_UPDATE_MAKEFILES
 model_DIAGNOSTICS
+if test $DIAGNOSTICSLEVEL -ge 0 ; then
+  AC_CHECK_HEADERS([diagnostics/basic_exceptions/low_level_exception.hpp], [],
+                    AC_MSG_ERROR([diagnostics found in an outdated version]))
+fi
 
 
 AC_SUBST(additional_args)
@@ -51,8 +55,7 @@ AC_CXX_HAVE_STL
 if test "x$ac_cv_cxx_have_stl" != "xyes" ; then
   AC_MSG_ERROR([C++ standard template library not found])
 fi
-AC_CHECK_HEADERS([diagnostics/basic_exceptions/low_level_exception.hpp \
-                  FlexLexer.h \
+AC_CHECK_HEADERS([FlexLexer.h \
                   signal.h \
                   sys/stat.h \
                   ctime \

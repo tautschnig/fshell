@@ -30,9 +30,11 @@
 #include <fshell2/config/annotations.hpp>
 #include <fshell2/exception/query_processing_error.hpp>
 
-#include <diagnostics/basic_exceptions/parse_error.hpp>
-#include <diagnostics/basic_exceptions/violated_invariance.hpp>
+#if FSHELL2_DEBUG__LEVEL__ > -1
+#  include <diagnostics/basic_exceptions/violated_invariance.hpp>
+#endif
 
+#include <sstream>
 #include <cerrno>
 
 /* parser */
@@ -70,9 +72,9 @@ void Query_Parser::parse(::std::ostream & os, char const * query, Query ** query
 		int parse(0);
 		parse = FQLparse(&lexer, &os, query_ast);
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 0 == parse);
-	} catch (::diagnostics::Parse_Error & e) {
+	} catch (::fshell2::Query_Processing_Error & e) {
 		FSHELL2_PROD_CHECK1(Query_Processing_Error, false,
-				::diagnostics::internal::to_string("Query parsing failed: ", e.what()));
+				::std::string("Query parsing failed: ") + e.what());
 	}
 }
 

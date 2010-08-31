@@ -31,7 +31,7 @@ TESTS = cfa trace_automaton
 trace_automaton_SOURCES = trace_automaton.t.cpp
 # add additional objects required to build trace_automaton here, like
 # trace_automaton_LDADD = ../base/libbase.la libbla.la
-trace_automaton_LDADD = libconcepts.la
+trace_automaton_LDADD = libconcepts.la ../../exception/libexception.la
 # note that this entry (trace_automaton_SOURCES, trace_automaton_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually

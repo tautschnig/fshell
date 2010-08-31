@@ -29,7 +29,9 @@
 #include <fshell2/main/fshell2.hpp>
 #include <fshell2/config/annotations.hpp>
 
-#include <diagnostics/basic_exceptions/violated_invariance.hpp>
+#if FSHELL2_DEBUG__LEVEL__ > -1
+#  include <diagnostics/basic_exceptions/violated_invariance.hpp>
+#endif
 
 #include <fshell2/exception/command_processing_error.hpp>
 #include <fshell2/exception/macro_processing_error.hpp>

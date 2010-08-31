@@ -29,8 +29,10 @@
 #include <fshell2/fql/evaluation/compute_test_goals.hpp>
 #include <fshell2/config/annotations.hpp>
 
-#include <diagnostics/basic_exceptions/violated_invariance.hpp>
-#include <diagnostics/basic_exceptions/not_implemented.hpp>
+#if FSHELL2_DEBUG__LEVEL__ > -1
+#  include <diagnostics/basic_exceptions/violated_invariance.hpp>
+#  include <diagnostics/basic_exceptions/not_implemented.hpp>
+#endif
 
 #include <fshell2/util/smart_printer.hpp>
 #include <fshell2/util/statistics.hpp>
@@ -351,8 +353,10 @@ bool Compute_Test_Goals_From_Instrumentation::find_all_contexts(context_to_pcs_t
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, n_iter->second->is_assign());
 			pc_to_context_and_guards_t::const_iterator guards_entry(m_pc_to_guard.find(n_iter->second));
 			if (m_pc_to_guard.end() == guards_entry) {
-				m_equation.warning(::diagnostics::internal::to_string("transition to test goal state ",
-							*iter, " in ", n_iter->second->function, " is unreachable"));
+				::std::ostringstream warn;
+				warn << "Transition to test goal state " << *iter << " in "
+					<< n_iter->second->function << " is unreachable";
+				m_equation.warning(warn.str());
 				continue;
 			}
 
@@ -1063,8 +1067,9 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 		}
 	}
 
-	m_manager.status(::diagnostics::internal::to_string("Need to analyze ",
-				current_states_size, " candidates for subsumption"));
+	::std::ostringstream status;
+	status << "Need to analyze " << current_states_size << " candidates for subsumption";
+	m_manager.status(status.str());
 	::std::set< ::literalt > known_sat_final;
 	if (m_test_goals.end() != m_test_goals.find(::const_literal(true)))
 		known_sat_final.insert(::const_literal(true));

@@ -30,13 +30,13 @@
 */
 
 #include <fshell2/config/config.hpp>
-#include <diagnostics/basic_exceptions/low_level_exception.hpp>
+#include <fshell2/exception/base_exception.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 
 /*! \brief Errors thrown in query processing
 */
-class FShell2_Error : public ::diagnostics::Low_Level_Exception
+class FShell2_Error : public Base_Exception
 {
 	private:
 		/*! \copydoc doc_self

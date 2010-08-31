@@ -29,7 +29,9 @@
 #include <fshell2/fql/ast/fql_ast_printer.hpp>
 #include <fshell2/config/annotations.hpp>
 
-#include <diagnostics/basic_exceptions/violated_invariance.hpp>
+#if FSHELL2_DEBUG__LEVEL__ > -1
+#  include <diagnostics/basic_exceptions/violated_invariance.hpp>
+#endif
 
 #include <fshell2/fql/ast/cp_alternative.hpp>
 #include <fshell2/fql/ast/cp_concat.hpp>

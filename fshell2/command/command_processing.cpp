@@ -30,8 +30,10 @@
 #include <fshell2/config/annotations.hpp>
 #include <fshell2/exception/command_processing_error.hpp>
 
-#include <diagnostics/basic_exceptions/violated_invariance.hpp>
-#include <diagnostics/basic_exceptions/invalid_argument.hpp>
+#if FSHELL2_DEBUG__LEVEL__ > -1
+#  include <diagnostics/basic_exceptions/violated_invariance.hpp>
+#  include <diagnostics/basic_exceptions/invalid_argument.hpp>
+#endif
 
 #include <cbmc/src/util/config.h>
 #include <cbmc/src/langapi/language_ui.h>
@@ -141,15 +143,15 @@ Command_Processing::Command_Processing(::optionst const& opts, ::goto_functionst
 		// try to obtain the file modification date
 		struct stat info;
 		FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error, 0 == ::stat(name, &info),
-				::diagnostics::internal::to_string("Failed to stat() file ", name));
+				::std::string("Failed to stat() file ") + name);
 		FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error, info.st_mtime <= entry->second,
-				::diagnostics::internal::to_string("File ", name, " changed on disk"));
+				::std::string("File ") + name + " changed on disk");
 	}
 	// read the file using an ifstream
 	::std::ifstream fs(name);
 	// make sure the file could be opened
 	FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error, fs.is_open(),
-			::diagnostics::internal::to_string("Failed to open file ", name));
+			::std::string("Failed to open file ") + name);
 	int lc(0);
 	::std::string line;
 	while(!::std::getline(fs, line).eof())
@@ -171,7 +173,7 @@ void Command_Processing::add_sourcecode(::language_uit & manager, char const * f
 			// CBMC internally does -D' and the closing ', thus we
 			// generate define_ident=definition
 			config.ansi_c.defines.push_back(
-					::diagnostics::internal::to_string(iter->first, "=", iter->second));
+					::std::string(iter->first) + "=" + iter->second);
 	// keep a private copy of previously loaded files
 	::language_filest::filemapt prev_files;
 	prev_files.swap(manager.language_files.filemap);
@@ -190,12 +192,12 @@ void Command_Processing::add_sourcecode(::language_uit & manager, char const * f
 	if (err) {
 		manager.language_files.filemap.swap(prev_files);
 		FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error, false,
-				::diagnostics::internal::to_string("Failed to parse ", file));
+				::std::string("Failed to parse ") + file);
 	}
 	if (manager.typecheck()) {
 		manager.language_files.filemap.swap(prev_files);
 		FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error, false,
-				::diagnostics::internal::to_string("Failed to typecheck ", file));
+				::std::string("Failed to typecheck ") + file);
 	}
 	// build the full list of loaded files
 	manager.language_files.filemap.insert(prev_files.begin(), prev_files.end());
@@ -286,8 +288,7 @@ bool Command_Processing::finalize(::language_uit & manager) {
 	entry += ::config.main;
 	FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,
 			manager.context.has_symbol(entry),
-			::diagnostics::internal::to_string("Could not find entry function ",
-				::config.main));
+			::std::string("Could not find entry function " + ::config.main));
 	
 	if (m_finalized) return false;
 	

@@ -29,7 +29,11 @@
 #include <fshell2/util/statistics.hpp>
 #include <fshell2/config/annotations.hpp>
 
-#include <diagnostics/basic_exceptions/invalid_protocol.hpp>
+#if FSHELL2_DEBUG__LEVEL__ > -1
+#  include <diagnostics/basic_exceptions/invalid_protocol.hpp>
+#endif
+
+#include <sstream>
 
 #include <cbmc/src/util/message.h>
 #include <minisat-2.2.0/utils/System.h>
