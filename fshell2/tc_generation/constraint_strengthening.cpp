@@ -52,7 +52,8 @@ typedef ::std::map< ::literalt, ::literalt > aux_var_map_t;
 
 static int find_sat_test_goals(::satcheck_minisatt const& minisat,
 		aux_var_map_t & aux_var_map, ::bvt & goals_done, ::bvt & fixed_literals,
-		bool const has_internal_check, ::fshell2::fql::CNF_Conversion::test_goals_t & tgs)
+		bool const has_internal_check, ::fshell2::fql::test_goals_t & tgs,
+		::fshell2::fql::test_goals_t & tgs_done)
 {
 	int cnt(0);
 
@@ -72,6 +73,7 @@ static int find_sat_test_goals(::satcheck_minisatt const& minisat,
 			tgs.erase(iter->first);
 		}
 
+		tgs_done.insert(iter->first);
 		goals_done.push_back(::neg(iter->second));
 		fixed_literals.push_back(::neg(iter->second));
 		aux_var_map.erase(iter++);
@@ -93,12 +95,12 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 
 	m_equation.status("Starting incremental constraint strengthening");
 
-	::fshell2::fql::CNF_Conversion::test_goals_t const& goal_set(m_equation.get_test_goal_literals());
+	::fshell2::fql::test_goals_t const& goal_set(m_equation.get_test_goal_literals());
 	::cnf_clause_list_assignmentt & cnf(m_equation.get_cnf());
 
 	aux_var_map_t aux_var_map;
 	::bvt goal_cl;
-	for (::fshell2::fql::CNF_Conversion::test_goals_t::const_iterator iter(goal_set.begin());
+	for (::fshell2::fql::test_goals_t::const_iterator iter(goal_set.begin());
 			iter != goal_set.end(); ++iter) {
 		::literalt s(cnf.new_variable());
 		aux_var_map.insert(::std::make_pair(*iter, s));
@@ -134,9 +136,10 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 		*/
 
 		// keep all test cases
-		tcs.push_back(::cnf_clause_list_assignmentt());
-		tcs.back().set_no_variables(cnf.no_variables());
-		tcs.back().copy_assignment_from(minisat);
+		tcs.push_back(::std::make_pair(::fshell2::fql::test_goals_t(),
+					::cnf_clause_list_assignmentt()));
+		tcs.back().second.set_no_variables(cnf.no_variables());
+		tcs.back().second.copy_assignment_from(minisat);
 		/*
 		for (unsigned i(0); i != cnf.no_variables()-1; ++i)
 			::std::cerr << (i+1) << ": " << (minisat.l_get(::literalt(i+1,false)).is_false() ? "FALSE" : "TRUE") << ::std::endl;
@@ -146,13 +149,12 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 		::fshell2::statistics::Statistics i_stats;
 		NEW_STAT(i_stats, CPU_Timer, timer1, "Internal subsumption analysis");
 		timer1.start_timer();
-		::fshell2::fql::CNF_Conversion::test_goals_t test_goal_set;
-		bool const has_internal_check(ctg.get_satisfied_test_goals(tcs.back(), test_goal_set));
+		::fshell2::fql::test_goals_t test_goal_set;
+		bool const has_internal_check(ctg.get_satisfied_test_goals(tcs.back().second, test_goal_set));
 		if (has_internal_check) {
-			::fshell2::fql::CNF_Conversion::test_goals_t test_goal_set_bak;
-			test_goal_set_bak.swap(test_goal_set);
-			for (::fshell2::fql::CNF_Conversion::test_goals_t::const_iterator iter(
-						test_goal_set_bak.begin()); iter != test_goal_set_bak.end(); ++iter) {
+			tcs.back().first.swap(test_goal_set);
+			for (::fshell2::fql::test_goals_t::const_iterator iter(
+						tcs.back().first.begin()); iter != tcs.back().first.end(); ++iter) {
 				aux_var_map_t::iterator tg(aux_var_map.find(*iter));
 				if (aux_var_map.end() == tg) continue;
 					
@@ -188,7 +190,7 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 		fixed_literals.insert(fixed_literals.end(), goals_done.begin(), goals_done.end());
 		
 		num_sat += find_sat_test_goals(minisat, aux_var_map, goals_done,
-				fixed_literals, has_internal_check, test_goal_set);
+				fixed_literals, has_internal_check, test_goal_set, tcs.back().first);
 		
 		::satcheck_minisatt tmp_minisat;
 		tmp_minisat.set_message_handler(cnf.get_message_handler());
@@ -199,7 +201,7 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 			if (::propt::P_UNSATISFIABLE == tmp_minisat.prop_solve()) break;
 			
 			num_sat += find_sat_test_goals(tmp_minisat, aux_var_map, goals_done,
-					fixed_literals, has_internal_check, test_goal_set);
+					fixed_literals, has_internal_check, test_goal_set, tcs.back().first);
 		}
 
 		timer2.stop_timer();
@@ -211,8 +213,6 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 		if (use_sat && has_internal_check) i_stats.print(m_equation);
 	}
 	
-	NEW_STAT(m_stats, Counter< test_cases_t::size_type >, tcs_cnt, "Test cases");
-	tcs_cnt.inc(tcs.size());
 	NEW_STAT(m_stats, Counter< aux_var_map_t::size_type >, missing_cnt, "Test goals not fulfilled");
 	missing_cnt.inc(aux_var_map.size());
 	

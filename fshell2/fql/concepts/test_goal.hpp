@@ -18,50 +18,29 @@
  * limitations under the License.
  *******************************************************************************/
 
-#ifndef FSHELL2__TC_GENERATION__TEST_SUITE_MINIMIZATION_HPP
-#define FSHELL2__TC_GENERATION__TEST_SUITE_MINIMIZATION_HPP
+#ifndef FSHELL2__FQL__CONCEPTS__TEST_GOAL_HPP
+#define FSHELL2__FQL__CONCEPTS__TEST_GOAL_HPP
 
-/*! \file fshell2/tc_generation/test_suite_minimization.hpp
+/*! \file fshell2/fql/concepts/test_goal.hpp
  * \brief TODO
  *
  * $Id$
  * \author Michael Tautschnig <tautschnig@forsyte.de>
- * \date   Fri Jul 31 23:18:36 CEST 2009 
+ * \date   Tue Aug 31 17:01:01 CEST 2010 
 */
 
 #include <fshell2/config/config.hpp>
 
-#include <fshell2/tc_generation/constraint_strengthening.hpp>
+#include <set>
 
-class messaget;
+class literalt;
 
 FSHELL2_NAMESPACE_BEGIN;
+FSHELL2_FQL_NAMESPACE_BEGIN;
 
-/*! \brief TODO
-*/
-class Test_Suite_Minimization
-{
-	/*! \copydoc doc_self
-	*/
-	typedef Test_Suite_Minimization Self;
+typedef ::std::set< ::literalt > test_goals_t;
 
-	public:
-	explicit Test_Suite_Minimization(::messaget & msg);
-
-	void minimize(Constraint_Strengthening::test_cases_t & test_suite);
-
-	private:
-	messaget & m_message;
-
-	/*! \copydoc copy_constructor
-	*/
-	Test_Suite_Minimization( Self const& rhs );
-
-	/*! \copydoc assignment_op
-	 */
-	Self& operator=( Self const& rhs );
-};
-
+FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
 
-#endif /* FSHELL2__TC_GENERATION__TEST_SUITE_MINIMIZATION_HPP */
+#endif /* FSHELL2__FQL__CONCEPTS__TEST_GOAL_HPP */

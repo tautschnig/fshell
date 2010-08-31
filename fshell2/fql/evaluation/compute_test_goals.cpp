@@ -203,16 +203,16 @@ void Compute_Test_Goals::visit(CP_Concat const* n) {
 	::std::list< Evaluate_Coverage_Pattern::Test_Goal_States >::const_iterator iter(m_test_goal_states->m_children.begin());
 	m_test_goal_states = &(*iter);
 	n->get_cp_a()->accept(this);
-	CNF_Conversion::test_goals_t backup;
+	test_goals_t backup;
 	backup.swap(m_test_goals);
 	m_test_goal_states = &(*(++iter));
 	n->get_cp_b()->accept(this);
 	m_test_goal_states = m_tgs_bak;
-	CNF_Conversion::test_goals_t backup2;
+	test_goals_t backup2;
 	backup2.swap(m_test_goals);
 			
-	for (CNF_Conversion::test_goals_t::const_iterator agi(backup.begin()); agi != backup.end(); ++agi)
-		for (CNF_Conversion::test_goals_t::const_iterator bgi(backup2.begin());
+	for (test_goals_t::const_iterator agi(backup.begin()); agi != backup.end(); ++agi)
+		for (test_goals_t::const_iterator bgi(backup2.begin());
 				bgi != backup2.end(); ++bgi) {
 			::literalt const sg(m_equation.get_cnf().land(*agi, *bgi));
 			// if (agi->is_true()) ::std::cerr << agi->dimacs() << " is TRUE" << ::std::endl;
@@ -258,7 +258,7 @@ void Compute_Test_Goals::visit(Query const* n) {
 
 	bool const do_print(m_opts.get_bool_option("show-test-goals"));
 
-	for (CNF_Conversion::test_goals_t::const_iterator iter(m_test_goals.begin());
+	for (test_goals_t::const_iterator iter(m_test_goals.begin());
 			iter != m_test_goals.end(); ++iter) {
 		if (do_print) {
 			::std::ostringstream oss;
@@ -444,8 +444,7 @@ void Compute_Test_Goals_From_Instrumentation::do_atom(Coverage_Pattern_Expr cons
 }
 	
 bool Compute_Test_Goals_From_Instrumentation::get_satisfied_test_goals(
-		::cnf_clause_list_assignmentt const& cnf,
-		CNF_Conversion::test_goals_t & tgs) const
+		::cnf_clause_list_assignmentt const& cnf, test_goals_t & tgs) const
 {
 	return false;
 }
@@ -980,8 +979,7 @@ void Compute_Test_Goals_Boolean::do_atom(Coverage_Pattern_Expr const* n,
 }
 
 bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
-		::cnf_clause_list_assignmentt const& cnf,
-		CNF_Conversion::test_goals_t & tgs) const
+		::cnf_clause_list_assignmentt const& cnf, test_goals_t & tgs) const
 {
 	// simulate cp-automaton according to edge guards
 	// start from initial state and check possible successors - but do not

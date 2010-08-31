@@ -31,6 +31,8 @@
 
 #include <fshell2/config/config.hpp>
 
+#include <fshell2/fql/concepts/test_goal.hpp>
+
 #include <list>
 
 class cnf_clause_list_assignmentt;
@@ -60,7 +62,8 @@ class Constraint_Strengthening
 	typedef Constraint_Strengthening Self;
 
 	public:
-	typedef ::std::list< ::cnf_clause_list_assignmentt > test_cases_t;
+	typedef ::std::list< ::std::pair< ::fshell2::fql::test_goals_t,
+				::cnf_clause_list_assignmentt > > test_cases_t;
 	
 	Constraint_Strengthening(::fshell2::fql::CNF_Conversion & equation,
 			::fshell2::statistics::Statistics & stats, ::optionst const& opts);

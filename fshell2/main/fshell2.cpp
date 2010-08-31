@@ -181,10 +181,16 @@ void FShell2::try_query(::language_uit & manager, char const * line,
 	::fshell2::Constraint_Strengthening cs(equation, stats, m_opts);
 	::fshell2::Constraint_Strengthening::test_cases_t test_suite;
 	cs.generate(*goals, test_suite, limit);
+	::fshell2::Constraint_Strengthening::test_cases_t::size_type const before_min(test_suite.size());
 
 	// post-minimization
-	::fshell2::Test_Suite_Minimization ts_min;
+	::fshell2::Test_Suite_Minimization ts_min(manager);
 	ts_min.minimize(test_suite);
+	
+	NEW_STAT(stats, Counter< ::fshell2::Constraint_Strengthening::test_cases_t::size_type >, min_cnt, "Test cases removed by minimization");
+	min_cnt.inc(before_min - test_suite.size());
+	NEW_STAT(stats, Counter< ::fshell2::Constraint_Strengthening::test_cases_t::size_type >, tcs_cnt, "Test cases");
+	tcs_cnt.inc(test_suite.size());
 
 	// output
 	::fshell2::Test_Suite_Output out(equation);

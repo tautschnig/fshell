@@ -127,7 +127,7 @@ void test( Test_Data & data )
 	TEST_CHECK_RELATION(size, >=, 2);
 	TEST_CHECK_RELATION(size, <=, 3);
 	
-	Test_Suite_Minimization ts_min;
+	Test_Suite_Minimization ts_min(l);
 	ts_min.minimize(test_suite);
 	TEST_CHECK_RELATION(test_suite.size(), >, 0);
 	TEST_CHECK_RELATION(test_suite.size(), <=, size);

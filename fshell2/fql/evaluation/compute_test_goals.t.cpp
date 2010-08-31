@@ -112,7 +112,7 @@ void test_instr( Test_Data & data )
 	Compute_Test_Goals_From_Instrumentation goals(l, options);
 	CNF_Conversion & eq(goals.do_query(gf, *q));
 	
-	CNF_Conversion::test_goals_t const& bb_goals(eq.get_test_goal_literals());
+	test_goals_t const& bb_goals(eq.get_test_goal_literals());
 	TEST_ASSERT_RELATION(6, ==, bb_goals.size());
 }
 
@@ -164,7 +164,7 @@ void test_boolean( Test_Data & data )
 	Compute_Test_Goals_Boolean goals(l, options, stats);
 	CNF_Conversion & eq(goals.do_query(gf, *q));
 	
-	CNF_Conversion::test_goals_t const& bb_goals(eq.get_test_goal_literals());
+	test_goals_t const& bb_goals(eq.get_test_goal_literals());
 	TEST_ASSERT_RELATION(6, ==, bb_goals.size());
 }
 

@@ -494,7 +494,7 @@ Test_Suite_Output::Test_Suite_Output(::fshell2::fql::CNF_Conversion & equation) 
 	
 	for (::fshell2::Constraint_Strengthening::test_cases_t::const_iterator iter(
 				test_suite.begin()); iter != test_suite.end(); ++iter) {
-		cnf.copy_assignment_from(*iter);
+		cnf.copy_assignment_from(iter->second);
 		ti.m_test_inputs.clear();
 		get_test_case(ti);
 		switch (ui) {

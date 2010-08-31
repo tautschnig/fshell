@@ -33,6 +33,7 @@
 
 #include <fshell2/fql/ast/ast_visitor.hpp>
 #include <fshell2/fql/ast/standard_ast_visitor_aspect.hpp>
+#include <fshell2/fql/concepts/test_goal.hpp>
 #include <fshell2/fql/concepts/trace_automaton.hpp>
 #include <fshell2/fql/evaluation/automaton_inserter.hpp>
 
@@ -66,8 +67,6 @@ class CNF_Conversion : public ::bmct
 	typedef CNF_Conversion Self;
 
 	public:
-	typedef ::std::set< ::literalt > test_goals_t;
-	
 	CNF_Conversion(::language_uit & manager, ::optionst const& opts);
 
 	virtual ~CNF_Conversion();
@@ -101,7 +100,7 @@ class CNF_Conversion : public ::bmct
 	Self& operator=( Self const& rhs );
 };
 	
-inline CNF_Conversion::test_goals_t const& CNF_Conversion::get_test_goal_literals() const {
+inline test_goals_t const& CNF_Conversion::get_test_goal_literals() const {
 	return m_test_goals;
 }
 	
@@ -143,7 +142,7 @@ class Compute_Test_Goals : protected Standard_AST_Visitor_Aspect<AST_Visitor>
 	virtual CNF_Conversion & do_query(::goto_functionst & gf, Query const& query) = 0;
 
 	virtual bool get_satisfied_test_goals(::cnf_clause_list_assignmentt const& cnf,
-			CNF_Conversion::test_goals_t & tgs) const = 0;
+			test_goals_t & tgs) const = 0;
 
 	protected:
 	typedef ::std::map< ::literalt, ::std::pair< ::literalt, ::literalt > > and_map_t;
@@ -157,7 +156,7 @@ class Compute_Test_Goals : protected Standard_AST_Visitor_Aspect<AST_Visitor>
 	::optionst const& m_opts;
 	CNF_Conversion m_equation;
 	Evaluate_Coverage_Pattern::Test_Goal_States const* m_test_goal_states;
-	CNF_Conversion::test_goals_t m_test_goals;
+	test_goals_t m_test_goals;
 	and_map_t m_and_map;
 	tg_to_ctx_map_t m_tg_to_ctx_map;
 	reverse_and_lit_map_t m_reverse_and_map;
@@ -263,7 +262,7 @@ class Compute_Test_Goals_From_Instrumentation : public Compute_Test_Goals
 	CNF_Conversion & do_query(::goto_functionst & gf, Query const& query);
 
 	virtual bool get_satisfied_test_goals(::cnf_clause_list_assignmentt const& cnf,
-			CNF_Conversion::test_goals_t & tgs) const;
+			test_goals_t & tgs) const;
 
 	private:
 	typedef ::std::map< ::goto_programt::const_targett,
@@ -310,7 +309,7 @@ class Compute_Test_Goals_Boolean : public Compute_Test_Goals
 	CNF_Conversion & do_query(::goto_functionst & gf, Query const& query);
 
 	virtual bool get_satisfied_test_goals(::cnf_clause_list_assignmentt const& cnf,
-			CNF_Conversion::test_goals_t & tgs) const;
+			test_goals_t & tgs) const;
 
 	private:
 	typedef ::std::map< target_graph_t::edge_t, ::std::set< target_graph_t const* > > edge_to_target_graphs_t;

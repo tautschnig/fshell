@@ -123,10 +123,15 @@ void test( Test_Data & data )
 	TEST_CHECK_RELATION(size, >=, 2);
 	TEST_CHECK_RELATION(size, <=, 3);
 	
-	Test_Suite_Minimization ts_min;
+	Test_Suite_Minimization ts_min(l);
+	// hack test goal sets to enforce minimization
+	for (Constraint_Strengthening::test_cases_t::const_iterator iter(++(test_suite.begin()));
+			iter != test_suite.end(); ++iter)
+		test_suite.front().first.insert(iter->first.begin(), iter->first.end());
+	::cnf_clause_list_assignmentt const* tc(&(test_suite.front().second));
 	ts_min.minimize(test_suite);
-	TEST_ASSERT_RELATION(test_suite.size(), >, 0);
-	TEST_ASSERT_RELATION(test_suite.size(), <=, size);
+	TEST_ASSERT_RELATION(test_suite.size(), ==, 1);
+	TEST_ASSERT(&(test_suite.front().second) == tc);
 }
 
 /** @cond */
