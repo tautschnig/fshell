@@ -149,7 +149,8 @@ class Compute_Test_Goals : protected Standard_AST_Visitor_Aspect<AST_Visitor>
 	typedef ::std::map< ::literalt, ::std::pair< ::literalt, ::literalt > > and_map_t;
 	typedef ::std::map< ::literalt, ::std::set< ::literalt > > reverse_or_lit_map_t;
 	typedef ::std::map< ::literalt, ::std::set< ::std::pair< ::literalt, ::literalt > > > reverse_and_lit_map_t;
-	typedef ::std::vector< ::goto_programt::const_targett > ctx_coll_t;
+	typedef ::std::vector< ::std::pair< ::goto_programt::const_targett,
+				::goto_programt::const_targett > > ctx_coll_t;
 	typedef ::std::map< ::literalt, ctx_coll_t > tg_to_ctx_map_t;
 	
 	::language_uit & m_manager;
@@ -164,7 +165,8 @@ class Compute_Test_Goals : protected Standard_AST_Visitor_Aspect<AST_Visitor>
 
 	void print_test_goal(::literalt const& tg, ::std::ostream & os) const;
 	void store_mapping(::literalt const& tg, ::bvt const& or_set,
-			::goto_programt::const_targett const& context);
+			::goto_programt::const_targett const& src_context,
+			::goto_programt::const_targett const& dest_context);
 	void store_mapping(::literalt const& tg, ::bvt const& or_set,
 			ctx_coll_t const& contexts);
 

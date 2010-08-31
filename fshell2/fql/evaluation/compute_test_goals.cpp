@@ -116,10 +116,11 @@ Compute_Test_Goals::~Compute_Test_Goals() {
 }
 
 void Compute_Test_Goals::store_mapping(::literalt const& tg, ::bvt const& or_set,
-		::goto_programt::const_targett const& context)
+		::goto_programt::const_targett const& src_context,
+		::goto_programt::const_targett const& dest_context)
 {
 	ctx_coll_t tmp;
-	tmp.push_back(context);
+	tmp.push_back(::std::make_pair(src_context, dest_context));
 	store_mapping(tg, or_set, tmp);
 }
 
@@ -167,21 +168,19 @@ void Compute_Test_Goals::print_test_goal(::literalt const& tg,
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 				m_tg_to_ctx_map.end() != entry);
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !entry->second.empty());
-		if (1 == entry->second.size()) {
-			if (entry->second.front()->location.is_nil()) os << "NO_LOCATION";
-			else os << entry->second.front()->location.get_file() << ":"
-				<< entry->second.front()->location.get_line();
-		} else {
-			os << "(";
-			for (ctx_coll_t::const_iterator iter(entry->second.begin());
-					iter != entry->second.end(); ++iter) {
-				if (entry->second.begin() != iter) os << "|";
-				if ((*iter)->location.is_nil()) os << "NO_LOCATION";
-				else os << (*iter)->location.get_file() << ":"
-					<< (*iter)->location.get_line();
-			}
-			os << ")";
+		if (entry->second.size() > 1) os << "(";
+		for (ctx_coll_t::const_iterator iter(entry->second.begin());
+				iter != entry->second.end(); ++iter) {
+			if (entry->second.begin() != iter) os << "|";
+			if (iter->first->location.is_nil()) os << "NO_LOCATION";
+			else os << iter->first->location.get_file() << ":"
+				<< iter->first->location.get_line();
+			if (iter->second != iter->first && iter->first->is_goto() &&
+					!iter->second->location.is_nil())
+				os << "-" << iter->second->location.get_file() << ":"
+					<< iter->second->location.get_line();
 		}
+		if (entry->second.size() > 1) os << ")";
 	}
 }
 
@@ -425,7 +424,7 @@ void Compute_Test_Goals_From_Instrumentation::do_atom(Coverage_Pattern_Expr cons
 		if (!make_single && !set.empty()) {
 			// ::std::cerr << "Adding subgoal composed of " << set.size() << " guards" << ::std::endl;
 			::literalt const tg(m_equation.get_cnf().lor(set));
-			store_mapping(tg, set, c_iter->first);
+			store_mapping(tg, set, c_iter->first, c_iter->first);
 			m_test_goals.insert(tg);
 			set.clear();
 		}
@@ -438,7 +437,7 @@ void Compute_Test_Goals_From_Instrumentation::do_atom(Coverage_Pattern_Expr cons
 		contexts.reserve(context_to_pcs.size());
 		for (context_to_pcs_t::const_iterator c_iter(context_to_pcs.begin()); 
 				c_iter != context_to_pcs.end(); ++c_iter)
-			contexts.push_back(c_iter->first);
+			contexts.push_back(::std::make_pair(c_iter->first, c_iter->first));
 		store_mapping(tg, set, contexts);
 		m_test_goals.insert(tg);
 	}
@@ -958,7 +957,8 @@ void Compute_Test_Goals_Boolean::do_atom(Coverage_Pattern_Expr const* n,
 			if (!make_single && !set.empty()) {
 				// ::std::cerr << "Adding1 subgoal composed of " << set.size() << " guards" << ::std::endl;
 				::literalt const tg(m_equation.get_cnf().lor(set));
-				store_mapping(tg, set, c_iter->first.first.second);
+				store_mapping(tg, set, c_iter->first.first.second,
+						c_iter->first.second.second);
 				m_test_goals.insert(tg);
 				set.clear();
 			}
@@ -972,7 +972,8 @@ void Compute_Test_Goals_Boolean::do_atom(Coverage_Pattern_Expr const* n,
 		for (selected_t::const_iterator iter(selected.begin()); iter != selected.end(); ++iter)
 			for (edge_to_literal_map_t::const_iterator c_iter((*iter)->second.begin()); 
 					c_iter != (*iter)->second.end(); ++c_iter)
-				contexts.push_back(c_iter->first.first.second);
+				contexts.push_back(::std::make_pair(c_iter->first.first.second,
+							c_iter->first.second.second));
 		store_mapping(tg, set, contexts);
 		m_test_goals.insert(tg);
 	}
