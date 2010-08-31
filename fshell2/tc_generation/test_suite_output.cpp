@@ -224,13 +224,15 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::Test_Input & ti) const 
 	::std::string const start_proc_prefix(::std::string("c::") +
 			ti.m_main_symbol.module.as_string() + "::" + config.main + "::");
 
+	bool most_recent_non_hidden_is_true(false);
 	// does a DEF-USE analysis
 	for (::symex_target_equationt::SSA_stepst::const_iterator iter( 
 				equation.begin() ); iter != equation.end(); ++iter)
 	{
-		if (!iter->guard_expr.is_true() && cnf.l_get(iter->guard_literal) != ::tvt(true)) continue;
-		if (!iter->is_assignment()) continue;
-		
+		if (!iter->is_assignment() || ::symex_targett::HIDDEN != iter->assignment_type)
+			most_recent_non_hidden_is_true = (iter->guard_expr.is_true() || cnf.l_get(iter->guard_literal) == ::tvt(true));
+		if (!most_recent_non_hidden_is_true || !iter->is_assignment()) continue;
+
 		//// ::goto_programt tmp;
 		//// ::std::cerr << "#########################################################" << ::std::endl;
 		//// tmp.output_instruction(m_equation.get_ns(), "", ::std::cerr, iter->source.pc);
@@ -296,7 +298,7 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::Test_Input & ti) const 
 						// ::std::cerr << "Added LHS var " << var.m_identifier << " [" << var.m_vt << "]" << ::std::endl;
 						if (Symbol_Identifier::CBMC_TMP_RETURN_VALUE != var.m_vt) vars.insert(var.m_var_name + "@" + var.m_level1);
 						// ::std::cerr << "Also added var " << (var.m_var_name + "@" + var.m_level1) << " [" << var.m_vt << "]" << ::std::endl;
-					} else if (!is_lhs && var.m_level2 == "0") {
+					} else if (!is_lhs && var.m_level2 == "0" && vars.end() == vars.find(var.m_var_name + "@" + var.m_level1)) {
 						// reading use of undefined variable
 						if (!vars.insert(var.m_identifier).second) break;
 						// ::std::cerr << "Added #0 var " << var.m_identifier << " [" << var.m_vt << "]" << ::std::endl;
