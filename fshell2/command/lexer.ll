@@ -93,6 +93,7 @@ TOK_ENTRY               ENTRY
 TOK_LIMIT               LIMIT
 TOK_COUNT               COUNT
 TOK_NO_ZERO_INIT        NO_ZERO_INIT  
+TOK_ABSTRACT            ABSTRACT
 /* C identifier */
 TOK_C_IDENT             [_a-zA-Z][_a-zA-Z0-9]*
 /* a quoted string (no newline) */
@@ -122,6 +123,7 @@ TOK_NAT_NUMBER          [0-9]+
 <options>{TOK_LIMIT}   { return TOK_LIMIT; }
 <options>{TOK_COUNT}   { return TOK_COUNT; }
 <options>{TOK_NO_ZERO_INIT}   { return TOK_NO_ZERO_INIT; }
+<options>{TOK_ABSTRACT}   { return TOK_ABSTRACT; }
 
 <command,options>{TOK_C_IDENT}  { 
                                         yylval.STRING = strdup( yytext );

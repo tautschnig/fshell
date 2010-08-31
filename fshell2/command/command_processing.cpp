@@ -67,10 +67,11 @@ extern int CMDparse(CMDFlexLexer *,
 "<Options> ::= `ENTRY' <Identifier>" << ::std::endl << \
 "            | `LIMIT' `COUNT' <Number>" << ::std::endl << \
 "            | `NO_ZERO_INIT'" << ::std::endl << \
-"<File name> ::= <Quoted String>" << ::std::endl << \
+"            | `ABSTRACT' <Identifier>" << ::std::endl << \
+"<File name> ::= <Singly Quoted String>" << ::std::endl << \
 "<Defines> ::=" << ::std::endl << \
 "            | `-D' <Identifier> <Defines>" << ::std::endl << \
-"            | `-D' <Identifier> `=' <Quoted String> <Defines>" << ::std::endl << \
+"            | `-D' <Identifier> `=' <Singly Quoted String> <Defines>" << ::std::endl << \
 "Comments start with `//' and end at the end of the line"
 
 FSHELL2_NAMESPACE_BEGIN;
@@ -272,6 +273,18 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 		case CMD_SET_NO_ZERO_INIT:
 			m_remove_zero_init = true;	
 			m_finalized = false;
+			return DONE;
+		case CMD_SET_ABSTRACT:
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, arg != 0);
+			{
+				::symbolst::iterator sym_entry(manager.context.symbols.find(
+							::std::string("c::") + arg));
+				FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,
+						sym_entry != manager.context.symbols.end(),
+						::std::string("Function ") + arg + " not found");
+				sym_entry->second.value.make_nil();
+				m_finalized = false;
+			}
 			return DONE;
 	}
 			

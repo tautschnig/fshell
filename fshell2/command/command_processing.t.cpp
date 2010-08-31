@@ -260,6 +260,11 @@ void test_use_case_extended_invariants( Test_Data & data )
 	TEST_CHECK(cfg.function_map.find("c::foo")->second.body_available);
 	// should be a no-op
 	TEST_ASSERT(!cmd.finalize(l));
+	
+	TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, "set abstract foo"));
+	TEST_ASSERT(cmd.finalize(l));
+	TEST_CHECK(cfg.function_map.end() != cfg.function_map.find("c::foo"));
+	TEST_ASSERT(!cfg.function_map.find("c::foo")->second.body_available);
 }
 
 /** @cond */
