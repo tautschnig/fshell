@@ -13,7 +13,11 @@ fi
 [ -n "$logf" ]
   
 benchmarks=$@
-results=`mktemp`
+if which mktemp > /dev/null 2>&1 ; then
+  results=`mktemp`
+else
+  results="$logf.tmplog"
+fi
 trap 'rm -f $results' EXIT
 
 for b in $benchmarks ; do

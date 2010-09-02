@@ -1,5 +1,9 @@
 top_builddir = ../
-fshell = $(top_builddir)/fshell2/main/fshell 
+ifneq (,$(EXEEXT))
+fshell = $(top_builddir)/fshell2/main/.libs/fshell$(EXEEXT)
+else
+fshell = $(top_builddir)/fshell2/main/fshell
+endif
 params = --verbosity 0 --statistics --outfile /dev/null
 
 
