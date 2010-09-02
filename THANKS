@@ -1,0 +1,13 @@
+- Andreas Holzer, Christian Schallhart, Helmut Veith for conjointly helping to
+  develop FQL and many ideas relevant to the design of FShell.
+
+- Daniel Kroening <kroening@comlab.ox.ac.uk> for providing CBMC in the first
+  place.
+
+- Sven Bünte <sven@vmars.tuwien.ac.at> and Michael Zolda
+  <michaelz@vmars.tuwien.ac.at> for lots of testing and user-feedback.
+
+- Thomas Wahl <thomas.wahl@comlab.ox.ac.uk> for the ideas leading to the SET
+  ABSTRACT command.
+
+- Jakob Zwirchmayr <jakob.zwirchmayr@gmail.com> for testing and bug reports.

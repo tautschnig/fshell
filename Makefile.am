@@ -112,7 +112,7 @@ release-local: release
 	cd $(top_srcdir)/build/release && \
 	mkdir -p $$distdir && \
 	cp fshell2/main/fshell$(EXEEXT) $$distdir && \
-	cp ../../{LICENSE,NOTICE,LGPL} $$distdir && \
+	cp ../../{LICENSE,NOTICE,LGPL,THANKS} $$distdir && \
 	cp -a examples $$distdir && \
 	if test x$(build_os) = xmingw32 ; then \
 		cp /usr/bin/{libgcc_s_dw2-1,readline5}.dll $$distdir ; \
