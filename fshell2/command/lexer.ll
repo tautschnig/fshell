@@ -66,7 +66,7 @@ does; this breaks compilation with -pedantic */
 #include <fshell2/command/parser.h>
 
 #include <fshell2/config/annotations.hpp>
-#include <fshell2/exception/command_processing_error.hpp>>
+#include <fshell2/exception/command_processing_error.hpp>
 
 %}
 
