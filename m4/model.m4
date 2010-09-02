@@ -52,7 +52,9 @@ AC_DEFUN([model_DIAGNOSTICS],[
               model_REALPATH([DIAGNOSTICSDIR])
               diag_lib_check_string="-L${DIAGNOSTICSDIR}/lib"
               DIAGNOSTICSLEVEL=${with_diagnostics/*,/}
-              if test "x$DIAGNOSTICSLEVEL" = xoff; then
+              if test "x$DIAGNOSTICSLEVEL" = xno; then
+                DIAGNOSTICSLEVEL=-1
+              elif test "x$DIAGNOSTICSLEVEL" = xoff; then
                 DIAGNOSTICSLEVEL=-1
               elif test "x$DIAGNOSTICSLEVEL" = xprod; then
                 DIAGNOSTICSLEVEL=0
@@ -66,6 +68,7 @@ AC_DEFUN([model_DIAGNOSTICS],[
               ],
               DIAGNOSTICSLEVEL=0
               )
+  if test "x$DIAGNOSTICSLEVEL" != "x-1" ; then
   model_CHECK_CPLUSPLUS_LIB([diagnostics], [
 #include <vector>
 namespace diagnostics
@@ -78,6 +81,7 @@ void set_initial_loggers(::std::vector<Logger *> & loggers) {}
                 [:],
                 [DIAGNOSTICSLEVEL=-1],
                 [${diag_lib_check_string}])
+  fi
   AM_CONDITIONAL(DIAGNOSTICS, test $DIAGNOSTICSLEVEL -gt -1)
   AM_CONDITIONAL(DIAGNOSTICSDIR_DEFINED, test "x$DIAGNOSTICSDIR" != x)
   AC_SUBST(DIAGNOSTICSDIR)

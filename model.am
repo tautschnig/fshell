@@ -55,7 +55,18 @@ prod prod-check:
 	cd $(top_srcdir)/`pwd | sed "s|^\`cd $(top_builddir) > /dev/null; pwd\`||"` && \
     $(MAKE) $(AM_MAKEFLAGS) `echo $@ | @AWK@ -F- '{print $$2}'`
 
-
 endif
 
+release: CXXFLAGS := $(filter-out -O1 -O2 -O3 -Os -g -pg,$(CXXFLAGS)) -Wall -Werror -pedantic -O3
+release:
+	test -f $(top_srcdir)/build/$@/Makefile || \
+    ( mkdir -p $(top_srcdir)/build ; \
+			mkdir -p $(top_srcdir)/build/$@ ; \
+      cd $(top_srcdir) ; test -f config.status && mv config.status config.status.top || : ; \
+      cd build/$@ ; \
+			../../configure --disable-update-makefiles --without-diagnostics \
+        @additional_args@ LEX=$(LEX) CXXFLAGS="$(CXXFLAGS)" LDFLAGS="$(LDFLAGS)" ; \
+			cd ../../ ; test -f config.status.top && mv config.status.top config.status || : )
+	cd $(top_srcdir)/build/`echo $@``pwd | sed "s|^\`cd $(top_builddir) > /dev/null; pwd\`||"` && \
+    $(MAKE) $(AM_MAKEFLAGS)
 

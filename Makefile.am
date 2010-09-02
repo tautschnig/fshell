@@ -38,6 +38,7 @@ maintainer-clean-local:
 	$(MAKE) $(AM_MAKEFLAGS) -C cbmc/src maintainer-clean
 	$(RM) -rf $(DX_DOCDIR)
 	$(RM) -rf build/
+	$(RM) -rf examples/
 	
 check-local:
 	$(MAKE) $(AM_MAKEFLAGS) -C astl check
@@ -89,4 +90,34 @@ astl-src.tar.gz: $(shell find astl -name "*.cpp" -o -name "*.cc" -o -name "*.h")
 	rm -f $@
 	make -C astl/ clean
 	tar czf $@ --exclude .git astl/
+
+examples:
+	mkdir -p examples
+	$(MAKE) -C $(top_srcdir)/benchmarks/code ase-examples.prep
+	cp $(top_srcdir)/benchmarks/code/ase-examples/*.c examples/
+	echo "Queries described in our ASE'10 paper" > examples/ase-queries.txt
+	echo >> examples/ase-queries.txt
+	for c in $(top_srcdir)/benchmarks/conf/ase-examples* ; do \
+		q="`echo $$c | cut -f3 -d_`" ; \
+		echo "Query $$q:" >> examples/ase-queries.txt ; \
+		( . $$c ; echo "Use fshell $$extra_params" >> examples/ase-queries.txt ; \
+			echo $$query >> examples/ase-queries.txt ) ; \
+		echo >> examples/ase-queries.txt ; \
+	done
+
+release: CXXFLAGS := $(patsubst -L%,,$(CXXFLAGS)) -Wno-deprecated -Wno-long-long
+release-local: release
+	$(MAKE) -C $(top_srcdir)/build/release examples
+	distdir=$(PACKAGE_TARNAME)-$(PACKAGE_VERSION) ; \
+	cd $(top_srcdir)/build/release && \
+	mkdir -p $$distdir && \
+	cp fshell2/main/fshell$(EXEEXT) $$distdir && \
+	cp ../../{LICENSE,NOTICE,LGPL} $$distdir && \
+	cp -a examples $$distdir && \
+	if test x$(build_os) = xmingw32 ; then \
+		cp /usr/bin/{libgcc_s_dw2-1,readline5}.dll $$distdir ; \
+		zip -r -9 -x.svn -x.git $$distdir-$(build_cpu)-$(build_os).zip $$distdir ; \
+	else \
+		tar czf $$distdir-$(build_cpu)-$(build_os).tar.gz --exclude .git --exclude .svn $$distdir ; \
+	fi
 
