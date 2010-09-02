@@ -37,11 +37,11 @@ Smart_Printer::Smart_Printer(::language_uit & manager) :
 }
 
 Smart_Printer::~Smart_Printer() {
-	if (!m_oss.str().empty()) m_manager.print(m_oss.str());
+	if (!m_oss.str().empty()) m_manager.print(0, m_oss.str());
 }
 
 void Smart_Printer::print_now() {
-	if (!m_oss.str().empty()) m_manager.print(m_oss.str());
+	if (!m_oss.str().empty()) m_manager.print(0, m_oss.str());
 	m_oss.str("");
 }
 
