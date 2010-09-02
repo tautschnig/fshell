@@ -105,13 +105,17 @@ examples:
 		echo >> examples/ase-queries.txt ; \
 	done
 
-release: CXXFLAGS := $(patsubst -L%,,$(CXXFLAGS)) -Wno-deprecated -Wno-long-long
+if WIN32_BUILD
+release: CXXFLAGS += -Wno-deprecated -Wno-long-long
+else
+release: CXXFLAGS := $(filter-out -L%,$(CXXFLAGS)) -Wno-deprecated -Wno-long-long
+endif
 release-local: release
 	$(MAKE) -C $(top_srcdir)/build/release examples
+	$(MAKE) -C $(top_srcdir)/build/release/fshell2/main \
+		install-binPROGRAMS bindir=$$PWD/$(top_srcdir)/build/release/$(PACKAGE_TARNAME)-$(PACKAGE_VERSION)
 	distdir=$(PACKAGE_TARNAME)-$(PACKAGE_VERSION) ; \
 	cd $(top_srcdir)/build/release && \
-	mkdir -p $$distdir && \
-	cp fshell2/main/fshell$(EXEEXT) $$distdir && \
 	cp ../../{LICENSE,NOTICE,LGPL,THANKS} $$distdir && \
 	cp -a examples $$distdir && \
 	if test x$(build_os) = xmingw32 ; then \

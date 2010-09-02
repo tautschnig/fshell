@@ -49,6 +49,8 @@ fi
 
 AC_SUBST(additional_args)
 
+AM_CONDITIONAL(WIN32_BUILD, test x$build_os = xmingw32)
+
 # Checks for header files.
 # essential headers
 AC_CXX_HAVE_STL
