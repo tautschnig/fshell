@@ -96,8 +96,12 @@ int main(int argc, char** argv)
         // Use signal handlers that forcibly quit until the solver will be able to respond to
         // interrupts:
         signal(SIGINT, SIGINT_exit);
+#ifdef SIGXCPU
         signal(SIGXCPU,SIGINT_exit);
+#endif
 
+
+#if !defined(_MSC_VER) && !defined(__MINGW32__)
         // Set limit on CPU-time:
         if (cpu_lim != INT32_MAX){
             rlimit rl;
@@ -118,6 +122,7 @@ int main(int argc, char** argv)
                 if (setrlimit(RLIMIT_AS, &rl) == -1)
                     printf("WARNING! Could not set resource limit: Virtual memory.\n");
             } }
+#endif
         
         if (argc == 1)
             printf("Reading from standard input... Use '--help' for help.\n");
@@ -146,7 +151,9 @@ int main(int argc, char** argv)
         // Change to signal-handlers that will only notify the solver and allow it to terminate
         // voluntarily:
         signal(SIGINT, SIGINT_interrupt);
+#ifdef SIGXCPU
         signal(SIGXCPU,SIGINT_interrupt);
+#endif
        
         if (!S.simplify()){
             if (res != NULL) fprintf(res, "UNSAT\n"), fclose(res);

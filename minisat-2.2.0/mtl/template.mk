@@ -69,7 +69,7 @@ lib$(LIB)_release.a:	$(filter-out */Main.or, $(RCOBJS))
 ## Build rule
 %.o %.op %.od %.or:	%.cc
 	@echo Compiling: $(subst $(MROOT)/,,$@)
-	@$(CXX) $(CFLAGS) -c -o $@ $<
+	$(CXX) $(CFLAGS) -c -o $@ $<
 
 ## Linking rules (standard/profile/debug/release)
 $(EXEC) $(EXEC)_profile $(EXEC)_debug $(EXEC)_release $(EXEC)_static:
@@ -95,7 +95,7 @@ clean:
 depend.mk: $(CSRCS) $(CHDRS)
 	@echo Making dependencies
 	@$(CXX) $(CFLAGS) -I$(MROOT) \
-	   $(CSRCS) -MM | sed 's|\(.*\):|$(PWD)/\1 $(PWD)/\1r $(PWD)/\1d $(PWD)/\1p:|' > depend.mk
+	   $(CSRCS) -MM | sed 's|\(.*\): |$(PWD)/\1 $(PWD)/\1r $(PWD)/\1d $(PWD)/\1p: |' > depend.mk
 	@for dir in $(DEPDIR); do \
 	      if [ -r $(MROOT)/$${dir}/depend.mk ]; then \
 		  echo Depends on: $${dir}; \

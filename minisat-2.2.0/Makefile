@@ -1,5 +1,5 @@
 all check:
-	$(MAKE) MROOT=$$PWD -C simp s
+	CFLAGS="$(filter -I%, $(CXXFLAGS))" LFLAGS="$(filter -L%, $(CXXFLAGS))" $(MAKE) MROOT=$$PWD -C simp s
 
 install install-strip uninstall check installcheck dist:
 
