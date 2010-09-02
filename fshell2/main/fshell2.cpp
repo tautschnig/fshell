@@ -240,10 +240,10 @@ void FShell2::interactive(::language_uit & manager) {
 	while (true) {
 		// obtain the input from readline
 		::std::auto_ptr<char> input(::readline("FShell2> "));
-		::add_history(input.get());
+		if (input.get()) ::add_history(input.get());
 		try {
 			// process the input; returning true signals "quit"
-			if (process_line(manager, input.get())) {
+			if (!input.get() || process_line(manager, input.get())) {
 				manager.status("Bye.");
 				return;
 			}
