@@ -100,34 +100,28 @@ void Evaluate_Path_Pattern::dfs_build(trace_automaton_t & ta, ta_state_t const& 
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_cfg);
 	::fshell2::instrumentation::CFG::entries_t::const_iterator cfg_node(m_cfg->find(root.second));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg->end());
-	// the end? that's ok as well
-	if (cfg_node->second.successors.empty()) {
-		ta.final(state) = 1;
-		return;
-	}
 
+	bool may_be_end(false);
 	for (::fshell2::instrumentation::CFG::successors_t::const_iterator s_iter(
 				cfg_node->second.successors.begin());
 			s_iter != cfg_node->second.successors.end(); ++s_iter) {
 		// maybe the root statement is to be ignored, then just keep going but
 		// don't add anything
 		if (Evaluate_Filter::ignore_instruction(*(root.second))) {
-			// maybe this is the end, maybe we'll find some more; if we do,
-			// we'll pass this state anyway, but just be sure we have something.
-			ta.final(state) = 1;
 			dfs_build(ta, state, s_iter->first, bound, nc, tgg);
+			if (ta.delta2(state).empty()) may_be_end = true;
 			continue;
 		}
 		node_counts_t::const_iterator nc_iter(nc.find(s_iter->first));
 		// test the bound
 		if (nc.end() != nc_iter && nc_iter->second == bound) {
-			ta.final(state) = 1;
+			may_be_end = true;
 			continue;
 		}
 		target_graph_t::edge_t new_edge(::std::make_pair(root, s_iter->first));
 		// check target graph
 		if (tgg.get_E().end() == tgg.get_E().find(new_edge)) {
-			ta.final(state) = 1;
+			may_be_end = true;
 			continue;
 		}
 		// keep going, we're within the limits
@@ -147,6 +141,17 @@ void Evaluate_Path_Pattern::dfs_build(trace_automaton_t & ta, ta_state_t const& 
 		ta.set_trans(state, m_target_graph_index.to_index(&(m_more_target_graphs.back())), new_state);
 		// DFS recursion
 		dfs_build(ta, new_state, s_iter->first, bound, nc_next, tgg);
+	}
+
+	// the end of a path
+	if (ta.delta2(state).empty()) ta.final(state) = 1;
+	else if (may_be_end && !ta.delta2_backwards(state).empty()) {
+		trace_automaton_t::edges_type const& in_edges(ta.delta2_backwards(state));
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+				1 == in_edges.size());
+		ta_state_t const new_state(ta.new_state());
+		ta.set_trans(in_edges.begin()->second, in_edges.begin()->first, new_state);
+		ta.final(new_state) = 1;
 	}
 }
 
