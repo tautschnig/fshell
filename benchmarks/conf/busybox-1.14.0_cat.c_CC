@@ -9,4 +9,9 @@ tg=10
 unsat=2
 tc=4
 cputime=6.594
+mempeak=0.0
+
+exec_ts="no"
+gcov="no"
+gcov_opts=""
 

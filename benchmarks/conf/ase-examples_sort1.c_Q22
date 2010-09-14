@@ -8,4 +8,9 @@ tg=2
 unsat=1
 tc=1
 cputime=1
+mempeak=0.0
+
+exec_ts="no"
+gcov="no"
+gcov_opts=""
 

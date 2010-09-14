@@ -61,5 +61,5 @@ benchmark-%:
 	ident=`date +%Y-%m-%d_%H%M%S` ; \
 	hname=`hostname` ; \
 	fname="$$rev.$$ident.$$hname" ; \
-	$(MAKE) $(AM_MAKEFLAGS) -C $(top_srcdir)/benchmarks $(subst benchmark-,,$@) top_builddir=`pwd`/$(top_builddir) LOG=$$fname EXEEXT=$(EXEEXT)
+	$(MAKE) $(AM_MAKEFLAGS) -C $(top_srcdir)/benchmarks $(subst benchmark-,,$@) top_builddir=`pwd`/$(top_builddir) top_srcdir=`pwd`/$(top_srcdir) LOG=$$fname EXEEXT=$(EXEEXT)
 	

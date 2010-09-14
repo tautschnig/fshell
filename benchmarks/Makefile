@@ -1,10 +1,12 @@
 top_builddir = ../
+top_srcdir = ../
 ifneq (,$(EXEEXT))
 fshell = $(top_builddir)/fshell2/main/.libs/fshell$(EXEEXT)
 else
 fshell = $(top_builddir)/fshell2/main/fshell
 endif
-params = --verbosity 2 --statistics --outfile /dev/null
+params = --verbosity 2 --statistics
+testenv = $(top_srcdir)/test-harness-builder/simple/TestEnvGenerator.pl
 
 
 ASE_SCALE_s = busybox-1.14.0_cat.c_BB busybox-1.14.0_cat.c_CC busybox-1.14.0_cat.c_BB^2 \
@@ -44,26 +46,26 @@ clean distclean maintainer-clean:
 	$(MAKE) -C code clean
 	rm -f .fshell2_history
 
-prepare: $(fshell)
+prepare: $(fshell) $(testenv)
 	[ -n $(LOG) ]
 	mkdir -p logs
 
 %.only: prepare conf/%
-	logf=logs/$(LOG).$@ fshell="$(strip $(fshell))" params="$(params)" \
+	logf=logs/$(LOG).$@ fshell="$(strip $(fshell))" params="$(params)" testenv="$(strip $(testenv))" \
 			 scripts/run_bench.sh $(filter-out $<, $^)
 
 %.debug: prepare conf/%
-	debug=1 logf=logs/$(LOG).$@ fshell="$(strip $(fshell))" params="--verbosity 9 --outfile /dev/null" \
+	debug=1 logf=logs/$(LOG).$@ fshell="$(strip $(fshell))" params="--verbosity 9" testenv="$(strip $(testenv))" \
 			 scripts/run_bench.sh $(filter-out $<, $^)
 
 %.gdb: prepare conf/%
 	mkdir -p test
-	debug=2 logf=logs/$(LOG).$@ fshell="$(strip $(fshell))" params="" \
+	debug=2 logf=logs/$(LOG).$@ fshell="$(strip $(fshell))" params="" testenv="$(strip $(testenv))" \
 			 scripts/run_bench.sh $(filter-out $<, $^)
 
 .SECONDEXPANSION:
 %.suite: prepare $$(addprefix conf/, $$($$*))
-	logf=logs/$(LOG).$@ fshell="$(strip $(fshell))" params="$(params)" \
+	logf=logs/$(LOG).$@ fshell="$(strip $(fshell))" params="$(params)" testenv="$(strip $(testenv))" \
 			 scripts/run_bench.sh $(filter-out $<, $^)
 
 .PHONY: prepare all install install-strip uninstall check installcheck dist clean distclean maintainer-clean

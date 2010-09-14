@@ -8,4 +8,9 @@ tg=243
 unsat=229
 tc=2
 cputime=156.614
+mempeak=0.0
+
+exec_ts="no"
+gcov="no"
+gcov_opts=""
 
