@@ -108,7 +108,7 @@ void CPU_Timer::start_timer()
 {
 	FSHELL2_DEBUG_ASSERT(::diagnostics::Invalid_Protocol, !m_timer_running);
 	m_timer_running = true;
-	m_time = -::Minisat::cpuTime();
+	m_time -= ::Minisat::cpuTime();
 }
 
 void CPU_Timer::stop_timer()
