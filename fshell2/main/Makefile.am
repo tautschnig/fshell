@@ -23,7 +23,7 @@ fshell_LDADD = libmain.la \
 								../fql/concepts/libconcepts.la \
 								../instrumentation/libinstrumentation.la \
 								../exception/libexception.la \
-								$(CBMC_OBJS)
+								$(CBMC_OBJS) $(MINISAT_OBJS)
 
 CBMC_OBJS = $(top_builddir)/cbmc/src/goto-programs/goto-programs.o \
 						$(top_builddir)/cbmc/src/pointer-analysis/pointer-analysis.o \
@@ -41,6 +41,8 @@ CBMC_OBJS = $(top_builddir)/cbmc/src/goto-programs/goto-programs.o \
 						$(top_builddir)/cbmc/src/cbmc/symex_bmc.o \
 						$(top_builddir)/cbmc/src/langapi/langapi.o \
 						$(top_builddir)/cbmc/src/ansi-c/ansi-c.o
+
+MINISAT_OBJS = $(top_builddir)/minisat-2.2.0/utils/System.o
 
 include_fshell2_maindir = $(includedir)/fshell2/main
 noinst_LTLIBRARIES = libmain.la
@@ -62,7 +64,7 @@ fshell2_LDADD = libmain.la \
 								../fql/concepts/libconcepts.la \
 								../instrumentation/libinstrumentation.la \
 								../exception/libexception.la \
-								$(CBMC_OBJS)
+								$(CBMC_OBJS) $(MINISAT_OBJS)
 # note that this entry (fshell2_SOURCES, fshell2_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually

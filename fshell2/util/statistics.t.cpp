@@ -86,6 +86,9 @@ void test( Test_Data & data )
 	ct.stop_timer();
 	wt.stop_timer();
 
+	NEW_STAT(stats, Peak_Memory_Usage, mem_use_peak, "memory usage");
+	mem_use_peak.current();
+
 	{
 		get_stats_long(cnt_int);
 		TEST_ASSERT(-3 == cnt_int_val);
@@ -94,10 +97,15 @@ void test( Test_Data & data )
 		get_stats_double(ct);
 		get_stats_double(wt);
 		TEST_ASSERT(ct_val < wt_val);
+		get_stats_double(mem_use_peak);
+#if defined(__linux__) || defined(__APPLE__)
+		TEST_ASSERT(mem_use_peak_val > 0);
+#endif
 	}
 	
 	ct.reset();
 	wt.reset();
+	mem_use_peak.reset();
 
 	::std::ostringstream oss;
 	::stream_message_handlert mh(oss);

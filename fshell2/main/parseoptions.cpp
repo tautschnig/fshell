@@ -67,6 +67,10 @@ Parseoptions::Parseoptions(int argc, const char **argv,
 }
 
 Parseoptions::~Parseoptions() {
+#if defined(__linux__) || defined(__APPLE__)
+	NEW_STAT(m_stats, Peak_Memory_Usage, mem_usage, "Peak memory usage");
+	mem_usage.current();
+#endif
 	m_timer->stop_timer();
 	if (m_options.get_bool_option("statistics"))
 		m_stats.print(*this);

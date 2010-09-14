@@ -148,6 +148,32 @@ void Wallclock_Timer::stop_timer()
 	m_timer.stop();
 }
 
+Peak_Memory_Usage::Peak_Memory_Usage(::std::string const& name) :
+	Statistics_Interface(name),
+	m_peak_memory_usage(0)
+{
+}
+	
+Peak_Memory_Usage::~Peak_Memory_Usage()
+{
+}
+
+void Peak_Memory_Usage::reset()
+{
+	m_peak_memory_usage = 0;
+}
+	
+void Peak_Memory_Usage::print(::std::ostream & os) const
+{
+	Statistics_Interface::print(os);
+	os << m_peak_memory_usage;
+}
+
+void Peak_Memory_Usage::current()
+{
+	m_peak_memory_usage = ::Minisat::memUsedPeak();
+}
+
 FSHELL2_STATISTICS_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
 

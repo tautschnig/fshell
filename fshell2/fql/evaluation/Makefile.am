@@ -25,6 +25,8 @@ CBMC_OBJS = $(top_builddir)/cbmc/src/goto-programs/goto-programs.o \
 						$(top_builddir)/cbmc/src/langapi/langapi.o \
 						$(top_builddir)/cbmc/src/ansi-c/ansi-c.o
 
+MINISAT_OBJS = $(top_builddir)/minisat-2.2.0/utils/System.o
+
 noinst_LTLIBRARIES = libevaluation.la
 libevaluation_la_SOURCES =  evaluate_filter.cpp predicate_instrumentation.cpp evaluate_path_pattern.cpp evaluate_coverage_pattern.cpp automaton_inserter.cpp compute_test_goals.cpp
 include_fshell2_fql_evaluationdir = $(includedir)/fshell2/fql/evaluation
@@ -40,7 +42,7 @@ evaluate_filter_LDADD = libevaluation.la ../ast/libast.la ../concepts/libconcept
 compute_test_goals_SOURCES = compute_test_goals.t.cpp
 # add additional objects required to build compute_test_goals here, like
 # compute_test_goals_LDADD = ../base/libbase.la libbla.la
-compute_test_goals_LDADD = libevaluation.la ../../util/libutil.la ../ast/libast.la ../concepts/libconcepts.la ../../instrumentation/libinstrumentation.la ../../exception/libexception.la $(CBMC_OBJS)
+compute_test_goals_LDADD = libevaluation.la ../../util/libutil.la ../ast/libast.la ../concepts/libconcepts.la ../../instrumentation/libinstrumentation.la ../../exception/libexception.la $(CBMC_OBJS) $(MINISAT_OBJS)
 # note that this entry (compute_test_goals_SOURCES, compute_test_goals_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually

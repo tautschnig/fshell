@@ -25,6 +25,8 @@ CBMC_OBJS = $(top_builddir)/cbmc/src/goto-programs/goto-programs.o \
 						$(top_builddir)/cbmc/src/langapi/langapi.o \
 						$(top_builddir)/cbmc/src/ansi-c/ansi-c.o
 
+MINISAT_OBJS = $(top_builddir)/minisat-2.2.0/utils/System.o
+
 noinst_LTLIBRARIES = libtc_generation.la
 libtc_generation_la_SOURCES = constraint_strengthening.cpp test_suite_minimization.cpp test_suite_output.cpp
 include_fshell2_tc_generationdir = $(includedir)/fshell2/tc_generation
@@ -33,21 +35,21 @@ check_PROGRAMS = constraint_strengthening test_suite_minimization test_suite_out
 constraint_strengthening_SOURCES = constraint_strengthening.t.cpp
 # add additional objects required to build constraint_strengthening here, like
 # constraint_strengthening_LDADD = ../base/libbase.la libbla.la
-constraint_strengthening_LDADD = libtc_generation.la ../fql/evaluation/libevaluation.la ../util/libutil.la ../fql/ast/libast.la ../fql/concepts/libconcepts.la ../instrumentation/libinstrumentation.la ../exception/libexception.la $(CBMC_OBJS)
+constraint_strengthening_LDADD = libtc_generation.la ../fql/evaluation/libevaluation.la ../util/libutil.la ../fql/ast/libast.la ../fql/concepts/libconcepts.la ../instrumentation/libinstrumentation.la ../exception/libexception.la $(CBMC_OBJS) $(MINISAT_OBJS)
 # note that this entry (constraint_strengthening_SOURCES, constraint_strengthening_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually
 test_suite_minimization_SOURCES = test_suite_minimization.t.cpp
 # add additional objects required to build test_suite_minimization here, like
 # test_suite_minimization_LDADD = ../base/libbase.la libbla.la
-test_suite_minimization_LDADD = libtc_generation.la ../fql/evaluation/libevaluation.la ../util/libutil.la ../fql/ast/libast.la ../fql/concepts/libconcepts.la ../instrumentation/libinstrumentation.la ../exception/libexception.la $(CBMC_OBJS)
+test_suite_minimization_LDADD = libtc_generation.la ../fql/evaluation/libevaluation.la ../util/libutil.la ../fql/ast/libast.la ../fql/concepts/libconcepts.la ../instrumentation/libinstrumentation.la ../exception/libexception.la $(CBMC_OBJS) $(MINISAT_OBJS)
 # note that this entry (test_suite_minimization_SOURCES, test_suite_minimization_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually
 test_suite_output_SOURCES = test_suite_output.t.cpp
 # add additional objects required to build test_suite_output here, like
 # test_suite_output_LDADD = ../base/libbase.la libbla.la
-test_suite_output_LDADD = libtc_generation.la ../fql/evaluation/libevaluation.la ../util/libutil.la ../fql/ast/libast.la ../fql/concepts/libconcepts.la ../instrumentation/libinstrumentation.la ../exception/libexception.la $(CBMC_OBJS)
+test_suite_output_LDADD = libtc_generation.la ../fql/evaluation/libevaluation.la ../util/libutil.la ../fql/ast/libast.la ../fql/concepts/libconcepts.la ../instrumentation/libinstrumentation.la ../exception/libexception.la $(CBMC_OBJS) $(MINISAT_OBJS)
 # note that this entry (test_suite_output_SOURCES, test_suite_output_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually

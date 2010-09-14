@@ -247,6 +247,38 @@ class Wallclock_Timer : public Statistics_Interface
 	Self& operator=( Self const& rhs );
 };
 
+/*! \brief TODO
+*/
+class Peak_Memory_Usage : public Statistics_Interface
+{
+	/*! \copydoc doc_self
+	*/
+	typedef Peak_Memory_Usage Self;
+
+	public:
+	virtual void reset();
+	virtual void print(::std::ostream & os) const;
+
+	void current();
+
+	private:
+	double m_peak_memory_usage;
+	
+	friend Self & Statistics::new_stat<Self>(::std::string const&);
+	friend Statistics::~Statistics();
+
+	Peak_Memory_Usage(::std::string const& name);
+	virtual ~Peak_Memory_Usage();
+
+	/*! \copydoc copy_constructor
+	*/
+	Peak_Memory_Usage( Self const& rhs );
+
+	/*! \copydoc assignment_op
+	 */
+	Self& operator=( Self const& rhs );
+};
+
 FSHELL2_STATISTICS_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
 
