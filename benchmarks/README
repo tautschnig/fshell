@@ -6,7 +6,8 @@ passed to FShell.
 
 - Adding a new benchmark suite:
   * Add a make variable FOO to benchmarks/Makefile that lists the configurations.
-  * Create the corresponding configuration files in benchmarks/conf.
+  * Create the corresponding configuration files in benchmarks/conf. You may use
+    scripts/make-conf.sh as helper.
   * If necessary, add additional source code in benchmarks/code; source code
     should be given as an archive of original source code (foo.tar.gz or
     foo.tar.bz2). You may add a patch foo.patch, if necessary. In case you do
