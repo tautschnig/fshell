@@ -1231,85 +1231,46 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 			// ::std::cerr << ".";
 			// if (0 == step_count % 100) ::std::cerr << " state step count: " << step_count << ::std::endl;
 
-			// ::std::map< ::literalt, ::std::list< ::literalt > > and_missing_one;
-			::std::list< ::std::pair< ::literalt, ::literalt > > and_missing_one;
+			::std::map< ::literalt, ::std::list< ::literalt > > and_missing_one;
 			KnownSAT known_sat(i_iter->begin(), i_iter->end());
 			::std::list< ::literalt > new_sat;
 			known_sat.add_to_list_unique(new_sat);
 			while (!new_sat.empty()) {
-				// ::std::cerr << ",";
 				::literalt const s(new_sat.front());
 				new_sat.pop_front();
-				// ::std::cerr << "KNOWN SAT: " << s.dimacs() << ::std::endl;
 
 				reverse_and_lit_map_t::const_iterator and_entry(m_reverse_and_map.find(s));
-				if (m_reverse_and_map.end() == and_entry) continue;
-
-				for (::std::set< ::std::pair< ::literalt, ::literalt > >::const_iterator and_iter(and_entry->second.begin());
-						and_iter != and_entry->second.end(); ++and_iter) {
-					// ::std::cerr << "|";
-					// false will always remain false.
-					if (and_iter->first.is_false()) continue;
-					// s AND true is s
-					if (and_iter->second.is_true()) continue;
-					// already done
-					if (known_sat.has(and_iter->first)) continue;
-					// *or_entries AND x is known as *and_iter; value in m_and_map
-					// will be y AND z is known as *and_iter if
-					// or_entries->is_true(); skipped above
-					/// and_map_t::const_iterator and_map_entry(m_and_map.find(*and_iter));
-					/// FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_and_map.end() != and_map_entry);
-					//// ::std::cerr << "AND candidate: " << and_iter->dimacs() << " = " << 
-					//// 	and_map_entry->second.first.dimacs() << " AND " << and_map_entry->second.second.dimacs() << ::std::endl;
-					//// if (and_map_entry->second.first != *or_entries && and_map_entry->second.second != *or_entries) {
-					//// 	::std::cerr << "SATISFIED OR: " << or_entries->dimacs() << ::std::endl;
-					//// 	::std::cerr << "AND candidate: " << and_iter->dimacs() << " = " << 
-					//// 		and_map_entry->second.first.dimacs() << " AND " << and_map_entry->second.second.dimacs() << ::std::endl;
-					//// }
-					/*
-					   ::literalt const& other(and_iter->second);
-					   if (known_sat.end() != known_sat.find(other)) {
-					// ::std::cerr << "+";
-					if (known_sat.insert(and_iter->first).second) {
-					new_sat.push_back(and_iter->first);
-					// ::std::cerr << "#";
-					}
-					} else {
-					*/
-					// ::std::cerr << "AND candidate: " << and_iter->first.dimacs() << " == " << s.dimacs() << " AND " << and_iter->second.dimacs() << ::std::endl;
-					and_missing_one.push_back(*and_iter);
-					// and_missing_one[ other ].push_back(and_iter->first);
-					// ::std::cerr << "-";
-					//}
-				}
-
-				for (::std::list< ::std::pair< ::literalt, ::literalt > >::iterator a_iter(
-							and_missing_one.begin()); a_iter != and_missing_one.end(); ) {
-					if (known_sat.has(a_iter->second)) {
-						if (known_sat.insert(a_iter->first)) {
-							new_sat.push_back(a_iter->first);
-							//// ::std::cerr << "NEWLY SAT and: " << n_iter->dimacs() << ::std::endl;
+				if (m_reverse_and_map.end() != and_entry) {
+					for (::std::set< ::std::pair< ::literalt, ::literalt > >::const_iterator and_iter(and_entry->second.begin());
+							and_iter != and_entry->second.end(); ++and_iter) {
+						// false will always remain false.
+						if (and_iter->first.is_false()) continue;
+						// s AND true is s
+						if (and_iter->second.is_true()) continue;
+						// already done
+						if (known_sat.has(and_iter->first)) continue;
+						   
+						::literalt const& other(and_iter->second);
+						if (known_sat.has(other)) {
+							if (known_sat.insert(and_iter->first)) {
+								new_sat.push_back(and_iter->first);
+							}
+						} else {
+							and_missing_one[ other ].push_back(and_iter->first);
 						}
-						::std::list< ::std::pair< ::literalt, ::literalt > >::iterator a_iter_bak(a_iter);
-						++a_iter;
-						and_missing_one.erase(a_iter_bak);
-					} else {
-						++a_iter;
 					}
 				}
-				/*
-				   ::std::map< ::literalt, ::std::list< ::literalt > >::iterator entry(
-				   and_missing_one.find(s));
-				   if (and_missing_one.end() != entry) {
-				   for (::std::list< ::literalt >::const_iterator n_iter(entry->second.begin());
-				   n_iter != entry->second.end(); ++n_iter)
-				   if (known_sat.insert(*n_iter).second) {
-				   new_sat.push_back(*n_iter);
-				//// ::std::cerr << "NEWLY SAT and: " << n_iter->dimacs() << ::std::endl;
+
+				::std::map< ::literalt, ::std::list< ::literalt > >::iterator entry(
+						and_missing_one.find(s));
+				if (and_missing_one.end() != entry) {
+					for (::std::list< ::literalt >::const_iterator n_iter(entry->second.begin());
+							n_iter != entry->second.end(); ++n_iter)
+						if (known_sat.insert(*n_iter)) {
+							new_sat.push_back(*n_iter);
+						}
+					and_missing_one.erase(entry);
 				}
-				and_missing_one.erase(entry);
-				}
-				*/
 			}
 			
 			test_goal_id_t id(0);
