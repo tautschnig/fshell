@@ -80,8 +80,13 @@ CNF_Conversion::CNF_Conversion(::language_uit & manager, ::optionst const& opts)
 CNF_Conversion::~CNF_Conversion() {
 }
 	
-void CNF_Conversion::mark_as_test_goal(::literalt const& lit) {
-	m_test_goals.insert(lit);
+void CNF_Conversion::set_test_goal_groups(test_goal_groups_t & tg,
+		test_goal_id_map_t & id_map) {
+	m_test_goal_groups.clear();
+	m_test_goal_groups.swap(tg);
+
+	m_test_goal_id_map.clear();
+	m_test_goal_id_map.swap(id_map);
 }
 
 bool CNF_Conversion::decide_default() {
@@ -108,7 +113,9 @@ Compute_Test_Goals::Compute_Test_Goals(
 	m_manager(manager),
 	m_opts(opts),
 	m_equation(m_manager, m_opts),
-	m_test_goal_states(0)
+	m_test_goal_states(0),
+	m_test_goals(0),
+	m_alt_nesting(0)
 {
 }
 
@@ -184,9 +191,63 @@ void Compute_Test_Goals::print_test_goal(::literalt const& tg,
 	}
 }
 
+void Compute_Test_Goals::make_id_map()
+{
+	m_tg_id_map.clear();
+	
+	typedef ::std::vector< ::std::pair< test_goal_groups_t::const_iterator,
+			test_goals_t::const_iterator > > ptrs_t;
+	ptrs_t ptrs;
+	ptrs.reserve(m_test_goal_groups.size());
+	for (test_goal_groups_t::const_iterator g_iter(m_test_goal_groups.begin());
+			g_iter != m_test_goal_groups.end(); ++g_iter) {
+		if (g_iter->empty()) {
+			ptrs.clear();
+			break;
+		}
+		ptrs.push_back(::std::make_pair(g_iter, g_iter->begin()));
+	}
+	
+	if (ptrs.empty()) return;
+
+	while (ptrs.front().second != ptrs.front().first->end()) {
+		m_tg_id_map.push_back(::bvt());
+		m_tg_id_map.back().reserve(m_test_goal_groups.size());
+		for (ptrs_t::const_iterator iter(ptrs.begin()); iter != ptrs.end(); ++iter)
+			m_tg_id_map.back().push_back(*iter->second);
+		
+		ptrs_t::size_type rindex(ptrs.size());
+		for (; rindex > 0; --rindex) {
+			++(ptrs[rindex - 1].second);
+			if (ptrs[rindex - 1].second != ptrs[rindex - 1].first->end()) break;
+		}
+		for (ptrs_t::iterator iter(ptrs.begin() + rindex); rindex > 0 && iter != ptrs.end(); ++iter)
+			iter->second = iter->first->begin();
+	}
+}
+
+void Compute_Test_Goals::print_all_test_goals()
+{
+	test_goal_id_t id(0);
+	for (test_goal_id_map_t::const_iterator iter(m_tg_id_map.begin());
+			iter != m_tg_id_map.end(); ++iter, ++id) {
+		::std::ostringstream osstg, ossdata;
+		osstg << "Test goal " << id << " (" << iter->front().dimacs();
+		print_test_goal(iter->front(), ossdata);
+		for (::bvt::const_iterator l_iter(++(iter->begin())); l_iter != iter->end(); ++l_iter) {
+			osstg << "&" << l_iter->dimacs();
+			ossdata << "...";
+			print_test_goal(*l_iter, ossdata);
+		}
+		osstg << "): " << ossdata.str();
+		m_manager.print(0, osstg.str());
+	}
+}
+
 void Compute_Test_Goals::visit(CP_Alternative const* n) {
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_test_goal_states->m_cp == n);
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 2 == m_test_goal_states->m_children.size());
+	++m_alt_nesting;
 	Evaluate_Coverage_Pattern::Test_Goal_States const* m_tgs_bak(m_test_goal_states);
 	::std::list< Evaluate_Coverage_Pattern::Test_Goal_States >::const_iterator iter(m_test_goal_states->m_children.begin());
 	m_test_goal_states = &(*iter);
@@ -194,40 +255,54 @@ void Compute_Test_Goals::visit(CP_Alternative const* n) {
 	m_test_goal_states = &(*(++iter));
 	n->get_cp_b()->accept(this);
 	m_test_goal_states = m_tgs_bak;
+	--m_alt_nesting;
 }
 
 void Compute_Test_Goals::visit(CP_Concat const* n) {
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_test_goal_states->m_cp == n);
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 2 == m_test_goal_states->m_children.size());
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 0 == m_alt_nesting || m_test_goals);
 	Evaluate_Coverage_Pattern::Test_Goal_States const* m_tgs_bak(m_test_goal_states);
 	::std::list< Evaluate_Coverage_Pattern::Test_Goal_States >::const_iterator iter(m_test_goal_states->m_children.begin());
+	
+	if (0 == m_test_goals) {
+		m_test_goal_groups.push_back(test_goals_t());
+		m_test_goals = &(m_test_goal_groups.back());
+	}
 	m_test_goal_states = &(*iter);
 	n->get_cp_a()->accept(this);
 	test_goals_t backup;
-	backup.swap(m_test_goals);
+	if (0 == m_alt_nesting) {
+		m_test_goal_groups.push_back(test_goals_t());
+		m_test_goals = &(m_test_goal_groups.back());
+	} else {
+		backup.swap(*m_test_goals);
+	}
 	m_test_goal_states = &(*(++iter));
 	n->get_cp_b()->accept(this);
 	m_test_goal_states = m_tgs_bak;
-	test_goals_t backup2;
-	backup2.swap(m_test_goals);
 			
-	for (test_goals_t::const_iterator agi(backup.begin()); agi != backup.end(); ++agi)
-		for (test_goals_t::const_iterator bgi(backup2.begin());
-				bgi != backup2.end(); ++bgi) {
-			::literalt const sg(m_equation.get_cnf().land(*agi, *bgi));
-			// if (agi->is_true()) ::std::cerr << agi->dimacs() << " is TRUE" << ::std::endl;
-			// if (agi->is_false()) ::std::cerr << agi->dimacs() << " is FALSE" << ::std::endl;
-			// ::std::cerr << sg.dimacs() << " == " << agi->dimacs() << " AND " << bgi->dimacs() << ::std::endl;
-			if (!agi->is_true() && !agi->is_false() && !bgi->is_true() && !bgi->is_false()) {
-				m_and_map.insert(::std::make_pair(sg, ::std::make_pair(*agi, *bgi)));
-				//// ::std::cerr << "reverse-AND: " << sg.dimacs() << " == " << agi->dimacs() << " AND " << bgi->dimacs() << ::std::endl;
+	if (0 != m_alt_nesting) {
+		test_goals_t backup2;
+		backup2.swap(*m_test_goals);
+		for (test_goals_t::const_iterator agi(backup.begin()); agi != backup.end(); ++agi)
+			for (test_goals_t::const_iterator bgi(backup2.begin());
+					bgi != backup2.end(); ++bgi) {
+				::literalt const sg(m_equation.get_cnf().land(*agi, *bgi));
+				// if (agi->is_true()) ::std::cerr << agi->dimacs() << " is TRUE" << ::std::endl;
+				// if (agi->is_false()) ::std::cerr << agi->dimacs() << " is FALSE" << ::std::endl;
+				// ::std::cerr << sg.dimacs() << " == " << agi->dimacs() << " AND " << bgi->dimacs() << ::std::endl;
+				if (!agi->is_true() && !agi->is_false() && !bgi->is_true() && !bgi->is_false()) {
+					m_and_map.insert(::std::make_pair(sg, ::std::make_pair(*agi, *bgi)));
+					//// ::std::cerr << "reverse-AND: " << sg.dimacs() << " == " << agi->dimacs() << " AND " << bgi->dimacs() << ::std::endl;
+				}
+				//// else
+				////	::std::cerr << "Not adding " << sg.dimacs() << " == " << agi->dimacs() << " AND " << bgi->dimacs() << ::std::endl;
+				m_reverse_and_map[*agi].insert(::std::make_pair(sg, *bgi));
+				m_reverse_and_map[*bgi].insert(::std::make_pair(sg, *agi));
+				m_test_goals->insert(sg);
 			}
-			//// else
-			////	::std::cerr << "Not adding " << sg.dimacs() << " == " << agi->dimacs() << " AND " << bgi->dimacs() << ::std::endl;
-			m_reverse_and_map[*agi].insert(::std::make_pair(sg, *bgi));
-			m_reverse_and_map[*bgi].insert(::std::make_pair(sg, *agi));
-			m_test_goals.insert(sg);
-		}
+	}
 }
 
 void Compute_Test_Goals::visit(Depcov const* n) {
@@ -254,20 +329,14 @@ void Compute_Test_Goals::visit(Predicate const* n) {
 }
 
 void Compute_Test_Goals::visit(Query const* n) {
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 0 == m_alt_nesting);
 	n->get_cover()->accept(this);
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 0 == m_alt_nesting);
+	
+	make_id_map();
+	if (m_opts.get_bool_option("show-test-goals")) print_all_test_goals();
 
-	bool const do_print(m_opts.get_bool_option("show-test-goals"));
-
-	for (test_goals_t::const_iterator iter(m_test_goals.begin());
-			iter != m_test_goals.end(); ++iter) {
-		if (do_print) {
-			::std::ostringstream oss;
-			oss << "Test goal " << iter->dimacs() << ": ";
-			print_test_goal(*iter, oss);
-			m_manager.print(0, oss.str());
-		}
-		m_equation.mark_as_test_goal(*iter);
-	}
+	m_equation.set_test_goal_groups(m_test_goal_groups, m_tg_id_map);
 }
 	
 void Compute_Test_Goals::visit(Quote const* n) {
@@ -285,7 +354,8 @@ Compute_Test_Goals_From_Instrumentation::~Compute_Test_Goals_From_Instrumentatio
 }
 
 CNF_Conversion & Compute_Test_Goals_From_Instrumentation::do_query(::goto_functionst & gf, Query const& query) {
-	m_test_goals.clear();
+	m_test_goal_groups.clear();
+	m_test_goals = 0;
 	m_and_map.clear();
 	m_tg_to_ctx_map.clear();
 	m_reverse_and_map.clear();
@@ -407,6 +477,7 @@ void Compute_Test_Goals_From_Instrumentation::do_atom(Coverage_Pattern_Expr cons
 		bool epsilon_permitted, bool make_single) {
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_test_goal_states->m_cp == n);
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_test_goal_states->m_children.empty());
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_test_goals);
 
 	context_to_pcs_t context_to_pcs;
 	bool has_initial(find_all_contexts(context_to_pcs));
@@ -425,7 +496,7 @@ void Compute_Test_Goals_From_Instrumentation::do_atom(Coverage_Pattern_Expr cons
 			// ::std::cerr << "Adding subgoal composed of " << set.size() << " guards" << ::std::endl;
 			::literalt const tg(m_equation.get_cnf().lor(set));
 			store_mapping(tg, set, c_iter->first, c_iter->first);
-			m_test_goals.insert(tg);
+			m_test_goals->insert(tg);
 			set.clear();
 		}
 	}
@@ -439,12 +510,12 @@ void Compute_Test_Goals_From_Instrumentation::do_atom(Coverage_Pattern_Expr cons
 				c_iter != context_to_pcs.end(); ++c_iter)
 			contexts.push_back(::std::make_pair(c_iter->first, c_iter->first));
 		store_mapping(tg, set, contexts);
-		m_test_goals.insert(tg);
+		m_test_goals->insert(tg);
 	}
 }
 	
 bool Compute_Test_Goals_From_Instrumentation::get_satisfied_test_goals(
-		::cnf_clause_list_assignmentt const& cnf, test_goals_t & tgs) const
+		::cnf_clause_list_assignmentt const& cnf, test_goal_ids_t & tgs) const
 {
 	return false;
 }
@@ -463,7 +534,8 @@ Compute_Test_Goals_Boolean::~Compute_Test_Goals_Boolean()
 }
 
 CNF_Conversion & Compute_Test_Goals_Boolean::do_query(::goto_functionst & gf, Query const& query) {
-	m_test_goals.clear();
+	m_test_goal_groups.clear();
+	m_test_goals = 0;
 	m_and_map.clear();
 	m_tg_to_ctx_map.clear();
 	m_reverse_and_map.clear();
@@ -934,6 +1006,7 @@ void Compute_Test_Goals_Boolean::do_atom(Coverage_Pattern_Expr const* n,
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_test_goal_states->m_cp == n);
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_test_goal_states->m_children.empty());
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !m_test_goal_states->m_tg_states.empty());
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_test_goals);
 
 	typedef ::std::vector< state_edge_lit_map_t::const_iterator > selected_t;
 	selected_t selected;
@@ -966,7 +1039,7 @@ void Compute_Test_Goals_Boolean::do_atom(Coverage_Pattern_Expr const* n,
 				::literalt const tg(m_equation.get_cnf().lor(set));
 				store_mapping(tg, set, c_iter->first.first.second,
 						c_iter->first.second.second);
-				m_test_goals.insert(tg);
+				m_test_goals->insert(tg);
 				set.clear();
 			}
 		}
@@ -982,12 +1055,12 @@ void Compute_Test_Goals_Boolean::do_atom(Coverage_Pattern_Expr const* n,
 				contexts.push_back(::std::make_pair(c_iter->first.first.second,
 							c_iter->first.second.second));
 		store_mapping(tg, set, contexts);
-		m_test_goals.insert(tg);
+		m_test_goals->insert(tg);
 	}
 }
 
 bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
-		::cnf_clause_list_assignmentt const& cnf, test_goals_t & tgs) const
+		::cnf_clause_list_assignmentt const& cnf, test_goal_ids_t & tgs) const
 {
 	// simulate cp-automaton according to edge guards
 	// start from initial state and check possible successors - but do not
@@ -1077,9 +1150,7 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 	::std::ostringstream status;
 	status << "Need to analyze " << current_states_size << " candidates for subsumption";
 	m_manager.status(status.str());
-	::std::set< ::literalt > known_sat_final;
-	if (m_test_goals.end() != m_test_goals.find(::const_literal(true)))
-		known_sat_final.insert(::const_literal(true));
+	test_goal_id_map_t const& id_map(m_equation.get_test_goal_id_map());
 	// step_count = 0;
 	for (state_vec_t::const_iterator iter(current_states.begin());
 			iter != current_states.end(); ++iter) {
@@ -1100,6 +1171,7 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 			known_sat.insert(i_iter->begin(), i_iter->end());
 			::std::list< ::literalt > new_sat;
 			new_sat.insert(new_sat.end(), known_sat.begin(), known_sat.end());
+			known_sat.insert(::const_literal(true));
 			while (!new_sat.empty()) {
 				// ::std::cerr << ",";
 				::literalt const s(new_sat.front());
@@ -1107,13 +1179,7 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 				// ::std::cerr << "KNOWN SAT: " << s.dimacs() << ::std::endl;
 
 				reverse_and_lit_map_t::const_iterator and_entry(m_reverse_and_map.find(s));
-				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 
-						(m_test_goals.end() != m_test_goals.find(s)) ||
-						(m_reverse_and_map.end() != and_entry));
-				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 
-						(m_reverse_and_map.end() != and_entry) ||
-						(m_test_goals.end() != m_test_goals.find(s)));
-				if (m_test_goals.end() != m_test_goals.find(s)) continue;
+				if (m_reverse_and_map.end() == and_entry) continue;
 
 				for (::std::set< ::std::pair< ::literalt, ::literalt > >::const_iterator and_iter(and_entry->second.begin());
 						and_iter != and_entry->second.end(); ++and_iter) {
@@ -1181,23 +1247,19 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 				}
 				*/
 			}
-			known_sat_final.insert(known_sat.begin(), known_sat.end());
+			
+			test_goal_id_t id(0);
+			for (test_goal_id_map_t::const_iterator tg_iter(id_map.begin());
+					tg_iter != id_map.end(); ++tg_iter, ++id) {
+				bool found(true);
+				for (::bvt::const_iterator v_iter(tg_iter->begin());
+						found && v_iter != tg_iter->end(); ++v_iter)
+					found = (known_sat.end() != known_sat.find(*v_iter));
+				if (found) tgs.insert(id);
+			}
 		}
 	}
 
-	// ::std::cerr << "Known SAT1-final:";
-	for (::std::set< ::literalt >::const_iterator iter(known_sat_final.begin());
-			iter != known_sat_final.end(); ++iter)
-		if (m_test_goals.end() != m_test_goals.find(*iter)) {
-			// ::std::cerr << " " << iter->dimacs() << "(!TG!)";
-			tgs.insert(*iter);
-		}
-	/* else
-	   ::std::cerr << " " << iter->dimacs() << "(N)";
-	   ::std::cerr << ::std::endl;
-	   ::std::cerr << "SAT1-size: " << tgs.size() << ::std::endl;
-	   */
-	
 	return true;
 }
 	

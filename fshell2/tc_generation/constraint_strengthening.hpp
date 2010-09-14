@@ -62,7 +62,7 @@ class Constraint_Strengthening
 	typedef Constraint_Strengthening Self;
 
 	public:
-	typedef ::std::list< ::std::pair< ::fshell2::fql::test_goals_t,
+	typedef ::std::list< ::std::pair< ::fshell2::fql::test_goal_ids_t,
 				::cnf_clause_list_assignmentt > > test_cases_t;
 	
 	Constraint_Strengthening(::fshell2::fql::CNF_Conversion & equation,

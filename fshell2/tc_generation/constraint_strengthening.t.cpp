@@ -109,7 +109,7 @@ void test( Test_Data & data )
 	
 	fql::Compute_Test_Goals_From_Instrumentation goals(l, options);
 	fql::CNF_Conversion & eq(goals.do_query(gf, *q));
-	TEST_CHECK_RELATION(6, ==, eq.get_test_goal_literals().size());
+	TEST_CHECK_RELATION(6, ==, eq.get_test_goal_id_map().size());
 
 	statistics::Statistics stats;
 	Constraint_Strengthening cs(eq, stats, options);

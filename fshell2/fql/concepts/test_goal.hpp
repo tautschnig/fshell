@@ -32,6 +32,8 @@
 #include <fshell2/config/config.hpp>
 
 #include <set>
+#include <list>
+#include <vector>
 
 class literalt;
 
@@ -39,6 +41,10 @@ FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 typedef ::std::set< ::literalt > test_goals_t;
+typedef ::std::list< test_goals_t > test_goal_groups_t;
+typedef ::std::vector< ::std::vector< ::literalt > > test_goal_id_map_t;
+typedef test_goal_id_map_t::size_type test_goal_id_t;
+typedef ::std::set< test_goal_id_t > test_goal_ids_t;
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;

@@ -112,8 +112,12 @@ void test_instr( Test_Data & data )
 	Compute_Test_Goals_From_Instrumentation goals(l, options);
 	CNF_Conversion & eq(goals.do_query(gf, *q));
 	
-	test_goals_t const& bb_goals(eq.get_test_goal_literals());
-	TEST_ASSERT_RELATION(6, ==, bb_goals.size());
+	TEST_ASSERT_RELATION(6, ==, eq.get_test_goal_id_map().size());
+	test_goal_groups_t const& bb_goals(eq.get_test_goal_groups());
+	TEST_ASSERT_RELATION(3, ==, bb_goals.size());
+	TEST_ASSERT_RELATION(1, ==, bb_goals.front().size());
+	TEST_ASSERT_RELATION(6, ==, (++(bb_goals.begin()))->size());
+	TEST_ASSERT_RELATION(1, ==, bb_goals.back().size());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -164,8 +168,12 @@ void test_boolean( Test_Data & data )
 	Compute_Test_Goals_Boolean goals(l, options, stats);
 	CNF_Conversion & eq(goals.do_query(gf, *q));
 	
-	test_goals_t const& bb_goals(eq.get_test_goal_literals());
-	TEST_ASSERT_RELATION(6, ==, bb_goals.size());
+	TEST_ASSERT_RELATION(6, ==, eq.get_test_goal_id_map().size());
+	test_goal_groups_t const& bb_goals(eq.get_test_goal_groups());
+	TEST_ASSERT_RELATION(3, ==, bb_goals.size());
+	TEST_ASSERT_RELATION(1, ==, bb_goals.front().size());
+	TEST_ASSERT_RELATION(6, ==, (++(bb_goals.begin()))->size());
+	TEST_ASSERT_RELATION(1, ==, bb_goals.back().size());
 }
 
 /** @cond */

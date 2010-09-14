@@ -73,8 +73,9 @@ class CNF_Conversion : public ::bmct
 
 	void convert(::goto_functionst const& gf); 
 
-	void mark_as_test_goal(::literalt const& lit);
-	inline test_goals_t const& get_test_goal_literals() const;
+	void set_test_goal_groups(test_goal_groups_t & tg, test_goal_id_map_t & id_map);
+	inline test_goal_groups_t const& get_test_goal_groups() const;
+	inline test_goal_id_map_t const& get_test_goal_id_map() const;
 
 	inline ::cnf_clause_list_assignmentt & get_cnf();
 	inline ::cnf_clause_list_assignmentt const& get_cnf() const;
@@ -89,7 +90,8 @@ class CNF_Conversion : public ::bmct
 	
 	::cnf_clause_list_assignmentt m_cnf;
 	::bv_cbmct m_bv;
-	test_goals_t m_test_goals;
+	test_goal_groups_t m_test_goal_groups;
+	test_goal_id_map_t m_test_goal_id_map;
 
 	/*! \copydoc copy_constructor
 	*/
@@ -100,8 +102,12 @@ class CNF_Conversion : public ::bmct
 	Self& operator=( Self const& rhs );
 };
 	
-inline test_goals_t const& CNF_Conversion::get_test_goal_literals() const {
-	return m_test_goals;
+inline test_goal_groups_t const& CNF_Conversion::get_test_goal_groups() const {
+	return m_test_goal_groups;
+}
+	
+inline test_goal_id_map_t const& CNF_Conversion::get_test_goal_id_map() const {
+	return m_test_goal_id_map;
 }
 	
 inline ::cnf_clause_list_assignmentt & CNF_Conversion::get_cnf() {
@@ -142,7 +148,7 @@ class Compute_Test_Goals : protected Standard_AST_Visitor_Aspect<AST_Visitor>
 	virtual CNF_Conversion & do_query(::goto_functionst & gf, Query const& query) = 0;
 
 	virtual bool get_satisfied_test_goals(::cnf_clause_list_assignmentt const& cnf,
-			test_goals_t & tgs) const = 0;
+			test_goal_ids_t & tgs) const = 0;
 
 	protected:
 	typedef ::std::map< ::literalt, ::std::pair< ::literalt, ::literalt > > and_map_t;
@@ -156,13 +162,18 @@ class Compute_Test_Goals : protected Standard_AST_Visitor_Aspect<AST_Visitor>
 	::optionst const& m_opts;
 	CNF_Conversion m_equation;
 	Evaluate_Coverage_Pattern::Test_Goal_States const* m_test_goal_states;
-	test_goals_t m_test_goals;
+	test_goal_groups_t m_test_goal_groups;
+	test_goals_t * m_test_goals;
+	test_goal_id_map_t m_tg_id_map;
 	and_map_t m_and_map;
 	tg_to_ctx_map_t m_tg_to_ctx_map;
 	reverse_and_lit_map_t m_reverse_and_map;
 	reverse_or_lit_map_t m_reverse_or_map;
+	int m_alt_nesting;
 
+	void make_id_map();
 	void print_test_goal(::literalt const& tg, ::std::ostream & os) const;
+	void print_all_test_goals();
 	void store_mapping(::literalt const& tg, ::bvt const& or_set,
 			::goto_programt::const_targett const& src_context,
 			::goto_programt::const_targett const& dest_context);
@@ -262,7 +273,7 @@ class Compute_Test_Goals_From_Instrumentation : public Compute_Test_Goals
 	CNF_Conversion & do_query(::goto_functionst & gf, Query const& query);
 
 	virtual bool get_satisfied_test_goals(::cnf_clause_list_assignmentt const& cnf,
-			test_goals_t & tgs) const;
+			test_goal_ids_t & tgs) const;
 
 	private:
 	typedef ::std::map< ::goto_programt::const_targett,
@@ -309,7 +320,7 @@ class Compute_Test_Goals_Boolean : public Compute_Test_Goals
 	CNF_Conversion & do_query(::goto_functionst & gf, Query const& query);
 
 	virtual bool get_satisfied_test_goals(::cnf_clause_list_assignmentt const& cnf,
-			test_goals_t & tgs) const;
+			test_goal_ids_t & tgs) const;
 
 	private:
 	typedef ::std::map< target_graph_t::edge_t, ::std::set< target_graph_t const* > > edge_to_target_graphs_t;

@@ -58,7 +58,7 @@ void Test_Suite_Minimization::minimize(Constraint_Strengthening::test_cases_t &
 	// one variable per test case
 	// walk all sat test goals, add map entry OR-ing satisfying test cases
 	// add fan-in adder over test cases
-	::std::map< ::literalt, ::literalt > set_cover;
+	::std::map< ::fshell2::fql::test_goal_id_t, ::literalt > set_cover;
 	::std::map< ::literalt, Constraint_Strengthening::test_cases_t::iterator > tc_lit_map;
 	::std::list< ::bvt > sum_operands;
 	for (Constraint_Strengthening::test_cases_t::iterator iter(test_suite.begin());
@@ -66,17 +66,17 @@ void Test_Suite_Minimization::minimize(Constraint_Strengthening::test_cases_t &
 		::literalt const tc_var(cnf.new_variable());
 		sum_operands.push_back(::bvt(1, tc_var));
 		tc_lit_map.insert(::std::make_pair(tc_var, iter));
-		for (::fshell2::fql::test_goals_t::const_iterator tg_iter(iter->first.begin());
+		for (::fshell2::fql::test_goal_ids_t::const_iterator tg_iter(iter->first.begin());
 				tg_iter != iter->first.end(); ++tg_iter) {
-			::std::pair< ::std::map< ::literalt, ::literalt >::iterator, bool > entry(
-					set_cover.insert(::std::make_pair(*tg_iter, tc_var)));
+			::std::pair< ::std::map< ::fshell2::fql::test_goal_id_t, ::literalt >::iterator, bool >
+				entry(set_cover.insert(::std::make_pair(*tg_iter, tc_var)));
 			if (!entry.second)
 				entry.first->second = cnf.lor(entry.first->second, tc_var);
 		}
 	}
 	// each test goal must be covered by at least one test case
-	for (::std::map< ::literalt, ::literalt >::const_iterator iter(set_cover.begin());
-			iter != set_cover.end(); ++iter)
+	for (::std::map< ::fshell2::fql::test_goal_id_t, ::literalt >::const_iterator
+			iter(set_cover.begin()); iter != set_cover.end(); ++iter)
 		cnf.lcnf(::bvt(1, iter->second));
 
 	// fan-in adder over test case variables
