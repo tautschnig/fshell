@@ -52,6 +52,10 @@ sub process_input () {
   my $is_func = 0;
   my $loc = $2;
   my $val = $3;
+  my $is_global = 0;
+  $is_global = 1 if ($loc =~ / #global/);
+  $val = "1" if ($val eq "TRUE");
+  $val = "0" if ($val eq "FALSE");
   my $key = "$sym\@$loc";
     
   ($loc =~ /^file (\S+) line (\d+)(\s+.*)?$/)
@@ -79,6 +83,7 @@ sub process_input () {
       symbol => $sym,
       type => $type,
       is_func => $is_func,
+      is_global => $is_global,
       file => $file,
       line => $line,
       code_done => 0
@@ -125,14 +130,12 @@ foreach my $id (sort keys %test_suite) {
       push @{ $inserts{ $sym->{file} } }, "extern unsigned $idx_name;";
       push @idx_vars, $idx_name;
       my $decl = $sym->{symbol};
-      if ($decl =~ /,/) {
-        $decl =~ s/,/ ###,/g;
-        $decl =~ s/\)/ ###)/;
-        my $i = 0;
-        while ($decl =~ / ###/) {
-          $decl =~ s/ ###/ _$i/;
-          $i++;
-        }
+      $decl =~ s/,/ ###,/g if ($decl =~ /,/);
+      $decl =~ s/\)/ ###)/ if ($decl =~ /\(.+\)/);
+      my $i = 0;
+      while ($decl =~ / ###/) {
+        $decl =~ s/ ###/ _$i/;
+        $i++;
       }
       push @{ $inserts{ $sym->{file} } }, "$decl\{";
       
@@ -156,7 +159,16 @@ foreach my $id (sort keys %test_suite) {
       $new_name =~ s/[\/\\:]/__/g;
       $new_name =~ s/\./_/g;
       push @{ $inserts{ $sym->{file} } }, "extern unsigned __fshell2__tc_selector;";
-      if ($sym->{type} =~ /\[\d+\]/) {
+      if ($sym->{is_global}) {
+        if (!defined($appends{ $sym->{file} })) {
+          my $init_name = $sym->{file};
+          $init_name =~ s/[\/\\\.\-]/_/g;
+          $appends{ $sym->{file} }{init_name} = "__${init_name}_init_globals";
+          $appends{ $sym->{file} }{lines} = ();
+        }
+        push @{ $appends{ $sym->{file} }{lines} }, 
+          $sym->{symbol} .  "=$new_name\[__fshell2__tc_selector][idx__$new_name++]";
+      } elsif ($sym->{type} =~ /\[\d+\]/) {
         $replaces{ $sym->{file} }{ $sym->{line} }{ "[[:space:]]" . $sym->{symbol} . "\\[.*\\]" } =
           "*" . $sym->{symbol} . "=$new_name\[__fshell2__tc_selector][idx__$new_name++]";
       } else {
@@ -225,14 +237,22 @@ print MAKEFILE join(".mod.c ", keys %replaces) .
   (scalar(keys %inserts)?".mod.c\n":"\n");
 print MAKEFILE "\tgcc -lcunit -o \$@ \$(BUILD_FLAGS) \$^\n\n";
 
-foreach my $f (keys %replaces) {
+my %all_edits = ();
+@all_edits{ keys %replaces } = ();
+@all_edits{ keys %inserts } = ();
+@all_edits{ keys %appends } = ();
+
+foreach my $f (keys %all_edits) {
   print MAKEFILE "$f.mod.c: $f\n";
   print MAKEFILE "\tcp \$^ \$@\n";
-  foreach my $l (keys %{ $replaces{$f} }) {
-    foreach my $s (keys %{ $replaces{$f}{$l} }) {
-      print MAKEFILE "\tmv \$\@ \$\@_\n";
-      print MAKEFILE "\tsed '$l s/$s/ $replaces{$f}{$l}{$s}/' \$\@_ > \$\@\n";
-      print MAKEFILE "\trm \$\@_\n";
+
+  if (defined($replaces{$f})) {
+    foreach my $l (keys %{ $replaces{$f} }) {
+      foreach my $s (keys %{ $replaces{$f}{$l} }) {
+        print MAKEFILE "\tmv \$\@ \$\@_\n";
+        print MAKEFILE "\tsed '$l s/$s/ $replaces{$f}{$l}{$s}/' \$\@_ > \$\@\n";
+        print MAKEFILE "\trm \$\@_\n";
+      }
     }
   }
   
@@ -242,15 +262,13 @@ foreach my $f (keys %replaces) {
     print MAKEFILE "\tcat \$\@_ >> \$\@\n";
     print MAKEFILE "\trm \$\@_\n";
   }
-  
-  print MAKEFILE "\n";
-}
 
-foreach my $f (keys %inserts) {
-  next if (defined($replaces{$f}));
-  print MAKEFILE "$f.mod.c: $f\n";
-  print MAKEFILE "\techo '$_' >> \$\@\n" foreach(@{ $inserts{$f} });
-  print MAKEFILE "\tcat \$^ >> \$\@\n";
+  if (defined($appends{$f})) {
+    print MAKEFILE "\techo '" . $appends{$f}{init_name} . "(){' >> \$\@\n";
+    print MAKEFILE "\techo '  $_;' >> \$\@\n" foreach(@{ $appends{$f}{lines} });
+    print MAKEFILE "\techo '}' >> \$\@\n";
+  }
+  
   print MAKEFILE "\n";
 }
 
@@ -270,6 +288,7 @@ foreach my $id (sort keys %test_suite) {
   print TESTER "void tc$id() {\n";
   print TESTER "  __fshell2__tc_selector = " . ($id-1) . ";\n";
   print TESTER "  $_ = 0;\n" foreach(@idx_vars);
+  print TESTER "  " . $appends{$_}{init_name} . "();\n" foreach (keys %appends);
   print TESTER "  __orig__" . $test_suite{$id}{MAIN}{symbol} . "(";
   print TESTER (defined($test_suite{$id}{MAIN}{arg_vals})?join(",", @{ $test_suite{$id}{MAIN}{arg_vals} }):"") . ");\n";
   print TESTER "}\n\n";

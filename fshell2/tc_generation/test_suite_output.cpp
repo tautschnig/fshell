@@ -419,14 +419,17 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::Test_Input & ti) const 
 	for (Test_Suite_Output::Test_Input::test_inputs_t::const_iterator iter(ti.m_test_inputs.begin()); 
 			iter != ti.m_test_inputs.end(); ++iter) {
 		os << "  ";
+		bool global(false);
 		if (iter->m_symbol->type.id() == "code") {
 			::std::string::size_type pos(iter->m_type_str.find('('));
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, pos != ::std::string::npos);
 			os << iter->m_type_str.substr(0, pos) << iter->m_symbol->base_name << iter->m_type_str.substr(pos);
 		} else {
 			os << iter->m_type_str << " " << iter->m_symbol->base_name;
+			Symbol_Identifier var(::symbol_exprt(iter->m_symbol->name));
+			global = (Symbol_Identifier::GLOBAL == var.m_vt || Symbol_Identifier::GLOBAL_STATIC == var.m_vt);
 		}
-		os << "@[" << *(iter->m_location) << "]=" << iter->m_value_str;
+		os << "@[" << *(iter->m_location) << (global ? " #global":"") << "]=" << iter->m_value_str;
 		os << ::std::endl;
 	}
 	
