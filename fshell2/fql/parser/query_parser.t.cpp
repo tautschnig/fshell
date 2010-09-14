@@ -36,6 +36,8 @@
 
 #include <fshell2/fql/ast/query.hpp>
 
+#include <cbmc/src/util/config.h>
+
 #define TEST_COMPONENT_NAME Query_Parser
 #define TEST_COMPONENT_NAMESPACE fshell2::fql
 
@@ -113,6 +115,9 @@ void test_invalid( Test_Data & data )
  */
 void test_use_case( Test_Data & data )
 {
+	::cmdlinet cmdline;
+	::config.set(cmdline);
+	
 	::std::ostringstream os;
 	::fshell2::fql::Query * q(0);
 	Query_Parser qp;

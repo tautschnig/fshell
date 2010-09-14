@@ -106,7 +106,7 @@ void test( Test_Data & data )
 	::exprt sym(ID_symbol);
 	sym.set(ID_base_name, "argc");
 	sym.set(ID_identifier, "argc");
-	::exprt num(ID_constant, ::typet(ID_integer));
+	::exprt num(ID_constant, ::signedbv_typet(::config.ansi_c.int_width));
 	num.set(ID_value, 42);
 	::exprt * dummy(new ::exprt(ID_code, ::typet(ID_code)));
 	dummy->id("=");

@@ -54,8 +54,6 @@ void Predicate::accept(AST_Visitor const * v) const {
 bool Predicate::destroy() {
 	if (this->m_ref_count) return false;
 	Factory::get_instance().destroy(this);
-	delete m_expr;
-	m_expr = 0;
 	return true;
 }
 
