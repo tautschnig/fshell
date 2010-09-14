@@ -6,6 +6,6 @@ prepare=""
 query="in @FUNC(sort)|@FUNC(compare) cover @ENTRY(sort).{len>=2}.{len<=15}.  \"NOT(@EXIT(sort))*\". @BASICBLOCKENTRY"
 tg=9
 unsat=1
-tc=2
-cputime=5
+tc=1
+cputime=0.504845
 

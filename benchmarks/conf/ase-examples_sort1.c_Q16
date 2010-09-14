@@ -6,6 +6,6 @@ prepare=""
 query="cover @CONDITIONEDGE+@BASICBLOCKENTRY"
 tg=30
 unsat=0
-tc=3
-cputime=5
+tc=2
+cputime=0.183421
 

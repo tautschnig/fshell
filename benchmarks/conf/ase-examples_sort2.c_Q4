@@ -4,8 +4,8 @@ source="ase-examples"
 extra_params="--unwind 4 --no-unwinding-assertions code/ase-examples/sort2.c"
 prepare=""
 query="cover PATHS(@FUNC(main) | @FUNC(insert),1)"
-tg=11
-unsat=4
-tc=3
-cputime=5
+tg=6
+unsat=2
+tc=2
+cputime=0.151835
 

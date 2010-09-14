@@ -7,5 +7,5 @@ query="cover @DEF(t) . \"NOT(@DEF(t))*\" . @USE(t)"
 tg=4
 unsat=2
 tc=1
-cputime=4
+cputime=0.270977
 

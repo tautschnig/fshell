@@ -4,8 +4,8 @@ source="ase-examples"
 extra_params="--unwind 3 code/ase-examples/list2.c"
 prepare=""
 query="cover @BASICBLOCKENTRY->@BASICBLOCKENTRY"
-tg=110
-unsat=42
+tg=121
+unsat=53
 tc=4
-cputime=7
+cputime=0.595283
 

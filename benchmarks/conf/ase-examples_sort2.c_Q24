@@ -7,5 +7,5 @@ query="cover @ENTRY(main) passing @ENTRY(main)->{precondition_holds()}.@41.{!pos
 tg=2
 unsat=2
 tc=0
-cputime=1
+cputime=0.182284
 

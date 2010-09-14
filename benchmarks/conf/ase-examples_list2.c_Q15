@@ -7,5 +7,5 @@ query="in @FUNC(partition) cover @CONDITIONEDGE passing @7"
 tg=8
 unsat=3
 tc=1
-cputime=4
+cputime=0.338681
 

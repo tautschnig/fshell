@@ -7,5 +7,5 @@ query="cover @CONDITIONEDGE"
 tg=8
 unsat=0
 tc=3
-cputime=3
+cputime=0.26313
 
