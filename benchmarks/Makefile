@@ -31,6 +31,10 @@ ASE_QUERIES = ase-examples_list2.c_Q1 ase-examples_list2.c_Q2 ase-examples_list2
 
 JOPLIFT = joplift_BB joplift_PATHS_ctrl_loop
 
+BASIC = basic_bitops_1 basic_bool_1 basic_boolop1_CC basic_boolop2_CC basic_cov-union_1 \
+				basic_cov-union_2 basic_globals_1 basic_labels_1 basic_minimal_BB basic_repeat_1 \
+				basic_undefined-func_1 basic_variables_pred
+
 all install install-strip uninstall check installcheck dist:
 
 clean distclean maintainer-clean:

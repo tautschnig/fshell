@@ -1,0 +1,10 @@
+# vi: set ft=sh:
+
+source="basic"
+extra_params="code/basic/variables.c"
+prepare=""
+query="cover {inner_local > 5}.id"
+tg=2
+unsat=0
+tc=1
+cputime=0.006013

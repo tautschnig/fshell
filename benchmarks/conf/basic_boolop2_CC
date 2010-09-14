@@ -1,0 +1,10 @@
+# vi: set ft=sh:
+
+source="basic"
+extra_params="code/basic/boolop-control-flow2.c"
+prepare=""
+query="cover @conditionedge"
+tg=4
+unsat=0
+tc=3
+cputime=0.00823
