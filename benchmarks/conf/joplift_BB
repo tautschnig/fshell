@@ -4,11 +4,11 @@ source="joplift"
 extra_params="code/joplift/*.c --unwind 15"
 prepare="set no_zero_init"
 query="cover edges(@basicblockentry)"
-tg=0
-unsat=0
-tc=0
-cputime=0.000
-mempeak=0.0
+tg=152
+unsat=1
+tc=37
+cputime=1.89212
+mempeak=75
 
 exec_ts="no"
 gcov="no"
