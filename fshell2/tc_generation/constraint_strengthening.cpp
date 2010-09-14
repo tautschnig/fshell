@@ -124,6 +124,9 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 	::bvt goals_done;
 	bool const use_sat(m_opts.get_bool_option("sat-subsumption"));
 	while (!aux_var_map.empty() && (limit == 0 || tcs.size() < limit)) {
+		::std::ostringstream status;
+		status << aux_var_map.size() << " test goals remain to be covered";
+		m_equation.status(status.str());
 		
 		minisat.set_assumptions(goals_done);
 		if (::propt::P_UNSATISFIABLE == minisat.prop_solve()) break;
@@ -165,7 +168,7 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 					aux_var_map.erase(tg);
 				}
 			}
-			::std::ostringstream status;
+			status.str("");
 			status << "Satisfies " << test_goal_set.size() << " additional test goals";
 			m_equation.status(status.str());
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !test_goal_set.empty());
@@ -206,7 +209,7 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 
 		timer2.stop_timer();
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, num_sat > 0);
-		::std::ostringstream status;
+		status.str("");
 		status << "Satisfies " << num_sat << " test goals";
 		m_equation.status(status.str());
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, test_goal_set.empty());

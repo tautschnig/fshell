@@ -4,7 +4,7 @@ fshell = $(top_builddir)/fshell2/main/.libs/fshell$(EXEEXT)
 else
 fshell = $(top_builddir)/fshell2/main/fshell
 endif
-params = --verbosity 0 --statistics --outfile /dev/null
+params = --verbosity 2 --statistics --outfile /dev/null
 
 
 ASE_SCALE_s = busybox-1.14.0_cat.c_BB busybox-1.14.0_cat.c_CC busybox-1.14.0_cat.c_BB^2 \
@@ -46,7 +46,7 @@ prepare: $(fshell)
 			 scripts/run_bench.sh $(filter-out $<, $^)
 
 %.debug: prepare conf/%
-	debug=1 logf=logs/$(LOG).$@ fshell="$(strip $(fshell))" params="--outfile /dev/null" \
+	debug=1 logf=logs/$(LOG).$@ fshell="$(strip $(fshell))" params="--verbosity 9 --outfile /dev/null" \
 			 scripts/run_bench.sh $(filter-out $<, $^)
 
 %.gdb: prepare conf/%

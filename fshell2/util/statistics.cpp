@@ -68,6 +68,8 @@ Statistics::~Statistics()
 
 void Statistics::print(::messaget & mh) const
 {
+	if (m_stats.empty()) return;
+
 	::std::ostringstream oss;
 	for (::std::vector< Statistics_Interface * >::const_iterator iter(m_stats.begin());
 			iter != m_stats.end();) {

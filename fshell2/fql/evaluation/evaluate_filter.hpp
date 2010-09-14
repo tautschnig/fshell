@@ -73,6 +73,7 @@ class Evaluate_Filter : private Standard_AST_Visitor_Aspect<AST_Visitor>
 	target_graph_t const& get(Predicate const& p) const;
 		
 	private:
+	::language_uit & m_manager;
 	::fshell2::fql::Predicate_Instrumentation m_pred_instr;
 	::goto_functionst * m_gf;
 	::fshell2::instrumentation::CFG * m_cfg;

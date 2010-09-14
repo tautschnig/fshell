@@ -149,7 +149,7 @@ bool Parseoptions::get_command_line_options()
 
 	set_verbosity(*this);
 
-	if(cmdline.isset("statistics") || get_verbosity() > 2)
+	if(cmdline.isset("statistics") || get_verbosity() >= 8)
 		m_options.set_option("statistics", true);
 
 	return false;

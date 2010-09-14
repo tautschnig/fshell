@@ -63,12 +63,14 @@
 #include <sstream>
 
 #include <cbmc/src/util/config.h>
+#include <cbmc/src/langapi/language_ui.h>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 Evaluate_Filter::Evaluate_Filter(::language_uit & manager) :
-	m_pred_instr(manager),
+	m_manager(manager),
+	m_pred_instr(m_manager),
 	m_gf(0),
 	m_cfg(0)
 {
@@ -607,7 +609,14 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 			}
 			break;
 	}
-				
+	
+	if (edges.empty()) {
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, initial.empty());
+		::std::ostringstream warn;
+		warn << "Filter expression " << *n << " evaluates to empty target graph";
+		m_manager.warning(warn.str());
+	}
+
 	entry.first->second.set_E(edges);
 	entry.first->second.set_I(initial);
 }
