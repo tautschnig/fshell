@@ -56,6 +56,8 @@
 #include <fshell2/fql/ast/query.hpp>
 #include <fshell2/fql/ast/quote.hpp>
 
+#include <deque>
+
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
@@ -1059,6 +1061,70 @@ void Compute_Test_Goals_Boolean::do_atom(Coverage_Pattern_Expr const* n,
 	}
 }
 
+class KnownSAT {
+	public:
+		typedef ::std::vector< ::literalt > init_t;
+		KnownSAT(init_t::const_iterator begin, init_t::const_iterator end) :
+			m_min_var_no(0), m_max_var_no(0)
+		{
+			for(;begin != end; ++begin)
+				insert(*begin);
+		}
+
+		bool insert(::literalt const& lit) {
+			if (lit.is_constant()) return false;
+			
+			unsigned const var_no(lit.var_no());
+			int const mask(lit.sign() ? 1 : 2);
+			bool retval(true);
+			if (m_lits.empty()) {
+				m_lits.push_back(mask);
+				m_min_var_no = m_max_var_no = var_no;
+			} else if (var_no > m_max_var_no) {
+				m_lits.resize(m_lits.size() + (var_no - m_max_var_no), 0);
+				m_max_var_no = var_no;
+				m_lits.back() = mask;
+			} else if (var_no < m_min_var_no) {
+				for (unsigned i(var_no); i < m_min_var_no; ++i)
+					m_lits.push_front(0);
+				m_min_var_no = var_no;
+				m_lits.front() = mask;
+			} else {
+				retval = (0 == (m_lits[ var_no - m_min_var_no ] & mask));
+				m_lits[ var_no - m_min_var_no ] |= mask;
+			}
+
+			return retval;
+		}
+			
+		void add_to_list_unique(::std::list< ::literalt > & new_sat) {
+			unsigned offset(0);
+			for (::std::deque< int >::const_iterator iter(m_lits.begin());
+					iter != m_lits.end(); ++iter, ++offset) {
+				if (*iter & 1) new_sat.push_back(::literalt(m_min_var_no + offset, true));
+				if (*iter & 2) new_sat.push_back(::literalt(m_min_var_no + offset, false));
+			}
+		}
+
+		bool has(::literalt const& lit) const {
+			if (lit.is_true()) return true;
+			if (lit.is_false()) return false;
+
+			unsigned const var_no(lit.var_no());
+			if (var_no < m_min_var_no || var_no > m_max_var_no) return false;
+
+			return (m_lits[ var_no - m_min_var_no ] & (lit.sign() ? 1 : 2));
+		}
+
+	private:
+		::std::deque< int > m_lits;
+		unsigned m_min_var_no;
+		unsigned m_max_var_no;
+
+		KnownSAT(KnownSAT const& other);
+		KnownSAT & operator=(KnownSAT const& other);
+};
+
 bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 		::cnf_clause_list_assignmentt const& cnf, test_goal_ids_t & tgs) const
 {
@@ -1167,11 +1233,9 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 
 			// ::std::map< ::literalt, ::std::list< ::literalt > > and_missing_one;
 			::std::list< ::std::pair< ::literalt, ::literalt > > and_missing_one;
-			::std::set< ::literalt > known_sat;
-			known_sat.insert(i_iter->begin(), i_iter->end());
+			KnownSAT known_sat(i_iter->begin(), i_iter->end());
 			::std::list< ::literalt > new_sat;
-			new_sat.insert(new_sat.end(), known_sat.begin(), known_sat.end());
-			known_sat.insert(::const_literal(true));
+			known_sat.add_to_list_unique(new_sat);
 			while (!new_sat.empty()) {
 				// ::std::cerr << ",";
 				::literalt const s(new_sat.front());
@@ -1189,7 +1253,7 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 					// s AND true is s
 					if (and_iter->second.is_true()) continue;
 					// already done
-					if (known_sat.end() != known_sat.find(and_iter->first)) continue;
+					if (known_sat.has(and_iter->first)) continue;
 					// *or_entries AND x is known as *and_iter; value in m_and_map
 					// will be y AND z is known as *and_iter if
 					// or_entries->is_true(); skipped above
@@ -1221,8 +1285,8 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 
 				for (::std::list< ::std::pair< ::literalt, ::literalt > >::iterator a_iter(
 							and_missing_one.begin()); a_iter != and_missing_one.end(); ) {
-					if (known_sat.end() != known_sat.find(a_iter->second)) {
-						if (known_sat.insert(a_iter->first).second) {
+					if (known_sat.has(a_iter->second)) {
+						if (known_sat.insert(a_iter->first)) {
 							new_sat.push_back(a_iter->first);
 							//// ::std::cerr << "NEWLY SAT and: " << n_iter->dimacs() << ::std::endl;
 						}
@@ -1254,7 +1318,7 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 				bool found(true);
 				for (::bvt::const_iterator v_iter(tg_iter->begin());
 						found && v_iter != tg_iter->end(); ++v_iter)
-					found = (known_sat.end() != known_sat.find(*v_iter));
+					found = known_sat.has(*v_iter);
 				if (found) tgs.insert(id);
 			}
 		}
