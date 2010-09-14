@@ -41,7 +41,9 @@ maintainer-clean-local:
 	$(RM) -rf examples/
 	
 check-local:
-	$(MAKE) $(AM_MAKEFLAGS) -C astl check
+	if ! test x$(build_os) = xmingw32 ; then \
+		$(MAKE) $(AM_MAKEFLAGS) -C astl check ; \
+	fi
 				
 all-local:
 	if [ "$(top_srcdir)" = "." ] ; then \

@@ -96,9 +96,9 @@ void test( Test_Data & data )
 		TEST_ASSERT(7 == cnt_size_t_val);
 		get_stats_double(ct);
 		get_stats_double(wt);
-		TEST_ASSERT(ct_val < wt_val);
-		get_stats_double(mem_use_peak);
+		TEST_ASSERT(ct_val <= wt_val);
 #if defined(__linux__) || defined(__APPLE__)
+		get_stats_double(mem_use_peak);
 		TEST_ASSERT(mem_use_peak_val > 0);
 #endif
 	}
