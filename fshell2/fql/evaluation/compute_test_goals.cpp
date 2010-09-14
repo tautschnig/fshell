@@ -500,8 +500,8 @@ CNF_Conversion & Compute_Test_Goals_Boolean::do_query(::goto_functionst & gf, Qu
 	// convert CFA to CNF
 	m_equation.convert(gf);
 	
-	unsigned const cnt_vars_before(m_equation.get_cnf().no_variables());
-	unsigned const cnt_cl_before(m_equation.get_cnf().no_clauses());
+	unsigned cnt_vars_before(m_equation.get_cnf().no_variables());
+	unsigned cnt_cl_before(m_equation.get_cnf().no_clauses());
 
 	build(m_cp_eval.get(), true);
 	build(m_cp_eval.get_pp_eval().get(query.get_passing()), false);
@@ -511,8 +511,16 @@ CNF_Conversion & Compute_Test_Goals_Boolean::do_query(::goto_functionst & gf, Qu
 	NEW_STAT(m_stats, Counter< unsigned >, more_cl_cnt, "Additional clauses");
 	more_cl_cnt.inc(m_equation.get_cnf().no_clauses() - cnt_cl_before);
 	
+	cnt_vars_before = m_equation.get_cnf().no_variables();
+	cnt_cl_before = m_equation.get_cnf().no_clauses();
+	
 	query.accept(this);
 
+	NEW_STAT(m_stats, Counter< unsigned >, more_vars_cnt2, "Additional Boolean variables from query");
+	more_vars_cnt2.inc(m_equation.get_cnf().no_variables() - cnt_vars_before);
+	NEW_STAT(m_stats, Counter< unsigned >, more_cl_cnt2, "Additional clauses from query");
+	more_cl_cnt2.inc(m_equation.get_cnf().no_clauses() - cnt_cl_before);
+	
 	return m_equation;
 }
 
