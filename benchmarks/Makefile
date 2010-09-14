@@ -35,6 +35,9 @@ BASIC = basic_bitops_1 basic_bool_1 basic_boolop1_CC basic_boolop2_CC basic_cov-
 				basic_cov-union_2 basic_globals_1 basic_labels_1 basic_minimal_BB basic_repeat_1 \
 				basic_undefined-func_1 basic_variables_pred
 
+SORTING = sorting_bs_BB sorting_bubble-fortas_BB sorting_bubble_BB sorting_sorter_BB
+
+
 all install install-strip uninstall check installcheck dist:
 
 clean distclean maintainer-clean:

@@ -1,5 +1,6 @@
 BENCHMARKS = ase-examples busybox-1.14.0 engine-controllers joplift \
-						 memory-manager nt-drivers picosat-913 vfs-model basic
+						 memory-manager nt-drivers picosat-913 vfs-model basic \
+						 sorting
 
 all: $(BENCHMARKS:=.prep)
 

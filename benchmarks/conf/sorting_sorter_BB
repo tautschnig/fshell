@@ -1,0 +1,10 @@
+# vi: set ft=sh:
+
+source="sorting"
+extra_params="code/sorting/sorter.c --unwind 8 --no-unwinding-assertions"
+prepare=""
+query="cover @basicblockentry"
+tg=24
+unsat=3
+tc=1
+cputime=268.871
