@@ -79,7 +79,6 @@ void test( Test_Data & data )
 		<< "int x=0;" << ::std::endl
 		<< "if (argc > 5) x=2; else x=1;" << ::std::endl
 		<< "if (argc > 27) ++x; else --x;" << ::std::endl
-		<< "assert(0);" << ::std::endl
 		<< "return x;" << ::std::endl
 		<< "}" << ::std::endl;
 	of.close();
@@ -89,7 +88,6 @@ void test( Test_Data & data )
 	::config.set(cmdline);
 	::language_uit l("FShell2", cmdline);
 	::optionst options;
-	options.set_option("assertions", true);
 	::goto_functionst gf;
 
 	TEST_CHECK(!l.parse(tempname_str));
