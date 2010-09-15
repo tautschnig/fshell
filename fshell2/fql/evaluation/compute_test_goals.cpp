@@ -196,6 +196,7 @@ void Compute_Test_Goals::print_test_goal(::literalt const& tg,
 void Compute_Test_Goals::make_id_map()
 {
 	m_tg_id_map.clear();
+	m_skips.clear();
 	
 	typedef ::std::vector< ::std::pair< test_goal_groups_t::const_iterator,
 			test_goals_t::const_iterator > > ptrs_t;
@@ -225,6 +226,19 @@ void Compute_Test_Goals::make_id_map()
 		}
 		for (ptrs_t::iterator iter(ptrs.begin() + rindex); rindex > 0 && iter != ptrs.end(); ++iter)
 			iter->second = iter->first->begin();
+	}
+	
+	m_skips.resize(m_test_goal_groups.size(), 0);
+	test_goals_t::size_type prec_skip(1);
+	skips_t::reverse_iterator s_iter(m_skips.rbegin());
+	// should be a const_reverse_iterator, but some buggy STL versions (OS X!)
+	// lack a proper operator!=
+	for (test_goal_groups_t::reverse_iterator g_iter(m_test_goal_groups.rbegin());
+			g_iter != m_test_goal_groups.rend(); ++g_iter, ++s_iter) {
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !g_iter->empty());
+		// users of skips will do +1 through for-loop increments
+		*s_iter = prec_skip - 1;
+		prec_skip *= g_iter->size();
 	}
 }
 
@@ -1277,10 +1291,16 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 			for (test_goal_id_map_t::const_iterator tg_iter(id_map.begin());
 					tg_iter != id_map.end(); ++tg_iter, ++id) {
 				bool found(true);
+				skips_t::const_iterator s_iter(m_skips.begin());
 				for (::bvt::const_iterator v_iter(tg_iter->begin());
-						found && v_iter != tg_iter->end(); ++v_iter)
+						found && v_iter != tg_iter->end(); ++v_iter, ++s_iter)
 					found = known_sat.has(*v_iter);
 				if (found) tgs.insert(id);
+				else {
+					--s_iter;
+					tg_iter += *s_iter;
+					id += *s_iter;
+				}
 			}
 		}
 	}

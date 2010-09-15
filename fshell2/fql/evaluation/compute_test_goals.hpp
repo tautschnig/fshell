@@ -157,6 +157,7 @@ class Compute_Test_Goals : protected Standard_AST_Visitor_Aspect<AST_Visitor>
 	typedef ::std::vector< ::std::pair< ::goto_programt::const_targett,
 				::goto_programt::const_targett > > ctx_coll_t;
 	typedef ::std::map< ::literalt, ctx_coll_t > tg_to_ctx_map_t;
+	typedef ::std::vector< test_goals_t::size_type > skips_t;
 	
 	::language_uit & m_manager;
 	::optionst const& m_opts;
@@ -170,6 +171,7 @@ class Compute_Test_Goals : protected Standard_AST_Visitor_Aspect<AST_Visitor>
 	reverse_and_lit_map_t m_reverse_and_map;
 	reverse_or_lit_map_t m_reverse_or_map;
 	int m_alt_nesting;
+	skips_t m_skips;
 
 	void make_id_map();
 	void print_test_goal(::literalt const& tg, ::std::ostream & os) const;
