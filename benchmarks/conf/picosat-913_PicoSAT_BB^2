@@ -6,9 +6,9 @@ prepare=""
 query="cover edges(@basicblockentry)->edges(@basicblockentry)"
 tg=152881
 unsat=78148
-tc=405
-cputime=54586.8
-mempeak=6395
+tc=407
+cputime=3364.33
+mempeak=6099
 
 exec_ts="no"
 gcov="no"
