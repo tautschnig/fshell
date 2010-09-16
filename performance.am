@@ -2,15 +2,14 @@
 
 PROF_BENCH = \
 						 "$(MAKE) -C $(top_srcdir)/benchmarks/code joplift.prep":"$(top_srcdir)/benchmarks/code/joplift/*.c --unwind 1 --partial-loops --function ctrl_loop":"set no_zero_init":"cover @basicblockentry" \
-						 "$(MAKE) -C $(top_srcdir)/benchmarks/code ase-examples.prep":"$(top_srcdir)/benchmarks/code/ase-examples/list2.c --unwind 3":"":"cover @BASICBLOCKENTRY->@BASICBLOCKENTRY->@BASICBLOCKENTRY->@BASICBLOCKENTRY" \
-						 "$(MAKE) -C $(top_srcdir)/benchmarks/code picosat-913.prep":"$(top_srcdir)/benchmarks/code/picosat-913/*.c --unwind 3 --no-unwinding-assertions":"":"cover @conditionedge"
+						 "$(MAKE) -C $(top_srcdir)/benchmarks/code ase-examples.prep":"$(top_srcdir)/benchmarks/code/ase-examples/list2.c --unwind 3":"":"cover @BASICBLOCKENTRY->@BASICBLOCKENTRY->@BASICBLOCKENTRY->@BASICBLOCKENTRY->@BASICBLOCKENTRY" \
+						 "$(MAKE) -C $(top_srcdir)/benchmarks/code picosat-913.prep":"$(top_srcdir)/benchmarks/code/picosat-913/*.c --unwind 2 --no-unwinding-assertions":"":"cover @BASICBLOCKENTRY->@BASICBLOCKENTRY"
 PROF_CLIENT = $(top_builddir)/fshell2/main/fshell
-PROF_CLIENT_OPTS = --verbosity 0 --statistics --outfile /dev/null
+PROF_CLIENT_OPTS = --verbosity 9 --statistics --outfile /dev/null
 
 # -fno-inline avoids any inlining, -finline-limit=4 allows for inlining very
 # small functions
-# profile: CXXFLAGS := $(filter-out -O1 -O2 -O3 -Os,$(CXXFLAGS)) -O2 -finline-limit=4 -pg
-profile: CXXFLAGS := $(filter-out -O1 -O2 -O3 -Os,$(CXXFLAGS)) -O2 -pg
+profile: CXXFLAGS := $(filter-out -O1 -O2 -O3 -Os,$(CXXFLAGS)) -O2 -finline-limit=4 -pg
 profile:
 	mkdir -p benchmarks/profiling
 	[ -n "$(no_clean)" ] || $(MAKE) $(AM_MAKEFLAGS) -C $(top_builddir) clean
