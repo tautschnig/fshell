@@ -1252,7 +1252,9 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 			::std::map< ::literalt, ::std::list< ::literalt > > and_missing_one;
 			KnownSAT known_sat(*i_iter);
 			::std::list< ::literalt > new_sat;
-			known_sat.add_to_list_unique(new_sat);
+                       // known_sat.add_to_list_unique(new_sat);
+                       // it is a set, we can safely copy from it directly
+                       new_sat.insert(new_sat.end(), i_iter->begin(), i_iter->end());
 			while (!new_sat.empty()) {
 				::literalt const s(new_sat.front());
 				new_sat.pop_front();
