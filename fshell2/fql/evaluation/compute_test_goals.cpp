@@ -1078,11 +1078,15 @@ void Compute_Test_Goals_Boolean::do_atom(Coverage_Pattern_Expr const* n,
 class KnownSAT {
 	public:
                typedef ::std::set< ::literalt > init_t;
-		KnownSAT(init_t::const_iterator begin, init_t::const_iterator end) :
+		KnownSAT(init_t const& base) :
 			m_min_var_no(0), m_max_var_no(0)
 		{
-			for(;begin != end; ++begin)
-				insert(*begin);
+			// try to benefit from base being sorted -> resize only once when
+			// called from here
+			for(init_t::const_iterator iter(base.begin()); iter != base.end(); ++iter)
+				if (insert(*iter)) break;
+			for(init_t::const_reverse_iterator riter(base.rbegin()); riter != base.rend(); ++riter)
+				insert(*riter);
 		}
 
 		bool insert(::literalt const& lit) {
@@ -1246,7 +1250,7 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 			// if (0 == step_count % 100) ::std::cerr << " state step count: " << step_count << ::std::endl;
 
 			::std::map< ::literalt, ::std::list< ::literalt > > and_missing_one;
-			KnownSAT known_sat(i_iter->begin(), i_iter->end());
+			KnownSAT known_sat(*i_iter);
 			::std::list< ::literalt > new_sat;
 			known_sat.add_to_list_unique(new_sat);
 			while (!new_sat.empty()) {
