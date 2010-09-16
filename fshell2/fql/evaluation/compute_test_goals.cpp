@@ -1077,7 +1077,7 @@ void Compute_Test_Goals_Boolean::do_atom(Coverage_Pattern_Expr const* n,
 
 class KnownSAT {
 	public:
-		typedef ::std::vector< ::literalt > init_t;
+               typedef ::std::set< ::literalt > init_t;
 		KnownSAT(init_t::const_iterator begin, init_t::const_iterator end) :
 			m_min_var_no(0), m_max_var_no(0)
 		{
@@ -1149,9 +1149,9 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 	// have satisfied
 
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == m_cp_eval.get().initial().size());
-	typedef ::std::map< ta_state_t, ::std::list< ::std::vector< ::literalt > > > state_vec_t;
+       typedef ::std::map< ta_state_t, ::std::list< ::std::set< ::literalt > > > state_vec_t;
 	state_vec_t current_states;
-	current_states[ *m_cp_eval.get().initial().begin() ].push_back(::std::vector< ::literalt >());
+       current_states[ *m_cp_eval.get().initial().begin() ].push_back(::std::set< ::literalt >());
 	unsigned current_states_size(0);
 	
 	// int step_count(0);
@@ -1198,12 +1198,12 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 				ta_state_t const& dest(iter_pair.first->second.m_dest);
 				bool const is_tgs(m_cp_eval.is_test_goal_state(dest));
 				// ::std::cerr << "trans " << src << " -> " << dest << ::std::endl;
-				for (::std::list< ::std::vector< ::literalt > >::const_iterator i_iter(entry->second.begin());
+                               for (::std::list< ::std::set< ::literalt > >::const_iterator i_iter(entry->second.begin());
 						i_iter != entry->second.end(); ++i_iter) {
 					state_vec_t::iterator next_entry(next_states.insert(::std::make_pair(dest,
-									::std::list< ::std::vector< ::literalt > >())).first);
+                                                                       ::std::list< ::std::set< ::literalt > >())).first);
 					next_entry->second.push_back(*i_iter);
-					::std::vector< ::literalt > & known_sat(next_entry->second.back());
+                                       ::std::set< ::literalt > & known_sat(next_entry->second.back());
 					++current_states_size;
 					if (is_tgs) {
 
@@ -1216,7 +1216,7 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 						for (::std::set< ::literalt >::const_iterator or_entries(or_entry->second.begin());
 								or_entries != or_entry->second.end(); ++or_entries) {
 							//// ::std::cerr << "SATISFIED OR: " << or_entries->dimacs() << ::std::endl;
-							if (!or_entries->is_true()) known_sat.push_back(*or_entries);
+                                                       if (!or_entries->is_true()) known_sat.insert(*or_entries);
 						}
 					}
 				}
@@ -1239,7 +1239,7 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 			continue;
 		}
 
-		for (::std::list< ::std::vector< ::literalt > >::const_iterator i_iter(iter->second.begin());
+               for (::std::list< ::std::set< ::literalt > >::const_iterator i_iter(iter->second.begin());
 				i_iter != iter->second.end(); ++i_iter) {
 			// ++step_count;
 			// ::std::cerr << ".";
