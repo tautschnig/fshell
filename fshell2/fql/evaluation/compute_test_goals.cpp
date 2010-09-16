@@ -1099,12 +1099,11 @@ class KnownSAT {
 				m_lits.push_back(mask);
 				m_min_var_no = m_max_var_no = var_no;
 			} else if (var_no > m_max_var_no) {
-				m_lits.resize(m_lits.size() + (var_no - m_max_var_no), 0);
+                               m_lits.insert(m_lits.end(), var_no - m_max_var_no, 0);
 				m_max_var_no = var_no;
 				m_lits.back() = mask;
 			} else if (var_no < m_min_var_no) {
-				for (unsigned i(var_no); i < m_min_var_no; ++i)
-					m_lits.push_front(0);
+                               m_lits.insert(m_lits.begin(), m_min_var_no - var_no, 0);
 				m_min_var_no = var_no;
 				m_lits.front() = mask;
 			} else {
