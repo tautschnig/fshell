@@ -1121,13 +1121,13 @@ class KnownSAT {
 		}
 
 		bool has(::literalt const& lit) const {
-			if (lit.is_true()) return true;
-			if (lit.is_false()) return false;
+                       FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !lit.is_true() || lit.sign());
+                       FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !lit.is_false() || !lit.sign());
+                       if (lit.is_constant()) return lit.sign();
 
 			unsigned const var_no(lit.var_no());
-			if (var_no < m_min_var_no || var_no > m_max_var_no) return false;
-
-			return (m_lits[ var_no - m_min_var_no ] & (lit.sign() ? 1 : 2));
+                       return (var_no >= m_min_var_no && var_no <= m_max_var_no &&
+                                       (m_lits[ var_no - m_min_var_no ] & (lit.sign() ? 1 : 2)));
 		}
 
 	private:
