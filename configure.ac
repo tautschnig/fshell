@@ -63,6 +63,7 @@ AC_CHECK_HEADERS([FlexLexer.h \
                   ctime \
                   cerrno \
                   unistd.h \
+                  zlib.h \
                   ],
                   [],
                   AC_MSG_ERROR([Essential header $ac_header missing]))
