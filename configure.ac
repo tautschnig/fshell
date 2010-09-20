@@ -6,7 +6,7 @@
 # useful
 
 AC_PREREQ(2.59)
-AC_INIT([fshell2],[0.9],[michael.tautschnig@gmail.com])
+AC_INIT([fshell2],[1.0],[michael.tautschnig@gmail.com])
 AC_CONFIG_SRCDIR([config/update-makefiles.pl])
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_HEADER(config.h)
