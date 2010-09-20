@@ -413,8 +413,12 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::Test_Input & ti) const 
 }
 
 ::std::ostream & Test_Suite_Output::print_test_case_plain(::std::ostream & os,
-		Test_Suite_Output::Test_Input const& ti) const {
-	os << "  ENTRY " << ti.m_main_symbol_str << "@[" << ti.m_main_location << "]" << ::std::endl;
+		Test_Suite_Output::Test_Input const& ti) const
+{
+	bool const do_full(!m_opts.get_bool_option("brief-test-inputs"));
+
+	if (do_full)
+		os << "  ENTRY " << ti.m_main_symbol_str << "@[" << ti.m_main_location << "]" << ::std::endl;
 
 	for (Test_Suite_Output::Test_Input::test_inputs_t::const_iterator iter(ti.m_test_inputs.begin()); 
 			iter != ti.m_test_inputs.end(); ++iter) {
@@ -423,13 +427,17 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::Test_Input & ti) const 
 		if (iter->m_symbol->type.id() == "code") {
 			::std::string::size_type pos(iter->m_type_str.find('('));
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, pos != ::std::string::npos);
-			os << iter->m_type_str.substr(0, pos) << iter->m_symbol->base_name << iter->m_type_str.substr(pos);
+			if (do_full) os << iter->m_type_str.substr(0, pos);
+			os << iter->m_symbol->base_name << iter->m_type_str.substr(pos);
 		} else {
-			os << iter->m_type_str << " " << iter->m_symbol->base_name;
+			if (do_full) os << iter->m_type_str << " ";
+			os << iter->m_symbol->base_name;
 			Symbol_Identifier var(::symbol_exprt(iter->m_symbol->name));
 			global = (Symbol_Identifier::GLOBAL == var.m_vt || Symbol_Identifier::GLOBAL_STATIC == var.m_vt);
 		}
-		os << "@[" << *(iter->m_location) << (global ? " #global":"") << "]=" << iter->m_value_str;
+		if (do_full)
+			os << "@[" << *(iter->m_location) << (global ? " #global":"") << "]";
+		os << "=" << iter->m_value_str;
 		os << ::std::endl;
 	}
 	
@@ -437,30 +445,39 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::Test_Input & ti) const 
 }
 
 ::std::ostream & Test_Suite_Output::print_test_case_xml(::std::ostream & os,
-		Test_Suite_Output::Test_Input const& ti) const {
+		Test_Suite_Output::Test_Input const& ti) const
+{
+	bool const do_full(!m_opts.get_bool_option("brief-test-inputs"));
+
 	::xmlt xml_tc("test-case");
 
-	::xmlt xml_entry("entry");
-	xml_entry.new_element("function").data = ti.m_main_symbol_str;
-	::xmlt xml_main_loc("location");
-	::convert(ti.m_main_location, xml_main_loc);
-	xml_entry.new_element().swap(xml_main_loc);
-	xml_tc.new_element().swap(xml_entry);
+	if (do_full) {
+		::xmlt xml_entry("entry");
+		xml_entry.new_element("function").data = ti.m_main_symbol_str;
+		::xmlt xml_main_loc("location");
+		::convert(ti.m_main_location, xml_main_loc);
+		xml_entry.new_element().swap(xml_main_loc);
+		xml_tc.new_element().swap(xml_entry);
+	}
 
 	for (Test_Suite_Output::Test_Input::test_inputs_t::const_iterator iter(ti.m_test_inputs.begin()); 
 			iter != ti.m_test_inputs.end(); ++iter) {
 		::xmlt xml_obj("object");
 		xml_obj.set_attribute("kind", (iter->m_symbol->type.id() == ID_code ? "undefined-function" : "variable"));
-		
-		xml_obj.new_element("identifier").data = ::xmlt::escape(::id2string(iter->m_name->get("identifier")));
+
+		if (do_full)
+			xml_obj.new_element("identifier").data = ::xmlt::escape(::id2string(iter->m_name->get("identifier")));
 		xml_obj.new_element("base_name").data = ::xmlt::escape(::id2string(iter->m_symbol->base_name));
-		
-		::xmlt xml_loc("location");
-		::convert(*(iter->m_location), xml_loc);
-		xml_obj.new_element().swap(xml_loc);
+	
+		if (do_full) {
+			::xmlt xml_loc("location");
+			::convert(*(iter->m_location), xml_loc);
+			xml_obj.new_element().swap(xml_loc);
+		}
 		
 		xml_obj.new_element("value").data = ::xmlt::escape(iter->m_value_str);
-		xml_obj.new_element("type").data = ::xmlt::escape(iter->m_type_str);
+		if (do_full)
+			xml_obj.new_element("type").data = ::xmlt::escape(iter->m_type_str);
 		
 		xml_tc.new_element().swap(xml_obj);
 	}
@@ -469,8 +486,11 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::Test_Input & ti) const 
 	return os;
 }
 
-Test_Suite_Output::Test_Suite_Output(::fshell2::fql::CNF_Conversion & equation) :
-	m_equation(equation) {
+Test_Suite_Output::Test_Suite_Output(::fshell2::fql::CNF_Conversion & equation,
+		::optionst const& opts) :
+	m_equation(equation),
+	m_opts(opts)
+{
 }
 	
 ::std::ostream & Test_Suite_Output::print_ts(

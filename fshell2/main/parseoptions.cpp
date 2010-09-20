@@ -150,6 +150,7 @@ bool Parseoptions::get_command_line_options()
 	m_options.set_option("use-instrumentation", cmdline.isset("use-instrumentation"));
 	m_options.set_option("sat-subsumption", cmdline.isset("sat-subsumption") ||
 			m_options.get_bool_option("use-instrumentation"));
+	m_options.set_option("brief-test-inputs", cmdline.isset("brief-test-inputs"));
 
 	set_verbosity(*this);
 
@@ -336,6 +337,7 @@ void Parseoptions::help()
 		" --show-test-goals            print test goals derived from query\n"
 		" --use-instrumentation        instrument trace automata into GOTO program\n"
 		" --sat-subsumption            use SAT solver for subsumption analysis (implied by --use-instrumentation)\n"
+		" --brief-test-inputs          only show variable-name/value pairs in listing of test inputs\n"
 		"\n";
 }
 

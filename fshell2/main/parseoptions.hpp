@@ -50,7 +50,7 @@
   "(i386-linux)(i386-macos)(i386-win32)(winx64)" \
   "(ppc-macos)(unsigned-char)" \
   "(no-arch)(query-file):(statistics)(use-instrumentation)" \
-  "(sat-subsumption)"
+  "(sat-subsumption)(brief-test-inputs)"
 
 FSHELL2_NAMESPACE_BEGIN;
 

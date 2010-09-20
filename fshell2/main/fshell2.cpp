@@ -193,7 +193,7 @@ void FShell2::try_query(::language_uit & manager, char const * line,
 	tcs_cnt.inc(test_suite.size());
 
 	// output
-	::fshell2::Test_Suite_Output out(equation);
+	::fshell2::Test_Suite_Output out(equation, m_opts);
 	out.print_ts(test_suite, os, manager.ui_message_handler.get_ui());
 	of.close();
 

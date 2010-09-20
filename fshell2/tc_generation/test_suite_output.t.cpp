@@ -131,13 +131,21 @@ void test( Test_Data & data )
 	TEST_CHECK_RELATION(test_suite.size(), <=, size);
 	
 	::config.main = "main";
-	Test_Suite_Output out(eq);
+	Test_Suite_Output out(eq, options);
 	::std::ostringstream os;
 	out.print_ts(test_suite, os, ::ui_message_handlert::PLAIN);
 	TEST_ASSERT(data.compare("test_results_plain_1", os.str()));
 	::std::ostringstream os_xml;
 	out.print_ts(test_suite, os_xml, ::ui_message_handlert::XML_UI);
 	TEST_ASSERT(data.compare("test_results_xml_1", os_xml.str()));
+	
+	options.set_option("brief-test-inputs", true);
+	::std::ostringstream os_brief;
+	out.print_ts(test_suite, os_brief, ::ui_message_handlert::PLAIN);
+	TEST_ASSERT(data.compare("test_results_brief_plain_1", os_brief.str()));
+	::std::ostringstream os_xml_brief;
+	out.print_ts(test_suite, os_xml_brief, ::ui_message_handlert::XML_UI);
+	TEST_ASSERT(data.compare("test_results_brief_xml_1", os_xml_brief.str()));
 }
 
 /** @cond */

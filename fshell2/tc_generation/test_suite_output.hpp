@@ -40,6 +40,7 @@
 class symbolt;
 class exprt;
 class locationt;
+class optionst;
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
@@ -57,7 +58,7 @@ class Test_Suite_Output
 	typedef Test_Suite_Output Self;
 
 	public:
-	explicit Test_Suite_Output(::fshell2::fql::CNF_Conversion & equation);
+	Test_Suite_Output(::fshell2::fql::CNF_Conversion & equation, ::optionst const& opts);
 	
 	::std::ostream & print_ts(Constraint_Strengthening::test_cases_t &
 			test_suite, ::std::ostream & os, ::ui_message_handlert::uit const ui);
@@ -91,6 +92,7 @@ class Test_Suite_Output
 	::std::ostream & print_test_case_xml(::std::ostream & os, Test_Input const& ti) const;
 	
 	::fshell2::fql::CNF_Conversion & m_equation;
+	::optionst const& m_opts;
 	
 	/*! \copydoc copy_constructor
 	*/
