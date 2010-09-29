@@ -276,9 +276,9 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 			special_pred_symb->set("identifier", cond_symbol.name);
 			
 			FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Trying to typecheck: ", pred_copy.pretty()));
-			::ansi_c_parse_treet ansi_c_parse_tree;
-			::ansi_c_typecheckt ct(ansi_c_parse_tree, m_manager.context, "", m_manager.get_message_handler());
-			ct.typecheck_expr(pred_copy);
+			bool const tc_failed(::ansi_c_typecheck(pred_copy, m_manager.get_message_handler(), ns));
+			FSHELL2_PROD_CHECK1(Instrumentation_Error, !tc_failed,
+					::std::string("Predicate ") + ::expr2c(pred_copy, ns) + " failed to typecheck");
 			FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Typecheck completed: ", pred_copy.pretty()));
 
 			::optionst options;
@@ -290,9 +290,9 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 		pred_copy = ::symbol_expr(cond_symbol);
 	} else {
 		FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Trying to typecheck: ", pred_copy.pretty()));
-		::ansi_c_parse_treet ansi_c_parse_tree;
-		::ansi_c_typecheckt ct(ansi_c_parse_tree, m_manager.context, "", m_manager.get_message_handler());
-		ct.typecheck_expr(pred_copy);
+		bool const tc_failed(::ansi_c_typecheck(pred_copy, m_manager.get_message_handler(), ns));
+		FSHELL2_PROD_CHECK1(Instrumentation_Error, !tc_failed,
+				::std::string("Predicate ") + ::expr2c(pred_copy, ns) + " failed to typecheck");
 		FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Typecheck completed: ", pred_copy.pretty()));
 	}
 
