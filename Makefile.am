@@ -118,7 +118,7 @@ release-local: release
 		install-binPROGRAMS bindir=$$PWD/$(top_srcdir)/build/release/$(PACKAGE_TARNAME)-$(PACKAGE_VERSION)
 	distdir=$(PACKAGE_TARNAME)-$(PACKAGE_VERSION) ; \
 	cd $(top_srcdir)/build/release && \
-	cp ../../{LICENSE,NOTICE,LGPL,THANKS} $$distdir && \
+	cp ../../{LICENSE,NOTICE,LGPL,THANKS,ChangeLog} $$distdir && \
 	cp -a examples $$distdir && \
 	if test x$(build_os) = xmingw32 ; then \
 		cp /usr/bin/{libgcc_s_dw2-1,readline5}.dll $$distdir ; \
@@ -126,4 +126,16 @@ release-local: release
 	else \
 		tar czf $$distdir-$(build_cpu)-$(build_os).tar.gz --exclude .git --exclude .svn $$distdir ; \
 	fi
+
+update-changelog:
+	[ -d .git ]
+	lastmod="`git log --pretty=format:%H ChangeLog | head -n1`" ; \
+	git log --date-order --date=short $$lastmod..HEAD \
+		--pretty="format:%ad  %an  <%ae>%n%n%w(80,2,2)  * %s%n" \
+		> ChangeLog.new
+	mv ChangeLog ChangeLog.old
+	mv ChangeLog.new ChangeLog
+	echo >> ChangeLog
+	cat ChangeLog.old >> ChangeLog
+	rm ChangeLog.old
 

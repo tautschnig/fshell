@@ -1,0 +1,10 @@
+2010-09-21  Michael Tautschnig  <tautschnig@forsyte.at>
+
+	* Alternative over quoted expression caused wrong states to be stored as test
+		goal states
+	* Properly deal with queries *without* coverage pattern concatenations
+	* Build environment fixes
+
+2010-09-20  Michael Tautschnig  <tautschnig@forsyte.at>
+
+	* First public release (1.0)
