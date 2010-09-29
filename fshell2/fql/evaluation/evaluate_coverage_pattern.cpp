@@ -143,16 +143,24 @@ void Evaluate_Coverage_Pattern::copy_from_path_pattern(Path_Pattern_Expr const* 
 			m_test_goal_automaton.set_trans(*iter, m_pp_eval.epsilon_index(), *ta_init_final.first.begin());
 			m_test_goal_automaton.final(*iter) = 0;
 		}
-		
+	
+		// initial state must not be a final state for ECP atoms (everything
+		// other than quoted expr)
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !dynamic_cast<ECP_Atom const*>(n) ||
 				(ta_init_final.second.end() == ta_init_final.second.find(*ta_init_final.first.begin())));
+		// previously set final states
+		ta_state_set_t ex_final;
+		for (trace_automaton_t::const_iterator iter(m_test_goal_automaton.begin());
+				iter != m_test_goal_automaton.end(); ++iter)
+			if (m_test_goal_automaton.final(*iter)) ex_final.insert(*iter);
 		for (ta_state_set_t::const_iterator iter(ta_init_final.second.begin());
 				iter != ta_init_final.second.end(); ++iter)
 			m_test_goal_automaton.final(*iter) = 1;
 		simplify_automaton(m_test_goal_automaton, false);
 		for (trace_automaton_t::const_iterator iter(m_test_goal_automaton.begin());
 				iter != m_test_goal_automaton.end(); ++iter)
-			if (m_test_goal_automaton.final(*iter)) m_current_final.insert(*iter);
+			if (m_test_goal_automaton.final(*iter) &&
+					ex_final.end() == ex_final.find(*iter)) m_current_final.insert(*iter);
 		m_current_tg_states->m_tg_states = m_current_final;
 		m_all_test_goal_states.insert(m_current_final.begin(), m_current_final.end());
 	}

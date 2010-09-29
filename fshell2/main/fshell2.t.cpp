@@ -188,6 +188,7 @@ of
 	QUERY("query10", "cover nodes(id)");
 	QUERY("query11", "cover \"ID*\"");
 	QUERY("query12", "cover ^ID$");
+	QUERY("query13", "cover \"ID*.@5.ID*\" + \"ID*.@7.ID*\"");
 	
 	TEST_ASSERT(fshell.process_line(l, "QUIT"));
 }	
