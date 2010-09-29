@@ -1297,8 +1297,10 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 				for (::bvt::const_iterator v_iter(tg_iter->begin());
 						found && v_iter != tg_iter->end(); ++v_iter, ++s_iter)
 					found = known_sat.has(*v_iter);
-				if (found) tgs.insert(id);
-				else {
+				if (found) {
+					tgs.insert(id);
+					break;
+				} else {
 					--s_iter;
 					tg_iter += *s_iter;
 					id += *s_iter;
