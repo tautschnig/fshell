@@ -277,14 +277,9 @@ void Compute_Test_Goals::visit(CP_Alternative const* n) {
 void Compute_Test_Goals::visit(CP_Concat const* n) {
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_test_goal_states->m_cp == n);
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 2 == m_test_goal_states->m_children.size());
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 0 == m_alt_nesting || m_test_goals);
 	Evaluate_Coverage_Pattern::Test_Goal_States const* m_tgs_bak(m_test_goal_states);
 	::std::list< Evaluate_Coverage_Pattern::Test_Goal_States >::const_iterator iter(m_test_goal_states->m_children.begin());
 	
-	if (0 == m_test_goals) {
-		m_test_goal_groups.push_back(test_goals_t());
-		m_test_goals = &(m_test_goal_groups.back());
-	}
 	m_test_goal_states = &(*iter);
 	n->get_cp_a()->accept(this);
 	test_goals_t backup;
@@ -346,6 +341,8 @@ void Compute_Test_Goals::visit(Predicate const* n) {
 
 void Compute_Test_Goals::visit(Query const* n) {
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 0 == m_alt_nesting);
+	m_test_goal_groups.push_back(test_goals_t());
+	m_test_goals = &(m_test_goal_groups.back());
 	n->get_cover()->accept(this);
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 0 == m_alt_nesting);
 	
