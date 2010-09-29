@@ -43,6 +43,7 @@
 #include <cbmc/src/util/std_code.h>
 #include <cbmc/src/util/std_expr.h>
 #include <cbmc/src/util/arith_tools.h>
+#include <cbmc/src/util/expr_util.h>
 #include <cbmc/src/langapi/mode.h>
 #include <cbmc/src/ansi-c/ansi_c_language.h>
 #include <cbmc/src/cbmc/bmc.h>
@@ -74,7 +75,7 @@ void test_invalid( Test_Data & data )
 	::goto_programt prg;
 
 	TEST_THROWING_BLOCK_ENTER;
-	t.insert("main", GOTO_Transformation::BEFORE, ::END_FUNCTION, prg);
+	t.insert(ID_main, GOTO_Transformation::BEFORE, ::END_FUNCTION, prg);
 	TEST_THROWING_BLOCK_EXIT(::fshell2::Instrumentation_Error);
 }
 
@@ -112,12 +113,10 @@ void test_use_case( Test_Data & data )
 	::goto_programt tmp;
 	::goto_programt::targett as(tmp.add_instruction(ASSERT));
 	as->code = ::code_assertt();
-	::exprt zero(::exprt("constant", ::typet("bool")));
-	zero.set("value", "false");
-	as->guard = zero;
+	as->guard = ::gen_zero(::bool_typet());
 
 	::fshell2::instrumentation::GOTO_Transformation inserter(l, cfg);
-	TEST_ASSERT_RELATION(1, ==, inserter.insert("main", ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::END_FUNCTION, tmp).size());
+	TEST_ASSERT_RELATION(1, ==, inserter.insert(ID_main, ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::END_FUNCTION, tmp).size());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -151,11 +150,11 @@ void test_use_case2( Test_Data & data )
 		// add dummy symbol to make CBMC happy
 		cfg.function_map["c::__CPROVER_initialize"].body_available = false;
 		cfg.function_map["c::__CPROVER_initialize"].type.return_type() = ::empty_typet(); 
-		::symbol_exprt func_expr("c::__CPROVER_initialize", ::typet("code"));
+		::symbol_exprt func_expr("c::__CPROVER_initialize", ::code_typet());
 		::symbolt func_symb;
 		func_symb.from_irep(func_expr);
 		func_symb.value = ::code_blockt();
-		func_symb.mode = "C";
+		func_symb.mode = ID_C;
 		func_symb.name = "c::__CPROVER_initialize";
 		func_symb.base_name = "__CPROVER_initialize";
 		l.context.move(func_symb);
@@ -164,16 +163,16 @@ void test_use_case2( Test_Data & data )
 	cfg.function_map["c::tmp_func"].body_available = true;
 	cfg.function_map["c::tmp_func"].type.return_type() = ::empty_typet(); 
 	::config.main = "tmp_func";
-	::symbol_exprt func_expr("c::tmp_func", ::typet("code"));
+	::symbol_exprt func_expr("c::tmp_func", ::code_typet());
 	::symbolt func_symb;
 	func_symb.from_irep(func_expr);
 	func_symb.value = ::code_blockt();
-	func_symb.mode = "C";
+	func_symb.mode = ID_C;
 	func_symb.name = "c::tmp_func";
 	func_symb.base_name = "tmp_func";
 	l.context.move(func_symb);
 	TEST_CHECK(!l.final());
-	::symbolst::iterator main_iter(l.context.symbols.find("main"));
+	::symbolst::iterator main_iter(l.context.symbols.find(ID_main));
 	TEST_CHECK(main_iter != l.context.symbols.end());
     ::goto_convert_functionst converter(l.context, options, cfg, l.ui_message_handler);
     converter.convert_function(main_iter->first);
@@ -243,7 +242,7 @@ void test_use_case2( Test_Data & data )
 	{
 		::symbol_exprt x("x");
 		x.set("base_name", "x");
-		::binary_relation_exprt inv(x, "<", ::from_integer(1, ::typet("integer")));
+		::binary_relation_exprt inv(x, "<", ::from_integer(1, ::integer_typet()));
 		// invalidates targets
 		inserter.insert_predicate_at(ndchoice3, &inv);
 		::goto_programt::targett loc(ndchoice3.second);

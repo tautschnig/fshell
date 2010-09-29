@@ -335,11 +335,11 @@ void Automaton_Inserter::add_transition_function(::goto_functionst & gf,
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, entry.second);
 	entry.first->second.body_available = true;
 	entry.first->second.type.return_type() = ::empty_typet();
-	::symbol_exprt func_expr(func_name, ::typet("code"));
+	::symbol_exprt func_expr(func_name, ::code_typet());
 	::symbolt func_symb;
 	func_symb.from_irep(func_expr);
 	func_symb.value = ::code_blockt();
-	func_symb.mode = "C";
+	func_symb.mode = ID_C;
 	func_symb.name = func_name;
 	func_symb.base_name = func_name.substr(3, ::std::string::npos);
 	m_manager.context.move(func_symb);
@@ -444,7 +444,7 @@ Evaluate_Coverage_Pattern::Test_Goal_States const& Automaton_Inserter::do_query(
 	as->guard.make_not();
 	
 	::fshell2::instrumentation::GOTO_Transformation inserter(m_manager, gf);
-	inserter.insert("main", ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::END_FUNCTION, tmp);
+	inserter.insert(ID_main, ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::END_FUNCTION, tmp);
 
 	return tgs;
 }

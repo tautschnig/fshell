@@ -120,7 +120,7 @@ bool Evaluate_Filter::ignore_function(::goto_functionst::goto_functiont const& f
 			((fct.body.instructions.front().location.get_file() == "<builtin-library>") ||
 			(fct.body.instructions.front().location.get_file() == "<built-in>"))) return true;
 	if (!fct.body.instructions.empty() &&
-			fct.body.instructions.front().function == "main") return true;
+			fct.body.instructions.front().function == ID_main) return true;
 
 	return false;
 }
@@ -385,7 +385,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 						if (ignore_instruction(*f_iter)) continue;
 						if (GOTO_Transformation::is_instrumented(f_iter)) continue;
 						if (!f_iter->is_function_call()) continue;
-						::std::string const& f(::to_code_function_call(f_iter->code).function().get("identifier").as_string());
+						::std::string const& f(::to_code_function_call(f_iter->code).function().get(ID_identifier).as_string());
 						::std::string::size_type delim(f.rfind("::"));
 						if (arg != f.substr(::std::string::npos == delim?0:delim+2)) continue;
 						CFG::entries_t::iterator cfg_node(m_cfg->find(f_iter));
@@ -527,7 +527,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 						bool use_stmt(false);
 						for (::std::list< ::exprt const* >::const_iterator n_iter(symbols.begin());
 								n_iter != symbols.end(); ++n_iter) {
-							::std::string const& n((*n_iter)->get("identifier").as_string());
+							::std::string const& n((*n_iter)->get(ID_identifier).as_string());
 							::std::string::size_type delim(n.rfind("::"));
 							if (base_name == n.substr(::std::string::npos == delim?0:delim+2)) {
 								use_stmt = true;
@@ -562,7 +562,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 						bool use_stmt(false);
 						for (::std::list< ::exprt const* >::const_iterator n_iter(symbols.begin());
 								n_iter != symbols.end(); ++n_iter) {
-							::std::string const& n((*n_iter)->get("identifier").as_string());
+							::std::string const& n((*n_iter)->get(ID_identifier).as_string());
 							::std::string::size_type delim(n.rfind("::"));
 							if (base_name == n.substr(::std::string::npos == delim?0:delim+2)) {
 								use_stmt = true;
@@ -595,7 +595,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 						if (types & (STT_IF | STT_FOR | STT_WHILE | STT_SWITCH))
 							if (f_iter->is_goto() && (!f_iter->guard.is_true() && !f_iter->guard.is_false())) use_stmt = true;
 						if (types & (STT_CONDOP))
-							if (f_iter->is_assign() && ::to_code_assign(f_iter->code).rhs().id() == "if") use_stmt = true;
+							if (f_iter->is_assign() && ::to_code_assign(f_iter->code).rhs().id() == ID_if) use_stmt = true;
 						if (types & (STT_ASSERT))
 							if (f_iter->is_assert()) use_stmt = true;
 						if (!use_stmt) continue;

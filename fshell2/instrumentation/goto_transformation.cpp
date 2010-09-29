@@ -92,8 +92,7 @@ void GOTO_Transformation::make_function_call(::goto_programt::targett ins,
 			::std::string const& func_name) {
 	ins->type = FUNCTION_CALL;
 	::code_function_callt fct;
-	fct.function() = ::exprt("symbol");
-	fct.function().set("identifier", func_name);
+	fct.function() = ::symbol_exprt(func_name);
 	ins->code = fct;
 }
 	
@@ -104,7 +103,7 @@ void GOTO_Transformation::make_function_call(::goto_programt::targett ins,
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, symb_entry == m_manager.context.symbols.end());
 	
 	::symbolt symbol;
-	symbol.mode = "C";
+	symbol.mode = ID_C;
 	symbol.name = var_name;
 	symbol.base_name = name;
 	symbol.type = type;
@@ -123,17 +122,17 @@ void GOTO_Transformation::make_function_call(::goto_programt::targett ins,
 	FSHELL2_PROD_CHECK1(Instrumentation_Error, var_count >= 0, "Too many nondet choices required");
 	::std::ostringstream var_name;
 	var_name << "$fshell2$" << name << var_count;
-	return new_var(var_name.str(), ::typet("bool"), false);
+	return new_var(var_name.str(), ::bool_typet(), false);
 }
 
-GOTO_Transformation::inserted_t const& GOTO_Transformation::insert(::std::string const& f,
+GOTO_Transformation::inserted_t const& GOTO_Transformation::insert(::irep_idt const& f,
 		GOTO_Transformation::position_t const pos,
 		::goto_program_instruction_typet const stmt_type, ::goto_programt const& prg) {
 	::goto_functionst::function_mapt::iterator entry(m_goto.function_map.find(f));
 	FSHELL2_DEBUG_CHECK1(::fshell2::Instrumentation_Error, entry != m_goto.function_map.end(),
-			"Function " + f + " not found in goto program");
+			"Function " + f.as_string() + " not found in goto program");
 	FSHELL2_DEBUG_CHECK1(::fshell2::Instrumentation_Error, !entry->second.body.empty(),
-			"Body of function " + f + " not available");
+			"Body of function " + f.as_string() + " not available");
 	FSHELL2_DEBUG_CHECK1(::fshell2::Instrumentation_Error, !entry->second.is_inlined(),
 			"Cannot instrument inlined functions");
 	
@@ -211,7 +210,7 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 	bool make_nondet(false);
 	::exprt * special_pred_symb(0);
 	for (::std::list< ::exprt * >::iterator iter(symbols.begin()); iter != symbols.end(); ++iter) {
-		if ((*iter)->get("identifier") == "!PRED!") {
+		if ((*iter)->get(ID_identifier) == "!PRED!") {
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 0 == special_pred_symb);
 			special_pred_symb = *iter;
 			continue;
@@ -225,7 +224,7 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 				fmap_entry != m_goto.function_map.end(); ++fmap_entry) {
 			if (fmap_entry->first == node.first->instructions.front().function) fct_entry = fmap_entry;
 			::symbolt const& symb(ns.lookup(fmap_entry->first));
-			if ((*iter)->get("identifier") == symb.base_name) alt_names.push_back(::symbol_expr(symb));
+			if ((*iter)->get(ID_identifier) == symb.base_name) alt_names.push_back(::symbol_expr(symb));
 		}
 		// check globals
 		symbolst::const_iterator global_symb(
@@ -240,7 +239,7 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 		for (::code_typet::argumentst::const_iterator a_iter(argument_types.begin());
 				a_iter != argument_types.end(); ++a_iter) {
 			::symbolt const& symb(ns.lookup(a_iter->get_identifier()));
-			if ((*iter)->get("identifier") == symb.base_name) alt_names.push_back(::symbol_expr(symb));
+			if ((*iter)->get(ID_identifier) == symb.base_name) alt_names.push_back(::symbol_expr(symb));
 		}
 		// local variables
 		for (::goto_programt::instructionst::const_iterator f_iter(node.first->instructions.begin());
@@ -250,19 +249,19 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 			find_symbols(f_iter->code, decl_symbols);
 			for (::std::list< ::exprt const* >::const_iterator s_iter(decl_symbols.begin());
 					s_iter != decl_symbols.end(); ++s_iter) {
-				::symbolt const& symb(ns.lookup((*s_iter)->get("identifier")));
-				if ((*iter)->get("identifier") == symb.base_name) alt_names.push_back(**s_iter);
+				::symbolt const& symb(ns.lookup((*s_iter)->get(ID_identifier)));
+				if ((*iter)->get(ID_identifier) == symb.base_name) alt_names.push_back(**s_iter);
 			}
 		}
 
 		// rename, if possible
 		if (alt_names.empty()) {
-			FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Failed to resolve ", (*iter)->get("identifier"), " at ", node.second->location));
+			FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Failed to resolve ", (*iter)->get(ID_identifier), " at ", node.second->location));
 			make_nondet = true;
 			break;
 		}
-		FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Renaming ", (*iter)->get("identifier"), " to ", alt_names.back().get("identifier")));
-		(*iter)->set("identifier", alt_names.back().get("identifier"));
+		FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Renaming ", (*iter)->get(ID_identifier), " to ", alt_names.back().get(ID_identifier)));
+		(*iter)->set(ID_identifier, alt_names.back().get(ID_identifier));
 	}
 	::goto_programt tmp;
 
@@ -273,7 +272,7 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 		decl->code = ::code_declt(::symbol_expr(cond_symbol));
 
 		if (special_pred_symb && !make_nondet) {
-			special_pred_symb->set("identifier", cond_symbol.name);
+			special_pred_symb->set(ID_identifier, cond_symbol.name);
 			
 			FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Trying to typecheck: ", pred_copy.pretty()));
 			bool const tc_failed(::ansi_c_typecheck(pred_copy, m_manager.get_message_handler(), ns));
@@ -296,7 +295,7 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 		FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Typecheck completed: ", pred_copy.pretty()));
 	}
 
-	FSHELL2_PROD_CHECK1(Instrumentation_Error, pred_copy.type().id() == "bool",
+	FSHELL2_PROD_CHECK1(Instrumentation_Error, pred_copy.type().id() == ID_bool,
 			::std::string("Predicate ") + ::expr2c(*pred, ns) + " is not of Boolean type");
 
 	::goto_programt::targett if_stmt(tmp.add_instruction());

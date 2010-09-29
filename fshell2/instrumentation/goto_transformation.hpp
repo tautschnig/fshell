@@ -58,7 +58,7 @@ class GOTO_Transformation
 
 	GOTO_Transformation(::language_uit & manager, ::goto_functionst & gf);
 
-	inserted_t const& insert(::std::string const& f, position_t const pos,
+	inserted_t const& insert(::irep_idt const& f, position_t const pos,
 			::goto_program_instruction_typet const stmt_type, ::goto_programt const& prg);
 
 	inserted_t const& insert_at(goto_node_t const& edge, ::goto_programt & prg);

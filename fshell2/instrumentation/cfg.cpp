@@ -87,7 +87,7 @@ void CFG::compute_edges(
     const exprt &function=
       to_code_function_call(instruction.code).function();
 
-    if(function.id()=="symbol")
+    if(function.id()==ID_symbol)
     {
       const irep_idt &identifier=
         to_symbol_expr(function).get_identifier();

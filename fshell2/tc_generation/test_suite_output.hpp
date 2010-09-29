@@ -68,7 +68,7 @@ class Test_Suite_Output
 		public:
 		typedef struct {
 			::exprt const * m_name;
-			::std::string m_pretty_name;
+			::irep_idt m_pretty_name;
 			::exprt const * m_value;
 			::symbolt const * m_symbol;
 			::locationt const * m_location;

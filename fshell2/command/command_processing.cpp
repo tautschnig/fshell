@@ -203,7 +203,7 @@ void Command_Processing::add_sourcecode(::language_uit & manager, char const * f
 	// build the full list of loaded files
 	manager.language_files.filemap.insert(prev_files.begin(), prev_files.end());
 	// reset entry routine
-	if (m_finalized) manager.context.remove("main");
+	if (m_finalized) manager.context.remove(ID_main);
 	m_finalized = false;
 }
 
@@ -260,7 +260,7 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, arg != 0);
 			{
 				::config.main = arg;
-				if (m_finalized) manager.context.remove("main");
+				if (m_finalized) manager.context.remove(ID_main);
 				m_finalized = false;
 			}
 			return DONE;
@@ -320,10 +320,10 @@ bool Command_Processing::finalize(::language_uit & manager) {
 		for (::exprt::operandst::iterator iter(init_iter->second.value.operands().begin());
 				iter != init_iter->second.value.operands().end();)
 		{
-			if (iter->get("statement") == "assign" &&
+			if (iter->get(ID_statement) == ID_assign &&
 					iter->location().get_file() != "<built-in>") {
 				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 2 == iter->operands().size());
-				if (iter->op1().get_bool("#zero_initializer")) {
+				if (iter->op1().get_bool(ID_C_zero_initializer)) {
 					iter = init_iter->second.value.operands().erase(iter);
 				} else {
 					++iter;
@@ -339,7 +339,7 @@ bool Command_Processing::finalize(::language_uit & manager) {
 	::std::vector< ::irep_idt > symbols;
 	for(::symbolst::iterator iter(manager.context.symbols.begin()); iter !=
 			manager.context.symbols.end(); ++iter)
-		if(iter->second.type.id() == "code")
+		if(iter->second.type.id() == ID_code)
 			symbols.push_back(iter->first);
 	
 	::goto_convert_functionst converter(manager.context, m_opts, m_gf,

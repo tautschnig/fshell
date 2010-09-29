@@ -574,7 +574,7 @@ CNF_Conversion & Compute_Test_Goals_Boolean::do_query(::goto_functionst & gf, Qu
 	tmp.add_instruction(ASSERT)->make_assertion(::false_exprt());
 	
 	::fshell2::instrumentation::GOTO_Transformation inserter(m_manager, gf);
-	inserter.insert("main", ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::END_FUNCTION, tmp);
+	inserter.insert(ID_main, ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::END_FUNCTION, tmp);
 
 	// print instrumented program, if requested
 	if (m_opts.get_bool_option("show-goto-functions")) {
@@ -723,7 +723,7 @@ void Compute_Test_Goals_Boolean::build(trace_automaton_t const& aut, bool map_tg
 		if (!iter->source.pc->location.is_nil() &&
 			((iter->source.pc->location.get_file() == "<builtin-library>") ||
 			(iter->source.pc->location.get_file() == "<built-in>"))) continue;
-		if (iter->source.pc->function == "main") continue;
+		if (iter->source.pc->function == ID_main) continue;
 		if (iter->source.pc->function == "c::__CPROVER_initialize") continue;
 		if (Evaluate_Filter::ignore_instruction(*(iter->source.pc))) continue;
 
