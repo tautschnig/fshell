@@ -56,8 +56,6 @@
 #include <fshell2/fql/ast/query.hpp>
 #include <fshell2/fql/ast/quote.hpp>
 
-#include <deque>
-
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
@@ -1113,7 +1111,7 @@ class KnownSAT {
 			
 		void add_to_list_unique(::std::list< ::literalt > & new_sat) {
 			unsigned offset(0);
-			for (::std::deque< int >::const_iterator iter(m_lits.begin());
+			for (::std::vector< int >::const_iterator iter(m_lits.begin());
 					iter != m_lits.end(); ++iter, ++offset) {
 				if (*iter & 1) new_sat.push_back(::literalt(m_min_var_no + offset, true));
 				if (*iter & 2) new_sat.push_back(::literalt(m_min_var_no + offset, false));
@@ -1131,7 +1129,7 @@ class KnownSAT {
 		}
 
 	private:
-		::std::deque< int > m_lits;
+		::std::vector< int > m_lits;
 		unsigned m_min_var_no;
 		unsigned m_max_var_no;
 
