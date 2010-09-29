@@ -4,9 +4,9 @@ source="picosat-913"
 extra_params="code/picosat-913/*.c --unwind 3 --no-unwinding-assertions"
 prepare=""
 query="cover edges(@conditionedge)"
-tg=289
+tg=295
 unsat=59
-tc=26
+tc=33
 cputime=66.1081
 mempeak=636
 

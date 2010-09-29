@@ -99,10 +99,11 @@ while (<>) {
     $in_input = 1;
     $tc_counter++;
     $test_suite{ $tc_counter } = {};
-  } elsif (/^\s*$/) {
+  } elsif (/^\s*$/ || /^\S+/) {
     $in_input = 0;
   } elsif ($in_input == 1) {
     chomp;
+    /^\s+/ or die "Invalid input line $_\n";
     s/^\s+//;
     if (/^ENTRY/) {
       chomp;

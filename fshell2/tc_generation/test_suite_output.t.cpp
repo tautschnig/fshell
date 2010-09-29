@@ -80,9 +80,9 @@ void test( Test_Data & data )
 	TEST_CHECK_RELATION(0, !=, ::stat(tempname_str.c_str(), &info));
 	::std::ofstream of(tempname_str.c_str());
 	TEST_CHECK(of.is_open());
-	of << "int main(int argc, char * argv[])" << ::std::endl
+	of << "int x;" << ::std::endl
+		<< "int main(int argc, char * argv[])" << ::std::endl
 		<< "{" << ::std::endl
-		<< "int x=0;" << ::std::endl
 		<< "if (argc == 2) x=2; else x=1;" << ::std::endl
 		<< "if (argc == 3) ++x; else --x;" << ::std::endl
 		<< "return x;" << ::std::endl
@@ -114,7 +114,7 @@ void test( Test_Data & data )
 	
 	fql::Compute_Test_Goals_From_Instrumentation goals(l, options);
 	fql::CNF_Conversion & eq(goals.do_query(gf, *q));
-	TEST_CHECK_RELATION(6, ==, eq.get_test_goal_id_map().size());
+	TEST_CHECK_RELATION(5, ==, eq.get_test_goal_id_map().size());
 
 	statistics::Statistics stats;
 	Constraint_Strengthening cs(eq, stats, options);
@@ -132,6 +132,15 @@ void test( Test_Data & data )
 	
 	::config.main = "main";
 	Test_Suite_Output out(eq, options);
+	
+	::std::ostringstream os_brief;
+	out.print_ts(test_suite, os_brief, ::ui_message_handlert::PLAIN);
+	TEST_ASSERT(data.compare("test_results_brief_plain_1", os_brief.str()));
+	::std::ostringstream os_xml_brief;
+	out.print_ts(test_suite, os_xml_brief, ::ui_message_handlert::XML_UI);
+	TEST_ASSERT(data.compare("test_results_brief_xml_1", os_xml_brief.str()));
+	
+	options.set_option("tco-location", true);
 	::std::ostringstream os;
 	out.print_ts(test_suite, os, ::ui_message_handlert::PLAIN);
 	TEST_ASSERT(data.compare("test_results_plain_1", os.str()));
@@ -139,13 +148,14 @@ void test( Test_Data & data )
 	out.print_ts(test_suite, os_xml, ::ui_message_handlert::XML_UI);
 	TEST_ASSERT(data.compare("test_results_xml_1", os_xml.str()));
 	
-	options.set_option("brief-test-inputs", true);
-	::std::ostringstream os_brief;
-	out.print_ts(test_suite, os_brief, ::ui_message_handlert::PLAIN);
-	TEST_ASSERT(data.compare("test_results_brief_plain_1", os_brief.str()));
-	::std::ostringstream os_xml_brief;
-	out.print_ts(test_suite, os_xml_brief, ::ui_message_handlert::XML_UI);
-	TEST_ASSERT(data.compare("test_results_brief_xml_1", os_xml_brief.str()));
+	options.set_option("tco-called-functions", true);
+	options.set_option("tco-assign-globals", true);
+	::std::ostringstream os_ext;
+	out.print_ts(test_suite, os_ext, ::ui_message_handlert::PLAIN);
+	TEST_ASSERT(data.compare("test_results_ext_plain_1", os_ext.str()));
+	::std::ostringstream os_xml_ext;
+	out.print_ts(test_suite, os_xml_ext, ::ui_message_handlert::XML_UI);
+	TEST_ASSERT(data.compare("test_results_ext_xml_1", os_xml_ext.str()));
 }
 
 /** @cond */

@@ -198,7 +198,9 @@ Test_Suite_Output::Test_Input::Test_Input(::symbolt const& main_sym,
 	m_main_location(main_loc) {
 }
 
-void Test_Suite_Output::get_test_case(Test_Suite_Output::Test_Input & ti) const {
+void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & calls,
+			assignments_t & global_assign) const
+{
 	::symex_target_equationt::SSA_stepst const& equation(m_equation.get_equation().SSA_steps);
 	::cnf_clause_list_assignmentt const& cnf(m_equation.get_cnf());
 
@@ -224,15 +226,14 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::Test_Input & ti) const 
 	::std::string const start_proc_prefix(::std::string("c::") +
 			ti.m_main_symbol.module.as_string() + "::" + config.main + "::");
 
+	// track calls and returns
+	::std::list< called_functions_t::iterator > call_stack;
+
 	bool most_recent_non_hidden_is_true(false);
-	// does a DEF-USE analysis
+	// does a DEF-USE + call stack analysis
 	for (::symex_target_equationt::SSA_stepst::const_iterator iter( 
 				equation.begin() ); iter != equation.end(); ++iter)
 	{
-		if (!iter->is_assignment() || ::symex_targett::HIDDEN != iter->assignment_type)
-			most_recent_non_hidden_is_true = (iter->guard_expr.is_true() || cnf.l_get(iter->guard_literal) == ::tvt(true));
-		if (!most_recent_non_hidden_is_true || !iter->is_assignment()) continue;
-
 		//// ::goto_programt tmp;
 		//// ::std::cerr << "#########################################################" << ::std::endl;
 		//// tmp.output_instruction(m_equation.get_ns(), "", ::std::cerr, iter->source.pc);
@@ -240,6 +241,57 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::Test_Input & ti) const 
 		//// ::std::cerr << "LHS: " << iter->lhs << ::std::endl;
 		//// ::std::cerr << "ORIG_LHS: " << iter->original_lhs << ::std::endl;
 		//// ::std::cerr << "RHS: " << iter->rhs << ::std::endl;
+	
+		bool const instr_enabled(iter->guard_expr.is_true() || cnf.l_get(iter->guard_literal) == ::tvt(true));
+
+		if (instr_enabled && !::fshell2::instrumentation::GOTO_Transformation::is_instrumented(
+					iter->source.pc) && 
+				(!iter->is_assignment() || ::symex_targett::HIDDEN != iter->assignment_type)) {
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !iter->source.pc->function.empty());
+			
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+					iter->source.pc->function == ID_main || !call_stack.empty());
+			if (!call_stack.empty() && iter->source.pc != call_stack.back()->first) {
+				::irep_idt const & fname(::to_code_function_call(
+							call_stack.back()->first->code).function().get(ID_identifier));
+				
+				if (iter->source.pc->function != fname) {
+					call_stack.pop_back();
+					// ::std::cerr << "POP" << ::std::endl;
+					if (iter->source.pc->function != ID_main) {
+						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !call_stack.empty());
+						// handle possible recursion
+						while (fname == ::to_code_function_call(
+								call_stack.back()->first->code).function().get(ID_identifier)) {
+							call_stack.pop_back();
+							// ::std::cerr << "POP-more" << ::std::endl;
+						}
+						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+								iter->source.pc->function == ::to_code_function_call(
+									call_stack.back()->first->code).function().get(ID_identifier));
+					}
+				}
+			}
+			
+			if (iter->is_location() && iter->source.pc->is_function_call()) {
+				calls.push_back(::std::make_pair< ::goto_programt::const_targett, ::exprt const* >(
+							iter->source.pc, 0));
+				call_stack.push_back(calls.end());
+				--call_stack.back();
+				// ::std::cerr << "PUSH" << ::std::endl;
+			} else if (iter->is_assignment() && iter->source.pc->is_return()) {
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !call_stack.empty());
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 0 == call_stack.back()->second);
+				call_stack.back()->second = &(iter->lhs);
+				// required for recursive functions
+				call_stack.pop_back();
+				// ::std::cerr << "POP-return" << ::std::endl;
+			} 
+		}
+		
+		if (!iter->is_assignment() || ::symex_targett::HIDDEN != iter->assignment_type)
+			most_recent_non_hidden_is_true = instr_enabled;
+		if (!most_recent_non_hidden_is_true || !iter->is_assignment()) continue;
 		
 		::std::map< ::exprt const*, ::exprt const* > stmt_vars_and_parents;
 		::fshell2::instrumentation::collect_expr_with_parents(iter->rhs, stmt_vars_and_parents);
@@ -283,6 +335,10 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::Test_Input & ti) const 
 				case Symbol_Identifier::LOCAL_STATIC:
 				case Symbol_Identifier::GLOBAL:
 				case Symbol_Identifier::GLOBAL_STATIC:
+					if (is_lhs && ::symex_targett::HIDDEN != iter->assignment_type &&
+							(Symbol_Identifier::GLOBAL == var.m_vt || Symbol_Identifier::GLOBAL_STATIC == var.m_vt))
+						global_assign.push_back(iter);
+					
 					if (v_iter->second && ID_with == v_iter->second->id() && v_iter->second->op2().id() == "nondet_symbol") {
 						// array/struct element assignment using undefined
 						// function; we do not add the array/struct variable at
@@ -410,14 +466,18 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::Test_Input & ti) const 
 		}
 	}
 
+	// we still have all recent tail calls on the stack
+	FSHELL2_AUDIT_ASSERT_RELATION(::diagnostics::Violated_Invariance, call_stack.size(), >=, 1);
+	FSHELL2_AUDIT_ASSERT_RELATION(::diagnostics::Violated_Invariance,
+			::to_code_function_call(call_stack.front()->first->code).function().get(ID_identifier), ==, "c::"+::config.main);
 }
 
-::std::ostream & Test_Suite_Output::print_test_case_plain(::std::ostream & os,
+::std::ostream & Test_Suite_Output::print_test_inputs_plain(::std::ostream & os,
 		Test_Suite_Output::Test_Input const& ti) const
 {
-	bool const do_full(!m_opts.get_bool_option("brief-test-inputs"));
+	bool const print_loc(m_opts.get_bool_option("tco-location"));
 
-	if (do_full)
+	if (print_loc)
 		os << "  ENTRY " << ti.m_main_symbol_str << "@[" << ti.m_main_location << "]" << ::std::endl;
 
 	for (Test_Suite_Output::Test_Input::test_inputs_t::const_iterator iter(ti.m_test_inputs.begin()); 
@@ -427,15 +487,15 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::Test_Input & ti) const 
 		if (iter->m_symbol->type.id() == "code") {
 			::std::string::size_type pos(iter->m_type_str.find('('));
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, pos != ::std::string::npos);
-			if (do_full) os << iter->m_type_str.substr(0, pos);
+			if (print_loc) os << iter->m_type_str.substr(0, pos);
 			os << iter->m_symbol->base_name << iter->m_type_str.substr(pos);
 		} else {
-			if (do_full) os << iter->m_type_str << " ";
+			if (print_loc) os << iter->m_type_str << " ";
 			os << iter->m_symbol->base_name;
 			Symbol_Identifier var(::symbol_exprt(iter->m_symbol->name));
 			global = (Symbol_Identifier::GLOBAL == var.m_vt || Symbol_Identifier::GLOBAL_STATIC == var.m_vt);
 		}
-		if (do_full)
+		if (print_loc)
 			os << "@[" << *(iter->m_location) << (global ? " #global":"") << "]";
 		os << "=" << iter->m_value_str;
 		os << ::std::endl;
@@ -443,15 +503,68 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::Test_Input & ti) const 
 	
 	return os;
 }
-
-::std::ostream & Test_Suite_Output::print_test_case_xml(::std::ostream & os,
-		Test_Suite_Output::Test_Input const& ti) const
+	
+::std::ostream & Test_Suite_Output::print_function_calls(::std::ostream & os,
+		called_functions_t const& cf) const
 {
-	bool const do_full(!m_opts.get_bool_option("brief-test-inputs"));
+	::boolbvt const& bv(m_equation.get_bv());
+	bool const print_loc(m_opts.get_bool_option("tco-location"));
+
+	for (called_functions_t::const_iterator iter(cf.begin()); iter != cf.end(); ++iter) { 
+		os << "  ";
+		::symbolt const * sym(0);
+		m_equation.get_ns().lookup(::to_code_function_call(iter->first->code).function().get(ID_identifier), sym);
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, sym);
+		os << sym->base_name << "()";
+		if (print_loc)
+			os << "@[" << iter->first->location << "]";
+		if (iter->second) {
+			FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, bv.map.mapping.end() !=
+					bv.map.mapping.find(iter->second->get(ID_identifier)),
+					::diagnostics::internal::to_string("Failed to lookup ", iter->second->get(ID_identifier)));
+			os << "=" << ::from_expr(m_equation.get_ns(), iter->second->get(ID_identifier), bv.get(*(iter->second)));
+		}
+		os << ::std::endl;
+	}
+	
+	return os;
+}
+	
+::std::ostream & Test_Suite_Output::print_assignments_to_globals(::std::ostream & os,
+		assignments_t const& as) const
+{
+	::boolbvt const& bv(m_equation.get_bv());
+	bool const print_loc(m_opts.get_bool_option("tco-location"));
+
+	for (assignments_t::const_iterator iter(as.begin()); iter != as.end(); ++iter) { 
+		os << "  ";
+		::exprt const& lhs((*iter)->lhs);
+		Symbol_Identifier var(lhs);
+		::symbolt const * sym(0);
+		m_equation.get_ns().lookup(var.m_var_name, sym);
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, sym);
+		os << sym->base_name;
+		if (print_loc)
+			os << "@[" << (*iter)->source.pc->location << "]";
+		FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, bv.map.mapping.end() !=
+				bv.map.mapping.find(lhs.get(ID_identifier)),
+				::diagnostics::internal::to_string("Failed to lookup ", lhs.get(ID_identifier)));
+		os << "=" << ::from_expr(m_equation.get_ns(), lhs.get(ID_identifier), bv.get(lhs));
+		os << ::std::endl;
+	}
+	
+	return os;
+}
+	
+::std::ostream & Test_Suite_Output::print_test_case_xml(::std::ostream & os,
+		Test_Suite_Output::Test_Input const& ti, called_functions_t const& cf,
+		assignments_t const& as) const
+{
+	bool const print_loc(m_opts.get_bool_option("tco-location"));
 
 	::xmlt xml_tc("test-case");
 
-	if (do_full) {
+	if (print_loc) {
 		::xmlt xml_entry("entry");
 		xml_entry.new_element("function").data = ti.m_main_symbol_str;
 		::xmlt xml_main_loc("location");
@@ -465,21 +578,78 @@ void Test_Suite_Output::get_test_case(Test_Suite_Output::Test_Input & ti) const 
 		::xmlt xml_obj("object");
 		xml_obj.set_attribute("kind", (iter->m_symbol->type.id() == ID_code ? "undefined-function" : "variable"));
 
-		if (do_full)
+		if (print_loc)
 			xml_obj.new_element("identifier").data = ::xmlt::escape(::id2string(iter->m_name->get("identifier")));
 		xml_obj.new_element("base_name").data = ::xmlt::escape(::id2string(iter->m_symbol->base_name));
 	
-		if (do_full) {
+		if (print_loc) {
 			::xmlt xml_loc("location");
 			::convert(*(iter->m_location), xml_loc);
 			xml_obj.new_element().swap(xml_loc);
 		}
 		
 		xml_obj.new_element("value").data = ::xmlt::escape(iter->m_value_str);
-		if (do_full)
+		if (print_loc)
 			xml_obj.new_element("type").data = ::xmlt::escape(iter->m_type_str);
 		
 		xml_tc.new_element().swap(xml_obj);
+	}
+	
+	::boolbvt const& bv(m_equation.get_bv());
+	if (m_opts.get_bool_option("tco-called-functions")) {
+		for (called_functions_t::const_iterator iter(cf.begin()); iter != cf.end(); ++iter) { 
+			::xmlt xml_obj("function-call");
+			
+			::symbolt const * sym(0);
+			m_equation.get_ns().lookup(::to_code_function_call(iter->first->code).function().get(ID_identifier), sym);
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, sym);
+			xml_obj.new_element("base_name").data = ::xmlt::escape(::id2string(sym->base_name));
+
+			if (print_loc) {
+				::xmlt xml_loc("location");
+				::convert(iter->first->location, xml_loc);
+				xml_obj.new_element().swap(xml_loc);
+			}
+
+			if (iter->second) {
+				FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, bv.map.mapping.end() !=
+						bv.map.mapping.find(iter->second->get(ID_identifier)),
+						::diagnostics::internal::to_string("Failed to lookup ", iter->second->get(ID_identifier)));
+				xml_obj.new_element("return-value").data = ::xmlt::escape(
+						::from_expr(m_equation.get_ns(), iter->second->get(ID_identifier), bv.get(*(iter->second))));
+			}
+		
+			xml_tc.new_element().swap(xml_obj);
+		}
+	}
+	
+	if (m_opts.get_bool_option("tco-assign-globals")) {
+		for (assignments_t::const_iterator iter(as.begin()); iter != as.end(); ++iter) { 
+			::xmlt xml_obj("assign-global");
+			
+			::exprt const& lhs((*iter)->lhs);
+			Symbol_Identifier var(lhs);
+			::symbolt const * sym(0);
+			m_equation.get_ns().lookup(var.m_var_name, sym);
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, sym);
+			if (print_loc)
+				xml_obj.new_element("identifier").data = ::xmlt::escape(::id2string(lhs.get("identifier")));
+			xml_obj.new_element("base_name").data = ::xmlt::escape(::id2string(sym->base_name));
+
+			if (print_loc) {
+				::xmlt xml_loc("location");
+				::convert((*iter)->source.pc->location, xml_loc);
+				xml_obj.new_element().swap(xml_loc);
+			}
+
+			FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, bv.map.mapping.end() !=
+					bv.map.mapping.find(lhs.get(ID_identifier)),
+					::diagnostics::internal::to_string("Failed to lookup ", lhs.get(ID_identifier)));
+			xml_obj.new_element("value").data = ::xmlt::escape(
+					::from_expr(m_equation.get_ns(), lhs.get(ID_identifier), bv.get(lhs)));
+		
+			xml_tc.new_element().swap(xml_obj);
+		}
 	}
 
 	xml_tc.output(os, 2);
@@ -515,25 +685,40 @@ Test_Suite_Output::Test_Suite_Output(::fshell2::fql::CNF_Conversion & equation,
 	main_symb_str << ")";
 	Test_Input ti(main_symb, main_symb_str.str(), main_symb.location);
 	
+	if (::ui_message_handlert::XML_UI == ui) os << "<test-suite>" << ::std::endl;
 	for (::fshell2::Constraint_Strengthening::test_cases_t::const_iterator iter(
 				test_suite.begin()); iter != test_suite.end(); ++iter) {
 		cnf.copy_assignment_from(iter->second);
 		ti.m_test_inputs.clear();
-		get_test_case(ti);
+		called_functions_t cf;
+		assignments_t as;
+		get_test_case(ti, cf, as);
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !cf.empty());
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 
+				::to_code_function_call(cf.front().first->code).function().get(ID_identifier) ==
+				"c::__CPROVER_initialize");
+		cf.pop_front();
 		switch (ui) {
 			case ::ui_message_handlert::XML_UI:
-				os << "<test-suite>" << ::std::endl;
-				print_test_case_xml(os, ti);
-				os << "</test-suite>" << ::std::endl;
+				print_test_case_xml(os, ti, cf, as);
 				break;
 			case ::ui_message_handlert::PLAIN:
 			case ::ui_message_handlert::OLD_GUI:
 				os << "IN:" << ::std::endl;
-				print_test_case_plain(os, ti);
+				print_test_inputs_plain(os, ti);
+				if (m_opts.get_bool_option("tco-called-functions")) {
+					os << "Function calls:" << ::std::endl;
+					print_function_calls(os, cf);
+				}
+				if (m_opts.get_bool_option("tco-assign-globals")) {
+					os << "Assignments to global variables:" << ::std::endl;
+					print_assignments_to_globals(os, as);
+				}
 				os << ::std::endl;
 				break;
 		}
 	}
+	if (::ui_message_handlert::XML_UI == ui) os << "</test-suite>" << ::std::endl;
 
 	return os;
 }

@@ -36,10 +36,9 @@
 #include <fshell2/tc_generation/constraint_strengthening.hpp>
 
 #include <cbmc/src/util/ui_message.h>
+#include <cbmc/src/goto-programs/goto_program.h>
+#include <cbmc/src/goto-symex/symex_target_equation.h>
 
-class symbolt;
-class exprt;
-class locationt;
 class optionst;
 
 FSHELL2_NAMESPACE_BEGIN;
@@ -86,10 +85,18 @@ class Test_Suite_Output
 		::locationt const& m_main_location;
 		test_inputs_t m_test_inputs;
 	};
+	typedef ::std::list< ::std::pair< ::goto_programt::const_targett,
+			::exprt const * > > called_functions_t;
+	typedef ::std::list< ::symex_target_equationt::SSA_stepst::const_iterator > assignments_t;
 
-	void get_test_case(Test_Input & ti) const;
-	::std::ostream & print_test_case_plain(::std::ostream & os, Test_Input const& ti) const;
-	::std::ostream & print_test_case_xml(::std::ostream & os, Test_Input const& ti) const;
+	void get_test_case(Test_Input & ti, called_functions_t & calls,
+			assignments_t & global_assign) const;
+	::std::ostream & print_test_inputs_plain(::std::ostream & os, Test_Input const& ti) const;
+	::std::ostream & print_function_calls(::std::ostream & os, called_functions_t const& cf) const;
+	::std::ostream & print_assignments_to_globals(::std::ostream & os, assignments_t const& as) const;
+	
+	::std::ostream & print_test_case_xml(::std::ostream & os, Test_Input const& ti,
+			called_functions_t const& cf, assignments_t const& as) const;
 	
 	::fshell2::fql::CNF_Conversion & m_equation;
 	::optionst const& m_opts;

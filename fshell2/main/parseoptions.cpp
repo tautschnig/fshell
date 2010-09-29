@@ -150,7 +150,9 @@ bool Parseoptions::get_command_line_options()
 	m_options.set_option("use-instrumentation", cmdline.isset("use-instrumentation"));
 	m_options.set_option("sat-subsumption", cmdline.isset("sat-subsumption") ||
 			m_options.get_bool_option("use-instrumentation"));
-	m_options.set_option("brief-test-inputs", cmdline.isset("brief-test-inputs"));
+	m_options.set_option("tco-location", cmdline.isset("tco-location"));
+	m_options.set_option("tco-called-functions", cmdline.isset("tco-called-functions"));
+	m_options.set_option("tco-assign-globals", cmdline.isset("tco-assign-globals"));
 
 	set_verbosity(*this);
 
@@ -327,6 +329,11 @@ void Parseoptions::help()
 		" --slice-formula              remove assignments unrelated to property\n"
 		" --slice-by-trace             UNDOCUMENTED\n"
 		"\n"
+		"Test case output options:\n"
+		" --tco-location               show locations and type info in listing of test cases\n"
+		" --tco-called-functions       list sequence of function calls performed by test case\n"
+		" --tco-assign-globals         show assignments to global variables performed by test case\n"
+		"\n"
 		"Other options:\n"
 		" --query-file Filename        read FShell query from Filename\n"
 		" --version                    show version and exit\n"
@@ -337,7 +344,6 @@ void Parseoptions::help()
 		" --show-test-goals            print test goals derived from query\n"
 		" --use-instrumentation        instrument trace automata into GOTO program\n"
 		" --sat-subsumption            use SAT solver for subsumption analysis (implied by --use-instrumentation)\n"
-		" --brief-test-inputs          only show variable-name/value pairs in listing of test inputs\n"
 		"\n";
 }
 

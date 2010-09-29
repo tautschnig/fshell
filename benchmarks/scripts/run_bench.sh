@@ -32,7 +32,7 @@ for b in $benchmarks ; do
   rm -f $testsuite
   if [ x$exec_ts = xyes -o x$gcov = xyes ] ; then
     exec_ts="yes"
-    extra_params="$extra_params --outfile $testsuite"
+    extra_params="$extra_params --tco-location --outfile $testsuite"
   else
     extra_params="$extra_params --outfile /dev/null"
   fi
