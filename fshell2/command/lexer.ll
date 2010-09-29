@@ -76,7 +76,7 @@ does; this breaks compilation with -pedantic */
 %option prefix="CMD"
 
 /* commands */
-TOK_QUIT                QUIT
+TOK_QUIT                (QUIT|EXIT)
 TOK_HELP                HELP
 /* preparing the CFG */
 TOK_ADD                 ADD

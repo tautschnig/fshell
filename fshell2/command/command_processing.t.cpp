@@ -77,6 +77,7 @@ void test_basic( Test_Data & data )
 	TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, "   // comment"));
 	
 	TEST_ASSERT(Command_Processing::QUIT == cmd.process(l, os, "quit"));
+	TEST_ASSERT(Command_Processing::QUIT == cmd.process(l, os, "exit"));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
