@@ -26,16 +26,16 @@ MAINTAINERCLEANFILES += aclocal.m4 configure config.h.in $(AUX_DIST)
 DISTCLEANFILES = config.h.in~ _configs.sed fshell2/config/features.hpp
 
 clean-local:
-	$(MAKE) $(AM_MAKEFLAGS) -C astl clean
-	$(MAKE) $(AM_MAKEFLAGS) -C cbmc/src clean
+	[ ! -d astl ] || $(MAKE) $(AM_MAKEFLAGS) -C astl clean
+	[ ! -d cbmc ] || $(MAKE) $(AM_MAKEFLAGS) -C cbmc/src clean
 
 distclean-local:
-	$(MAKE) $(AM_MAKEFLAGS) -C astl distclean
-	$(MAKE) $(AM_MAKEFLAGS) -C cbmc/src distclean
+	[ ! -d astl ] || $(MAKE) $(AM_MAKEFLAGS) -C astl distclean
+	[ ! -d cbmc ] || $(MAKE) $(AM_MAKEFLAGS) -C cbmc/src distclean
 
 maintainer-clean-local:
-	$(MAKE) $(AM_MAKEFLAGS) -C astl maintainer-clean
-	$(MAKE) $(AM_MAKEFLAGS) -C cbmc/src maintainer-clean
+	[ ! -d astl ] || $(MAKE) $(AM_MAKEFLAGS) -C astl maintainer-clean
+	[ ! -d cbmc ] || $(MAKE) $(AM_MAKEFLAGS) -C cbmc/src maintainer-clean
 	$(RM) -rf $(DX_DOCDIR)
 	$(RM) -rf build/
 	$(RM) -rf examples/
