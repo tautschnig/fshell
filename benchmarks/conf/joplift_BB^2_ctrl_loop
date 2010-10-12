@@ -1,0 +1,16 @@
+# vi: set ft=sh:
+
+source="joplift"
+extra_params="code/joplift/*.c"
+prepare="set no_zero_init"
+query="cover (@basicblockentry & @func(ctrl_loop)) -> (@basicblockentry & @func(ctrl_loop))"
+tg=18496
+unsat=14834
+tc=192
+cputime=18.9678
+mempeak=32.1912
+
+exec_ts="no"
+gcov="no"
+gcov_opts=""
+

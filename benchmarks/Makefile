@@ -31,7 +31,7 @@ ASE_QUERIES = ase-examples_list2.c_Q1 ase-examples_list2.c_Q2 ase-examples_list2
 							ase-examples_list2.c_Q19 ase-examples_list2.c_Q20 ase-examples_sort1.c_Q21 \
 							ase-examples_sort1.c_Q22 ase-examples_sort2.c_Q23 ase-examples_sort2.c_Q24
 
-JOPLIFT = joplift_BB joplift_PATHS_ctrl_loop
+JOPLIFT = joplift_BB joplift_BB^2_ctrl_loop joplift_PATHS_ctrl_loop
 
 BASIC = basic_bitops_1 basic_bool_1 basic_boolop1_CC basic_boolop2_CC basic_cov-union_1 \
 				basic_cov-union_2 basic_globals_1 basic_labels_1 basic_minimal_BB basic_repeat_1 \
