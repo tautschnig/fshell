@@ -86,12 +86,12 @@
 
 #define LINENOISE_DEFAULT_HISTORY_MAX_LEN 100
 #define LINENOISE_MAX_LINE 4096
+#ifndef __MINGW32__
 static char *unsupported_term[] = {"dumb","cons25",NULL};
 
-#ifndef __MINGW32__
 static struct termios orig_termios; /* in order to restore at exit */
-#endif
 static int rawmode = 0; /* for atexit() function to check if restore is needed*/
+#endif
 static int atexit_registered = 0; /* register atexit just 1 time */
 static int history_max_len = LINENOISE_DEFAULT_HISTORY_MAX_LEN;
 static int history_len = 0;
@@ -101,6 +101,7 @@ static void linenoiseAtExit(void);
 int linenoiseHistoryAdd(const char *line);
 
 static int isUnsupportedTerm(void) {
+#ifndef __MINGW32__
     char *term = getenv("TERM");
     int j;
 
@@ -108,6 +109,9 @@ static int isUnsupportedTerm(void) {
     for (j = 0; unsupported_term[j]; j++)
         if (!strcasecmp(term,unsupported_term[j])) return 1;
     return 0;
+#else
+    return 1;
+#endif
 }
 
 static void freeHistory(void) {
@@ -123,12 +127,14 @@ static void freeHistory(void) {
 static int enableRawMode(int fd) {
 #ifndef __MINGW32__
     struct termios raw;
+#endif
 
     if (!isatty(STDIN_FILENO)) goto fatal;
     if (!atexit_registered) {
         atexit(linenoiseAtExit);
         atexit_registered = 1;
     }
+#ifndef __MINGW32__
     if (tcgetattr(fd,&orig_termios) == -1) goto fatal;
 
     raw = orig_termios;  /* modify the original mode */
@@ -397,9 +403,7 @@ char *linenoise(const char *prompt) {
     char buf[LINENOISE_MAX_LINE];
     int count;
 
-#ifndef __MINGW32__
     if (isUnsupportedTerm()) {
-#endif
         size_t len;
 
         printf("%s",prompt);
@@ -411,13 +415,11 @@ char *linenoise(const char *prompt) {
             buf[len] = '\0';
         }
         return strdup(buf);
-#ifndef __MINGW32__
     } else {
         count = linenoiseRaw(buf,LINENOISE_MAX_LINE,prompt);
         if (count == -1) return NULL;
         return strdup(buf);
     }
-#endif
 }
 
 /* Using a circular buffer is smarter, but a bit more complex to handle. */
@@ -464,7 +466,7 @@ int linenoiseHistorySetMaxLen(int len) {
 
 /* Save the history in the specified file. On success 0 is returned
  * otherwise -1 is returned. */
-int linenoiseHistorySave(char *filename) {
+int linenoiseHistorySave(const char *filename) {
     FILE *fp = fopen(filename,"w");
     int j;
     
@@ -480,7 +482,7 @@ int linenoiseHistorySave(char *filename) {
  *
  * If the file exists and the operation succeeded 0 is returned, otherwise
  * on error -1 is returned. */
-int linenoiseHistoryLoad(char *filename) {
+int linenoiseHistoryLoad(const char *filename) {
     FILE *fp = fopen(filename,"r");
     char buf[LINENOISE_MAX_LINE];
     

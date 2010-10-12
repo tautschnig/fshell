@@ -94,7 +94,7 @@ all-local:
 	fi
 	$(MAKE) $(filter-out CXXFLAGS="$(CXXFLAGS)", $(AM_MAKEFLAGS)) CXXFLAGS="$(CXXFLAGS) -Wno-parentheses -Wno-sign-compare" -C cbmc/src
 if BUILD_LINENOISE
-	$(MAKE) $(AM_MAKEFLAGS) -C linenoise
+	$(MAKE) $(AM_MAKEFLAGS) -C linenoise CC=$(CC) CFLAGS="$(CXXFLAGS)"
 endif
 
 cbmc-src.tar.gz: $(shell find cbmc -name "*.cpp" -o -name "*.h")
