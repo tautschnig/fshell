@@ -28,14 +28,23 @@ DISTCLEANFILES = config.h.in~ _configs.sed fshell2/config/features.hpp
 clean-local:
 	[ ! -d astl ] || $(MAKE) $(AM_MAKEFLAGS) -C astl clean
 	[ ! -d cbmc ] || $(MAKE) $(AM_MAKEFLAGS) -C cbmc/src clean
+if BUILD_LINENOISE
+	$(MAKE) $(AM_MAKEFLAGS) -C linenoise clean
+endif
 
 distclean-local:
 	[ ! -d astl ] || $(MAKE) $(AM_MAKEFLAGS) -C astl distclean
 	[ ! -d cbmc ] || $(MAKE) $(AM_MAKEFLAGS) -C cbmc/src distclean
+if BUILD_LINENOISE
+	$(MAKE) $(AM_MAKEFLAGS) -C linenoise distclean
+endif
 
 maintainer-clean-local:
 	[ ! -d astl ] || $(MAKE) $(AM_MAKEFLAGS) -C astl maintainer-clean
 	[ ! -d cbmc ] || $(MAKE) $(AM_MAKEFLAGS) -C cbmc/src maintainer-clean
+if BUILD_LINENOISE
+	$(MAKE) $(AM_MAKEFLAGS) -C linenoise maintainer-clean
+endif
 	$(RM) -rf $(DX_DOCDIR)
 	$(RM) -rf build/
 	$(RM) -rf examples/
@@ -71,6 +80,8 @@ all-local:
 		cp -p $(top_srcdir)/minisat-2.2.0/mtl/{*.h,*.mk} minisat-2.2.0/mtl ; \
 		cp -p $(top_srcdir)/minisat-2.2.0/simp/{Makefile,*.cc,*.h} minisat-2.2.0/simp ; \
 		cp -p $(top_srcdir)/minisat-2.2.0/utils/{Makefile,*.cc,*.h} minisat-2.2.0/utils ; \
+		mkdir -p linenoise ; \
+		cp -p $(top_srcdir)/linenoise/{Makefile,linenoise.c,linenoise.h} linenoise ; \
 	fi
 	$(MAKE) $(AM_MAKEFLAGS) -C minisat-2.2.0
 	if [ ! -d cbmc/.git ] ; then \
@@ -82,6 +93,9 @@ all-local:
 		fi ; \
 	fi
 	$(MAKE) $(filter-out CXXFLAGS="$(CXXFLAGS)", $(AM_MAKEFLAGS)) CXXFLAGS="$(CXXFLAGS) -Wno-parentheses -Wno-sign-compare" -C cbmc/src
+if BUILD_LINENOISE
+	$(MAKE) $(AM_MAKEFLAGS) -C linenoise
+endif
 
 cbmc-src.tar.gz: $(shell find cbmc -name "*.cpp" -o -name "*.h")
 	rm -f $@
@@ -122,7 +136,7 @@ release-local: release
 	cp ../../{LICENSE,NOTICE,LGPL,THANKS,ChangeLog} $$distdir && \
 	cp -a examples $$distdir && \
 	if test x$(build_os) = xmingw32 ; then \
-		cp /usr/bin/{libgcc_s_dw2-1,readline5}.dll $$distdir ; \
+		cp /usr/bin/libgcc_s_dw2-1.dll $$distdir ; \
 		zip -r -9 -x.svn -x.git $$distdir-$(build_cpu)-$(build_os).zip $$distdir ; \
 	else \
 		tar czf $$distdir-$(build_cpu)-$(build_os).tar.gz --exclude .git --exclude .svn $$distdir ; \

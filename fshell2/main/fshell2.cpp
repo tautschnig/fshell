@@ -50,8 +50,19 @@
 #include <cstdlib>
 #include <cerrno>
 
-#include <readline/readline.h>
-#include <readline/history.h>
+#include <fshell2/config/features.hpp>
+
+#ifdef FSHELL2_HAVE_LIBREADLINE
+#  include <readline/readline.h>
+#  include <readline/history.h>
+#else
+extern "C" {
+#  include <linenoise/linenoise.h>
+}
+#define readline(prompt) linenoise(prompt)
+#define read_history(f) linenoiseHistoryLoad(f)
+#define add_history(x) linenoiseHistoryAdd(x)
+#endif
 
 #include <cbmc/src/cbmc/bmc.h>
 
@@ -73,8 +84,13 @@ FShell2::FShell2(::optionst const& opts, ::goto_functionst & gf) :
 
 FShell2::~FShell2() {
 	// write the history and truncate it to 200 lines
+#ifdef FSHELL2_HAVE_LIBREADLINE
 	::write_history(".fshell2_history"); 
 	::history_truncate_file(".fshell2_history", 200);
+#else
+	::linenoiseHistorySetMaxLen(200);
+	::linenoiseHistorySave(".fshell2_history");
+#endif
 }
 
 class Query_Cleanup {
