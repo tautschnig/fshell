@@ -102,7 +102,8 @@ examples:
 	for c in $(top_srcdir)/benchmarks/conf/ase-examples* ; do \
 		q="`echo $$c | cut -f3 -d_`" ; \
 		echo "Query $$q:" >> examples/ase-queries.txt ; \
-		( . $$c ; echo "Use fshell $$extra_params" >> examples/ase-queries.txt ; \
+		( . $$c ; echo "Use fshell $$extra_params" | \
+			sed 's# code/ase-examples# examples#g' >> examples/ase-queries.txt ; \
 			echo $$query >> examples/ase-queries.txt ) ; \
 		echo >> examples/ase-queries.txt ; \
 	done
