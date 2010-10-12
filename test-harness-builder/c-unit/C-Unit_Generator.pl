@@ -8,6 +8,7 @@ my %test_suite = ();
 my @idx_vars = ();
 my %inserts = ();
 my %replaces = ();
+my %appends = ();
 
 sub prepare_main () {
   my ($tc_id, $input_line) = @_;
