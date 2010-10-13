@@ -34,6 +34,9 @@
 #ifndef __LINENOISE_H
 #define __LINENOISE_H
 
+#include <stdio.h>
+extern FILE * linenoiseInStream;
+
 char *linenoise(const char *prompt);
 int linenoiseHistoryAdd(const char *line);
 int linenoiseHistorySetMaxLen(int len);

@@ -82,7 +82,6 @@
 #ifndef __MINGW32__
 #include <sys/ioctl.h>
 #endif
-#include <unistd.h>
 
 #define LINENOISE_DEFAULT_HISTORY_MAX_LEN 100
 #define LINENOISE_MAX_LINE 4096
@@ -96,6 +95,7 @@ static int atexit_registered = 0; /* register atexit just 1 time */
 static int history_max_len = LINENOISE_DEFAULT_HISTORY_MAX_LEN;
 static int history_len = 0;
 char **history = NULL;
+FILE * linenoiseInStream;
 
 static void linenoiseAtExit(void);
 int linenoiseHistoryAdd(const char *line);
@@ -403,12 +403,13 @@ char *linenoise(const char *prompt) {
     char buf[LINENOISE_MAX_LINE];
     int count;
 
-    if (isUnsupportedTerm()) {
+    if (linenoiseInStream || isUnsupportedTerm()) {
         size_t len;
 
         printf("%s",prompt);
         fflush(stdout);
-        if (fgets(buf,LINENOISE_MAX_LINE,stdin) == NULL) return NULL;
+        if (fgets(buf,LINENOISE_MAX_LINE,
+            linenoiseInStream?linenoiseInStream:stdin) == NULL) return NULL;
         len = strlen(buf);
         while(len && (buf[len-1] == '\n' || buf[len-1] == '\r')) {
             len--;

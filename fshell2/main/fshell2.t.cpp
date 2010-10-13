@@ -36,7 +36,16 @@
 
 #include <cerrno>
 #include <fstream>
-#include <readline/readline.h>
+#include <fshell2/config/features.hpp>
+
+#ifdef FSHELL2_HAVE_LIBREADLINE
+#  include <readline/readline.h>
+#else
+extern "C" {
+#  include <linenoise/linenoise.h>
+}
+#define rl_instream linenoiseInStream
+#endif
 
 #include <cbmc/src/util/config.h>
 #include <cbmc/src/util/tempfile.h>
