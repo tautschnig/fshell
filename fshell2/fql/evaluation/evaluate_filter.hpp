@@ -67,6 +67,7 @@ class Evaluate_Filter : private Standard_AST_Visitor_Aspect<AST_Visitor>
 			Query const& query);
 
 	static bool ignore_function(::goto_functionst::goto_functiont const& fct);
+	static bool ignore_function(::goto_programt::instructiont const& e);
 	static bool ignore_instruction(::goto_programt::instructiont const& e);
 
 	target_graph_t const& get(Filter_Expr const& f) const;

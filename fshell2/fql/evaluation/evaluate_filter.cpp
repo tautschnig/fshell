@@ -110,19 +110,25 @@ target_graph_t const& Evaluate_Filter::get(Predicate const& p) const {
 			entry != m_predicate_map.end());
 	return entry->second;
 }
+
+bool Evaluate_Filter::ignore_function(::goto_programt::instructiont const& e) {
+	if (e.function == ID_main) return true;
+	if (e.function == "c::__CPROVER_initialize") return true;
+	static const ::std::string::size_type len(::std::string::traits_type::length("<builtin-library>-"));
+	if (!e.location.is_nil() &&
+			((e.location.get_file() == "<built-in>") ||
+			(0 == e.location.get_file().as_string().compare(
+				0, len, "<builtin-library>-")))) return true;
+
+	return false;
+}
 	
 bool Evaluate_Filter::ignore_function(::goto_functionst::goto_functiont const& fct) {
 	if (!fct.body_available) return true;
 	if (fct.body.instructions.empty()) return true;
 	if (fct.is_inlined()) return true;
-	if (!fct.body.instructions.empty() &&
-			!fct.body.instructions.front().location.is_nil() &&
-			((fct.body.instructions.front().location.get_file() == "<builtin-library>") ||
-			(fct.body.instructions.front().location.get_file() == "<built-in>"))) return true;
-	if (!fct.body.instructions.empty() &&
-			fct.body.instructions.front().function == ID_main) return true;
 
-	return false;
+	return ignore_function(fct.body.instructions.front());
 }
 	
 bool Evaluate_Filter::ignore_instruction(::goto_programt::instructiont const& e) {

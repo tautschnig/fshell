@@ -717,12 +717,7 @@ void Compute_Test_Goals_Boolean::build(trace_automaton_t const& aut, bool map_tg
 		// cannot reach final assert(0) from this node
 		if (iter->guard_literal.var_no() == ::literalt::unused_var_no()) continue;
 		
-		// if (Evaluate_Filter::ignore_function(lookup function of *(iter->source.pc))) continue;
-		if (!iter->source.pc->location.is_nil() &&
-			((iter->source.pc->location.get_file() == "<builtin-library>") ||
-			(iter->source.pc->location.get_file() == "<built-in>"))) continue;
-		if (iter->source.pc->function == ID_main) continue;
-		if (iter->source.pc->function == "c::__CPROVER_initialize") continue;
+		if (Evaluate_Filter::ignore_function(*(iter->source.pc))) continue;
 		if (Evaluate_Filter::ignore_instruction(*(iter->source.pc))) continue;
 
 		// ignore hidden assignments
