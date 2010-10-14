@@ -15,7 +15,7 @@ AC_DEFUN([model_CHECK_CPLUSPLUS_LIB],[
   AC_CACHE_CHECK([for $3 in -l$1], ac_Lib,
   [ac_check_lib_save_LIBS=$LIBS
   LIBS="-l$1 $6 $LIBS"
-  AC_LINK_IFELSE(AC_LANG_PROGRAM([$2],[$3]),
+  AC_LINK_IFELSE([AC_LANG_PROGRAM([$2],[$3])],
                  [model_VAR_SET(ac_Lib, yes)],
                  [model_VAR_SET(ac_Lib, no)])
   LIBS=$ac_check_lib_save_LIBS])
