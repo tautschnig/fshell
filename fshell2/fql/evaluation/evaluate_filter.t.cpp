@@ -99,7 +99,7 @@ void test( Test_Data & data )
 					FQL_CREATE1(Edgecov, FQL_CREATE_FF0(F_IDENTITY))));
 		eval.do_query(gf, cfg, *q);
 		target_graph_t const& bb_entries(eval.get(*bb));
-		TEST_ASSERT_RELATION(3, ==, bb_entries.get_E().size());
+		TEST_ASSERT_RELATION(2, ==, bb_entries.get_E().size());
 	}
 
 	{

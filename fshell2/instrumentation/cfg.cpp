@@ -133,6 +133,13 @@ void CFG::compute_edges(
 					::std::make_pair(&goto_program, next_PC), false));
     }
   }
+  else if(instruction.is_return())
+  {
+    if(next_PC!=goto_program.instructions.end())
+      entry.successors.push_back(::std::make_pair(
+				  ::std::make_pair(&goto_program,
+					  --(goto_program.instructions.end())), false));
+  }
   else
   {
     if(next_PC!=goto_program.instructions.end())
