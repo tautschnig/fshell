@@ -56,7 +56,6 @@
 #include <fshell2/fql/ast/query.hpp>
 #include <fshell2/fql/ast/quote.hpp>
 #include <fshell2/fql/ast/repeat.hpp>
-#include <fshell2/fql/ast/transform_pred.hpp>
 
 #include <algorithm>
 #include <iterator>
@@ -731,18 +730,6 @@ void Evaluate_Filter::visit(Quote const* n) {
 
 void Evaluate_Filter::visit(Repeat const* n) {
 	n->get_pp()->accept(this);
-}
-
-void Evaluate_Filter::visit(Transform_Pred const* n) {
-	::std::pair< filter_value_t::iterator, bool > entry(m_filter_map.insert(
-				::std::make_pair(n, target_graph_t())));
-	if (!entry.second) return;
-	
-	n->get_filter_expr()->accept(this);
-	filter_value_t::const_iterator filt_set(m_filter_map.find(n->get_filter_expr()));
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, filt_set != m_filter_map.end());
-
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, false);
 }
 
 FSHELL2_FQL_NAMESPACE_END;

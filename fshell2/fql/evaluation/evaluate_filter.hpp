@@ -200,13 +200,6 @@ class Evaluate_Filter : private Standard_AST_Visitor_Aspect<AST_Visitor>
 	virtual void visit(Repeat const* n);
 	/*! \} */
 
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Transform_Pred
-	 * \param  n Transform_Pred
-	 */
-	virtual void visit(Transform_Pred const* n);
-	/*! \} */
-
 	/*! \copydoc copy_constructor
 	*/
 	Evaluate_Filter( Self const& rhs );

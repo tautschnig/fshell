@@ -50,7 +50,6 @@
 #include <fshell2/fql/ast/query.hpp>
 #include <fshell2/fql/ast/quote.hpp>
 #include <fshell2/fql/ast/repeat.hpp>
-#include <fshell2/fql/ast/transform_pred.hpp>
 
 #define TEST_COMPONENT_NAME Normalization_Visitor
 #define TEST_COMPONENT_NAMESPACE fshell2::fql

@@ -56,7 +56,6 @@ class Predicate;
 class Quote;
 class Query;
 class Repeat;
-class Transform_Pred;
 
 /*! \brief TODO
 */
@@ -241,14 +240,6 @@ class AST_Visitor
 		 */
 		virtual void visit(Repeat const* n) = 0;
 		virtual void visit(Repeat const* n) const = 0;
-		/*! \} */
-
-		/*! \{
-		 * \brief Visit a @ref fshell2::fql::Transform_Pred
-		 * \param  n Transform_Pred
-		 */
-		virtual void visit(Transform_Pred const* n) = 0;
-		virtual void visit(Transform_Pred const* n) const = 0;
 		/*! \} */
 
 };

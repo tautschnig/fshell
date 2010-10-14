@@ -56,7 +56,6 @@ class Predicate;
 class Quote;
 class Query;
 class Repeat;
-class Transform_Pred;
 
 /*! \brief Default implementation of an AST visitor
  *
@@ -247,14 +246,6 @@ class Standard_AST_Visitor_Aspect : public INTERFACE
 		virtual void visit(Repeat const* n) const;
 		/*! \} */
 
-		/*! \{
-		 * \brief Visit a @ref fshell2::fql::Transform_Pred
-		 * \param  n Transform_Pred
-		 */
-		virtual void visit(Transform_Pred const* n);
-		virtual void visit(Transform_Pred const* n) const;
-		/*! \} */
-
 };
 
 template <typename INTERFACE>
@@ -294,7 +285,6 @@ NOOP_VISIT(Predicate);
 NOOP_VISIT(Quote);
 NOOP_VISIT(Query);
 NOOP_VISIT(Repeat);
-NOOP_VISIT(Transform_Pred);
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;

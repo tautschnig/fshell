@@ -65,7 +65,6 @@
 #include <fshell2/fql/ast/query.hpp>
 #include <fshell2/fql/ast/quote.hpp>
 #include <fshell2/fql/ast/repeat.hpp>
-#include <fshell2/fql/ast/transform_pred.hpp>
 
 #include <cbmc/src/ansi-c/ansi_c_parser.h>
 #include <cbmc/src/ansi-c/ansi_c_parse_tree.h>
@@ -115,9 +114,6 @@ extern "C"
   ::fshell2::fql::Path_Pattern_Expr * PATH_PATTERN_EXPR;
   ::fshell2::fql::Coverage_Pattern_Expr * COVERAGE_PATTERN_EXPR;
   ::fshell2::fql::ECP_Atom * ECP_ATOM;
-
-  ::std::set< ::fshell2::fql::Predicate *,
-    ::fshell2::fql::FQL_Node_Lt_Compare > * PREDICATE_SET;
 }
 
 /* general */
@@ -157,7 +153,6 @@ extern "C"
 %left TOK_TGINTERSECT
 %token TOK_SETMINUS
 %token TOK_COMPOSE
-%token TOK_PRED
 /* predicates */
 %token <STRING> TOK_ARBITRARY_PRED
 /* target graph interpreters */
@@ -191,7 +186,6 @@ extern "C"
 %type <COVERAGE_PATTERN_EXPR> Cover Coverage_Pattern Coverage_Pattern_Term Coverage_Pattern_Factor
 %type <PATH_PATTERN_EXPR> Passing Path_Pattern Path_Pattern_Term Path_Pattern_Factor Start_Anchor End_Anchor
 %type <ECP_ATOM> ECP_Atom
-%type <PREDICATE_SET> Predicates
 %type <PREDICATE> Predicate
 %type <NUMBER> Stmttype Stmttypes
 
@@ -466,18 +460,6 @@ Predicate: TOK_ARBITRARY_PRED
 		 }
 		 ;
 
-Predicates: Predicate
-		  {
-		  	$$ = new ::std::set< ::fshell2::fql::Predicate *, ::fshell2::fql::FQL_Node_Lt_Compare >;
-			$$->insert($1);
-		  }
-		  | Predicates TOK_COMMA Predicate
-		  {
-		    $$ = $1;
-			$$->insert($3);
-		  }
-		  ;
-
 Filter: Filter_Function
 	  {
 	    $$ = $1;
@@ -520,14 +502,6 @@ Filter: Filter_Function
 	 	IN_USE($5);
 	    needs_cleanup.insert($$);
 	  }
-	  /*
-	  | TOK_PRED TOK_L_PARENTHESIS Filter TOK_COMMA Predicates TOK_R_PARENTHESIS
-	  {
-	    $$ = FQL_CREATE2(Transform_Pred, $3, $5);
-	 	IN_USE($3);
-	    needs_cleanup.insert($$);
-	  }
-	  */
 	  ;
 	  
 Filter_Function: TOK_IDENTITY

@@ -121,8 +121,6 @@ class FQL_Node_Factory
 	Element * create(Path_Pattern_Expr * pp);
 	// Repeat
 	Element * create(Path_Pattern_Expr * pp, int lower, int upper);
-    // Transform_Pred	
-	Element * create(Filter_Expr * filter_expr, ::std::set<Predicate *, FQL_Node_Lt_Compare> * predicates);
 	
 	void destroy(Element * e);
 

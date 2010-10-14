@@ -135,7 +135,6 @@ TOK_TGUNION             \|
 TOK_TGINTERSECT         &
 TOK_SETMINUS            SETMINUS
 TOK_COMPOSE             COMPOSE
-TOK_PRED                PRED
 /* predicates */
 TOK_ARBITRARY_PRED      \{[^\{\}]+\}
 /* target graph interpreters */
@@ -216,7 +215,6 @@ TOK_NAT_NUMBER          [0-9]+
 <query_scope,query_cover,query_passing>{TOK_TGINTERSECT}   { return TOK_TGINTERSECT; }
 <query_scope,query_cover,query_passing>{TOK_SETMINUS}   { return TOK_SETMINUS; }
 <query_scope,query_cover,query_passing>{TOK_COMPOSE}   { return TOK_COMPOSE; }
-<query_scope,query_cover,query_passing>{TOK_PRED}   { return TOK_PRED; }
 
 <query_scope,query_cover,query_passing>{TOK_ARBITRARY_PRED}	{
                                         /* only return the string between { } */

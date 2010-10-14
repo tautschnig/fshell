@@ -55,7 +55,6 @@
 #include <fshell2/fql/ast/query.hpp>
 #include <fshell2/fql/ast/quote.hpp>
 #include <fshell2/fql/ast/repeat.hpp>
-#include <fshell2/fql/ast/transform_pred.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
@@ -400,27 +399,6 @@ void Normalization_Visitor::visit(Repeat const* n) {
 	MOVE_TO_PP;
 	m_top_pp = FQL_CREATE3(Repeat, m_top_pp.get(), n->get_lower_bound(),
 			n->get_upper_bound());
-}
-
-void Normalization_Visitor::visit(Transform_Pred const* n) {
-	n->get_filter_expr()->accept(this);
-	Smart_FQL_Node_Ptr<Filter_Expr> filter(m_top_filter);
-
-	Predicate::preds_t * preds(new Predicate::preds_t);
-	for (Predicate::preds_t::const_iterator iter(n->get_predicates()->begin());
-			iter != n->get_predicates()->end(); ++iter) {
-		(*iter)->accept(this);
-		Predicate * pred(dynamic_cast< Predicate * >(m_top_atom.get()));
-		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 0 != pred);
-		if (preds->insert(pred).second) pred->incr_ref_count();
-	}
-
-	for (Predicate::preds_t::const_iterator iter(preds->begin());
-			iter != preds->end(); ++iter)
-		(*iter)->decr_ref_count();
-	
-	m_top_filter = FQL_CREATE2(Transform_Pred, filter.get(), preds);
-	m_top_atom = 0;
 }
 
 FSHELL2_FQL_NAMESPACE_END;

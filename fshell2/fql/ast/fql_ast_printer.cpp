@@ -50,7 +50,6 @@
 #include <fshell2/fql/ast/query.hpp>
 #include <fshell2/fql/ast/quote.hpp>
 #include <fshell2/fql/ast/repeat.hpp>
-#include <fshell2/fql/ast/transform_pred.hpp>
 
 #include <cbmc/src/ansi-c/expr2c.h>
 
@@ -321,17 +320,6 @@ void FQL_AST_Printer::visit(Repeat const* n) {
 	} else {
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 0 == lb);
 		m_os << "<=" << ub;
-	}
-	m_os << ")";
-}
-
-void FQL_AST_Printer::visit(Transform_Pred const* n) {
-	m_os << "PRED(";
-	n->get_filter_expr()->accept(this);
-	for (Predicate::preds_t::const_iterator iter(n->get_predicates()->begin());
-			iter != n->get_predicates()->end(); ++iter) {
-		m_os << ",";
-		(*iter)->accept(this);
 	}
 	m_os << ")";
 }

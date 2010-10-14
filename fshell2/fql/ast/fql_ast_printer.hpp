@@ -171,13 +171,6 @@ class FQL_AST_Printer : public Standard_AST_Visitor_Aspect<AST_Visitor>
 	virtual void visit(Repeat const* n);
 	/*! \} */
 
-	/*! \{
-	 * \brief Visit a @ref fshell2::fql::Transform_Pred
-	 * \param  n Transform_Pred
-	 */
-	virtual void visit(Transform_Pred const* n);
-	/*! \} */
-
 
 	private:
 	::std::ostream & m_os;

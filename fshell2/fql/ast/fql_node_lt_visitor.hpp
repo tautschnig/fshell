@@ -55,7 +55,6 @@
 #include <fshell2/fql/ast/query.hpp>
 #include <fshell2/fql/ast/quote.hpp>
 #include <fshell2/fql/ast/repeat.hpp>
-#include <fshell2/fql/ast/transform_pred.hpp>
 
 #if FSHELL2_DEBUG__LEVEL__ > -1
 #  include <diagnostics/basic_exceptions/violated_invariance.hpp>
@@ -215,13 +214,6 @@ class FQL_Node_Lt_Visitor : public AST_Visitor
 		virtual void visit(Repeat const* n);
 		/*! \} */
 
-		/*! \{
-		 * \brief Visit a @ref fshell2::fql::Transform_Pred
-		 * \param  n Transform_Pred
-		 */
-		virtual void visit(Transform_Pred const* n);
-		/*! \} */
-
 
 	protected:
 		/*! \brief Compare an unidentified AST node to some other node of an AST
@@ -278,7 +270,6 @@ class FQL_Node_Lt_Visitor : public AST_Visitor
 				virtual void visit(Quote const* n);
 				virtual void visit(Query const* n);
 				virtual void visit(Repeat const* n);
-				virtual void visit(Transform_Pred const* n);
 				/*! \} */
 
 			private:
@@ -309,7 +300,6 @@ class FQL_Node_Lt_Visitor : public AST_Visitor
 				virtual void visit(Quote const* n) const;
 				virtual void visit(Query const* n) const;
 				virtual void visit(Repeat const* n) const;
-				virtual void visit(Transform_Pred const* n) const;
 
 				/*! \copydoc copy_constructor
 				*/
@@ -351,7 +341,6 @@ class FQL_Node_Lt_Visitor : public AST_Visitor
 		virtual void visit(Quote const* n) const;
 		virtual void visit(Query const* n) const;
 		virtual void visit(Repeat const* n) const;
-		virtual void visit(Transform_Pred const* n) const;
 
 		/*! \copydoc copy_constructor
 		*/
@@ -496,11 +485,10 @@ Predicate
 Quote
 Query
 Repeat
-Transform_Pred
 */
 
 /*
-for c in CP_Alternative CP_Concat Depcov Edgecov Filter_Compose Filter_Function Filter_Intersection Filter_Setminus Filter_Union Nodecov PP_Alternative PP_Concat Pathcov Predicate Quote Query Repeat Transform_Pred ; do res="FALSE" ; for c2 in CP_Alternative CP_Concat Depcov Edgecov Filter_Compose Filter_Function Filter_Intersection Filter_Setminus Filter_Union Nodecov PP_Alternative PP_Concat Pathcov Predicate Quote Query Repeat Transform_Pred ; do if [ "$c" = "$c2" ] ; then res="TRUE" ; echo "XXX" ; else echo "LT_COMPARISON_$res($c, $c2);" ; fi ; done ; echo "LT_COMPARISON_BUILDER($c);" ; echo ; done
+for c in CP_Alternative CP_Concat Depcov Edgecov Filter_Compose Filter_Function Filter_Intersection Filter_Setminus Filter_Union Nodecov PP_Alternative PP_Concat Pathcov Predicate Quote Query Repeat ; do res="FALSE" ; for c2 in CP_Alternative CP_Concat Depcov Edgecov Filter_Compose Filter_Function Filter_Intersection Filter_Setminus Filter_Union Nodecov PP_Alternative PP_Concat Pathcov Predicate Quote Query Repeat ; do if [ "$c" = "$c2" ] ; then res="TRUE" ; echo "XXX" ; else echo "LT_COMPARISON_$res($c, $c2);" ; fi ; done ; echo "LT_COMPARISON_BUILDER($c);" ; echo ; done
 */
 
 template<>
@@ -527,7 +515,6 @@ LT_COMPARISON_TRUE(CP_Alternative, Predicate);
 LT_COMPARISON_TRUE(CP_Alternative, Quote);
 LT_COMPARISON_TRUE(CP_Alternative, Query);
 LT_COMPARISON_TRUE(CP_Alternative, Repeat);
-LT_COMPARISON_TRUE(CP_Alternative, Transform_Pred);
 LT_COMPARISON_BUILDER(CP_Alternative);
 
 LT_COMPARISON_FALSE(CP_Concat, CP_Alternative);
@@ -554,7 +541,6 @@ LT_COMPARISON_TRUE(CP_Concat, Predicate);
 LT_COMPARISON_TRUE(CP_Concat, Quote);
 LT_COMPARISON_TRUE(CP_Concat, Query);
 LT_COMPARISON_TRUE(CP_Concat, Repeat);
-LT_COMPARISON_TRUE(CP_Concat, Transform_Pred);
 LT_COMPARISON_BUILDER(CP_Concat);
 
 LT_COMPARISON_FALSE(Depcov, CP_Alternative);
@@ -584,7 +570,6 @@ LT_COMPARISON_TRUE(Depcov, Predicate);
 LT_COMPARISON_TRUE(Depcov, Quote);
 LT_COMPARISON_TRUE(Depcov, Query);
 LT_COMPARISON_TRUE(Depcov, Repeat);
-LT_COMPARISON_TRUE(Depcov, Transform_Pred);
 LT_COMPARISON_BUILDER(Depcov);
 
 LT_COMPARISON_FALSE(Edgecov, CP_Alternative);
@@ -608,7 +593,6 @@ LT_COMPARISON_TRUE(Edgecov, Predicate);
 LT_COMPARISON_TRUE(Edgecov, Quote);
 LT_COMPARISON_TRUE(Edgecov, Query);
 LT_COMPARISON_TRUE(Edgecov, Repeat);
-LT_COMPARISON_TRUE(Edgecov, Transform_Pred);
 LT_COMPARISON_BUILDER(Edgecov);
 
 LT_COMPARISON_FALSE(Filter_Compose, CP_Alternative);
@@ -635,7 +619,6 @@ LT_COMPARISON_TRUE(Filter_Compose, Predicate);
 LT_COMPARISON_TRUE(Filter_Compose, Quote);
 LT_COMPARISON_TRUE(Filter_Compose, Query);
 LT_COMPARISON_TRUE(Filter_Compose, Repeat);
-LT_COMPARISON_TRUE(Filter_Compose, Transform_Pred);
 LT_COMPARISON_BUILDER(Filter_Compose);
 
 LT_COMPARISON_FALSE(Filter_Function, CP_Alternative);
@@ -698,7 +681,6 @@ LT_COMPARISON_TRUE(Filter_Function, Predicate);
 LT_COMPARISON_TRUE(Filter_Function, Quote);
 LT_COMPARISON_TRUE(Filter_Function, Query);
 LT_COMPARISON_TRUE(Filter_Function, Repeat);
-LT_COMPARISON_TRUE(Filter_Function, Transform_Pred);
 LT_COMPARISON_BUILDER(Filter_Function);
 
 LT_COMPARISON_FALSE(Filter_Intersection, CP_Alternative);
@@ -725,7 +707,6 @@ LT_COMPARISON_TRUE(Filter_Intersection, Predicate);
 LT_COMPARISON_TRUE(Filter_Intersection, Quote);
 LT_COMPARISON_TRUE(Filter_Intersection, Query);
 LT_COMPARISON_TRUE(Filter_Intersection, Repeat);
-LT_COMPARISON_TRUE(Filter_Intersection, Transform_Pred);
 LT_COMPARISON_BUILDER(Filter_Intersection);
 
 LT_COMPARISON_FALSE(Filter_Setminus, CP_Alternative);
@@ -752,7 +733,6 @@ LT_COMPARISON_TRUE(Filter_Setminus, Predicate);
 LT_COMPARISON_TRUE(Filter_Setminus, Quote);
 LT_COMPARISON_TRUE(Filter_Setminus, Query);
 LT_COMPARISON_TRUE(Filter_Setminus, Repeat);
-LT_COMPARISON_TRUE(Filter_Setminus, Transform_Pred);
 LT_COMPARISON_BUILDER(Filter_Setminus);
 
 LT_COMPARISON_FALSE(Filter_Union, CP_Alternative);
@@ -779,7 +759,6 @@ LT_COMPARISON_TRUE(Filter_Union, Predicate);
 LT_COMPARISON_TRUE(Filter_Union, Quote);
 LT_COMPARISON_TRUE(Filter_Union, Query);
 LT_COMPARISON_TRUE(Filter_Union, Repeat);
-LT_COMPARISON_TRUE(Filter_Union, Transform_Pred);
 LT_COMPARISON_BUILDER(Filter_Union);
 
 LT_COMPARISON_FALSE(Nodecov, CP_Alternative);
@@ -803,7 +782,6 @@ LT_COMPARISON_TRUE(Nodecov, Predicate);
 LT_COMPARISON_TRUE(Nodecov, Quote);
 LT_COMPARISON_TRUE(Nodecov, Query);
 LT_COMPARISON_TRUE(Nodecov, Repeat);
-LT_COMPARISON_TRUE(Nodecov, Transform_Pred);
 LT_COMPARISON_BUILDER(Nodecov);
 
 LT_COMPARISON_FALSE(PP_Alternative, CP_Alternative);
@@ -830,7 +808,6 @@ LT_COMPARISON_TRUE(PP_Alternative, Predicate);
 LT_COMPARISON_TRUE(PP_Alternative, Quote);
 LT_COMPARISON_TRUE(PP_Alternative, Query);
 LT_COMPARISON_TRUE(PP_Alternative, Repeat);
-LT_COMPARISON_TRUE(PP_Alternative, Transform_Pred);
 LT_COMPARISON_BUILDER(PP_Alternative);
 
 LT_COMPARISON_FALSE(PP_Concat, CP_Alternative);
@@ -857,7 +834,6 @@ LT_COMPARISON_TRUE(PP_Concat, Predicate);
 LT_COMPARISON_TRUE(PP_Concat, Quote);
 LT_COMPARISON_TRUE(PP_Concat, Query);
 LT_COMPARISON_TRUE(PP_Concat, Repeat);
-LT_COMPARISON_TRUE(PP_Concat, Transform_Pred);
 LT_COMPARISON_BUILDER(PP_Concat);
 
 LT_COMPARISON_FALSE(Pathcov, CP_Alternative);
@@ -884,7 +860,6 @@ LT_COMPARISON_TRUE(Pathcov, Predicate);
 LT_COMPARISON_TRUE(Pathcov, Quote);
 LT_COMPARISON_TRUE(Pathcov, Query);
 LT_COMPARISON_TRUE(Pathcov, Repeat);
-LT_COMPARISON_TRUE(Pathcov, Transform_Pred);
 LT_COMPARISON_BUILDER(Pathcov);
 
 LT_COMPARISON_FALSE(Predicate, CP_Alternative);
@@ -911,7 +886,6 @@ inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, Predicate const* b)
 LT_COMPARISON_TRUE(Predicate, Quote);
 LT_COMPARISON_TRUE(Predicate, Query);
 LT_COMPARISON_TRUE(Predicate, Repeat);
-LT_COMPARISON_TRUE(Predicate, Transform_Pred);
 LT_COMPARISON_BUILDER(Predicate);
 
 LT_COMPARISON_FALSE(Quote, CP_Alternative);
@@ -935,7 +909,6 @@ inline bool FQL_Node_Lt_Visitor::cmp_lt(Quote const* a, Quote const* b)
 }
 LT_COMPARISON_TRUE(Quote, Query);
 LT_COMPARISON_TRUE(Quote, Repeat);
-LT_COMPARISON_TRUE(Quote, Transform_Pred);
 LT_COMPARISON_BUILDER(Quote);
 
 LT_COMPARISON_FALSE(Query, CP_Alternative);
@@ -978,7 +951,6 @@ inline bool FQL_Node_Lt_Visitor::cmp_lt(Query const* a, Query const* b)
 	return false;
 }
 LT_COMPARISON_TRUE(Query, Repeat);
-LT_COMPARISON_TRUE(Query, Transform_Pred);
 LT_COMPARISON_BUILDER(Query);
 
 LT_COMPARISON_FALSE(Repeat, CP_Alternative);
@@ -1009,44 +981,7 @@ inline bool FQL_Node_Lt_Visitor::cmp_lt(Repeat const* a, Repeat const* b)
 	if (b->get_upper_bound() == -1) return true;
 	return a->get_upper_bound() < b->get_upper_bound();
 }
-LT_COMPARISON_TRUE(Repeat, Transform_Pred);
 LT_COMPARISON_BUILDER(Repeat);
-
-LT_COMPARISON_FALSE(Transform_Pred, CP_Alternative);
-LT_COMPARISON_FALSE(Transform_Pred, CP_Concat);
-LT_COMPARISON_FALSE(Transform_Pred, Depcov);
-LT_COMPARISON_FALSE(Transform_Pred, Edgecov);
-LT_COMPARISON_FALSE(Transform_Pred, Filter_Compose);
-LT_COMPARISON_FALSE(Transform_Pred, Filter_Function);
-LT_COMPARISON_FALSE(Transform_Pred, Filter_Intersection);
-LT_COMPARISON_FALSE(Transform_Pred, Filter_Setminus);
-LT_COMPARISON_FALSE(Transform_Pred, Filter_Union);
-LT_COMPARISON_FALSE(Transform_Pred, Nodecov);
-LT_COMPARISON_FALSE(Transform_Pred, PP_Alternative);
-LT_COMPARISON_FALSE(Transform_Pred, PP_Concat);
-LT_COMPARISON_FALSE(Transform_Pred, Pathcov);
-LT_COMPARISON_FALSE(Transform_Pred, Predicate);
-LT_COMPARISON_FALSE(Transform_Pred, Quote);
-LT_COMPARISON_FALSE(Transform_Pred, Query);
-LT_COMPARISON_FALSE(Transform_Pred, Repeat);
-template<>
-inline bool FQL_Node_Lt_Visitor::cmp_lt(Transform_Pred const* a, Transform_Pred const* b)
-{
-	if (cmp_lt(a->get_filter_expr(), b->get_filter_expr())) return true;
-	if (cmp_lt(b->get_filter_expr(), a->get_filter_expr())) return false;
-
-	if (a->get_predicates()->size() != b->get_predicates()->size())
-		return a->get_predicates()->size() < b->get_predicates()->size();
-	for (Predicate::preds_t::const_iterator itera(a->get_predicates()->begin()),
-			iterb(b->get_predicates()->begin()); itera != a->get_predicates()->end();
-			++itera, ++iterb) {
-		if (*itera == *iterb) continue;
-		if (cmp_lt(*itera, *iterb)) return true;
-		if (cmp_lt(*iterb, *itera)) return false;
-	}
-	return false;
-}
-LT_COMPARISON_BUILDER(Transform_Pred);
 
 
 LT_VISIT_BUILDER_TPL(CP_Alternative);
@@ -1066,7 +1001,6 @@ LT_VISIT_BUILDER_TPL(Predicate);
 LT_VISIT_BUILDER_TPL(Quote);
 LT_VISIT_BUILDER_TPL(Query);
 LT_VISIT_BUILDER_TPL(Repeat);
-LT_VISIT_BUILDER_TPL(Transform_Pred);
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
