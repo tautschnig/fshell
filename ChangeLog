@@ -1,3 +1,28 @@
+2010-10-14  Michael Tautschnig  <tautschnig@forsyte.at>
+
+		* Release 1.1
+		* Fixed bug in CFG construction for return statements
+		* Added output of total session time
+		* Fixed bug in less-than comparision of predicates
+
+2010-10-13  Michael Tautschnig  <tautschnig@forsyte.at>
+
+		* Ignore CBMC's C library implementations in filter evaluation
+
+2010-10-12  Michael Tautschnig  <tautschnig@forsyte.at>
+
+		* Use linenoise instead of readline if the latter is not available
+		* Fix paths in examples description
+
+2010-09-29  Michael Tautschnig  <tautschnig@forsyte.at>
+
+		* Performance improvements in coverage check
+		* Catch and report errors in typechecking new predicates
+		* Default to brief test case output, changed command line options (removed
+		--brief-test-inputs, added --tco-location, --tco-called-functions,
+		--tco-assign-globals)
+		* Added EXIT as alias to QUIT
+
 2010-09-21  Michael Tautschnig  <tautschnig@forsyte.at>
 
 	* Alternative over quoted expression caused wrong states to be stored as test
