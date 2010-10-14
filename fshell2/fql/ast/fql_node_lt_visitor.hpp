@@ -903,10 +903,10 @@ LT_COMPARISON_FALSE(Predicate, Pathcov);
 template<>
 inline bool FQL_Node_Lt_Visitor::cmp_lt(Predicate const* a, Predicate const* b)
 {
-	if (a->get_expr() && b->get_expr() &&
-			*(a->get_expr()) == *(b->get_expr())) return false;
-	// simple pointer comparison
-	return a->get_expr() < b->get_expr();
+	if (!a->get_expr()) return b->get_expr();
+	if (!b->get_expr()) return false;
+	if (*(a->get_expr()) == *(b->get_expr())) return false;
+	return *(a->get_expr()) < *(b->get_expr());
 }
 LT_COMPARISON_TRUE(Predicate, Quote);
 LT_COMPARISON_TRUE(Predicate, Query);

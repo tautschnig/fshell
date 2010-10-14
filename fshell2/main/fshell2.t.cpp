@@ -198,6 +198,7 @@ of
 	QUERY("query11", "cover \"ID*\"");
 	QUERY("query12", "cover ^ID$");
 	QUERY("query13", "cover \"ID*.@5.ID*\" + \"ID*.@7.ID*\"");
+	QUERY("query14", "cover ({x==0}+{x!=0}).({argc<10}+{argc>=10}).ID.({x==0}+{x!=0}).({argc<10}+{argc>=10})");
 	
 	TEST_ASSERT(fshell.process_line(l, "QUIT"));
 }	
