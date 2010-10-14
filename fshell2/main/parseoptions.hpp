@@ -76,7 +76,8 @@ class Parseoptions :
 
 	private:
 		::fshell2::statistics::Statistics m_stats;
-		::fshell2::statistics::CPU_Timer * m_timer;
+		::fshell2::statistics::CPU_Timer * m_cpu_total;
+		::fshell2::statistics::Wallclock_Timer * m_session_total;
 		::optionst m_options;
 
 		void set_verbosity(::messaget &message);

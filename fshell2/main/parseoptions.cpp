@@ -47,11 +47,15 @@ Parseoptions::Parseoptions(int argc, const char **argv) :
 	::parseoptions_baset(FSHELL2_OPTIONS, argc, argv),
 	::language_uit("FShell 2 " FSHELL2_VERSION, cmdline),
 	m_stats(),
-	m_timer(0)
+	m_cpu_total(0),
+	m_session_total(0)
 {
-	NEW_STAT(m_stats, CPU_Timer, timer, "Total CPU time");
-	timer.start_timer();
-	m_timer = &timer;
+	NEW_STAT(m_stats, CPU_Timer, cpu_timer, "Total CPU time");
+	cpu_timer.start_timer();
+	m_cpu_total = &cpu_timer;
+	NEW_STAT(m_stats, Wallclock_Timer, wall_timer, "Session lasted for");
+	wall_timer.start_timer();
+	m_session_total = &wall_timer;
 }
 
 Parseoptions::Parseoptions(int argc, const char **argv,
@@ -59,11 +63,15 @@ Parseoptions::Parseoptions(int argc, const char **argv,
 	::parseoptions_baset(FSHELL2_OPTIONS + extra_options, argc, argv),
 	::language_uit("FShell 2 " FSHELL2_VERSION, cmdline),
 	m_stats(),
-	m_timer(0)
+	m_cpu_total(0),
+	m_session_total(0)
 {
-	NEW_STAT(m_stats, CPU_Timer, timer, "Total CPU time");
-	timer.start_timer();
-	m_timer = &timer;
+	NEW_STAT(m_stats, CPU_Timer, cpu_timer, "Total CPU time");
+	cpu_timer.start_timer();
+	m_cpu_total = &cpu_timer;
+	NEW_STAT(m_stats, Wallclock_Timer, wall_timer, "Session lasted for");
+	wall_timer.start_timer();
+	m_session_total = &wall_timer;
 }
 
 Parseoptions::~Parseoptions() {
@@ -71,7 +79,8 @@ Parseoptions::~Parseoptions() {
 	NEW_STAT(m_stats, Peak_Memory_Usage, mem_usage, "Peak memory usage");
 	mem_usage.current();
 #endif
-	m_timer->stop_timer();
+	m_session_total->stop_timer();
+	m_cpu_total->stop_timer();
 	if (m_options.get_bool_option("statistics"))
 		m_stats.print(*this);
 }
