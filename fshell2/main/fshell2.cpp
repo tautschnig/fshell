@@ -133,7 +133,7 @@ Context_Backup::~Context_Backup() {
 }
 
 void FShell2::try_query(::language_uit & manager, char const * line,
-		::fshell2::statistics::Statistics & stats, unsigned const limit)
+		::fshell2::statistics::Statistics & stats)
 {
 	::std::string query(m_macro.expand(line));
 	if (query.empty()) return;
@@ -198,6 +198,7 @@ void FShell2::try_query(::language_uit & manager, char const * line,
 	::fshell2::Constraint_Strengthening::test_cases_t all_test_cases;
 	::fshell2::statistics::Statistics * ts_stats(&stats);
 	unsigned const mult(m_cmd.get_multiple_coverage());
+	unsigned const limit(m_cmd.get_limit());
 
 	for (unsigned idx(0); idx<mult; ++idx) {
 		if (mult > 1) ts_stats = new ::fshell2::statistics::Statistics();
@@ -260,7 +261,7 @@ bool FShell2::process_line(::language_uit & manager, char const * line,
 			return false;
 		case Command_Processing::NO_CONTROL_COMMAND:
 			smp.print_now();
-			try_query(manager, line, stats, m_cmd.get_limit());
+			try_query(manager, line, stats);
 			return false;
 	}
 

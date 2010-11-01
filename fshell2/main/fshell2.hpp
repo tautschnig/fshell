@@ -78,7 +78,7 @@ class FShell2
 	bool m_first_run;
 
 	void try_query(::language_uit & manager, char const * line,
-			::fshell2::statistics::Statistics & stats, unsigned const limit);
+			::fshell2::statistics::Statistics & stats);
 
 	/*! \copydoc copy_constructor
 	*/
