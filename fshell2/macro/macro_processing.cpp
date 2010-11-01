@@ -20,6 +20,9 @@
 
 /*! \file fshell2/macro/macro_processing.cpp
  * \brief TODO
+ * 
+ * The macro-defining command #define is matched case-insensitively using
+ * ::std::tolower.
  *
  * $Id$
  * \author Michael Tautschnig <tautschnig@forsyte.de>

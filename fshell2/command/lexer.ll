@@ -23,7 +23,8 @@
  *
  * @brief Lex/flex based lexer
  * 
- * The implementation is set to be case-insensitive
+ * The implementation is set to be case-insensitive using %option
+ * case-insensitive.
  *
  * $Id$
  *
