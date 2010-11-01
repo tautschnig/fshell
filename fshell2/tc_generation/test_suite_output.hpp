@@ -59,8 +59,8 @@ class Test_Suite_Output
 	public:
 	Test_Suite_Output(::fshell2::fql::CNF_Conversion & equation, ::optionst const& opts);
 	
-	::std::ostream & print_ts(Constraint_Strengthening::test_cases_t &
-			test_suite, ::std::ostream & os, ::ui_message_handlert::uit const ui);
+	::std::ostream & print_ts(Constraint_Strengthening::test_cases_t & test_suite,
+			unsigned const index, ::std::ostream & os, ::ui_message_handlert::uit const ui);
 
 	private:
 	class Test_Input

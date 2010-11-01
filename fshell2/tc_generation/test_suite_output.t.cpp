@@ -117,10 +117,10 @@ void test( Test_Data & data )
 	TEST_CHECK_RELATION(5, ==, eq.get_test_goal_id_map().size());
 
 	statistics::Statistics stats;
-	Constraint_Strengthening cs(eq, stats, options);
-	Constraint_Strengthening::test_cases_t test_suite;
+	Constraint_Strengthening cs(eq, options);
+	Constraint_Strengthening::test_cases_t test_suite, atc;
 	options.set_option("sat-subsumption", true);
-	cs.generate(goals, test_suite, 0);
+	cs.generate(goals, test_suite, 0, stats, atc);
 	Constraint_Strengthening::test_cases_t::size_type const size(test_suite.size());
 	TEST_CHECK_RELATION(size, >=, 2);
 	TEST_CHECK_RELATION(size, <=, 3);
@@ -134,27 +134,27 @@ void test( Test_Data & data )
 	Test_Suite_Output out(eq, options);
 	
 	::std::ostringstream os_brief;
-	out.print_ts(test_suite, os_brief, ::ui_message_handlert::PLAIN);
+	out.print_ts(test_suite, 0, os_brief, ::ui_message_handlert::PLAIN);
 	TEST_ASSERT(data.compare("test_results_brief_plain_1", os_brief.str()));
 	::std::ostringstream os_xml_brief;
-	out.print_ts(test_suite, os_xml_brief, ::ui_message_handlert::XML_UI);
+	out.print_ts(test_suite, 0, os_xml_brief, ::ui_message_handlert::XML_UI);
 	TEST_ASSERT(data.compare("test_results_brief_xml_1", os_xml_brief.str()));
 	
 	options.set_option("tco-location", true);
 	::std::ostringstream os;
-	out.print_ts(test_suite, os, ::ui_message_handlert::PLAIN);
+	out.print_ts(test_suite, 0, os, ::ui_message_handlert::PLAIN);
 	TEST_ASSERT(data.compare("test_results_plain_1", os.str()));
 	::std::ostringstream os_xml;
-	out.print_ts(test_suite, os_xml, ::ui_message_handlert::XML_UI);
+	out.print_ts(test_suite, 0, os_xml, ::ui_message_handlert::XML_UI);
 	TEST_ASSERT(data.compare("test_results_xml_1", os_xml.str()));
 	
 	options.set_option("tco-called-functions", true);
 	options.set_option("tco-assign-globals", true);
 	::std::ostringstream os_ext;
-	out.print_ts(test_suite, os_ext, ::ui_message_handlert::PLAIN);
+	out.print_ts(test_suite, 0, os_ext, ::ui_message_handlert::PLAIN);
 	TEST_ASSERT(data.compare("test_results_ext_plain_1", os_ext.str()));
 	::std::ostringstream os_xml_ext;
-	out.print_ts(test_suite, os_xml_ext, ::ui_message_handlert::XML_UI);
+	out.print_ts(test_suite, 0, os_xml_ext, ::ui_message_handlert::XML_UI);
 	TEST_ASSERT(data.compare("test_results_ext_xml_1", os_xml_ext.str()));
 }
 

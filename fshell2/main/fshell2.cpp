@@ -194,24 +194,39 @@ void FShell2::try_query(::language_uit & manager, char const * line,
 	::fshell2::fql::CNF_Conversion & equation(goals->do_query(gf_copy, *query_ast));
 
 	// do the enumeration
-	::fshell2::Constraint_Strengthening cs(equation, stats, m_opts);
-	::fshell2::Constraint_Strengthening::test_cases_t test_suite;
-	cs.generate(*goals, test_suite, limit);
-	::fshell2::Constraint_Strengthening::test_cases_t::size_type const before_min(test_suite.size());
+	::fshell2::Constraint_Strengthening cs(equation, m_opts);
+	::fshell2::Constraint_Strengthening::test_cases_t all_test_cases;
+	::fshell2::statistics::Statistics * ts_stats(&stats);
+	unsigned const mult(m_cmd.get_multiple_coverage());
 
-	// post-minimization
-	::fshell2::Test_Suite_Minimization ts_min(manager);
-	ts_min.minimize(test_suite);
-	
-	NEW_STAT(stats, Counter< ::fshell2::Constraint_Strengthening::test_cases_t::size_type >, min_cnt, "Test cases removed by minimization");
-	min_cnt.inc(before_min - test_suite.size());
-	NEW_STAT(stats, Counter< ::fshell2::Constraint_Strengthening::test_cases_t::size_type >, tcs_cnt, "Test cases");
-	tcs_cnt.inc(test_suite.size());
+	for (unsigned idx(0); idx<mult; ++idx) {
+		if (mult > 1) ts_stats = new ::fshell2::statistics::Statistics();
+		::fshell2::Constraint_Strengthening::test_cases_t test_suite;
+		cs.generate(*goals, test_suite, limit, *ts_stats, all_test_cases);
+		::fshell2::Constraint_Strengthening::test_cases_t::size_type const before_min(test_suite.size());
 
-	// output
-	::fshell2::Test_Suite_Output out(equation, m_opts);
-	out.print_ts(test_suite, os, manager.ui_message_handler.get_ui());
-	of.close();
+		// post-minimization
+		::fshell2::Test_Suite_Minimization ts_min(manager);
+		ts_min.minimize(test_suite);
+		
+		NEW_STAT((*ts_stats), Counter< ::fshell2::Constraint_Strengthening::test_cases_t::size_type >, min_cnt, "Test cases removed by minimization");
+		min_cnt.inc(before_min - test_suite.size());
+		NEW_STAT((*ts_stats), Counter< ::fshell2::Constraint_Strengthening::test_cases_t::size_type >, tcs_cnt, "Test cases");
+		tcs_cnt.inc(test_suite.size());
+
+		// output
+		::fshell2::Test_Suite_Output out(equation, m_opts);
+		out.print_ts(test_suite, idx, os, manager.ui_message_handler.get_ui());
+		of.close();
+
+		all_test_cases.splice(all_test_cases.end(), test_suite);
+		if (mult > 1) {
+			if (m_opts.get_bool_option("statistics"))
+				ts_stats->print(manager);
+			delete ts_stats;
+			ts_stats = &stats;
+		}
+	}
 
 	timer.stop_timer();
 }

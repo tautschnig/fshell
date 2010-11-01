@@ -66,14 +66,14 @@ class Constraint_Strengthening
 				::cnf_clause_list_assignmentt > > test_cases_t;
 	
 	Constraint_Strengthening(::fshell2::fql::CNF_Conversion & equation,
-			::fshell2::statistics::Statistics & stats, ::optionst const& opts);
+			::optionst const& opts);
 
 	void generate(::fshell2::fql::Compute_Test_Goals const& ctg, test_cases_t & tcs,
-			unsigned const limit);
+			unsigned const limit, ::fshell2::statistics::Statistics & stats,
+			test_cases_t const& prev_tcs);
 
 	private:
 	::fshell2::fql::CNF_Conversion & m_equation;
-	::fshell2::statistics::Statistics & m_stats;
 	::optionst const& m_opts;
 
 	/*! \copydoc copy_constructor

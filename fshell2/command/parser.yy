@@ -92,6 +92,7 @@ extern "C"
 %token TOK_COUNT
 %token TOK_NO_ZERO_INIT
 %token TOK_ABSTRACT
+%token TOK_MULTIPLE_COVERAGE
 /* C identifier */
 %token <STRING> TOK_C_IDENT
 /* a quoted string (no newline) */
@@ -161,6 +162,11 @@ Options: TOK_ENTRY TOK_C_IDENT
 	     cmd = ::fshell2::command::Command_Processing::CMD_SET_ABSTRACT;
 		 *arg = $2;
        }
+	   | TOK_MULTIPLE_COVERAGE TOK_NAT_NUMBER
+	   {
+	     cmd = ::fshell2::command::Command_Processing::CMD_SET_MULTIPLE_COVERAGE;
+		 *numeric_arg = $2;
+	   }
        ;
 
 

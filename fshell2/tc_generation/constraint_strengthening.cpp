@@ -43,8 +43,8 @@
 FSHELL2_NAMESPACE_BEGIN;
 
 Constraint_Strengthening::Constraint_Strengthening(::fshell2::fql::CNF_Conversion & equation,
-		::fshell2::statistics::Statistics & stats, ::optionst const& opts) :
-	m_equation(equation), m_stats(stats), m_opts(opts)
+		::optionst const& opts) :
+	m_equation(equation), m_opts(opts)
 {
 }
 	
@@ -90,25 +90,46 @@ static int find_sat_test_goals(::satcheck_minisatt const& minisat, ::std::list< 
 	return cnt;
 }
 
+static void get_test_case_literals(::cnf_clause_list_assignmentt const& tc,
+		::bvt & tcs_lits, ::boolbvt const& bv) {
+	for (::boolbv_mapt::mappingt::const_iterator iter(bv.map.mapping.begin());
+			iter != bv.map.mapping.end(); ++iter) {
+		if (iter->first.as_string().substr(0, 12) == "c::$fshell2$") continue;
+		for (::boolbv_mapt::literal_mapt::const_iterator m_iter(iter->second.literal_map.begin());
+				m_iter != iter->second.literal_map.end(); ++m_iter)
+			if (!m_iter->l.is_constant()) tcs_lits.push_back(::literalt(m_iter->l.var_no(), 
+						m_iter->l.sign() ? !tc.l_get(m_iter->l).is_false() : tc.l_get(m_iter->l).is_false()));
+	}
+}
+
 void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const& ctg,
-		test_cases_t & tcs, unsigned const limit)
+		test_cases_t & tcs, unsigned const limit,
+		::fshell2::statistics::Statistics & stats, test_cases_t const& prev_tcs)
 {
 	m_equation.status("Starting groupwise constraint strengthening");
 	
-	NEW_STAT(m_stats, CPU_Timer, sat_timer, "Time spent in main SAT solver");
-	NEW_STAT(m_stats, CPU_Timer, sub_timer, "Time spent in subsumption analysis");
+	NEW_STAT(stats, CPU_Timer, sat_timer, "Time spent in main SAT solver");
+	NEW_STAT(stats, CPU_Timer, sub_timer, "Time spent in subsumption analysis");
 
 	::cnf_clause_list_assignmentt & cnf(m_equation.get_cnf());
 	
 	::fshell2::fql::test_goal_id_map_t const& goals(m_equation.get_test_goal_id_map());
-	NEW_STAT(m_stats, Counter< ::fshell2::fql::test_goal_id_t >, feasible_cnt, "Possibly feasible test goals");
+	NEW_STAT(stats, Counter< ::fshell2::fql::test_goal_id_t >, feasible_cnt, "Possibly feasible test goals");
 	feasible_cnt.inc(goals.size());
 	::fshell2::fql::test_goal_ids_t unsat_goals;
 	::fshell2::fql::test_goal_id_t id(0);
 	for (::fshell2::fql::test_goal_id_map_t::const_iterator iter(goals.begin());
 			iter != goals.end(); ++iter, ++id)
 		unsat_goals.insert(unsat_goals.end(), id);
-	
+
+	for (test_cases_t::const_iterator iter(prev_tcs.begin()); iter != prev_tcs.end(); ++iter) {
+		::bvt cl;
+		get_test_case_literals(iter->second, cl, m_equation.get_bv());
+		for (::bvt::iterator v_iter(cl.begin()); v_iter != cl.end(); ++v_iter)
+			v_iter->invert();
+		cnf.lcnf(cl);
+	}
+
 	/*
 	::dimacs_cnft dimacs;
 	cnf.copy_to(dimacs);
@@ -181,15 +202,7 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 		timer2.start_timer();
 		int num_sat(0);
 		::bvt fixed_literals;
-		::boolbvt const& bv(m_equation.get_bv());
-		for (::boolbv_mapt::mappingt::const_iterator iter(bv.map.mapping.begin());
-			iter != bv.map.mapping.end(); ++iter) {
-			if (iter->first.as_string().substr(0, 12) == "c::$fshell2$") continue;
-			for (::boolbv_mapt::literal_mapt::const_iterator m_iter(iter->second.literal_map.begin());
-					m_iter != iter->second.literal_map.end(); ++m_iter)
-				if (!m_iter->l.is_constant()) fixed_literals.push_back(::literalt(m_iter->l.var_no(), 
-							m_iter->l.sign() ? !minisat.l_get(m_iter->l).is_false() : minisat.l_get(m_iter->l).is_false()));
-		}
+		get_test_case_literals(tcs.back().second, fixed_literals, m_equation.get_bv());
 		
 		::std::list< ::bvt > more_cl;
 		num_sat += find_sat_test_goals(minisat, more_cl, goals, unsat_goals,
@@ -228,7 +241,7 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 	}
 	if (!unsat_goals.empty()) sat_timer.stop_timer();
 	
-	NEW_STAT(m_stats, Counter< ::fshell2::fql::test_goal_id_t >, missing_cnt, "Test goals not fulfilled");
+	NEW_STAT(stats, Counter< ::fshell2::fql::test_goal_id_t >, missing_cnt, "Test goals not fulfilled");
 	missing_cnt.inc(unsat_goals.size());
 	
 	if (limit > 0 && tcs.size() == limit) {

@@ -65,7 +65,8 @@ class Command_Processing
 		CMD_SET_ENTRY,
 		CMD_SET_LIMIT_COUNT,
 		CMD_SET_NO_ZERO_INIT,
-		CMD_SET_ABSTRACT
+		CMD_SET_ABSTRACT,
+		CMD_SET_MULTIPLE_COVERAGE
 	} parsed_command_t;
 	
 	typedef enum {
@@ -83,6 +84,8 @@ class Command_Processing
 
 	inline unsigned get_limit() const;
 
+	inline unsigned get_multiple_coverage() const;
+
 	bool finalize(::language_uit & manager);
 	void finalize_goto_program(::language_uit & manager);
 	
@@ -93,6 +96,7 @@ class Command_Processing
 	bool m_finalized;
 	bool m_remove_zero_init;
 	unsigned m_limit;
+	unsigned m_multiple_coverage;
 	
 	::std::ostream & print_file_contents(::std::ostream & os, char const * name) const;
 
@@ -110,6 +114,10 @@ class Command_Processing
 	
 inline unsigned Command_Processing::get_limit() const {
 	return m_limit;
+}
+
+inline unsigned Command_Processing::get_multiple_coverage() const {
+	return m_multiple_coverage;
 }
 
 ::std::ostream & operator<<(::std::ostream & os, Command_Processing::status_t const& s);

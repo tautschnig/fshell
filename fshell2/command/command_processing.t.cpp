@@ -186,6 +186,10 @@ void test_use_case( Test_Data & data )
 	TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, "set limit count 27"));
 	TEST_ASSERT(27 == cmd.get_limit());
 
+	TEST_ASSERT(1 == cmd.get_multiple_coverage());
+	TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, "set multiple_coverage 42"));
+	TEST_ASSERT(42 == cmd.get_multiple_coverage());
+
 	::unlink(tempname_str.c_str());
 }
 

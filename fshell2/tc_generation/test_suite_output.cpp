@@ -663,8 +663,8 @@ Test_Suite_Output::Test_Suite_Output(::fshell2::fql::CNF_Conversion & equation,
 	
 ::std::ostream & Test_Suite_Output::print_ts(
 		Constraint_Strengthening::test_cases_t & test_suite,
-		::std::ostream & os, ::ui_message_handlert::uit const ui) {
-	
+		unsigned const index, ::std::ostream & os, ::ui_message_handlert::uit const ui)
+{
 	::cnf_clause_list_assignmentt & cnf(m_equation.get_cnf());
 	
 	// select the init procedure chosen by the user
@@ -683,7 +683,10 @@ Test_Suite_Output::Test_Suite_Output(::fshell2::fql::CNF_Conversion & equation,
 	main_symb_str << ")";
 	Test_Input ti(main_symb, main_symb_str.str(), main_symb.location);
 	
-	if (::ui_message_handlert::XML_UI == ui) os << "<test-suite>" << ::std::endl;
+	if (::ui_message_handlert::XML_UI == ui)
+		os << "<test-suite index=\"" << index << "\">" << ::std::endl;
+	else
+		os << "Test Suite " << index << ":" << ::std::endl;
 	for (::fshell2::Constraint_Strengthening::test_cases_t::const_iterator iter(
 				test_suite.begin()); iter != test_suite.end(); ++iter) {
 		cnf.copy_assignment_from(iter->second);

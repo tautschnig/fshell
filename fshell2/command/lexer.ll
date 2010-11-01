@@ -95,6 +95,7 @@ TOK_LIMIT               LIMIT
 TOK_COUNT               COUNT
 TOK_NO_ZERO_INIT        NO_ZERO_INIT  
 TOK_ABSTRACT            ABSTRACT
+TOK_MULTIPLE_COVERAGE   MULTIPLE_COVERAGE
 /* C identifier */
 TOK_C_IDENT             [_a-zA-Z][_a-zA-Z0-9]*
 /* a quoted string (no newline) */
@@ -125,6 +126,7 @@ TOK_NAT_NUMBER          [0-9]+
 <options>{TOK_COUNT}   { return TOK_COUNT; }
 <options>{TOK_NO_ZERO_INIT}   { return TOK_NO_ZERO_INIT; }
 <options>{TOK_ABSTRACT}   { return TOK_ABSTRACT; }
+<options>{TOK_MULTIPLE_COVERAGE}   { return TOK_MULTIPLE_COVERAGE; }
 
 <command,options>{TOK_C_IDENT}  { 
                                         yylval.STRING = strdup( yytext );

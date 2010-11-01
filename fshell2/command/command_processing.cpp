@@ -68,6 +68,7 @@ extern int CMDparse(CMDFlexLexer *,
 "            | `LIMIT' `COUNT' <Number>" << ::std::endl << \
 "            | `NO_ZERO_INIT'" << ::std::endl << \
 "            | `ABSTRACT' <Identifier>" << ::std::endl << \
+"            | `MULTIPLE_COVERAGE' <Number>" << ::std::endl << \
 "<File name> ::= <Singly Quoted String>" << ::std::endl << \
 "<Defines> ::=" << ::std::endl << \
 "            | `-D' <Identifier> <Defines>" << ::std::endl << \
@@ -124,7 +125,7 @@ Cleanup::~Cleanup() {
 
 Command_Processing::Command_Processing(::optionst const& opts, ::goto_functionst & gf) :
 	m_opts(opts), m_gf(gf), m_finalized(true),
-	m_remove_zero_init(false), m_limit(0) {
+	m_remove_zero_init(false), m_limit(0), m_multiple_coverage(1) {
 	if (::config.main.empty()) ::config.main = "main";
 }
 
@@ -285,6 +286,12 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 				sym_entry->second.value.make_nil();
 				m_finalized = false;
 			}
+			return DONE;
+		case CMD_SET_MULTIPLE_COVERAGE:
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, numeric_arg >= 0);
+			FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error, numeric_arg > 1,
+					"Multiplicity must be greater than 1");
+			m_multiple_coverage = numeric_arg;
 			return DONE;
 	}
 			
