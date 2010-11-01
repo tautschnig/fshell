@@ -114,7 +114,7 @@ void test( Test_Data & data )
 	statistics::Statistics stats;
 	Constraint_Strengthening cs(eq, options);
 	Constraint_Strengthening::test_cases_t test_suite, atc;
-	options.set_option("sat-subsumption", true);
+	options.set_option("sat-coverage-check", true);
 	cs.generate(goals, test_suite, 0, stats, atc);
 	TEST_ASSERT_RELATION(test_suite.size(), >=, 2);
 	TEST_ASSERT_RELATION(test_suite.size(), <=, 3);

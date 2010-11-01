@@ -1221,7 +1221,7 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 	}
 
 	::std::ostringstream status;
-	status << "Need to analyze " << current_states_size << " candidates for subsumption";
+	status << "Need to analyze " << current_states_size << " candidates for coverage";
 	m_manager.status(status.str());
 	test_goal_id_map_t const& id_map(m_equation.get_test_goal_id_map());
 	for (state_vec_t::const_iterator iter(current_states.begin());

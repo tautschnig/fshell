@@ -109,7 +109,7 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 	m_equation.status("Starting groupwise constraint strengthening");
 	
 	NEW_STAT(stats, CPU_Timer, sat_timer, "Time spent in main SAT solver");
-	NEW_STAT(stats, CPU_Timer, sub_timer, "Time spent in subsumption analysis");
+	NEW_STAT(stats, CPU_Timer, sub_timer, "Time spent in internal coverage analysis");
 
 	::cnf_clause_list_assignmentt & cnf(m_equation.get_cnf());
 	
@@ -141,7 +141,7 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 	minisat.set_verbosity(cnf.get_verbosity());
 	cnf.copy_to(minisat);
 		
-	bool const use_sat(m_opts.get_bool_option("sat-subsumption"));
+	bool const use_sat(m_opts.get_bool_option("sat-coverage-check"));
 	while (!unsat_goals.empty() && (limit == 0 || tcs.size() < limit)) {
 		::std::ostringstream status;
 		status << unsat_goals.size() << " test goals remain to be covered";
@@ -166,7 +166,7 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 
 		// deactivate test goals, if implemented
 		::fshell2::statistics::Statistics i_stats;
-		NEW_STAT(i_stats, CPU_Timer, timer1, "Internal subsumption analysis");
+		NEW_STAT(i_stats, CPU_Timer, timer1, "Internal coverage analysis");
 		timer1.start_timer();
 		::fshell2::fql::test_goal_ids_t test_goal_set;
 		sub_timer.start_timer();
@@ -198,7 +198,7 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, has_internal_check || use_sat);
 		if (!use_sat) continue;
 		
-		NEW_STAT(i_stats, CPU_Timer, timer2, "SAT subsumption analysis");
+		NEW_STAT(i_stats, CPU_Timer, timer2, "SAT coverage analysis");
 		timer2.start_timer();
 		int num_sat(0);
 		::bvt fixed_literals;
