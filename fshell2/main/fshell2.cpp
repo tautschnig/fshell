@@ -218,7 +218,6 @@ void FShell2::try_query(::language_uit & manager, char const * line,
 		// output
 		::fshell2::Test_Suite_Output out(equation, m_opts);
 		out.print_ts(test_suite, idx, os, manager.ui_message_handler.get_ui());
-		of.close();
 
 		all_test_cases.splice(all_test_cases.end(), test_suite);
 		if (mult > 1) {
@@ -229,6 +228,7 @@ void FShell2::try_query(::language_uit & manager, char const * line,
 		}
 	}
 
+	of.close();
 	timer.stop_timer();
 }
 	
