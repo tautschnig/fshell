@@ -1,3 +1,21 @@
+2010-11-15  Michael Tautschnig  <tautschnig@forsyte.at>
+
+		* Release 1.2
+		* Updated CBMC to current CVS HEAD + bugfixes
+		* Fixed call stack analysis in presence of inlined functions
+		* Added option --enable-assert
+		* Performance improvements in internal coverage analysis
+		* Make FShell work deterministically
+
+2010-11-02  Michael Tautschnig  <tautschnig@forsyte.at>
+
+		* Close test suite output file at the end only
+
+2010-11-01  Michael Tautschnig  <tautschnig@forsyte.at>
+
+		* Renamed --sat-subsumption to more appropriate --sat-coverage-check
+		* Added command set multiple_coverage X
+
 2010-10-17  Michael Tautschnig  <tautschnig@forsyte.at>
 
 		* Release 1.1.1
