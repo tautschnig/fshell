@@ -1180,6 +1180,13 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 				if (current_states.end() == entry) continue;
 				ta_state_t const& dest(iter_pair.first->second.m_dest);
 				bool const is_tgs(m_cp_eval.is_test_goal_state(dest));
+				reverse_or_lit_map_t::const_iterator or_entry(m_reverse_or_map.end());
+				if (is_tgs) {
+					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+							::literalt::unused_var_no() != iter_pair.first->second.m_tg.var_no());
+					//// ::std::cerr << "Looking up OR " << i_iter->dimacs() << ::std::endl;
+					or_entry = m_reverse_or_map.find(iter_pair.first->second.m_tg);
+				}
 				// ::std::cerr << "trans " << src << " -> " << dest << ::std::endl;
 				for (::std::list< ::std::set< ::literalt > >::const_iterator i_iter(entry->second.begin());
 						i_iter != entry->second.end(); ++i_iter) {
@@ -1189,13 +1196,7 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 					::std::set< ::literalt > & known_sat(next_entry->second.back());
 					++current_states_size;
 					if (is_tgs) {
-
-						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-								::literalt::unused_var_no() != iter_pair.first->second.m_tg.var_no());
-						//// ::std::cerr << "Looking up OR " << i_iter->dimacs() << ::std::endl;
-						reverse_or_lit_map_t::const_iterator or_entry(m_reverse_or_map.find(iter_pair.first->second.m_tg));
 						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_reverse_or_map.end() != or_entry);
-
 						for (::std::set< ::literalt >::const_iterator or_entries(or_entry->second.begin());
 								or_entries != or_entry->second.end(); ++or_entries) {
 							//// ::std::cerr << "SATISFIED OR: " << or_entries->dimacs() << ::std::endl;
