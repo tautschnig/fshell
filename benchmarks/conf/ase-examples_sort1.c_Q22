@@ -1,7 +1,7 @@
 # vi: set ft=sh:
 
 source="ase-examples"
-extra_params="--unwind 4 code/ase-examples/sort1.c"
+extra_params="--unwind 4 --enable-assert code/ase-examples/sort1.c"
 prepare=""
 query="cover @STMTTYPE(assert)->@STMTTYPE(assert)"
 tg=2

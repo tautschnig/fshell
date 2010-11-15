@@ -131,7 +131,7 @@ bool Parseoptions::get_command_line_options()
 	m_options.set_option("overflow-check", false);
 	m_options.set_option("nan-check", false);
 	m_options.set_option("pointer-check", false);
-	m_options.set_option("assertions", false);
+	m_options.set_option("assertions", cmdline.isset("enable-assert"));
 
 	// use assumptions
 	m_options.set_option("assumptions", !cmdline.isset("no-assumptions"));
@@ -327,6 +327,7 @@ void Parseoptions::help()
 		" --no-assumptions             ignore user assumptions\n"
 		" --no-simplify                UNDOCUMENTED\n"
 		" --partial-loops              don't generate unwinding assumptions (also implies --no-unwinding-assertions)\n"
+		" --enable-assert              don't ignore user assertions\n"
 		"\n"
 		"BMC options:\n"
 		" --function name              set main function name\n"
