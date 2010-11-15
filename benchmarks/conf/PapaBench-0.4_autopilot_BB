@@ -1,0 +1,16 @@
+# vi: set ft=sh:
+
+source="PapaBench-0.4"
+extra_params="-Icode/PapaBench-0.4/sw/include/ -Icode/PapaBench-0.4/sw/airborne/autopilot -Icode/PapaBench-0.4/sw/airborne/fly_by_wire/ -Icode/PapaBench-0.4/avr/include -Icode/PapaBench-0.4/sw/var/include -D__AVR_ATmega128__ -DUBX --unwind 3 --partial-loops code/PapaBench-0.4/sw/airborne/autopilot/mainloop.c code/PapaBench-0.4/sw/airborne/autopilot/main.c code/PapaBench-0.4/sw/airborne/autopilot/modem.c code/PapaBench-0.4/sw/airborne/autopilot/link_fbw.c code/PapaBench-0.4/sw/airborne/autopilot/spi.c code/PapaBench-0.4/sw/airborne/autopilot/adc.c code/PapaBench-0.4/sw/airborne/autopilot/infrared.c code/PapaBench-0.4/sw/airborne/autopilot/pid.c code/PapaBench-0.4/sw/airborne/autopilot/uart.c code/PapaBench-0.4/sw/airborne/autopilot/estimator.c code/PapaBench-0.4/sw/airborne/autopilot/if_calib.c code/PapaBench-0.4/sw/lib/c/math.c code/PapaBench-0.4/sw/airborne/autopilot/nav.c code/PapaBench-0.4/sw/airborne/autopilot/gps_ubx.c"
+prepare=""
+query="cover @BASICBLOCKENTRY"
+tg=0
+unsat=0
+tc=0
+min=0
+cputime=0.000
+mempeak=0.0
+
+exec_ts="no"
+gcov="no"
+gcov_opts=""

@@ -1,6 +1,6 @@
 BENCHMARKS = ase-examples busybox-1.14.0 engine-controllers joplift \
 						 memory-manager nt-drivers picosat-913 vfs-model basic \
-						 sorting
+						 sorting PapaBench-0.4 
 
 all: $(BENCHMARKS:=.prep)
 
@@ -15,6 +15,10 @@ clean:
 %.prep: %.tar.bz2 %.patch
 	tar xjf $<
 	cd $(subst .prep,,$@) && cat ../$(filter %.patch, $^) | patch -p1
+	touch $@
+
+%.prep: %.tar.gz
+	tar xzf $<
 	touch $@
 
 %.prep: %.tar.bz2
