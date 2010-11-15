@@ -367,7 +367,7 @@ void Command_Processing::finalize_goto_program(::language_uit & manager) {
 	::namespacet ns(manager.context);
 
 	manager.status("Function Pointer Removal");
-	::remove_function_pointers(m_gf);
+	::remove_function_pointers(ns, m_gf);
 
 	manager.status("Partial Inlining");
 	// do partial inlining

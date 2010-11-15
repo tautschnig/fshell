@@ -92,7 +92,7 @@ all-local:
 			$(MAKE) $(AM_MAKEFLAGS) -C cbmc/src/ clean ; \
 		fi ; \
 	fi
-	$(MAKE) $(filter-out CXXFLAGS="$(CXXFLAGS)", $(AM_MAKEFLAGS)) CXXFLAGS="$(CXXFLAGS) -Wno-parentheses -Wno-sign-compare" -C cbmc/src
+	$(MAKE) $(AM_MAKEFLAGS) -C cbmc/src
 if BUILD_LINENOISE
 	$(MAKE) $(AM_MAKEFLAGS) -C linenoise CC=$(CC) CFLAGS="$(CXXFLAGS)"
 endif
