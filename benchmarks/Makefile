@@ -46,6 +46,11 @@ NTDRIVERS = nt-drivers_cdaudio.c_BB nt-drivers_cdaudio.c_BB^2 nt-drivers_cdaudio
 						nt-drivers_parclass.BUG.c_BB nt-drivers_parclass.BUG.c_BB^2 nt-drivers_parclass.BUG.c_CC \
 						nt-drivers_parport.c_BB nt-drivers_parport.c_BB^2 nt-drivers_parport.c_CC
 
+MAELARDALEN = maelardalen_adpcm.c_BB maelardalen_adpcm.c_BB^2 \
+							maelardalen_nsichneu.c_BB maelardalen_nsichneu.c_BB^2 \
+							maelardalen_statemate.c_BB maelardalen_statemate.c_BB^2
+
+
 all install install-strip uninstall check installcheck dist:
 
 clean distclean maintainer-clean:
