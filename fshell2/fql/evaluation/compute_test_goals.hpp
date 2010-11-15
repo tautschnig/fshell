@@ -325,13 +325,13 @@ class Compute_Test_Goals_Boolean : public Compute_Test_Goals
 			test_goal_ids_t & tgs) const;
 
 	private:
-	typedef ::std::map< target_graph_t::edge_t, ::std::set< target_graph_t const* > > edge_to_target_graphs_t;
-	typedef ::std::map< target_graph_t::node_t, ::std::set< target_graph_t const* > > node_to_target_graphs_t;
+	typedef ::std::map< target_graph_t::edge_t, ::std::set< int > > edge_to_target_graphs_t;
+	typedef ::std::map< target_graph_t::node_t, ::std::set< int > > node_to_target_graphs_t;
 	typedef ::std::map< ::goto_programt::const_targett, edge_to_target_graphs_t > loc_to_edge_target_graphs_t; 
 	typedef ::std::map< ::goto_programt::const_targett, node_to_target_graphs_t > loc_to_node_target_graphs_t; 
 	typedef ::std::map< ta_state_t, ta_state_set_t > symbol_transition_map_t;
 	typedef ::std::map< int, symbol_transition_map_t > transition_map_t;
-	typedef ::std::map< target_graph_t const*, int > target_graph_to_int_t;
+	typedef ::std::set< int > local_target_graph_set_t;
 	typedef ::std::map< ta_state_t, ::bvt > bv_cache_t;
 	typedef ::std::map< ta_state_t, ::literalt > eq_cache_t;
 	typedef ::std::map< target_graph_t::edge_t, ::std::set< ::literalt > > edge_to_literal_map_t; 
@@ -377,7 +377,7 @@ class Compute_Test_Goals_Boolean : public Compute_Test_Goals
 			::bvt & prev_state, ta_state_set_t & possibly_reached_states,
 			unsigned const width,
 			::symex_target_equationt::SSA_stepst::const_iterator const step,
-			target_graph_to_int_t const& local_target_graph_map, bool map_tg,
+			local_target_graph_set_t const& local_target_graph_set, bool map_tg,
 			transition_map_t const& transitions, ta_state_map_t const&
 			reverse_state_map);
 	

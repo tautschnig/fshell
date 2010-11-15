@@ -44,6 +44,8 @@
 
 #include <sstream>
 #include <limits>
+#include <algorithm>
+#include <iterator>
 
 #include <cbmc/src/util/std_code.h>
 #include <cbmc/src/util/std_expr.h>
@@ -81,7 +83,7 @@ void Automaton_Inserter::insert(::goto_functionst & gf,
 	::fshell2::instrumentation::GOTO_Transformation inserter(m_manager, gf);
 	
 	int log_2_rounded(1);
-	int num_states(aut.state_count());
+	ta_state_map_t::size_type num_states(state_map.size());
 	while (num_states >>= 1) ++log_2_rounded;
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, ::std::numeric_limits< ta_state_t >::min() >= 0);
 	::symbolt const& state_symb(inserter.new_var(::std::string("$fshell2$state$") + suffix,
@@ -97,28 +99,25 @@ void Automaton_Inserter::insert(::goto_functionst & gf,
 
 	// traverse the automaton and collect relevant target graphs; we only need a
 	// subset of the target graphs and we should better know which ones
-	target_graph_to_int_t local_target_graph_map;
+	local_target_graph_set_t local_target_graph_set;
 
 	for (trace_automaton_t::const_iterator iter(aut.begin());
 			iter != aut.end(); ++iter) {
 		trace_automaton_t::edges_type const out_edges(aut.delta2(*iter));
 		for (trace_automaton_t::edges_type::const_iterator e_iter(out_edges.begin());
 				e_iter != out_edges.end(); ++e_iter) {
-			// skip ID
-			if (m_pp_eval.id_index() == e_iter->first) continue;
 			target_graph_t const& tgg(m_pp_eval.lookup_index(e_iter->first));
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, tgg.get_E().empty() ||
 					tgg.get_disconnected_nodes().empty());
-			if (local_target_graph_map.end() == local_target_graph_map.find(&tgg)) {
-				local_target_graph_map[ &tgg ] = e_iter->first;
+			if (local_target_graph_set.insert(e_iter->first).second) {
 				// store the mapping from edges to target graphs
 				for (target_graph_t::edges_t::const_iterator tg_iter(tgg.get_E().begin());
 						tg_iter != tgg.get_E().end(); ++tg_iter)
-					m_loc_to_edge_target_graphs_map[ tg_iter->first.second ][ *tg_iter ].insert(&tgg);
+					m_loc_to_edge_target_graphs_map[ tg_iter->first.second ][ *tg_iter ].insert(e_iter->first);
 				// store the mapping from nodes to target graphs
 				for (target_graph_t::nodes_t::const_iterator tg_iter(tgg.get_disconnected_nodes().begin());
 						tg_iter != tgg.get_disconnected_nodes().end(); ++tg_iter)
-					m_loc_to_node_target_graphs_map[ tg_iter->second ][ *tg_iter ].insert(&tgg);
+					m_loc_to_node_target_graphs_map[ tg_iter->second ][ *tg_iter ].insert(e_iter->first);
 			}
 		}
 	}
@@ -139,14 +138,10 @@ void Automaton_Inserter::insert(::goto_functionst & gf,
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg.end() != cfg_node_for_end_func);
 		if (cfg_node_for_end_func->second.successors.empty()) continue;
 
-		insert_function_calls(gf, iter->second.body, cfg, suffix, map_tg, local_target_graph_map);
+		insert_function_calls(gf, iter->second.body, cfg, suffix, map_tg, local_target_graph_set);
 	}
 	
 	transition_map_t transitions;
-	// make sure transitions has an entry for ID
-	transitions.insert(::std::make_pair(m_pp_eval.id_index(),
-				::std::map< ta_state_t, ta_state_set_t >()));
-	
 	for (trace_automaton_t::const_iterator iter(aut.begin());
 			iter != aut.end(); ++iter) {
 		ta_state_t const mapped_state(state_map.find(*iter)->second);
@@ -173,7 +168,7 @@ void Automaton_Inserter::insert(::goto_functionst & gf,
 void Automaton_Inserter::insert_function_calls(::goto_functionst & gf,
 		::goto_programt & body, ::fshell2::instrumentation::CFG const& cfg,
 		char const * suffix, bool const map_tg,
-		target_graph_to_int_t const& local_target_graph_map) {
+		local_target_graph_set_t const& local_target_graph_set) {
 	using ::fshell2::instrumentation::CFG;
 	using ::fshell2::instrumentation::GOTO_Transformation;
 	
@@ -192,10 +187,9 @@ void Automaton_Inserter::insert_function_calls(::goto_functionst & gf,
 			CFA::node_t node(::std::make_pair(&body, iter));
 			node_to_target_graphs_t::const_iterator node_map_iter(entry.find(node));
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, entry.end() != node_map_iter);
-			for (::std::set< target_graph_t const* >::const_iterator f_iter(node_map_iter->second.begin());
+			for (::std::set< int >::const_iterator f_iter(node_map_iter->second.begin());
 					f_iter != node_map_iter->second.end(); ++f_iter) {
-				target_graph_to_int_t::const_iterator int_entry(local_target_graph_map.find(*f_iter));
-				if (local_target_graph_map.end() == int_entry) continue;
+				if (local_target_graph_set.end() == local_target_graph_set.find(*f_iter)) continue;
 				
 				::goto_programt tmp;
 				GOTO_Transformation::inserted_t & targets(inserter.make_nondet_choice(tmp, 2));
@@ -203,7 +197,7 @@ void Automaton_Inserter::insert_function_calls(::goto_functionst & gf,
 				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 2 == targets.size());
 			
 				::std::ostringstream fct_name;
-				fct_name << "c::filter_trans$" << suffix << "$" << int_entry->second;
+				fct_name << "c::filter_trans$" << suffix << "$" << *f_iter;
 				GOTO_Transformation::make_function_call(t_iter->second, fct_name.str());
 				++t_iter;
 				// may be ignored, non-deterministically
@@ -215,37 +209,23 @@ void Automaton_Inserter::insert_function_calls(::goto_functionst & gf,
 		}
 
 		loc_to_edge_target_graphs_t::const_iterator l_e_t_g_entry(m_loc_to_edge_target_graphs_map.find(iter));
-		if (m_loc_to_edge_target_graphs_map.end() == l_e_t_g_entry) {
-			// statement may have been added by earlier instrumentation and
-			// we don't care about it anyway
-			if (GOTO_Transformation::is_instrumented(iter)) continue;
-
-			::goto_programt tmp;
-			::goto_programt::targett call(tmp.add_instruction(FUNCTION_CALL));
-			::std::ostringstream fct_name;
-			fct_name << "c::filter_trans$" << suffix << "$" << m_pp_eval.id_index();
-			GOTO_Transformation::make_function_call(call, fct_name.str());
-
-			inserter.insert_at(::std::make_pair(&body, iter), tmp);
-		} else if (GOTO_Transformation::is_instrumented(iter)) {
+		if (m_loc_to_edge_target_graphs_map.end() == l_e_t_g_entry) continue;
+		
+		edge_to_target_graphs_t const& entry(l_e_t_g_entry->second);
+		if (GOTO_Transformation::is_instrumented(iter)) {
 			// statement has been added by earlier instrumentation, but
 			// we care about it! It must be a predicate-edge
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, iter->is_location());
 			::goto_programt::targett next(iter);
 			++next;
-			edge_to_target_graphs_t const& entry(l_e_t_g_entry->second);
 			CFA::edge_t edge(::std::make_pair(&body, iter),
 					::std::make_pair(&body, next));
 			edge_to_target_graphs_t::const_iterator edge_map_iter(entry.find(edge));
-			::std::set< int > target_graphs;
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, entry.end() != edge_map_iter);
-			for (::std::set< target_graph_t const* >::const_iterator f_iter(edge_map_iter->second.begin());
-					f_iter != edge_map_iter->second.end(); ++f_iter) {
-				target_graph_to_int_t::const_iterator int_entry(local_target_graph_map.find(*f_iter));
-				// ID is not included and this automaton may not even make
-				// use of this edge at all
-				if (local_target_graph_map.end() != int_entry) target_graphs.insert(int_entry->second);
-			}
+			::std::set< int > target_graphs;
+			::std::set_intersection(edge_map_iter->second.begin(), edge_map_iter->second.end(),
+					local_target_graph_set.begin(), local_target_graph_set.end(),
+					::std::inserter(target_graphs, target_graphs.begin()));
 			if (target_graphs.empty()) continue;
 
 			::goto_programt tmp;
@@ -266,26 +246,22 @@ void Automaton_Inserter::insert_function_calls(::goto_functionst & gf,
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg.end() != cfg_node);
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !cfg_node->second.successors.empty());
 
-			edge_to_target_graphs_t const& entry(l_e_t_g_entry->second);
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Not_Implemented, (cfg_node->second.successors.size() == 1) ||
 					iter->is_goto());
 			for (CFG::successors_t::const_iterator s_iter(cfg_node->second.successors.begin());
 					s_iter != cfg_node->second.successors.end(); ++s_iter) {
 				CFA::edge_t edge(::std::make_pair(&body, iter), s_iter->first);
 				edge_to_target_graphs_t::const_iterator edge_map_iter(entry.find(edge));
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, entry.end() != edge_map_iter);
 				::std::set< int > target_graphs;
-				if (entry.end() != edge_map_iter) {
-					for (::std::set< target_graph_t const* >::const_iterator f_iter(edge_map_iter->second.begin());
-							f_iter != edge_map_iter->second.end(); ++f_iter) {
-						target_graph_to_int_t::const_iterator int_entry(local_target_graph_map.find(*f_iter));
-						if (local_target_graph_map.end() == int_entry) continue;
-						target_graphs.insert(int_entry->second);
-					}
-				}
+				::std::set_intersection(edge_map_iter->second.begin(), edge_map_iter->second.end(),
+						local_target_graph_set.begin(), local_target_graph_set.end(),
+						::std::inserter(target_graphs, target_graphs.begin()));
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !target_graphs.empty());
 
 				//::goto_programt tg_record;
 				::goto_programt tmp;
-				GOTO_Transformation::inserted_t & targets(inserter.make_nondet_choice(tmp, target_graphs.size() + 1));
+				GOTO_Transformation::inserted_t & targets(inserter.make_nondet_choice(tmp, target_graphs.size()));
 				GOTO_Transformation::inserted_t::iterator t_iter(targets.begin());
 				for (::std::set< int >::const_iterator f_iter(target_graphs.begin()); f_iter != target_graphs.end(); 
 						++f_iter, ++t_iter) {
@@ -293,9 +269,6 @@ void Automaton_Inserter::insert_function_calls(::goto_functionst & gf,
 					fct_name << "c::filter_trans$" << suffix << "$" << *f_iter;
 					GOTO_Transformation::make_function_call(t_iter->second, fct_name.str());
 				}
-				::std::ostringstream fct_name;
-				fct_name << "c::filter_trans$" << suffix << "$" << m_pp_eval.id_index();
-				GOTO_Transformation::make_function_call(t_iter->second, fct_name.str());
 
 				if (iter->is_goto()) {
 					// CBMC doesn't support non-det goto statements at the moment, but
@@ -428,7 +401,6 @@ void Automaton_Inserter::prepare_assertion(ta_state_set_t const& compact_final,
 Evaluate_Coverage_Pattern::Test_Goal_States const& Automaton_Inserter::do_query(
 		::goto_functionst & gf, ::fshell2::instrumentation::CFG & cfg, Query const& query) {
 	m_tg_instrumentation_map.clear();
-	m_target_edge_map.clear();
 	m_loc_to_edge_target_graphs_map.clear();
 	m_loc_to_node_target_graphs_map.clear();
 	// compute trace automata for coverage and path patterns

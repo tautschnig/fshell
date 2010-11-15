@@ -644,29 +644,25 @@ void Compute_Test_Goals_Boolean::build(trace_automaton_t const& aut, bool map_tg
 
 	// traverse the automaton and collect relevant target graphs; we only need a
 	// subset of the target graphs and we should better know which ones
-	target_graph_to_int_t local_target_graph_map;
+	local_target_graph_set_t local_target_graph_set;
 	Evaluate_Path_Pattern const& pp_eval(m_cp_eval.get_pp_eval());
 	for (trace_automaton_t::const_iterator iter(aut.begin());
 			iter != aut.end(); ++iter) {
 		trace_automaton_t::edges_type const out_edges(aut.delta2(*iter));
 		for (trace_automaton_t::edges_type::const_iterator e_iter(out_edges.begin());
 				e_iter != out_edges.end(); ++e_iter) {
-			// skip ID - we don't do that hack here, only in
-			// automaton_instrumentation
-			// if (pp_eval.id_index() == e_iter->first) continue;
 			target_graph_t const& tgg(pp_eval.lookup_index(e_iter->first));
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, tgg.get_E().empty() ||
 					tgg.get_disconnected_nodes().empty());
-			if (local_target_graph_map.end() == local_target_graph_map.find(&tgg)) {
-				local_target_graph_map[ &tgg ] = e_iter->first;
+			if (local_target_graph_set.insert(e_iter->first).second) {
 				// store the mapping from edges to target graphs
 				for (target_graph_t::edges_t::const_iterator tg_iter(tgg.get_E().begin());
 						tg_iter != tgg.get_E().end(); ++tg_iter)
-					m_loc_to_edge_target_graphs_map[ tg_iter->first.second ][ *tg_iter ].insert(&tgg);
+					m_loc_to_edge_target_graphs_map[ tg_iter->first.second ][ *tg_iter ].insert(e_iter->first);
 				// store the mapping from nodes to target graphs
 				for (target_graph_t::nodes_t::const_iterator tg_iter(tgg.get_disconnected_nodes().begin());
 						tg_iter != tgg.get_disconnected_nodes().end(); ++tg_iter)
-					m_loc_to_node_target_graphs_map[ tg_iter->second ][ *tg_iter ].insert(&tgg);
+					m_loc_to_node_target_graphs_map[ tg_iter->second ][ *tg_iter ].insert(e_iter->first);
 			}
 		}
 	}
@@ -736,7 +732,7 @@ void Compute_Test_Goals_Boolean::build(trace_automaton_t const& aut, bool map_tg
 
 		do_step(cnf, bv_utils, bv_cache, prev_eq_cache, next_eq_cache,
 				prev_state, possibly_reached_states, width, iter,
-				local_target_graph_map, map_tg, transitions, reverse_state_map);
+				local_target_graph_set, map_tg, transitions, reverse_state_map);
 	}
 
 	::bvt finals;
@@ -754,7 +750,7 @@ void Compute_Test_Goals_Boolean::do_step(::cnf_clause_list_assignmentt & cnf,
 		eq_cache_t & next_eq_cache, ::bvt & prev_state,
 		ta_state_set_t & possibly_reached_states, unsigned const width,
 		::symex_target_equationt::SSA_stepst::const_iterator const step,
-		target_graph_to_int_t const& local_target_graph_map, bool map_tg,
+		local_target_graph_set_t const& local_target_graph_set, bool map_tg,
 		transition_map_t const& transitions, ta_state_map_t const& reverse_state_map)
 {
 	using ::fshell2::instrumentation::GOTO_Transformation;
@@ -791,13 +787,9 @@ void Compute_Test_Goals_Boolean::do_step(::cnf_clause_list_assignmentt & cnf,
 		ta_state_set_t sources;
 		// find the target graphs it could belong to
 		::std::set< int > target_graphs;
-		for (::std::set< target_graph_t const* >::const_iterator iter(entry.begin()->second.begin());
-				iter != entry.begin()->second.end(); ++iter) {
-			// check whether this target graph also appears in the
-			// current automaton
-			target_graph_to_int_t::const_iterator int_entry(local_target_graph_map.find(*iter));
-			if (local_target_graph_map.end() != int_entry) target_graphs.insert(int_entry->second);
-		}
+		::std::set_intersection(entry.begin()->second.begin(), entry.begin()->second.end(),
+				local_target_graph_set.begin(), local_target_graph_set.end(),
+				::std::inserter(target_graphs, target_graphs.begin()));
 		if (!target_graphs.empty()) {
 			for (::std::set< int >::const_iterator tgg_iter(target_graphs.begin());
 					tgg_iter != target_graphs.end(); ++tgg_iter) {
@@ -921,13 +913,9 @@ void Compute_Test_Goals_Boolean::do_step(::cnf_clause_list_assignmentt & cnf,
 		for (edge_to_target_graphs_t::const_iterator e_iter(entry.begin());
 				e_iter != entry.end(); ++e_iter) {
 			::std::set< int > target_graphs;
-			for (::std::set< target_graph_t const* >::const_iterator iter(e_iter->second.begin());
-					iter != e_iter->second.end(); ++iter) {
-				// check whether this target graph also appears in the
-				// current automaton
-				target_graph_to_int_t::const_iterator int_entry(local_target_graph_map.find(*iter));
-				if (local_target_graph_map.end() != int_entry) target_graphs.insert(int_entry->second);
-			}
+			::std::set_intersection(e_iter->second.begin(), e_iter->second.end(),
+					local_target_graph_set.begin(), local_target_graph_set.end(),
+					::std::inserter(target_graphs, target_graphs.begin()));
 
 			::literalt const al(cnf.land(step->guard_literal,
 						(goto_edge == e_iter ? goto_guard : goto_guard.negation())));

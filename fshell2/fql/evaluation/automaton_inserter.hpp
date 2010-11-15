@@ -31,6 +31,7 @@
 
 #include <fshell2/config/config.hpp>
 
+//#include <fshell2/instrumentation/goto_lt_compare.hpp>
 #include <fshell2/instrumentation/goto_transformation.hpp>
 #include <fshell2/fql/concepts/trace_automaton.hpp>
 #include <fshell2/fql/evaluation/evaluate_coverage_pattern.hpp>
@@ -77,19 +78,22 @@ class Automaton_Inserter
 	inline trace_automaton_t const& get_tg_aut() const;
 
 	private:
-	typedef ::std::map< target_graph_t::edge_t, ::std::set< target_graph_t const* > > edge_to_target_graphs_t;
-	typedef ::std::map< target_graph_t::node_t, ::std::set< target_graph_t const* > > node_to_target_graphs_t;
-	typedef ::std::map< ::goto_programt::const_targett, edge_to_target_graphs_t > loc_to_edge_target_graphs_t; 
-	typedef ::std::map< ::goto_programt::const_targett, node_to_target_graphs_t > loc_to_node_target_graphs_t; 
+	typedef ::std::map< target_graph_t::edge_t, ::std::set< int >/*,
+			target_graph_t::CFAEdge_Lt_Compare*/ > edge_to_target_graphs_t;
+	typedef ::std::map< target_graph_t::node_t, ::std::set< int >/*,
+			target_graph_t::CFANode_Lt_Compare*/ > node_to_target_graphs_t;
+	typedef ::std::map< ::goto_programt::const_targett, edge_to_target_graphs_t/*,
+			::fshell2::instrumentation::GOTO_Lt_Compare*/ > loc_to_edge_target_graphs_t; 
+	typedef ::std::map< ::goto_programt::const_targett, node_to_target_graphs_t/*,
+			::fshell2::instrumentation::GOTO_Lt_Compare*/ > loc_to_node_target_graphs_t; 
 	typedef ::std::map< ta_state_t, ta_state_set_t > symbol_transition_map_t;
 	typedef ::std::map< int, symbol_transition_map_t > transition_map_t;
-	typedef ::std::map< target_graph_t const*, int > target_graph_to_int_t;
+	typedef ::std::set< int > local_target_graph_set_t;
 
 	::language_uit & m_manager;
 	Evaluate_Coverage_Pattern m_cp_eval;
 	Evaluate_Path_Pattern const& m_pp_eval;
 	instrumentation_map_t m_tg_instrumentation_map;
-	::std::map< ::goto_programt::const_targett, CFA::edge_t > m_target_edge_map;
 	loc_to_node_target_graphs_t m_loc_to_node_target_graphs_map;
 	loc_to_edge_target_graphs_t m_loc_to_edge_target_graphs_map;
 
@@ -99,7 +103,7 @@ class Automaton_Inserter
 
 	void insert_function_calls(::goto_functionst & gf, ::goto_programt & body,
 			::fshell2::instrumentation::CFG const& cfg, char const * suffix,
-			bool const map_tg, target_graph_to_int_t const& local_target_graph_map);
+			bool const map_tg, local_target_graph_set_t const& local_target_graph_set);
 
 	static void prepare_assertion(ta_state_set_t const& compact_final,
 			::exprt & final_cond, ::symbolt const& state_symb);
