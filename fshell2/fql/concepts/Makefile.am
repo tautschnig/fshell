@@ -16,9 +16,9 @@ CBMC_OBJS = $(top_builddir)/cbmc/src/goto-programs/goto-programs.o \
 						$(top_builddir)/cbmc/src/ansi-c/ansi-c.o
 
 noinst_LTLIBRARIES = libconcepts.la
-libconcepts_la_SOURCES = cfa.cpp path_predicate.cpp path_set_predicate.cpp state_predicate.cpp trace_automaton.cpp
+libconcepts_la_SOURCES = cfa.cpp    trace_automaton.cpp
 include_fshell2_fql_conceptsdir = $(includedir)/fshell2/fql/concepts
-include_fshell2_fql_concepts_HEADERS = path_set_predicate.hpp cfa.hpp state_predicate.hpp path_predicate.hpp target_graph.hpp trace_automaton.hpp test_goal.hpp
+include_fshell2_fql_concepts_HEADERS =  cfa.hpp   target_graph.hpp trace_automaton.hpp test_goal.hpp
 check_PROGRAMS = cfa trace_automaton
 cfa_SOURCES = cfa.t.cpp
 # add additional objects required to build cfa here, like
