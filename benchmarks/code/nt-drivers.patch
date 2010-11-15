@@ -1,41 +1,3995 @@
-diff -urN nt-drivers.old/kbfiltr.i.cil.c nt-drivers/kbfiltr.i.cil.c
---- nt-drivers.old/kbfiltr.i.cil.c	2010-08-10 23:20:19.000000000 +0200
-+++ nt-drivers/kbfiltr.i.cil.c	2009-08-03 17:00:40.000000000 +0200
-@@ -1634,8 +1634,8 @@
- { 
+diff -urN nt-drivers/cdaudio.c nt-drivers.new/cdaudio.c
+--- nt-drivers/cdaudio.c	2005-05-27 18:03:03.000000000 +0200
++++ nt-drivers.new/cdaudio.c	2010-11-15 09:54:39.000000000 +0100
+@@ -405,48 +405,15 @@
  
-   {
--  ERROR: 
--  goto ERROR;
-+  //ERROR: 
-+  //goto ERROR;
- }
- }
- int s  ;
-@@ -2031,7 +2031,7 @@
-                                               {
-                                               irpSp = Irp->Tail.Overlay.__annonCompField17.__annonCompField16.CurrentStackLocation;
-                                               nextIrpSp = Irp->Tail.Overlay.__annonCompField17.__annonCompField16.CurrentStackLocation - 1;
--                                              memcpy(nextIrpSp, irpSp, (long )(& ((IO_STACK_LOCATION *)0)->CompletionRoutine));
-+                                              //memcpy(nextIrpSp, irpSp, (long )(& ((IO_STACK_LOCATION *)0)->CompletionRoutine));
-                                               nextIrpSp->Control = 0;
- /*                                               KeInitializeEvent(& event, 0, 0); */ /* INLINED */
-                                               }
-@@ -2549,17 +2549,6 @@
- }
- }
- char _SLAM_alloc_dummy  ;
--char *malloc(int i ) 
--{ int __BLAST_NONDET ;
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___0(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___0(LONGLONG Value , ULONG ShiftCount
+-	)
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	);
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___0(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -1333,106 +1300,21 @@
+ #pragma warning(disable:4035)
+ #line 1960
+ __inline LARGE_INTEGER __stdcall RtlConvertLongToLargeInteger(LONG SignedInteger
+-	)
+-{
+-	#line 1966
+-	__asm {
+-        mov     eax, SignedInteger
+-        cdq                 ; (edx:eax) = signed LargeInt
+-    
+-		};
+-}
++	);
+ 
+ #line 1973
+ __inline LARGE_INTEGER __stdcall RtlConvertUlongToLargeInteger(ULONG
+-	UnsignedInteger )
+-{
+-	#line 1979
+-	__asm {
+-        sub     edx, edx    ; zero highpart
+-        mov     eax, UnsignedInteger
+-    
+-		};
+-}
++	UnsignedInteger );
+ 
+ #line 1986
+ __inline LARGE_INTEGER __stdcall RtlLargeIntegerShiftLeft(LARGE_INTEGER
+-	LargeInteger , CCHAR ShiftCount )
+-{
+-	#line 1993
+-	__asm {
+-        mov     cl, ShiftCount
+-        and     cl, 0x3f                    ; mod 64
 -
--  {
--  if (__BLAST_NONDET) {
--    return ((char *)0);
--  } else {
--    return ((char *)1);
--  }
+-        cmp     cl, 32
+-        jc      short sl10
+-
+-        mov     edx, LargeInteger.LowPart   ; ShiftCount >= 32
+-        xor     eax, eax                    ; lowpart is zero
+-        shl     edx, cl                     ; store highpart
+-        jmp     short done
+-
+-sl10:
+-        mov     eax, LargeInteger.LowPart   ; ShiftCount < 32
+-        mov     edx, LargeInteger.HighPart
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-done:
+-    
+-		};
 -}
++	LargeInteger , CCHAR ShiftCount );
+ 
+ __inline LARGE_INTEGER __stdcall RtlLargeIntegerShiftRight(LARGE_INTEGER
+-	LargeInteger , CCHAR ShiftCount )
+-{
+-	#line 2004
+-	__asm {
+-        mov     cl, ShiftCount
+-        and     cl, 0x3f               ; mod 64
+-
+-        cmp     cl, 32
+-        jc      short sr10
+-
+-        mov     eax, LargeInteger.HighPart  ; ShiftCount >= 32
+-        xor     edx, edx                    ; lowpart is zero
+-        shr     eax, cl                     ; store highpart
+-        jmp     short done
+-
+-sr10:
+-        mov     eax, LargeInteger.LowPart   ; ShiftCount < 32
+-        mov     edx, LargeInteger.HighPart
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-done:
+-    
+-		};
 -}
-   void ExAcquireFastMutex(PFAST_MUTEX FastMutex ) ;
- void ExAcquireFastMutex(PFAST_MUTEX FastMutex ) 
- { 
++	LargeInteger , CCHAR ShiftCount );
+ 
+ __inline LARGE_INTEGER __stdcall RtlLargeIntegerArithmeticShift(LARGE_INTEGER
+-	LargeInteger , CCHAR ShiftCount )
+-{
+-	#line 2015
+-	__asm {
+-        mov     cl, ShiftCount
+-        and     cl, 3fh                 ; mod 64
+-
+-        cmp     cl, 32
+-        jc      short sar10
+-
+-        mov     eax, LargeInteger.HighPart
+-        sar     eax, cl
+-        bt      eax, 31                     ; sign bit set?
+-        sbb     edx, edx                    ; duplicate sign bit into highpart
+-        jmp     short done
+-sar10:
+-        mov     eax, LargeInteger.LowPart   ; (eax) = LargeInteger.LowPart
+-        mov     edx, LargeInteger.HighPart  ; (edx) = LargeInteger.HighPart
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-done:
+-    
+-		};
+-}
++	LargeInteger , CCHAR ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -2535,10 +2417,7 @@
+ __declspec(dllimport) KIRQL KeGetCurrentIrql() ;
+ 
+ #line 5271
+-__inline ULONG KeGetCurrentProcessorNumber(void  )
+-{
+-	__asm {  movzx eax, fs:[0] KPCR.Number  };
+-}
++__inline ULONG KeGetCurrentProcessorNumber(void  );
+ 
+ #line 5280
+ __declspec(dllimport) NTSTATUS __stdcall
+@@ -15290,48 +15169,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___1(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___1(LONGLONG Value , ULONG ShiftCount
+-	)
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	);
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___1(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+diff -urN nt-drivers/floppy.c nt-drivers.new/floppy.c
+--- nt-drivers/floppy.c	2005-05-27 18:03:03.000000000 +0200
++++ nt-drivers.new/floppy.c	2010-11-15 09:56:03.000000000 +0100
+@@ -560,48 +560,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___0(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___0(LONGLONG Value , ULONG ShiftCount
+-	)
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	);
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___0(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -1485,106 +1452,21 @@
+ #pragma warning(disable:4035)
+ #line 1960
+ __inline LARGE_INTEGER __stdcall RtlConvertLongToLargeInteger(LONG SignedInteger
+-	)
+-{
+-	#line 1966
+-	__asm {
+-        mov     eax, SignedInteger
+-        cdq                 ; (edx:eax) = signed LargeInt
+-    
+-		};
+-}
++	);
+ 
+ #line 1973
+ __inline LARGE_INTEGER __stdcall RtlConvertUlongToLargeInteger(ULONG
+-	UnsignedInteger )
+-{
+-	#line 1979
+-	__asm {
+-        sub     edx, edx    ; zero highpart
+-        mov     eax, UnsignedInteger
+-    
+-		};
+-}
++	UnsignedInteger );
+ 
+ #line 1986
+ __inline LARGE_INTEGER __stdcall RtlLargeIntegerShiftLeft(LARGE_INTEGER
+-	LargeInteger , CCHAR ShiftCount )
+-{
+-	#line 1993
+-	__asm {
+-        mov     cl, ShiftCount
+-        and     cl, 0x3f                    ; mod 64
+-
+-        cmp     cl, 32
+-        jc      short sl10
+-
+-        mov     edx, LargeInteger.LowPart   ; ShiftCount >= 32
+-        xor     eax, eax                    ; lowpart is zero
+-        shl     edx, cl                     ; store highpart
+-        jmp     short done
+-
+-sl10:
+-        mov     eax, LargeInteger.LowPart   ; ShiftCount < 32
+-        mov     edx, LargeInteger.HighPart
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-done:
+-    
+-		};
+-}
++	LargeInteger , CCHAR ShiftCount );
+ 
+ __inline LARGE_INTEGER __stdcall RtlLargeIntegerShiftRight(LARGE_INTEGER
+-	LargeInteger , CCHAR ShiftCount )
+-{
+-	#line 2004
+-	__asm {
+-        mov     cl, ShiftCount
+-        and     cl, 0x3f               ; mod 64
+-
+-        cmp     cl, 32
+-        jc      short sr10
+-
+-        mov     eax, LargeInteger.HighPart  ; ShiftCount >= 32
+-        xor     edx, edx                    ; lowpart is zero
+-        shr     eax, cl                     ; store highpart
+-        jmp     short done
+-
+-sr10:
+-        mov     eax, LargeInteger.LowPart   ; ShiftCount < 32
+-        mov     edx, LargeInteger.HighPart
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-done:
+-    
+-		};
+-}
++	LargeInteger , CCHAR ShiftCount );
+ 
+ __inline LARGE_INTEGER __stdcall RtlLargeIntegerArithmeticShift(LARGE_INTEGER
+-	LargeInteger , CCHAR ShiftCount )
+-{
+-	#line 2015
+-	__asm {
+-        mov     cl, ShiftCount
+-        and     cl, 3fh                 ; mod 64
+-
+-        cmp     cl, 32
+-        jc      short sar10
+-
+-        mov     eax, LargeInteger.HighPart
+-        sar     eax, cl
+-        bt      eax, 31                     ; sign bit set?
+-        sbb     edx, edx                    ; duplicate sign bit into highpart
+-        jmp     short done
+-sar10:
+-        mov     eax, LargeInteger.LowPart   ; (eax) = LargeInteger.LowPart
+-        mov     edx, LargeInteger.HighPart  ; (edx) = LargeInteger.HighPart
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-done:
+-    
+-		};
+-}
++	LargeInteger , CCHAR ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -2687,10 +2569,7 @@
+ __declspec(dllimport) KIRQL KeGetCurrentIrql() ;
+ 
+ #line 5271
+-__inline ULONG KeGetCurrentProcessorNumber(void  )
+-{
+-	__asm {  movzx eax, fs:[0] KPCR.Number  };
+-}
++__inline ULONG KeGetCurrentProcessorNumber(void  );
+ 
+ #line 5280
+ __declspec(dllimport) NTSTATUS __stdcall
+@@ -8150,9 +8029,9 @@
+ void errorFn()
+ {
+ 	#line 97
+-	ERROR:
++	ERROR:;
+ 		#line 97
+-		goto ERROR;
++		//goto ERROR;
+ }
+ 
+ #line 101
+@@ -14790,48 +14669,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___1(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___1(LONGLONG Value , ULONG ShiftCount
+-	)
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	);
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___1(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -16810,12 +16656,6 @@
+ 
+ char _SLAM_alloc_dummy ;
+ 
+-char *  malloc(int i )
+-{
+-	#line 222
+-	return & _SLAM_alloc_dummy;
+-}
+-
+ #line 230
+ __declspec(dllimport) void ExAcquireFastMutex(PFAST_MUTEX FastMutex )
+ {
+diff -urN nt-drivers/kbfiltr.c nt-drivers.new/kbfiltr.c
+--- nt-drivers/kbfiltr.c	2010-11-11 23:57:55.000000000 +0100
++++ nt-drivers.new/kbfiltr.c	2010-11-15 09:58:04.000000000 +0100
+@@ -405,54 +405,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___0(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-/*
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-*/
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___0(LONGLONG Value , ULONG ShiftCount
+-	)
+-{
+-	#line 852
+-/*
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-*/
+-}
++	);
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___0(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-/*
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-*/
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -1339,116 +1300,21 @@
+ #pragma warning(disable:4035)
+ #line 1960
+ __inline LARGE_INTEGER __stdcall RtlConvertLongToLargeInteger(LONG SignedInteger
+-	)
+-{
+-	#line 1966
+-/*
+-	__asm {
+-        mov     eax, SignedInteger
+-        cdq                 ; (edx:eax) = signed LargeInt
+-    
+-		};
+-*/
+-}
++	);
+ 
+ #line 1973
+ __inline LARGE_INTEGER __stdcall RtlConvertUlongToLargeInteger(ULONG
+-	UnsignedInteger )
+-{
+-	#line 1979
+-/*
+-	__asm {
+-        sub     edx, edx    ; zero highpart
+-        mov     eax, UnsignedInteger
+-    
+-		};
+-*/
+-}
++	UnsignedInteger );
+ 
+ #line 1986
+ __inline LARGE_INTEGER __stdcall RtlLargeIntegerShiftLeft(LARGE_INTEGER
+-	LargeInteger , CCHAR ShiftCount )
+-{
+-	#line 1993
+-/*
+-	__asm {
+-        mov     cl, ShiftCount
+-        and     cl, 0x3f                    ; mod 64
+-
+-        cmp     cl, 32
+-        jc      short sl10
+-
+-        mov     edx, LargeInteger.LowPart   ; ShiftCount >= 32
+-        xor     eax, eax                    ; lowpart is zero
+-        shl     edx, cl                     ; store highpart
+-        jmp     short done
+-
+-sl10:
+-        mov     eax, LargeInteger.LowPart   ; ShiftCount < 32
+-        mov     edx, LargeInteger.HighPart
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-done:
+-    
+-		};
+-*/
+-}
++	LargeInteger , CCHAR ShiftCount );
+ 
+ __inline LARGE_INTEGER __stdcall RtlLargeIntegerShiftRight(LARGE_INTEGER
+-	LargeInteger , CCHAR ShiftCount )
+-{
+-	#line 2004
+-/*
+-	__asm {
+-        mov     cl, ShiftCount
+-        and     cl, 0x3f               ; mod 64
+-
+-        cmp     cl, 32
+-        jc      short sr10
+-
+-        mov     eax, LargeInteger.HighPart  ; ShiftCount >= 32
+-        xor     edx, edx                    ; lowpart is zero
+-        shr     eax, cl                     ; store highpart
+-        jmp     short done
+-
+-sr10:
+-        mov     eax, LargeInteger.LowPart   ; ShiftCount < 32
+-        mov     edx, LargeInteger.HighPart
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-done:
+-    
+-		};
+-*/
+-}
++	LargeInteger , CCHAR ShiftCount );
+ 
+ __inline LARGE_INTEGER __stdcall RtlLargeIntegerArithmeticShift(LARGE_INTEGER
+-	LargeInteger , CCHAR ShiftCount )
+-{
+-	#line 2015
+-/*
+-	__asm {
+-        mov     cl, ShiftCount
+-        and     cl, 3fh                 ; mod 64
+-
+-        cmp     cl, 32
+-        jc      short sar10
+-
+-        mov     eax, LargeInteger.HighPart
+-        sar     eax, cl
+-        bt      eax, 31                     ; sign bit set?
+-        sbb     edx, edx                    ; duplicate sign bit into highpart
+-        jmp     short done
+-sar10:
+-        mov     eax, LargeInteger.LowPart   ; (eax) = LargeInteger.LowPart
+-        mov     edx, LargeInteger.HighPart  ; (edx) = LargeInteger.HighPart
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-done:
+-    
+-		};
+-*/
+-}
++	LargeInteger , CCHAR ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -2551,12 +2417,7 @@
+ __declspec(dllimport) KIRQL KeGetCurrentIrql() ;
+ 
+ #line 5271
+-__inline ULONG KeGetCurrentProcessorNumber(void  )
+-{
+-/*
+-	__asm {  movzx eax, fs:[0] KPCR.Number  };
+-*/
+-}
++__inline ULONG KeGetCurrentProcessorNumber(void  );
+ 
+ #line 5280
+ __declspec(dllimport) NTSTATUS __stdcall
+@@ -8340,7 +8201,7 @@
+ void errorFn()
+ {
+ 	#line 36
+-	ERROR: goto ERROR;
++	ERROR: ;//goto ERROR;
+ 		#line 36
+ 		;
+ }
+@@ -9379,54 +9240,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___1(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-/*
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-*/
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___1(LONGLONG Value , ULONG ShiftCount
+-	)
+-{
+-	#line 852
+-/*
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-*/
+-}
++	);
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___1(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-/*
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-*/
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -11415,21 +11237,6 @@
+ 
+ char _SLAM_alloc_dummy ;
+ 
+-char *  malloc(int i )
+-{
+-	#line 224
+-	int __BLAST_NONDET ;
+-	#line 226
+-	if(__BLAST_NONDET)
+-	{
+-		#line 227
+-		return (char *  )0;
+-	}
+-	else
+-		#line 228
+-		return (char *  )1;
+-}
+-
+ #line 237
+ __declspec(dllimport) void ExAcquireFastMutex(PFAST_MUTEX FastMutex )
+ {
+diff -urN nt-drivers/parclass.BUG.c nt-drivers.new/parclass.BUG.c
+--- nt-drivers/parclass.BUG.c	2005-05-27 18:03:04.000000000 +0200
++++ nt-drivers.new/parclass.BUG.c	2010-11-15 11:13:52.000000000 +0100
+@@ -405,48 +405,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___0(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___0(LONGLONG Value , ULONG ShiftCount
+-	)
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	);
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___0(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -1333,106 +1300,21 @@
+ #pragma warning(disable:4035)
+ #line 1960
+ __inline LARGE_INTEGER __stdcall RtlConvertLongToLargeInteger(LONG SignedInteger
+-	)
+-{
+-	#line 1966
+-	__asm {
+-        mov     eax, SignedInteger
+-        cdq                 ; (edx:eax) = signed LargeInt
+-    
+-		};
+-}
++	);
+ 
+ #line 1973
+ __inline LARGE_INTEGER __stdcall RtlConvertUlongToLargeInteger(ULONG
+-	UnsignedInteger )
+-{
+-	#line 1979
+-	__asm {
+-        sub     edx, edx    ; zero highpart
+-        mov     eax, UnsignedInteger
+-    
+-		};
+-}
++	UnsignedInteger );
+ 
+ #line 1986
+ __inline LARGE_INTEGER __stdcall RtlLargeIntegerShiftLeft(LARGE_INTEGER
+-	LargeInteger , CCHAR ShiftCount )
+-{
+-	#line 1993
+-	__asm {
+-        mov     cl, ShiftCount
+-        and     cl, 0x3f                    ; mod 64
+-
+-        cmp     cl, 32
+-        jc      short sl10
+-
+-        mov     edx, LargeInteger.LowPart   ; ShiftCount >= 32
+-        xor     eax, eax                    ; lowpart is zero
+-        shl     edx, cl                     ; store highpart
+-        jmp     short done
+-
+-sl10:
+-        mov     eax, LargeInteger.LowPart   ; ShiftCount < 32
+-        mov     edx, LargeInteger.HighPart
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-done:
+-    
+-		};
+-}
++	LargeInteger , CCHAR ShiftCount );
+ 
+ __inline LARGE_INTEGER __stdcall RtlLargeIntegerShiftRight(LARGE_INTEGER
+-	LargeInteger , CCHAR ShiftCount )
+-{
+-	#line 2004
+-	__asm {
+-        mov     cl, ShiftCount
+-        and     cl, 0x3f               ; mod 64
+-
+-        cmp     cl, 32
+-        jc      short sr10
+-
+-        mov     eax, LargeInteger.HighPart  ; ShiftCount >= 32
+-        xor     edx, edx                    ; lowpart is zero
+-        shr     eax, cl                     ; store highpart
+-        jmp     short done
+-
+-sr10:
+-        mov     eax, LargeInteger.LowPart   ; ShiftCount < 32
+-        mov     edx, LargeInteger.HighPart
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-done:
+-    
+-		};
+-}
++	LargeInteger , CCHAR ShiftCount );
+ 
+ __inline LARGE_INTEGER __stdcall RtlLargeIntegerArithmeticShift(LARGE_INTEGER
+-	LargeInteger , CCHAR ShiftCount )
+-{
+-	#line 2015
+-	__asm {
+-        mov     cl, ShiftCount
+-        and     cl, 3fh                 ; mod 64
+-
+-        cmp     cl, 32
+-        jc      short sar10
+-
+-        mov     eax, LargeInteger.HighPart
+-        sar     eax, cl
+-        bt      eax, 31                     ; sign bit set?
+-        sbb     edx, edx                    ; duplicate sign bit into highpart
+-        jmp     short done
+-sar10:
+-        mov     eax, LargeInteger.LowPart   ; (eax) = LargeInteger.LowPart
+-        mov     edx, LargeInteger.HighPart  ; (edx) = LargeInteger.HighPart
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-done:
+-    
+-		};
+-}
++	LargeInteger , CCHAR ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -2535,10 +2417,7 @@
+ __declspec(dllimport) KIRQL KeGetCurrentIrql() ;
+ 
+ #line 5271
+-__inline ULONG KeGetCurrentProcessorNumber(void  )
+-{
+-	__asm {  movzx eax, fs:[0] KPCR.Number  };
+-}
++__inline ULONG KeGetCurrentProcessorNumber(void  );
+ 
+ #line 5280
+ __declspec(dllimport) NTSTATUS __stdcall
+@@ -10055,48 +9934,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___1(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___1(LONGLONG Value , ULONG ShiftCount
+-	)
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	);
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___1(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -13234,48 +13080,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___2(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___2(LONGLONG Value , ULONG ShiftCount
+-	)
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	);
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___2(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -16299,48 +16112,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___3(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___3(LONGLONG Value , ULONG ShiftCount
+-	)
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	);
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___3(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -20225,48 +20005,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___4(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___4(LONGLONG Value , ULONG ShiftCount
+-	)
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	);
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___4(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -23297,48 +23044,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___5(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___5(LONGLONG Value , ULONG ShiftCount
+-	)
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	);
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___5(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -26297,48 +26011,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___6(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___6(LONGLONG Value , ULONG ShiftCount
+-	)
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	);
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___6(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -29209,48 +28890,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___7(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___7(LONGLONG Value , ULONG ShiftCount
+-	)
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	);
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___7(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -32216,48 +31864,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___8(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___8(LONGLONG Value , ULONG ShiftCount
+-	)
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	);
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___8(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -36439,48 +36054,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___9(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___9(LONGLONG Value , ULONG ShiftCount
+-	)
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	);
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___9(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -39492,48 +39074,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___10(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___10(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___10(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -42852,48 +42401,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___11(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___11(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___11(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -45774,48 +45290,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___12(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___12(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___12(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -49999,48 +49482,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___13(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___13(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___13(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -53323,48 +52773,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___14(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___14(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___14(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -56416,48 +55833,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___15(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___15(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___15(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -60140,48 +59524,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___16(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___16(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___16(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -63100,48 +62451,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___17(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___17(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___17(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -66419,48 +65737,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___18(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___18(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___18(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -69265,48 +68550,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___19(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___19(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___19(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -72116,48 +71368,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___20(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___20(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___20(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -77417,48 +76636,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___21(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___21(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___21(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -81996,48 +81182,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___22(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___22(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___22(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -85634,48 +84787,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___23(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___23(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___23(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -89194,48 +88314,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___24(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___24(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___24(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -92331,48 +91418,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___25(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___25(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___25(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -95606,48 +94660,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___26(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___26(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___26(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -98966,48 +97987,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___27(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___27(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___27(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -101948,48 +100936,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___28(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___28(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___28(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -105443,48 +104398,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___29(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___29(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___29(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -109277,48 +108199,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___30(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___30(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___30(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -112885,48 +111774,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___31(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___31(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___31(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -115826,48 +114682,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___32(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___32(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___32(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -119417,48 +118240,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___33(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___33(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___33(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -122636,48 +121426,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___34(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___34(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___34(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -125671,48 +124428,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___35(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___35(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___35(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -128806,48 +127530,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___36(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___36(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___36(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -132005,48 +130696,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___37(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___37(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___37(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -135274,48 +133932,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___38(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___38(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___38(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -137067,9 +135692,9 @@
+ void errorFn()
+ {
+ 	#line 17
+-	ERROR:
++	ERROR:;
+ 		#line 17
+-		goto ERROR;
++		//goto ERROR;
+ }
+ 
+ #line 22
+@@ -137406,21 +136031,6 @@
+ 
+ char _SLAM_alloc_dummy ;
+ 
+-char *  malloc(int i )
+-{
+-	#line 247
+-	int __BLAST_NONDET ;
+-	#line 249
+-	if(__BLAST_NONDET)
+-	{
+-		#line 250
+-		return (char *  )0;
+-	}
+-	else
+-		#line 251
+-		return (char *  )1;
+-}
+-
+ #line 260
+ __declspec(dllimport) void ExAcquireFastMutex(PFAST_MUTEX FastMutex )
+ {
+diff -urN nt-drivers/parport.c nt-drivers.new/parport.c
+--- nt-drivers/parport.c	2005-05-27 18:03:04.000000000 +0200
++++ nt-drivers.new/parport.c	2010-11-15 10:11:29.000000000 +0100
+@@ -405,48 +405,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___0(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___0(LONGLONG Value , ULONG ShiftCount
+-	)
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	);
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___0(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -1335,106 +1302,21 @@
+ #pragma warning(disable:4035)
+ #line 1960
+ __inline LARGE_INTEGER __stdcall RtlConvertLongToLargeInteger(LONG SignedInteger
+-	)
+-{
+-	#line 1966
+-	__asm {
+-        mov     eax, SignedInteger
+-        cdq                 ; (edx:eax) = signed LargeInt
+-    
+-		};
+-}
++	);
+ 
+ #line 1973
+ __inline LARGE_INTEGER __stdcall RtlConvertUlongToLargeInteger(ULONG
+-	UnsignedInteger )
+-{
+-	#line 1979
+-	__asm {
+-        sub     edx, edx    ; zero highpart
+-        mov     eax, UnsignedInteger
+-    
+-		};
+-}
++	UnsignedInteger );
+ 
+ #line 1986
+ __inline LARGE_INTEGER __stdcall RtlLargeIntegerShiftLeft(LARGE_INTEGER
+-	LargeInteger , CCHAR ShiftCount )
+-{
+-	#line 1993
+-	__asm {
+-        mov     cl, ShiftCount
+-        and     cl, 0x3f                    ; mod 64
+-
+-        cmp     cl, 32
+-        jc      short sl10
+-
+-        mov     edx, LargeInteger.LowPart   ; ShiftCount >= 32
+-        xor     eax, eax                    ; lowpart is zero
+-        shl     edx, cl                     ; store highpart
+-        jmp     short done
+-
+-sl10:
+-        mov     eax, LargeInteger.LowPart   ; ShiftCount < 32
+-        mov     edx, LargeInteger.HighPart
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-done:
+-    
+-		};
+-}
++	LargeInteger , CCHAR ShiftCount );
+ 
+ __inline LARGE_INTEGER __stdcall RtlLargeIntegerShiftRight(LARGE_INTEGER
+-	LargeInteger , CCHAR ShiftCount )
+-{
+-	#line 2004
+-	__asm {
+-        mov     cl, ShiftCount
+-        and     cl, 0x3f               ; mod 64
+-
+-        cmp     cl, 32
+-        jc      short sr10
+-
+-        mov     eax, LargeInteger.HighPart  ; ShiftCount >= 32
+-        xor     edx, edx                    ; lowpart is zero
+-        shr     eax, cl                     ; store highpart
+-        jmp     short done
+-
+-sr10:
+-        mov     eax, LargeInteger.LowPart   ; ShiftCount < 32
+-        mov     edx, LargeInteger.HighPart
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-done:
+-    
+-		};
+-}
++	LargeInteger , CCHAR ShiftCount );
+ 
+ __inline LARGE_INTEGER __stdcall RtlLargeIntegerArithmeticShift(LARGE_INTEGER
+-	LargeInteger , CCHAR ShiftCount )
+-{
+-	#line 2015
+-	__asm {
+-        mov     cl, ShiftCount
+-        and     cl, 3fh                 ; mod 64
+-
+-        cmp     cl, 32
+-        jc      short sar10
+-
+-        mov     eax, LargeInteger.HighPart
+-        sar     eax, cl
+-        bt      eax, 31                     ; sign bit set?
+-        sbb     edx, edx                    ; duplicate sign bit into highpart
+-        jmp     short done
+-sar10:
+-        mov     eax, LargeInteger.LowPart   ; (eax) = LargeInteger.LowPart
+-        mov     edx, LargeInteger.HighPart  ; (edx) = LargeInteger.HighPart
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-done:
+-    
+-		};
+-}
++	LargeInteger , CCHAR ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -2537,10 +2419,7 @@
+ __declspec(dllimport) KIRQL KeGetCurrentIrql() ;
+ 
+ #line 5271
+-__inline ULONG KeGetCurrentProcessorNumber(void  )
+-{
+-	__asm {  movzx eax, fs:[0] KPCR.Number  };
+-}
++__inline ULONG KeGetCurrentProcessorNumber(void  );
+ 
+ #line 5280
+ __declspec(dllimport) NTSTATUS __stdcall
+@@ -8958,48 +8837,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___1(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___1(LONGLONG Value , ULONG ShiftCount
+-	)
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	);
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___1(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -11878,48 +11724,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___2(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___2(LONGLONG Value , ULONG ShiftCount
+-	)
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	);
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___2(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -14674,48 +14487,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___3(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___3(LONGLONG Value , ULONG ShiftCount
+-	)
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	);
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___3(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -17526,48 +17306,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___4(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___4(LONGLONG Value , ULONG ShiftCount
+-	)
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	);
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___4(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -21489,48 +21236,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___5(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___5(LONGLONG Value , ULONG ShiftCount
+-	)
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	);
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___5(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -24298,48 +24012,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___6(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___6(LONGLONG Value , ULONG ShiftCount
+-	)
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	);
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___6(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -27148,48 +26829,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___7(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___7(LONGLONG Value , ULONG ShiftCount
+-	)
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	);
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___7(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -30888,48 +30536,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___8(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___8(LONGLONG Value , ULONG ShiftCount
+-	)
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	);
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___8(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -35260,48 +34875,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___9(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___9(LONGLONG Value , ULONG ShiftCount
+-	)
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	);
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___9(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -38002,48 +37584,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___10(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___10(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___10(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -42942,48 +42491,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___11(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___11(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___11(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -46019,48 +45535,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___12(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___12(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___12(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -48951,48 +48434,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___13(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___13(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___13(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -51824,48 +51274,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___14(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___14(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___14(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -55697,48 +55114,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___15(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___15(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___15(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -58761,48 +58145,15 @@
+ 
+ #pragma warning(disable:4035)
+ __inline ULONGLONG __stdcall Int64ShllMod32___16(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 842
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shld    edx, eax, cl
+-        shl     eax, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 845
+ __inline LONGLONG __stdcall Int64ShraMod32___16(LONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 852
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        sar     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ #line 855
+ __inline ULONGLONG __stdcall Int64ShrlMod32___16(ULONGLONG Value , ULONG
+-	ShiftCount )
+-{
+-	#line 862
+-	__asm {
+-        mov     ecx, ShiftCount
+-        mov     eax, dword ptr [Value]
+-        mov     edx, dword ptr [Value+4]
+-        shrd    eax, edx, cl
+-        shr     edx, cl
+-    
+-		};
+-}
++	ShiftCount );
+ 
+ 
+ #pragma warning(pop)
+@@ -60846,21 +60197,6 @@
+ 
+ char _SLAM_alloc_dummy ;
+ 
+-char *  malloc(int i )
+-{
+-	#line 247
+-	int __BLAST_NONDET ;
+-	#line 249
+-	if(__BLAST_NONDET)
+-	{
+-		#line 250
+-		return (char *  )0;
+-	}
+-	else
+-		#line 251
+-		return (char *  )1;
+-}
+-
+ #line 260
+ __declspec(dllimport) void ExAcquireFastMutex(PFAST_MUTEX FastMutex )
+ {

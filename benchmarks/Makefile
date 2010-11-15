@@ -40,6 +40,11 @@ BASIC = basic_bitops_1 basic_bool_1 basic_boolop1_CC basic_boolop2_CC basic_cov-
 SORTING = sorting_bs_BB sorting_bubble-fortas_BB sorting_bubble_BB sorting_sorter_BB \
 					sorting_bubble-sort_CC sorting_insertion-sort_CC sorting_quick-sort_CC sorting_selection-sort_CC
 
+NTDRIVERS = nt-drivers_cdaudio.c_BB nt-drivers_cdaudio.c_BB^2 nt-drivers_cdaudio.c_CC \
+						nt-drivers_floppy.c_BB nt-drivers_floppy.c_BB^2 nt-drivers_floppy.c_CC \
+						nt-drivers_kbfiltr.c_BB nt-drivers_kbfiltr.c_BB^2 nt-drivers_kbfiltr.c_CC \
+						nt-drivers_parclass.BUG.c_BB nt-drivers_parclass.BUG.c_BB^2 nt-drivers_parclass.BUG.c_CC \
+						nt-drivers_parport.c_BB nt-drivers_parport.c_BB^2 nt-drivers_parport.c_CC
 
 all install install-strip uninstall check installcheck dist:
 

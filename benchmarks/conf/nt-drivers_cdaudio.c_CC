@@ -2,13 +2,13 @@
 
 source="nt-drivers"
 extra_params="-D__int64=\"long long int\" -D\"__declspec(x)=\" --no-library"
-prepare="add sourcecode 'code/nt-drivers/kbfiltr.c'"
+prepare="add sourcecode 'code/nt-drivers/cdaudio.c'"
 query="cover edges(@conditionedge)"
-tg=197
-unsat=191
-tc=2
+tg=0
+unsat=0
+tc=0
 min=0
-cputime=139.251
+cputime=0.0
 mempeak=0.0
 
 exec_ts="no"
