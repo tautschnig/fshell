@@ -8,6 +8,7 @@ query="edges(@basicblockentry)->edges(@basicblockentry)->edges(@basicblockentry)
 tg=43904
 unsat=43344
 tc=5
+min=0
 cputime=200.087
 mempeak=0.0
 

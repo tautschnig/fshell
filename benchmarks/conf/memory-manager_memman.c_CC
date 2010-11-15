@@ -7,6 +7,7 @@ query="cover edges(@conditionedge)"
 tg=40
 unsat=16
 tc=4
+min=0
 cputime=18.185
 mempeak=0.0
 

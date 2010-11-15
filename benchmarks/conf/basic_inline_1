@@ -7,6 +7,7 @@ query="cover ID"
 tg=5
 unsat=0
 tc=1
+min=0
 cputime=0.003115
 mempeak=0.0
 

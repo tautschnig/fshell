@@ -7,6 +7,7 @@ query="cover paths(@func(ctrl_loop),1)"
 tg=35504
 unsat=33876
 tc=1628
+min=0
 cputime=5150.8
 mempeak=9471.0
 

@@ -7,6 +7,7 @@ query="cover @BASICBLOCKENTRY->@BASICBLOCKENTRY"
 tg=121
 unsat=53
 tc=4
+min=0
 cputime=0.595283
 mempeak=0.0
 

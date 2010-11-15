@@ -28,6 +28,7 @@ query="cover no-such-query"
 tg=0
 unsat=0
 tc=0
+min=0
 cputime=0.000
 mempeak=0.0
 

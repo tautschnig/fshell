@@ -7,6 +7,7 @@ query="cover @CONDITIONEDGE & @STMTTYPE(if,switch,for,while,?:)"
 tg=8
 unsat=0
 tc=3
+min=0
 cputime=0.326575
 mempeak=0.0
 

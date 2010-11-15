@@ -7,6 +7,7 @@ query="cover @CONDITIONEDGE+@BASICBLOCKENTRY"
 tg=30
 unsat=0
 tc=2
+min=0
 cputime=0.183421
 mempeak=0.0
 

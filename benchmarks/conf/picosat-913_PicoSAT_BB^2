@@ -7,6 +7,7 @@ query="cover edges(@basicblockentry)->edges(@basicblockentry)"
 tg=160000
 unsat=82337
 tc=399
+min=0
 cputime=3364.33
 mempeak=6099
 

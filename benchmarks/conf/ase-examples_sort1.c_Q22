@@ -7,6 +7,7 @@ query="cover @STMTTYPE(assert)->@STMTTYPE(assert)"
 tg=2
 unsat=1
 tc=1
+min=0
 cputime=1
 mempeak=0.0
 

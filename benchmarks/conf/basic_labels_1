@@ -7,6 +7,7 @@ query="cover @label(L0a)->@label(L1)"
 tg=2
 unsat=1
 tc=1
+min=0
 cputime=0.014396
 mempeak=0.0
 

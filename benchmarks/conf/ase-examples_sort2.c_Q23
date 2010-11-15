@@ -7,6 +7,7 @@ query="cover @BASICBLOCKENTRY & @FUNC(eval) passing ^NOT(@LABEL(init))*$"
 tg=4
 unsat=0
 tc=1
+min=0
 cputime=0.127733
 mempeak=0.0
 

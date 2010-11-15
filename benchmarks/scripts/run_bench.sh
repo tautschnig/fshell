@@ -49,11 +49,12 @@ for b in $benchmarks ; do
     mtc=`grep "Test cases:" $results | sed 's/.*Test cases: //'`
     mcputime=`grep "Query CPU time:" $results | sed 's/.*Query CPU time: //'`
     mmempeak=`grep "Peak memory usage:" $results | sed 's/.*Peak memory usage: //'`
-    if [ -z "$mtg" -o -z "$munsat" -o -z "$mtc" -o -z "$mcputime" -o -z "$mmempeak" ] ; then
+    mmin=`grep "Test cases removed by minimization:" $results | sed 's/.*Test cases removed by minimization: //'`
+    if [ -z "$mtg" -o -z "$munsat" -o -z "$mtc" -o -z "$mcputime" -o -z "$mmempeak" -o -z "$mmin" ] ; then
       cp $results failure.log
       exit 1
     fi
-    echo "$b #tg=$mtg($tg) #iftg=$munsat($unsat) #tc=$mtc($tc) ${mcputime}($cputime) ${mmempeak}($mempeak)" >> $logf
+    echo "$b #tg=$mtg($tg) #iftg=$munsat($unsat) #tc=$mtc($tc) #min=$mmin($min) ${mcputime}($cputime) ${mmempeak}($mempeak)" >> $logf
     if [ x$exec_ts = xyes ] ; then
       echo "Trying to execute generated test suite"
       $testenv < $testsuite

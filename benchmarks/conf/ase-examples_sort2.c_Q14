@@ -7,6 +7,7 @@ query="cover @CONDITIONEDGE passing ^(NOT(@CALL(eval))*.@CALL(insert)) >= 2"
 tg=6
 unsat=1
 tc=1
+min=0
 cputime=0.159552
 mempeak=0.0
 

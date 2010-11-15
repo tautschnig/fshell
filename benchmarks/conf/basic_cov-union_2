@@ -7,6 +7,7 @@ query="cover (@func(foo) & @conditionedge) + (@func(main) & @conditionedge)"
 tg=8
 unsat=0
 tc=5
+min=0
 cputime=0.014377
 mempeak=0.0
 

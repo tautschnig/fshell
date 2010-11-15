@@ -7,6 +7,7 @@ query="in @FUNC(partition) cover @CONDITIONEDGE passing @7"
 tg=8
 unsat=3
 tc=1
+min=0
 cputime=0.338681
 mempeak=0.0
 

@@ -7,6 +7,7 @@ query="cover @BASICBLOCKENTRY passing ^(@2.{j>0} + NOT(@2))*$"
 tg=11
 unsat=0
 tc=3
+min=0
 cputime=0.391201
 mempeak=0.0
 

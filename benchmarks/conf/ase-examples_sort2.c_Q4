@@ -7,6 +7,7 @@ query="cover PATHS(@FUNC(main) | @FUNC(insert),1)"
 tg=6
 unsat=2
 tc=2
+min=0
 cputime=0.151835
 mempeak=0.0
 

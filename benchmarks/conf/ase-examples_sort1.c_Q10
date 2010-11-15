@@ -7,6 +7,7 @@ query="cover @CONDITIONEDGE & @FUNC(compare) passing ^(NOT(@CALL(compare))* . (@
 tg=2
 unsat=0
 tc=1
+min=0
 cputime=0.157393
 mempeak=0.0
 
