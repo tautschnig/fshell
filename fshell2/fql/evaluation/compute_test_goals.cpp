@@ -1137,13 +1137,10 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 	current_states[ *m_cp_eval.get().initial().begin() ].push_back(::std::set< ::literalt >());
 	unsigned current_states_size(0);
 
-	// int step_count(0);
 	for (::symex_target_equationt::SSA_stepst::const_iterator iter( 
 				m_equation.get_equation().SSA_steps.begin() );
 			iter != m_equation.get_equation().SSA_steps.end(); ++iter)
 	{
-		// ++step_count;
-		// if (0 == step_count % 100) ::std::cerr << "step count: " << step_count << ::std::endl;
 		if (!iter->guard_literal.is_true() && cnf.l_get(iter->guard_literal) != ::tvt(true)) continue;
 		//// ::std::cerr << "--------------------------------------------------------------------------------" << ::std::endl;
 		//// ::goto_programt tmp;
@@ -1153,6 +1150,12 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 		// lookup possible transitions in this SSA step and their edge guards
 		node_rep_map_t::const_iterator rep_entry(m_node_rep_map.find(iter));
 		for (unsigned cnt(m_node_rep_map.end() == rep_entry ? 1 : rep_entry->second + 1); cnt > 0; --cnt) {
+			// this is slower than the code below, penalty of more than 90-140
+			// seconds on picosat BB^2 - for whatever reason
+			// ::std::cerr << (1 == cnt ? "Doing edges" : "Doing one round of nodes") << ::std::endl;
+			// ::std::pair< step_to_trans_mmap_t::const_iterator, step_to_trans_mmap_t::const_iterator >
+			// 	iter_pair(1 == cnt ? m_step_to_trans.equal_range(iter) :
+			// 			m_node_step_to_trans.equal_range(iter));
 			::std::pair< step_to_trans_mmap_t::const_iterator, step_to_trans_mmap_t::const_iterator >
 				iter_pair;
 			if (1 == cnt) {
@@ -1190,6 +1193,8 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 				// ::std::cerr << "trans " << src << " -> " << dest << ::std::endl;
 				for (::std::list< ::std::set< ::literalt > >::const_iterator i_iter(entry->second.begin());
 						i_iter != entry->second.end(); ++i_iter) {
+					// moving this initialization out of the loop causes an
+					// overall penalty of 40-100 seconds on picosat BB^2
 					state_vec_t::iterator next_entry(next_states.insert(::std::make_pair(dest,
 									::std::list< ::std::set< ::literalt > >())).first);
 					next_entry->second.push_back(*i_iter);
