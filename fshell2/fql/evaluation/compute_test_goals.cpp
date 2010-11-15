@@ -1096,7 +1096,7 @@ class KnownSAT {
 			
 		void add_to_list_unique(::std::list< ::literalt > & new_sat) {
 			unsigned offset(0);
-			for (::std::vector< int >::const_iterator iter(m_lits.begin());
+			for (::std::vector< char >::const_iterator iter(m_lits.begin());
 					iter != m_lits.end(); ++iter, ++offset) {
 				if (*iter & 1) new_sat.push_back(::literalt(m_min_var_no + offset, true));
 				if (*iter & 2) new_sat.push_back(::literalt(m_min_var_no + offset, false));
@@ -1114,7 +1114,7 @@ class KnownSAT {
 		}
 
 	private:
-		::std::vector< int > m_lits;
+		::std::vector< char > m_lits;
 		unsigned m_min_var_no;
 		unsigned m_max_var_no;
 
