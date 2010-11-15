@@ -5,7 +5,7 @@ fshell = $(top_builddir)/fshell2/main/.libs/fshell$(EXEEXT)
 else
 fshell = $(top_builddir)/fshell2/main/fshell
 endif
-params = --verbosity 2 --statistics
+params = $(MORE_PARAMS)
 testenv = $(top_srcdir)/test-harness-builder/simple/TestEnvGenerator.pl
 
 
@@ -37,7 +37,8 @@ BASIC = basic_bitops_1 basic_bool_1 basic_boolop1_CC basic_boolop2_CC basic_cov-
 				basic_cov-union_2 basic_globals_1 basic_labels_1 basic_minimal_BB basic_repeat_1 \
 				basic_undefined-func_1 basic_variables_pred basic_inline_1
 
-SORTING = sorting_bs_BB sorting_bubble-fortas_BB sorting_bubble_BB sorting_sorter_BB
+SORTING = sorting_bs_BB sorting_bubble-fortas_BB sorting_bubble_BB sorting_sorter_BB \
+					sorting_bubble-sort_CC sorting_insertion-sort_CC sorting_quick-sort_CC sorting_selection-sort_CC
 
 
 all install install-strip uninstall check installcheck dist:
@@ -50,19 +51,23 @@ prepare: $(fshell) $(testenv)
 	[ -n $(LOG) ]
 	mkdir -p logs
 
+%.only: params += --verbosity 2 --statistics
 %.only: prepare conf/%
 	logf=logs/$(LOG).$@ fshell="$(strip $(fshell))" params="$(params)" testenv="$(strip $(testenv))" \
 			 scripts/run_bench.sh $(filter-out $<, $^)
 
+%.debug: params += --verbosity 9
 %.debug: prepare conf/%
-	debug=1 logf=logs/$(LOG).$@ fshell="$(strip $(fshell))" params="--verbosity 9" testenv="$(strip $(testenv))" \
+	debug=1 logf=logs/$(LOG).$@ fshell="$(strip $(fshell))" params="$(params)" testenv="$(strip $(testenv))" \
 			 scripts/run_bench.sh $(filter-out $<, $^)
 
+%.gdb: params += --verbosity 9
 %.gdb: prepare conf/%
 	mkdir -p test
-	debug=2 logf=logs/$(LOG).$@ fshell="$(strip $(fshell))" params="" testenv="$(strip $(testenv))" \
+	debug=2 logf=logs/$(LOG).$@ fshell="$(strip $(fshell))" params="$(params)" testenv="$(strip $(testenv))" \
 			 scripts/run_bench.sh $(filter-out $<, $^)
 
+%.suite: params += --verbosity 2 --statistics
 .SECONDEXPANSION:
 %.suite: prepare $$(addprefix conf/, $$($$*))
 	logf=logs/$(LOG).$@ fshell="$(strip $(fshell))" params="$(params)" testenv="$(strip $(testenv))" \

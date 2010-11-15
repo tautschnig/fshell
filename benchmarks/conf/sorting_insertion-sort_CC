@@ -1,0 +1,17 @@
+# vi: set ft=sh:
+
+source="sorting"
+extra_params="code/sorting/insertion_sort.c"
+prepare=""
+query="cover @conditionedge"
+tg=0
+unsat=0
+tc=0
+min=0
+cputime=0.0
+mempeak=0.0
+
+exec_ts="no"
+gcov="no"
+gcov_opts=""
+
