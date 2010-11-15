@@ -85,8 +85,8 @@ class Test_Suite_Output
 		::locationt const& m_main_location;
 		test_inputs_t m_test_inputs;
 	};
-	typedef ::std::list< ::std::pair< ::goto_programt::const_targett,
-			::exprt const * > > called_functions_t;
+	typedef ::std::list< ::std::pair< ::std::pair< ::goto_programt::const_targett,
+			::irep_idt const >, ::exprt const * > > called_functions_t;
 	typedef ::std::list< ::symex_target_equationt::SSA_stepst::const_iterator > assignments_t;
 
 	void get_test_case(Test_Input & ti, called_functions_t & calls,

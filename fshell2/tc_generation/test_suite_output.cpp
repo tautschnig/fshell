@@ -250,34 +250,53 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 			
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 					iter->source.pc->function == ID_main || !call_stack.empty());
-			if (!call_stack.empty() && iter->source.pc != call_stack.back()->first) {
-				::irep_idt const & fname(::to_code_function_call(
-							call_stack.back()->first->code).function().get(ID_identifier));
-				
+			if (!call_stack.empty() && iter->source.pc != call_stack.back()->first.first) {
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+						call_stack.back()->first.first->is_function_call() ||
+						call_stack.back()->first.first->is_location());
+					
+				::irep_idt const fname(call_stack.back()->first.second);
 				if (iter->source.pc->function != fname) {
+					// ::std::cerr << "POP " << call_stack.back()->first.second << ::std::endl;
 					call_stack.pop_back();
-					// ::std::cerr << "POP" << ::std::endl;
 					if (iter->source.pc->function != ID_main) {
 						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !call_stack.empty());
-						// handle possible recursion
-						while (fname == ::to_code_function_call(
-								call_stack.back()->first->code).function().get(ID_identifier)) {
+						// handle sequences of functions without explicit return
+						while (iter->source.pc->function != call_stack.back()->first.second) {
 							call_stack.pop_back();
 							// ::std::cerr << "POP-more" << ::std::endl;
 						}
-						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-								iter->source.pc->function == ::to_code_function_call(
-									call_stack.back()->first->code).function().get(ID_identifier));
 					}
 				}
 			}
-			
+		
+			::goto_programt::const_targett next(iter->source.pc);
+			++next;
 			if (iter->is_location() && iter->source.pc->is_function_call()) {
-				calls.push_back(::std::make_pair< ::goto_programt::const_targett, ::exprt const* >(
-							iter->source.pc, 0));
+				calls.push_back(::std::make_pair< ::std::pair< ::goto_programt::const_targett,
+						::irep_idt const >, ::exprt const* >(::std::make_pair(iter->source.pc,
+								::to_code_function_call(iter->source.pc->code).function().get(ID_identifier)), 0));
 				call_stack.push_back(calls.end());
 				--call_stack.back();
-				// ::std::cerr << "PUSH" << ::std::endl;
+				// ::std::cerr << "PUSH " << call_stack.back()->first.second << ::std::endl;
+			} else if (iter->is_location() &&
+					iter->source.pc->function != next->function) {
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+						!call_stack.back()->first.first->is_location() || call_stack.size() >= 2);
+				// inlined function
+				if (call_stack.back()->first.first->is_location() &&
+						(*--(--call_stack.end()))->first.second == next->function) {
+					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 0 == call_stack.back()->second);
+					call_stack.pop_back();
+					// ::std::cerr << "POP-inline" << ::std::endl;
+				} else {
+					calls.push_back(::std::make_pair< ::std::pair< ::goto_programt::const_targett,
+							::irep_idt const >, ::exprt const* >(::std::make_pair(iter->source.pc,
+									next->function), 0));
+					call_stack.push_back(calls.end());
+					--call_stack.back();
+					// ::std::cerr << "PUSH-inline" << ::std::endl;
+				}
 			} else if (iter->is_assignment() && iter->source.pc->is_return()) {
 				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !call_stack.empty());
 				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 0 == call_stack.back()->second);
@@ -467,7 +486,7 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 	// we still have all recent tail calls on the stack
 	FSHELL2_AUDIT_ASSERT_RELATION(::diagnostics::Violated_Invariance, call_stack.size(), >=, 1);
 	FSHELL2_AUDIT_ASSERT_RELATION(::diagnostics::Violated_Invariance,
-			::to_code_function_call(call_stack.front()->first->code).function().get(ID_identifier), ==, "c::"+::config.main);
+			call_stack.front()->first.second, ==, "c::"+::config.main);
 }
 
 ::std::ostream & Test_Suite_Output::print_test_inputs_plain(::std::ostream & os,
@@ -511,11 +530,11 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 	for (called_functions_t::const_iterator iter(cf.begin()); iter != cf.end(); ++iter) { 
 		os << "  ";
 		::symbolt const * sym(0);
-		m_equation.get_ns().lookup(::to_code_function_call(iter->first->code).function().get(ID_identifier), sym);
+		m_equation.get_ns().lookup(iter->first.second, sym);
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, sym);
 		os << sym->base_name << "()";
 		if (print_loc)
-			os << "@[" << iter->first->location << "]";
+			os << "@[" << iter->first.first->location << "]";
 		if (iter->second) {
 			FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, bv.map.mapping.end() !=
 					bv.map.mapping.find(iter->second->get(ID_identifier)),
@@ -599,13 +618,13 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 			::xmlt xml_obj("function-call");
 			
 			::symbolt const * sym(0);
-			m_equation.get_ns().lookup(::to_code_function_call(iter->first->code).function().get(ID_identifier), sym);
+			m_equation.get_ns().lookup(iter->first.second, sym);
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, sym);
 			xml_obj.new_element("base_name").data = ::xmlt::escape(::id2string(sym->base_name));
 
 			if (print_loc) {
 				::xmlt xml_loc("location");
-				::convert(iter->first->location, xml_loc);
+				::convert(iter->first.first->location, xml_loc);
 				xml_obj.new_element().swap(xml_loc);
 			}
 
@@ -696,8 +715,7 @@ Test_Suite_Output::Test_Suite_Output(::fshell2::fql::CNF_Conversion & equation,
 		get_test_case(ti, cf, as);
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !cf.empty());
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 
-				::to_code_function_call(cf.front().first->code).function().get(ID_identifier) ==
-				"c::__CPROVER_initialize");
+				cf.front().first.second == "c::__CPROVER_initialize");
 		cf.pop_front();
 		switch (ui) {
 			case ::ui_message_handlert::XML_UI:

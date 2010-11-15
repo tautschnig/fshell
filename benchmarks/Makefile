@@ -35,7 +35,7 @@ JOPLIFT = joplift_BB joplift_BB^2_ctrl_loop joplift_PATHS_ctrl_loop
 
 BASIC = basic_bitops_1 basic_bool_1 basic_boolop1_CC basic_boolop2_CC basic_cov-union_1 \
 				basic_cov-union_2 basic_globals_1 basic_labels_1 basic_minimal_BB basic_repeat_1 \
-				basic_undefined-func_1 basic_variables_pred
+				basic_undefined-func_1 basic_variables_pred basic_inline_1
 
 SORTING = sorting_bs_BB sorting_bubble-fortas_BB sorting_bubble_BB sorting_sorter_BB
 
