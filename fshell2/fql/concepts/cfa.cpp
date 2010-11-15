@@ -30,13 +30,35 @@
 
 #if FSHELL2_DEBUG__LEVEL__ > -1
 #  include <diagnostics/basic_exceptions/invalid_argument.hpp>
+#  include <diagnostics/basic_exceptions/violated_invariance.hpp>
 #endif
+
+#include <fshell2/instrumentation/goto_lt_compare.hpp>
 
 #include <algorithm>
 #include <iterator>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
+
+bool CFA::CFANode_Lt_Compare::operator()(node_t const& a, node_t const& b) const
+{
+	::fshell2::instrumentation::GOTO_Lt_Compare lt_cmp;
+	if (lt_cmp(a.second, b.second)) return true;
+	if (lt_cmp(b.second, a.second)) return false;
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, a.first == b.first);
+	return false;
+}
+
+bool CFA::CFAEdge_Lt_Compare::operator()(edge_t const& a, edge_t const& b) const
+{
+	::fshell2::instrumentation::GOTO_Lt_Compare lt_cmp;
+	if (lt_cmp(a.first.second, b.first.second)) return true;
+	if (lt_cmp(b.first.second, a.first.second)) return false;
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, a.first == b.first);
+	CFA::CFANode_Lt_Compare node_lt_cmp;
+	return node_lt_cmp(a.second, b.second);
+}
 
 CFA::CFA() {
 }
@@ -117,23 +139,29 @@ CFA& CFA::setunion(Self const& other) {
 CFA& CFA::setintersection(Self const& other) {
 	FSHELL2_AUDIT_CLASS_INVARIANCE_GUARD;
 
+	CFANode_Lt_Compare node_lt_cmp;
+	CFAEdge_Lt_Compare edge_lt_cmp;
+
 	// first compute intersection of all nodes
 	nodes_t L(get_L()), other_L(other.get_L());
 	m_disconnected_nodes.clear();
 	::std::set_intersection(L.begin(), L.end(), other_L.begin(), other_L.end(),
-			::std::inserter(m_disconnected_nodes, m_disconnected_nodes.begin()));
+			::std::inserter(m_disconnected_nodes, m_disconnected_nodes.begin()),
+			node_lt_cmp);
 
 	edges_t old_edges;
 	old_edges.swap(m_edges);
 	::std::set_intersection(old_edges.begin(), old_edges.end(),
 			other.m_edges.begin(), other.m_edges.end(),
-			::std::inserter(m_edges, m_edges.begin()));
+			::std::inserter(m_edges, m_edges.begin()),
+			edge_lt_cmp);
 	
 	initial_states_t old_initial;
 	old_initial.swap(m_initial);
 	::std::set_intersection(old_initial.begin(), old_initial.end(),
 			other.m_initial.begin(), other.m_initial.end(),
-			::std::inserter(m_initial, m_initial.begin()));
+			::std::inserter(m_initial, m_initial.begin()),
+			node_lt_cmp);
 	
 	// remove now non-disconnected nodes
 	for (edges_t::const_iterator iter(m_edges.begin());
@@ -150,17 +178,22 @@ CFA& CFA::setintersection(Self const& other) {
 CFA& CFA::setsubtract(Self const& other) {
 	FSHELL2_AUDIT_CLASS_INVARIANCE_GUARD;
 	
+	CFANode_Lt_Compare node_lt_cmp;
+	CFAEdge_Lt_Compare edge_lt_cmp;
+
 	// first compute set difference of all nodes
 	nodes_t L(get_L()), other_L(other.get_L());
 	m_disconnected_nodes.clear();
 	::std::set_difference(L.begin(), L.end(), other_L.begin(), other_L.end(),
-			::std::inserter(m_disconnected_nodes, m_disconnected_nodes.begin()));
+			::std::inserter(m_disconnected_nodes, m_disconnected_nodes.begin()),
+			node_lt_cmp);
 
 	edges_t old_edges;
 	old_edges.swap(m_edges);
 	::std::set_difference(old_edges.begin(), old_edges.end(),
 			other.m_edges.begin(), other.m_edges.end(),
-			::std::inserter(m_edges, m_edges.begin()));
+			::std::inserter(m_edges, m_edges.begin()),
+			edge_lt_cmp);
 	// remove edges where at least one of the nodes is not in L anymore
 	// NO, don't do that, ASE paper says these nodes stay
 	// for (edges_t::iterator iter(m_edges.begin()); iter != m_edges.end();) {
@@ -178,7 +211,8 @@ CFA& CFA::setsubtract(Self const& other) {
 	old_initial.swap(m_initial);
 	::std::set_intersection(m_disconnected_nodes.begin(), m_disconnected_nodes.end(),
 			old_initial.begin(), old_initial.end(),
-			::std::inserter(m_initial, m_initial.begin()));
+			::std::inserter(m_initial, m_initial.begin()),
+			node_lt_cmp);
 
 	// remove now non-disconnected nodes
 	for (edges_t::const_iterator iter(m_edges.begin());

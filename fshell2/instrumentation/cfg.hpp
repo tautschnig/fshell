@@ -31,6 +31,8 @@
 
 #include <fshell2/config/config.hpp>
 
+#include <fshell2/instrumentation/goto_lt_compare.hpp>
+
 #include <cbmc/src/goto-programs/goto_functions.h>
 
 #include <list>
@@ -58,7 +60,7 @@ class CFG
 		predecessors_t predecessors;
 	};
 
-	typedef ::std::map<goto_programt::targett, entry_t> entries_t;
+	typedef ::std::map<goto_programt::targett, entry_t, GOTO_Lt_Compare> entries_t;
 
 	void compute_edges(
 			goto_functionst &goto_functions);

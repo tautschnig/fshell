@@ -56,6 +56,10 @@
 #include <fshell2/fql/ast/query.hpp>
 #include <fshell2/fql/ast/quote.hpp>
 
+#include <limits>
+#include <algorithm>
+#include <iterator>
+
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
@@ -441,8 +445,8 @@ bool Compute_Test_Goals_From_Instrumentation::find_all_contexts(context_to_pcs_t
 			}
 
 			// collect all possible function calls that may cause transitions to test goal state
-			for (::std::map< ::goto_programt::const_targett, ::std::set< ::literalt > >::const_iterator
-					c_iter(guards_entry->second.begin()); c_iter != guards_entry->second.end(); ++c_iter)
+			for (context_to_guards_t::const_iterator c_iter(guards_entry->second.begin());
+					c_iter != guards_entry->second.end(); ++c_iter)
 				context_to_pcs[ c_iter->first ].insert(n_iter->second);
 		}
 	}
@@ -451,14 +455,12 @@ bool Compute_Test_Goals_From_Instrumentation::find_all_contexts(context_to_pcs_t
 }
 
 void Compute_Test_Goals_From_Instrumentation::context_to_literals(::goto_programt::const_targett const& context,
-		::std::set< ::goto_programt::const_targett > const& pcs, ::bvt & test_goal_literals) const {
+		pcs_t const& pcs, ::bvt & test_goal_literals) const {
 	// forall transitions to test goal states in this context
-	for (::std::set< ::goto_programt::const_targett >::const_iterator t_iter(pcs.begin());
-			t_iter != pcs.end(); ++t_iter) {
+	for (pcs_t::const_iterator t_iter(pcs.begin()); t_iter != pcs.end(); ++t_iter) {
 		pc_to_context_and_guards_t::const_iterator guards_entry(m_pc_to_guard.find(*t_iter));
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_pc_to_guard.end() != guards_entry);
-		::std::map< ::goto_programt::const_targett, ::std::set< ::literalt > >::const_iterator
-			inner_guards_entry(guards_entry->second.find(context));
+		context_to_guards_t::const_iterator inner_guards_entry(guards_entry->second.find(context));
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 				guards_entry->second.end() != inner_guards_entry);
 

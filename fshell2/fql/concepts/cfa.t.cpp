@@ -55,13 +55,19 @@ void test_invariance( Test_Data & data )
 {
 	::goto_programt prg;
 	::goto_programt::targett i1(prg.add_instruction(SKIP));
+	i1->function = "func1";
 	CFA::node_t n1(&prg, i1);
 	::goto_programt::targett i2(prg.add_instruction(SKIP));
+	i2->function = "func1";
 	CFA::node_t n2(&prg, i2);
 	::goto_programt::targett i3(prg.add_instruction(SKIP));
+	i3->function = "func1";
 	CFA::node_t n3(&prg, i3);
 	::goto_programt::targett i4(prg.add_instruction(SKIP));
+	i4->function = "func1";
 	CFA::node_t n4(&prg, i4);
+
+	prg.compute_location_numbers();
 
 	CFA::edge_t e1(n1, n2);
 	CFA::edge_t e2(n2, n3);
@@ -113,17 +119,25 @@ void test( Test_Data & data )
 {
 	::goto_programt prg;
 	::goto_programt::targett i1(prg.add_instruction(SKIP));
+	i1->function = "func1";
 	CFA::node_t n1(&prg, i1);
 	::goto_programt::targett i2(prg.add_instruction(SKIP));
+	i2->function = "func1";
 	CFA::node_t n2(&prg, i2);
 	::goto_programt::targett i3(prg.add_instruction(SKIP));
+	i3->function = "func1";
 	CFA::node_t n3(&prg, i3);
 	::goto_programt::targett i4(prg.add_instruction(SKIP));
+	i4->function = "func1";
 	CFA::node_t n4(&prg, i4);
 	::goto_programt::targett i5(prg.add_instruction(SKIP));
+	i5->function = "func1";
 	CFA::node_t n5(&prg, i5);
 	::goto_programt::targett i6(prg.add_instruction(SKIP));
+	i6->function = "func1";
 	CFA::node_t n6(&prg, i6);
+
+	prg.compute_location_numbers();
 
 	CFA::edge_t e1(n1, n2);
 	CFA::edge_t e2(n2, n3);

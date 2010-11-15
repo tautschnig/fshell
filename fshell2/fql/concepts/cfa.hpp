@@ -51,8 +51,16 @@ class CFA
 	typedef ::std::pair< ::goto_programt *, ::goto_programt::targett > node_t;
 	typedef ::std::pair< node_t, node_t > edge_t;
 	
-	typedef ::std::set< node_t > nodes_t;
-	typedef ::std::set< edge_t > edges_t;
+	struct CFANode_Lt_Compare {
+		bool operator()(node_t const& a, node_t const& b) const;
+	};
+
+	struct CFAEdge_Lt_Compare {
+		bool operator()(edge_t const& a, edge_t const& b) const;
+	};
+	
+	typedef ::std::set< node_t, CFANode_Lt_Compare > nodes_t;
+	typedef ::std::set< edge_t, CFAEdge_Lt_Compare > edges_t;
 	typedef nodes_t initial_states_t;
 
 	CFA();

@@ -31,7 +31,7 @@
 
 #include <fshell2/config/config.hpp>
 
-//#include <fshell2/instrumentation/goto_lt_compare.hpp>
+#include <fshell2/instrumentation/goto_lt_compare.hpp>
 #include <fshell2/instrumentation/goto_transformation.hpp>
 #include <fshell2/fql/concepts/trace_automaton.hpp>
 #include <fshell2/fql/evaluation/evaluate_coverage_pattern.hpp>
@@ -78,14 +78,14 @@ class Automaton_Inserter
 	inline trace_automaton_t const& get_tg_aut() const;
 
 	private:
-	typedef ::std::map< target_graph_t::edge_t, ::std::set< int >/*,
-			target_graph_t::CFAEdge_Lt_Compare*/ > edge_to_target_graphs_t;
-	typedef ::std::map< target_graph_t::node_t, ::std::set< int >/*,
-			target_graph_t::CFANode_Lt_Compare*/ > node_to_target_graphs_t;
-	typedef ::std::map< ::goto_programt::const_targett, edge_to_target_graphs_t/*,
-			::fshell2::instrumentation::GOTO_Lt_Compare*/ > loc_to_edge_target_graphs_t; 
-	typedef ::std::map< ::goto_programt::const_targett, node_to_target_graphs_t/*,
-			::fshell2::instrumentation::GOTO_Lt_Compare*/ > loc_to_node_target_graphs_t; 
+	typedef ::std::map< target_graph_t::edge_t, ::std::set< int >,
+			target_graph_t::CFAEdge_Lt_Compare > edge_to_target_graphs_t;
+	typedef ::std::map< target_graph_t::node_t, ::std::set< int >,
+			target_graph_t::CFANode_Lt_Compare > node_to_target_graphs_t;
+	typedef ::std::map< ::goto_programt::const_targett, edge_to_target_graphs_t,
+			::fshell2::instrumentation::GOTO_Lt_Compare > loc_to_edge_target_graphs_t; 
+	typedef ::std::map< ::goto_programt::const_targett, node_to_target_graphs_t,
+			::fshell2::instrumentation::GOTO_Lt_Compare > loc_to_node_target_graphs_t; 
 	typedef ::std::map< ta_state_t, ta_state_set_t > symbol_transition_map_t;
 	typedef ::std::map< int, symbol_transition_map_t > transition_map_t;
 	typedef ::std::set< int > local_target_graph_set_t;

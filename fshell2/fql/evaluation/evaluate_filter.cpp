@@ -201,8 +201,9 @@ void Evaluate_Filter::visit(Filter_Compose const* n) {
 	entry.first->second.setintersection(b_set->second);
 	CFA::nodes_t const L(entry.first->second.get_L());
 	CFA::initial_states_t initial;
+	CFA::CFANode_Lt_Compare node_lt_cmp;
 	::std::set_intersection(a_set->second.get_I().begin(), a_set->second.get_I().end(),
-			L.begin(), L.end(), ::std::inserter(initial, initial.begin()));
+			L.begin(), L.end(), ::std::inserter(initial, initial.begin()), node_lt_cmp);
 	entry.first->second.set_I(initial);
 }
 

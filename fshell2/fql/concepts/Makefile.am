@@ -23,7 +23,7 @@ check_PROGRAMS = cfa trace_automaton
 cfa_SOURCES = cfa.t.cpp
 # add additional objects required to build cfa here, like
 # cfa_LDADD = ../base/libbase.la libbla.la
-cfa_LDADD = libconcepts.la $(CBMC_OBJS)
+cfa_LDADD = libconcepts.la ../../instrumentation/libinstrumentation.la $(CBMC_OBJS)
 # note that this entry (cfa_SOURCES, cfa_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually

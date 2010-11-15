@@ -27,9 +27,9 @@ CBMC_OBJS = $(top_builddir)/cbmc/src/goto-programs/goto-programs.o \
 
 include_fshell2_instrumentationdir = $(includedir)/fshell2/instrumentation
 noinst_LTLIBRARIES = libinstrumentation.la
-libinstrumentation_la_SOURCES = goto_transformation.cpp cfg.cpp goto_utils.cpp
-include_fshell2_instrumentation_HEADERS = goto_transformation.hpp cfg.hpp goto_utils.hpp
-check_PROGRAMS = goto_transformation
+libinstrumentation_la_SOURCES = goto_transformation.cpp cfg.cpp goto_utils.cpp goto_lt_compare.cpp
+include_fshell2_instrumentation_HEADERS = goto_transformation.hpp cfg.hpp goto_utils.hpp goto_lt_compare.hpp
+check_PROGRAMS = goto_transformation goto_lt_compare
 goto_transformation_SOURCES = goto_transformation.t.cpp
 # add additional objects required to build goto_transformation here, like
 # goto_transformation_LDADD = ../base/libbase.la libbla.la
@@ -37,4 +37,11 @@ goto_transformation_LDADD = libinstrumentation.la ../exception/libexception.la $
 # note that this entry (goto_transformation_SOURCES, goto_transformation_LDADD) will not be removed
 # by update-makefiles.pl, if the sources files are removed;
 # it must then be removed manually
-TESTS = goto_transformation
+TESTS = goto_transformation goto_lt_compare
+goto_lt_compare_SOURCES = goto_lt_compare.t.cpp
+# add additional objects required to build goto_lt_compare here, like
+# goto_lt_compare_LDADD = ../base/libbase.la libbla.la
+goto_lt_compare_LDADD = libinstrumentation.la $(CBMC_OBJS)
+# note that this entry (goto_lt_compare_SOURCES, goto_lt_compare_LDADD) will not be removed
+# by update-makefiles.pl, if the sources files are removed;
+# it must then be removed manually

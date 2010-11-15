@@ -56,7 +56,7 @@ class Predicate_Instrumentation
 	typedef Predicate_Instrumentation Self;
 
 	public:
-	typedef ::std::set< target_graph_t::node_t > node_set_t;
+	typedef ::std::set< target_graph_t::node_t, target_graph_t::CFANode_Lt_Compare > node_set_t;
 	typedef ::std::map< Predicate const*, target_graph_t::edge_t > pred_instrumentation_map_t;
 	typedef ::std::map< target_graph_t::node_t, pred_instrumentation_map_t > node_to_pred_instrumentation_map_t;
 

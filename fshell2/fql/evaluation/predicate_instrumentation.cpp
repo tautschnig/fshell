@@ -63,8 +63,7 @@ void Predicate_Instrumentation::insert_predicate(::goto_functionst & gf,
 	
 	::fshell2::instrumentation::GOTO_Transformation inserter(m_manager, gf);
 
-	for (::std::set< target_graph_t::node_t >::iterator n_iter(nodes.begin());
-			n_iter != nodes.end(); ++n_iter)
+	for (node_set_t::iterator n_iter(nodes.begin()); n_iter != nodes.end(); ++n_iter)
 		if (m_node_to_pred_instr[ *n_iter ].end() ==
 				m_node_to_pred_instr[ *n_iter ].find(pred)) {
 			GOTO_Transformation::inserted_t const & res(inserter.insert_predicate_at(

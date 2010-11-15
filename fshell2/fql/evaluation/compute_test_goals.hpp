@@ -31,6 +31,7 @@
 
 #include <fshell2/config/config.hpp>
 
+#include <fshell2/instrumentation/goto_lt_compare.hpp>
 #include <fshell2/fql/ast/ast_visitor.hpp>
 #include <fshell2/fql/ast/standard_ast_visitor_aspect.hpp>
 #include <fshell2/fql/concepts/test_goal.hpp>
@@ -278,11 +279,14 @@ class Compute_Test_Goals_From_Instrumentation : public Compute_Test_Goals
 			test_goal_ids_t & tgs) const;
 
 	private:
-	typedef ::std::map< ::goto_programt::const_targett,
-				::std::map< ::goto_programt::const_targett, 
-					::std::set< ::literalt > > > pc_to_context_and_guards_t;
-	typedef ::std::map< ::goto_programt::const_targett,
-				::std::set< ::goto_programt::const_targett > > context_to_pcs_t;
+	typedef ::std::map< ::goto_programt::const_targett, ::std::set< ::literalt >,
+			::fshell2::instrumentation::GOTO_Lt_Compare > context_to_guards_t;
+	typedef ::std::map< ::goto_programt::const_targett, context_to_guards_t,
+			::fshell2::instrumentation::GOTO_Lt_Compare > pc_to_context_and_guards_t;
+	typedef ::std::set< ::goto_programt::const_targett,
+			::fshell2::instrumentation::GOTO_Lt_Compare > pcs_t;
+	typedef ::std::map< ::goto_programt::const_targett, pcs_t,
+			::fshell2::instrumentation::GOTO_Lt_Compare > context_to_pcs_t;
 	
 	Automaton_Inserter m_aut_insert;
 	pc_to_context_and_guards_t m_pc_to_guard;
@@ -290,7 +294,7 @@ class Compute_Test_Goals_From_Instrumentation : public Compute_Test_Goals
 	bool find_all_contexts(context_to_pcs_t & context_to_pcs);
 
 	void context_to_literals(::goto_programt::const_targett const& context,
-		::std::set< ::goto_programt::const_targett > const& pcs, ::bvt & test_goal_literals) const;
+			pcs_t const& pcs, ::bvt & test_goal_literals) const;
 
 	virtual void do_atom(Coverage_Pattern_Expr const* n, bool epsilon_permitted, bool make_single);
 	
@@ -325,16 +329,21 @@ class Compute_Test_Goals_Boolean : public Compute_Test_Goals
 			test_goal_ids_t & tgs) const;
 
 	private:
-	typedef ::std::map< target_graph_t::edge_t, ::std::set< int > > edge_to_target_graphs_t;
-	typedef ::std::map< target_graph_t::node_t, ::std::set< int > > node_to_target_graphs_t;
-	typedef ::std::map< ::goto_programt::const_targett, edge_to_target_graphs_t > loc_to_edge_target_graphs_t; 
-	typedef ::std::map< ::goto_programt::const_targett, node_to_target_graphs_t > loc_to_node_target_graphs_t; 
+	typedef ::std::map< target_graph_t::edge_t, ::std::set< int >,
+			target_graph_t::CFAEdge_Lt_Compare > edge_to_target_graphs_t;
+	typedef ::std::map< target_graph_t::node_t, ::std::set< int >,
+			target_graph_t::CFANode_Lt_Compare > node_to_target_graphs_t;
+	typedef ::std::map< ::goto_programt::const_targett, edge_to_target_graphs_t,
+			::fshell2::instrumentation::GOTO_Lt_Compare > loc_to_edge_target_graphs_t; 
+	typedef ::std::map< ::goto_programt::const_targett, node_to_target_graphs_t,
+			::fshell2::instrumentation::GOTO_Lt_Compare > loc_to_node_target_graphs_t; 
 	typedef ::std::map< ta_state_t, ta_state_set_t > symbol_transition_map_t;
 	typedef ::std::map< int, symbol_transition_map_t > transition_map_t;
 	typedef ::std::set< int > local_target_graph_set_t;
 	typedef ::std::map< ta_state_t, ::bvt > bv_cache_t;
 	typedef ::std::map< ta_state_t, ::literalt > eq_cache_t;
-	typedef ::std::map< target_graph_t::edge_t, ::std::set< ::literalt > > edge_to_literal_map_t; 
+	typedef ::std::map< target_graph_t::edge_t, ::std::set< ::literalt >,
+			target_graph_t::CFAEdge_Lt_Compare > edge_to_literal_map_t; 
 	typedef ::std::map< ta_state_t, edge_to_literal_map_t > state_edge_lit_map_t;
 
 	class Edge_Goal {
