@@ -36,14 +36,15 @@ for b in $benchmarks ; do
   else
     extra_params="$extra_params --outfile /dev/null"
   fi
+  eval set -- "$extra_params"
   echo "Running benchmark $b"
   if [ $debug -eq 1 ] ; then
-    echo -e "$prepare\n$query\nquit\n" | $fshell $params $extra_params
+    echo -e "$prepare\n$query\nquit\n" | $fshell $params "$@"
   elif [ $debug -eq 2 ] ; then
     echo -e "$prepare\n$query\nquit\n"
-    gdb --args $fshell $params $extra_params
+    gdb --args $fshell $params "$@"
   else
-    ( time echo -e "$prepare\n$query\nquit\n" | $fshell $params $extra_params ) > $results 2>&1
+    ( time echo -e "$prepare\n$query\nquit\n" | $fshell $params "$@" ) > $results 2>&1
     mtg=`grep "Possibly feasible test goals:" $results | sed 's/.*Possibly feasible test goals: //'`
     munsat=`grep "Test goals not fulfilled:" $results | sed 's/.*Test goals not fulfilled: //'`
     mtc=`grep "Test cases:" $results | sed 's/.*Test cases: //'`
