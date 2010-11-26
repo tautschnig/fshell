@@ -1,6 +1,6 @@
 BENCHMARKS = ase-examples busybox-1.14.0 engine-controllers joplift \
 						 memory-manager nt-drivers picosat-913 vfs-model basic \
-						 sorting PapaBench-0.4 
+						 sorting PapaBench-0.4 maelardalen 
 
 all: $(BENCHMARKS:=.prep)
 
