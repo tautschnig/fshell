@@ -131,13 +131,26 @@ void test_interactive( Test_Data & data )
 	::unlink(tempname_str.c_str());
 }
 
+::std::string const tag1("Possibly feasible test goals:");
+::std::string const tag2("Test goals not fulfilled:");
+::std::string const tag3("Test cases removed by minimization:");
+::std::string const tag4("Test cases:");
+
 #define QUERY(dataname, querystr) \
 	{ \
 		::fshell2::statistics::Statistics stats; \
 		TEST_ASSERT(!fshell.process_line(l, querystr, stats)); \
 		oss.str(""); \
 		stats.print(msg); \
-		oss.str(oss.str().substr(oss.str().find("Possibly feasible test goals:"))); \
+		::std::istringstream is(oss.str()); \
+		oss.str(""); \
+		::std::string line; \
+		while (!::std::getline(is, line).eof()) \
+			if (0 == line.compare(0, tag1.size(), tag1) || \
+					0 == line.compare(0, tag2.size(), tag2) || \
+					0 == line.compare(0, tag3.size(), tag3) || \
+					0 == line.compare(0, tag4.size(), tag4)) \
+				oss << line << ::std::endl; \
 		TEST_ASSERT(data.compare(dataname ":" querystr, oss.str())); \
 	} DUMMY_FUNC
 
