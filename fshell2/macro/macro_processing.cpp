@@ -43,6 +43,9 @@
 #include <vector>
 #include <cstdlib>
 #include <sstream>
+#include <set>
+#include <csignal>
+#include <cerrno>
 
 #include <fshell2/exception/macro_processing_error.hpp>
 
@@ -50,7 +53,17 @@
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_MACRO_NAMESPACE_BEGIN;
-	
+
+::std::set< ::std::string > cleanup;
+
+void remove_macro_files(int sig) {
+	for (::std::set< ::std::string >::const_iterator iter(cleanup.begin());
+			iter != cleanup.end(); ++iter)
+		::unlink(iter->c_str());
+
+	::std::exit(sig);
+}
+
 Macro_Processing::Macro_Processing() :
 	m_has_defines(false),
 	m_deffilename(::get_temporary_file("tmp.defs", ".c")),
@@ -61,25 +74,34 @@ Macro_Processing::Macro_Processing() :
 	m_cpp_cmdline(CPP_CMD " -dP -undef -Werror")
 #endif
 {
+	errno = 0;
+	::std::signal(SIGINT, remove_macro_files);
+	FSHELL2_PROD_ASSERT1(::fshell2::Macro_Processing_Error, 0 == errno,
+			"Failed to install SIGINT handler");
+	
 	FSHELL2_AUDIT_TRACE("Defines are written to " + m_deffilename);
 	::std::ofstream fs(m_deffilename.c_str());
 	FSHELL2_PROD_ASSERT1(::fshell2::Macro_Processing_Error, fs.is_open(),
 			"Failed to open macro expansion file");
 	fs << "// FShell macro list" << ::std::endl;
 	fs.close();
+	cleanup.insert(m_deffilename);
 	
 	::std::ofstream fs2(m_checkfilename.c_str());
 	FSHELL2_PROD_ASSERT1(::fshell2::Macro_Processing_Error, fs2.is_open(),
 			"Failed to open second macro expansion file");
 	fs2 << "// FShell macro test list" << ::std::endl;
 	fs2.close();
+	cleanup.insert(m_checkfilename);
 
 	m_cpp_cmdline += " " + m_checkfilename;
 }
 
 Macro_Processing::~Macro_Processing() {
 	::unlink(m_deffilename.c_str());
+	cleanup.erase(m_deffilename);
 	::unlink(m_checkfilename.c_str());
+	cleanup.erase(m_checkfilename);
 }
 
 ::std::ostream & Macro_Processing::help(::std::ostream & os) {
