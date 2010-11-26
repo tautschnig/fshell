@@ -1,6 +1,6 @@
 diff -urN nt-drivers/cdaudio.c nt-drivers.new/cdaudio.c
 --- nt-drivers/cdaudio.c	2005-05-27 18:03:03.000000000 +0200
-+++ nt-drivers.new/cdaudio.c	2010-11-15 09:54:39.000000000 +0100
++++ nt-drivers.new/cdaudio.c	2010-11-16 14:48:53.000000000 +0100
 @@ -405,48 +405,15 @@
  
  #pragma warning(disable:4035)
@@ -231,7 +231,7 @@ diff -urN nt-drivers/cdaudio.c nt-drivers.new/cdaudio.c
  #pragma warning(pop)
 diff -urN nt-drivers/floppy.c nt-drivers.new/floppy.c
 --- nt-drivers/floppy.c	2005-05-27 18:03:03.000000000 +0200
-+++ nt-drivers.new/floppy.c	2010-11-15 09:56:03.000000000 +0100
++++ nt-drivers.new/floppy.c	2010-11-16 14:48:53.000000000 +0100
 @@ -560,48 +560,15 @@
  
  #pragma warning(disable:4035)
@@ -487,7 +487,7 @@ diff -urN nt-drivers/floppy.c nt-drivers.new/floppy.c
  {
 diff -urN nt-drivers/kbfiltr.c nt-drivers.new/kbfiltr.c
 --- nt-drivers/kbfiltr.c	2010-11-11 23:57:55.000000000 +0100
-+++ nt-drivers.new/kbfiltr.c	2010-11-15 09:58:04.000000000 +0100
++++ nt-drivers.new/kbfiltr.c	2010-11-16 14:48:53.000000000 +0100
 @@ -405,54 +405,15 @@
  
  #pragma warning(disable:4035)
@@ -771,9 +771,9 @@ diff -urN nt-drivers/kbfiltr.c nt-drivers.new/kbfiltr.c
  #line 237
  __declspec(dllimport) void ExAcquireFastMutex(PFAST_MUTEX FastMutex )
  {
-diff -urN nt-drivers/parclass.BUG.c nt-drivers.new/parclass.BUG.c
---- nt-drivers/parclass.BUG.c	2005-05-27 18:03:04.000000000 +0200
-+++ nt-drivers.new/parclass.BUG.c	2010-11-15 11:13:52.000000000 +0100
+diff -urN nt-drivers/parclass.c nt-drivers.new/parclass.c
+--- nt-drivers/parclass.c	2010-11-16 14:51:19.000000000 +0100
++++ nt-drivers.new/parclass.c	2010-11-16 14:56:00.000000000 +0100
 @@ -405,48 +405,15 @@
  
  #pragma warning(disable:4035)
@@ -1574,7 +1574,7 @@ diff -urN nt-drivers/parclass.BUG.c nt-drivers.new/parclass.BUG.c
  
  
  #pragma warning(pop)
-@@ -49999,48 +49482,15 @@
+@@ -50007,48 +49490,15 @@
  
  #pragma warning(disable:4035)
  __inline ULONGLONG __stdcall Int64ShllMod32___13(ULONGLONG Value , ULONG
@@ -1626,7 +1626,7 @@ diff -urN nt-drivers/parclass.BUG.c nt-drivers.new/parclass.BUG.c
  
  
  #pragma warning(pop)
-@@ -53323,48 +52773,15 @@
+@@ -53331,48 +52781,15 @@
  
  #pragma warning(disable:4035)
  __inline ULONGLONG __stdcall Int64ShllMod32___14(ULONGLONG Value , ULONG
@@ -1678,7 +1678,7 @@ diff -urN nt-drivers/parclass.BUG.c nt-drivers.new/parclass.BUG.c
  
  
  #pragma warning(pop)
-@@ -56416,48 +55833,15 @@
+@@ -56424,48 +55841,15 @@
  
  #pragma warning(disable:4035)
  __inline ULONGLONG __stdcall Int64ShllMod32___15(ULONGLONG Value , ULONG
@@ -1730,7 +1730,7 @@ diff -urN nt-drivers/parclass.BUG.c nt-drivers.new/parclass.BUG.c
  
  
  #pragma warning(pop)
-@@ -60140,48 +59524,15 @@
+@@ -60148,48 +59532,15 @@
  
  #pragma warning(disable:4035)
  __inline ULONGLONG __stdcall Int64ShllMod32___16(ULONGLONG Value , ULONG
@@ -1782,7 +1782,7 @@ diff -urN nt-drivers/parclass.BUG.c nt-drivers.new/parclass.BUG.c
  
  
  #pragma warning(pop)
-@@ -63100,48 +62451,15 @@
+@@ -63108,48 +62459,15 @@
  
  #pragma warning(disable:4035)
  __inline ULONGLONG __stdcall Int64ShllMod32___17(ULONGLONG Value , ULONG
@@ -1834,7 +1834,7 @@ diff -urN nt-drivers/parclass.BUG.c nt-drivers.new/parclass.BUG.c
  
  
  #pragma warning(pop)
-@@ -66419,48 +65737,15 @@
+@@ -66427,48 +65745,15 @@
  
  #pragma warning(disable:4035)
  __inline ULONGLONG __stdcall Int64ShllMod32___18(ULONGLONG Value , ULONG
@@ -1886,7 +1886,7 @@ diff -urN nt-drivers/parclass.BUG.c nt-drivers.new/parclass.BUG.c
  
  
  #pragma warning(pop)
-@@ -69265,48 +68550,15 @@
+@@ -69273,48 +68558,15 @@
  
  #pragma warning(disable:4035)
  __inline ULONGLONG __stdcall Int64ShllMod32___19(ULONGLONG Value , ULONG
@@ -1938,7 +1938,7 @@ diff -urN nt-drivers/parclass.BUG.c nt-drivers.new/parclass.BUG.c
  
  
  #pragma warning(pop)
-@@ -72116,48 +71368,15 @@
+@@ -72124,48 +71376,15 @@
  
  #pragma warning(disable:4035)
  __inline ULONGLONG __stdcall Int64ShllMod32___20(ULONGLONG Value , ULONG
@@ -1990,7 +1990,7 @@ diff -urN nt-drivers/parclass.BUG.c nt-drivers.new/parclass.BUG.c
  
  
  #pragma warning(pop)
-@@ -77417,48 +76636,15 @@
+@@ -77425,48 +76644,15 @@
  
  #pragma warning(disable:4035)
  __inline ULONGLONG __stdcall Int64ShllMod32___21(ULONGLONG Value , ULONG
@@ -2042,7 +2042,7 @@ diff -urN nt-drivers/parclass.BUG.c nt-drivers.new/parclass.BUG.c
  
  
  #pragma warning(pop)
-@@ -81996,48 +81182,15 @@
+@@ -82004,48 +81190,15 @@
  
  #pragma warning(disable:4035)
  __inline ULONGLONG __stdcall Int64ShllMod32___22(ULONGLONG Value , ULONG
@@ -2094,7 +2094,7 @@ diff -urN nt-drivers/parclass.BUG.c nt-drivers.new/parclass.BUG.c
  
  
  #pragma warning(pop)
-@@ -85634,48 +84787,15 @@
+@@ -85644,48 +84797,15 @@
  
  #pragma warning(disable:4035)
  __inline ULONGLONG __stdcall Int64ShllMod32___23(ULONGLONG Value , ULONG
@@ -2146,7 +2146,7 @@ diff -urN nt-drivers/parclass.BUG.c nt-drivers.new/parclass.BUG.c
  
  
  #pragma warning(pop)
-@@ -89194,48 +88314,15 @@
+@@ -89207,48 +88327,15 @@
  
  #pragma warning(disable:4035)
  __inline ULONGLONG __stdcall Int64ShllMod32___24(ULONGLONG Value , ULONG
@@ -2198,7 +2198,7 @@ diff -urN nt-drivers/parclass.BUG.c nt-drivers.new/parclass.BUG.c
  
  
  #pragma warning(pop)
-@@ -92331,48 +91418,15 @@
+@@ -92344,48 +91431,15 @@
  
  #pragma warning(disable:4035)
  __inline ULONGLONG __stdcall Int64ShllMod32___25(ULONGLONG Value , ULONG
@@ -2250,7 +2250,7 @@ diff -urN nt-drivers/parclass.BUG.c nt-drivers.new/parclass.BUG.c
  
  
  #pragma warning(pop)
-@@ -95606,48 +94660,15 @@
+@@ -95619,48 +94673,15 @@
  
  #pragma warning(disable:4035)
  __inline ULONGLONG __stdcall Int64ShllMod32___26(ULONGLONG Value , ULONG
@@ -2302,7 +2302,7 @@ diff -urN nt-drivers/parclass.BUG.c nt-drivers.new/parclass.BUG.c
  
  
  #pragma warning(pop)
-@@ -98966,48 +97987,15 @@
+@@ -98979,48 +98000,15 @@
  
  #pragma warning(disable:4035)
  __inline ULONGLONG __stdcall Int64ShllMod32___27(ULONGLONG Value , ULONG
@@ -2354,7 +2354,7 @@ diff -urN nt-drivers/parclass.BUG.c nt-drivers.new/parclass.BUG.c
  
  
  #pragma warning(pop)
-@@ -101948,48 +100936,15 @@
+@@ -101961,48 +100949,15 @@
  
  #pragma warning(disable:4035)
  __inline ULONGLONG __stdcall Int64ShllMod32___28(ULONGLONG Value , ULONG
@@ -2406,7 +2406,7 @@ diff -urN nt-drivers/parclass.BUG.c nt-drivers.new/parclass.BUG.c
  
  
  #pragma warning(pop)
-@@ -105443,48 +104398,15 @@
+@@ -105459,48 +104414,15 @@
  
  #pragma warning(disable:4035)
  __inline ULONGLONG __stdcall Int64ShllMod32___29(ULONGLONG Value , ULONG
@@ -2458,7 +2458,7 @@ diff -urN nt-drivers/parclass.BUG.c nt-drivers.new/parclass.BUG.c
  
  
  #pragma warning(pop)
-@@ -109277,48 +108199,15 @@
+@@ -109293,48 +108215,15 @@
  
  #pragma warning(disable:4035)
  __inline ULONGLONG __stdcall Int64ShllMod32___30(ULONGLONG Value , ULONG
@@ -2510,7 +2510,7 @@ diff -urN nt-drivers/parclass.BUG.c nt-drivers.new/parclass.BUG.c
  
  
  #pragma warning(pop)
-@@ -112885,48 +111774,15 @@
+@@ -112901,48 +111790,15 @@
  
  #pragma warning(disable:4035)
  __inline ULONGLONG __stdcall Int64ShllMod32___31(ULONGLONG Value , ULONG
@@ -2562,7 +2562,7 @@ diff -urN nt-drivers/parclass.BUG.c nt-drivers.new/parclass.BUG.c
  
  
  #pragma warning(pop)
-@@ -115826,48 +114682,15 @@
+@@ -115842,48 +114698,15 @@
  
  #pragma warning(disable:4035)
  __inline ULONGLONG __stdcall Int64ShllMod32___32(ULONGLONG Value , ULONG
@@ -2614,7 +2614,7 @@ diff -urN nt-drivers/parclass.BUG.c nt-drivers.new/parclass.BUG.c
  
  
  #pragma warning(pop)
-@@ -119417,48 +118240,15 @@
+@@ -119433,48 +118256,15 @@
  
  #pragma warning(disable:4035)
  __inline ULONGLONG __stdcall Int64ShllMod32___33(ULONGLONG Value , ULONG
@@ -2666,7 +2666,7 @@ diff -urN nt-drivers/parclass.BUG.c nt-drivers.new/parclass.BUG.c
  
  
  #pragma warning(pop)
-@@ -122636,48 +121426,15 @@
+@@ -122652,48 +121442,15 @@
  
  #pragma warning(disable:4035)
  __inline ULONGLONG __stdcall Int64ShllMod32___34(ULONGLONG Value , ULONG
@@ -2718,7 +2718,7 @@ diff -urN nt-drivers/parclass.BUG.c nt-drivers.new/parclass.BUG.c
  
  
  #pragma warning(pop)
-@@ -125671,48 +124428,15 @@
+@@ -125687,48 +124444,15 @@
  
  #pragma warning(disable:4035)
  __inline ULONGLONG __stdcall Int64ShllMod32___35(ULONGLONG Value , ULONG
@@ -2770,7 +2770,7 @@ diff -urN nt-drivers/parclass.BUG.c nt-drivers.new/parclass.BUG.c
  
  
  #pragma warning(pop)
-@@ -128806,48 +127530,15 @@
+@@ -128822,48 +127546,15 @@
  
  #pragma warning(disable:4035)
  __inline ULONGLONG __stdcall Int64ShllMod32___36(ULONGLONG Value , ULONG
@@ -2822,7 +2822,7 @@ diff -urN nt-drivers/parclass.BUG.c nt-drivers.new/parclass.BUG.c
  
  
  #pragma warning(pop)
-@@ -132005,48 +130696,15 @@
+@@ -132021,48 +130712,15 @@
  
  #pragma warning(disable:4035)
  __inline ULONGLONG __stdcall Int64ShllMod32___37(ULONGLONG Value , ULONG
@@ -2874,7 +2874,7 @@ diff -urN nt-drivers/parclass.BUG.c nt-drivers.new/parclass.BUG.c
  
  
  #pragma warning(pop)
-@@ -135274,48 +133932,15 @@
+@@ -135290,48 +133948,15 @@
  
  #pragma warning(disable:4035)
  __inline ULONGLONG __stdcall Int64ShllMod32___38(ULONGLONG Value , ULONG
@@ -2926,7 +2926,7 @@ diff -urN nt-drivers/parclass.BUG.c nt-drivers.new/parclass.BUG.c
  
  
  #pragma warning(pop)
-@@ -137067,9 +135692,9 @@
+@@ -137083,9 +135708,9 @@
  void errorFn()
  {
  	#line 17
@@ -2938,7 +2938,7 @@ diff -urN nt-drivers/parclass.BUG.c nt-drivers.new/parclass.BUG.c
  }
  
  #line 22
-@@ -137406,21 +136031,6 @@
+@@ -137423,21 +136048,6 @@
  
  char _SLAM_alloc_dummy ;
  
@@ -2962,7 +2962,7 @@ diff -urN nt-drivers/parclass.BUG.c nt-drivers.new/parclass.BUG.c
  {
 diff -urN nt-drivers/parport.c nt-drivers.new/parport.c
 --- nt-drivers/parport.c	2005-05-27 18:03:04.000000000 +0200
-+++ nt-drivers.new/parport.c	2010-11-15 10:11:29.000000000 +0100
++++ nt-drivers.new/parport.c	2010-11-16 14:48:53.000000000 +0100
 @@ -405,48 +405,15 @@
  
  #pragma warning(disable:4035)

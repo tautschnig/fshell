@@ -2,7 +2,7 @@
 
 source="nt-drivers"
 extra_params="-D__int64=\"long long int\" -D\"__declspec(x)=\" --no-library --unwind 1 --no-unwinding-assertions"
-prepare="add sourcecode 'code/nt-drivers/parclass.BUG.c'"
+prepare="add sourcecode 'code/nt-drivers/parclass.c'"
 query="cover edges(@basicblockentry)"
 tg=0
 unsat=0

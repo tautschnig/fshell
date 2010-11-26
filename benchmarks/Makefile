@@ -43,7 +43,7 @@ SORTING = sorting_bs_BB sorting_bubble-fortas_BB sorting_bubble_BB sorting_sorte
 NTDRIVERS = nt-drivers_cdaudio.c_BB nt-drivers_cdaudio.c_BB^2 nt-drivers_cdaudio.c_CC \
 						nt-drivers_floppy.c_BB nt-drivers_floppy.c_BB^2 nt-drivers_floppy.c_CC \
 						nt-drivers_kbfiltr.c_BB nt-drivers_kbfiltr.c_BB^2 nt-drivers_kbfiltr.c_CC \
-						nt-drivers_parclass.BUG.c_BB nt-drivers_parclass.BUG.c_BB^2 nt-drivers_parclass.BUG.c_CC \
+						nt-drivers_parclass.c_BB nt-drivers_parclass.c_BB^2 nt-drivers_parclass.c_CC \
 						nt-drivers_parport.c_BB nt-drivers_parport.c_BB^2 nt-drivers_parport.c_CC
 
 MAELARDALEN = maelardalen_adpcm.c_BB maelardalen_adpcm.c_BB^2 \
