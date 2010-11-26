@@ -71,7 +71,7 @@ Macro_Processing::Macro_Processing() :
 #if defined(_WIN32) && !defined(__MINGW32__)
 	m_cpp_cmdline("CL /nologo /E")
 #else
-	m_cpp_cmdline(CPP_CMD " -dP -undef -Werror")
+	m_cpp_cmdline(::std::getenv("CPP")?::std::getenv("CPP"):CPP_CMD " -dP -undef -Werror")
 #endif
 {
 	errno = 0;
