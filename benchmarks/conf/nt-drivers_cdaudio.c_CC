@@ -1,7 +1,7 @@
 # vi: set ft=sh:
 
 source="nt-drivers"
-extra_params="-D__int64=\"long long int\" -D\"__declspec(x)=\" --no-library"
+extra_params="-D__int64=\"long long int\" -D\"__declspec(x)=\" --no-library --32"
 prepare="add sourcecode 'code/nt-drivers/cdaudio.c'"
 query="cover edges(@conditionedge)"
 tg=0
