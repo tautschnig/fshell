@@ -297,7 +297,9 @@ void Parseoptions::help()
 		"Frontend options:\n"
 		" -I path                      set include path (C/C++)\n"
 		" -D macro                     define preprocessor macro (C/C++)\n"
-		" --16, --32, --64             set width of machine word\n"
+		" --16, --32, --64             set width of int\n"
+		" --LP64, --ILP64, --LLP64,\n"
+		"   --ILP32, --LP32            set width of int, long and pointers\n"
 		" --little-endian              allow little-endian word-byte conversions\n"
 		" --big-endian                 allow big-endian word-byte conversions\n"
 		" --unsigned-char              make \"char\" unsigned by default\n"
@@ -306,18 +308,20 @@ void Parseoptions::help()
 		" --i386-macos                 set MACOS/I386 architecture\n"
 		" --i386-linux                 set Linux/I386 architecture\n"
 		" --i386-win32                 set Windows/I386 architecture (default)\n"
+		" --winx64                     set Windows/X64 architecture\n"
 #else
 #ifdef __APPLE__
 		" --i386-macos                 set MACOS/I386 architecture (default)\n"
 		" --i386-linux                 set Linux/I386 architecture\n"
 		" --i386-win32                 set Windows/I386 architecture\n"
+		" --winx64                     set Windows/X64 architecture\n"
 #else
 		" --i386-macos                 set MACOS/I386 architecture\n"
 		" --i386-linux                 set Linux/I386 architecture (default)\n"
 		" --i386-win32                 set Windows/I386 architecture\n"
-#endif
-#endif
 		" --winx64                     set Windows/X64 architecture\n"
+#endif
+#endif
 		" --no-arch                    don't set up an architecture\n"
 		" --no-library                 disable built-in abstract C library\n"
 		"\n"

@@ -44,12 +44,14 @@
   "(no-assumptions)(no-unwinding-assertions)" \
   "(enable-assert)" \
   "(partial-loops)(xml-ui)" \
-  "(16)(32)(64)(little-endian)(big-endian)" \
   "(show-goto-functions)(show-loops)" \
+  "(16)(32)(64)(LP64)(ILP64)(LLP64)(ILP32)(LP32)" \
+  "(little-endian)(big-endian)" \
   "(verbosity):(no-library)" \
-  "(version)(outfile):(show-test-goals)" \
-  "(i386-linux)(i386-macos)(i386-win32)(winx64)" \
+  "(version)" \
+  "(i386-linux)(i386-macos)(i386-win32)(win32)(winx64)" \
   "(ppc-macos)(unsigned-char)" \
+  "(outfile):(show-test-goals)" \
   "(no-arch)(query-file):(statistics)(use-instrumentation)" \
   "(sat-coverage-check)" \
   "(tco-location)(tco-called-functions)(tco-assign-globals)"
