@@ -50,6 +50,10 @@ MAELARDALEN = maelardalen_adpcm.c_BB maelardalen_adpcm.c_BB^2 \
 							maelardalen_nsichneu.c_BB maelardalen_nsichneu.c_BB^2 \
 							maelardalen_statemate.c_BB maelardalen_statemate.c_BB^2
 
+PAPABENCH = PapaBench-0.4_autopilot_BB PapaBench-0.4_fly-by-wire_BB \
+						PapaBench-0.4_autopilot_C1 PapaBench-0.4_autopilot_C2 \
+						PapaBench-0.4_autopilot_C3 PapaBench-0.4_autopilot_C4 \
+						PapaBench-0.4_autopilot_C5 PapaBench-0.4_autopilot_C6
 
 all install install-strip uninstall check installcheck dist:
 
