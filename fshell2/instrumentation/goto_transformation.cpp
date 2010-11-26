@@ -194,7 +194,8 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_at(
 	::goto_programt::targett pred(node.second);
 	pred--;
 	m_inserted.push_back(::std::make_pair(node.first, pred));
-	node.first->update();
+	// run update on all goto functions for consistent location numbers
+	m_goto.update();
 
 	return m_inserted;
 }
