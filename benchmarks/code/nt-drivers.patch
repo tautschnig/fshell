@@ -1,6 +1,6 @@
-diff -urN nt-drivers/cdaudio.c nt-drivers.new/cdaudio.c
---- nt-drivers/cdaudio.c	2005-05-27 18:03:03.000000000 +0200
-+++ nt-drivers.new/cdaudio.c	2010-11-16 14:48:53.000000000 +0100
+diff -urN nt-drivers.orig/cdaudio.c nt-drivers/cdaudio.c
+--- nt-drivers.orig/cdaudio.c	2005-05-27 18:03:03.000000000 +0200
++++ nt-drivers/cdaudio.c	2010-11-20 09:24:42.000000000 +0100
 @@ -405,48 +405,15 @@
  
  #pragma warning(disable:4035)
@@ -229,9 +229,17 @@ diff -urN nt-drivers/cdaudio.c nt-drivers.new/cdaudio.c
  
  
  #pragma warning(pop)
-diff -urN nt-drivers/floppy.c nt-drivers.new/floppy.c
---- nt-drivers/floppy.c	2005-05-27 18:03:03.000000000 +0200
-+++ nt-drivers.new/floppy.c	2010-11-16 14:48:53.000000000 +0100
+@@ -17280,6 +17126,7 @@
+ }
+ 
+ char _SLAM_alloc_dummy ;
++void * malloc(unsigned);
+ 
+ char *  nondet_malloc(int i )
+ {
+diff -urN nt-drivers.orig/floppy.c nt-drivers/floppy.c
+--- nt-drivers.orig/floppy.c	2005-05-27 18:03:03.000000000 +0200
++++ nt-drivers/floppy.c	2010-11-20 09:24:55.000000000 +0100
 @@ -560,48 +560,15 @@
  
  #pragma warning(disable:4035)
@@ -472,22 +480,23 @@ diff -urN nt-drivers/floppy.c nt-drivers.new/floppy.c
  
  
  #pragma warning(pop)
-@@ -16810,12 +16656,6 @@
+@@ -16809,12 +16655,7 @@
+ }
  
  char _SLAM_alloc_dummy ;
- 
+-
 -char *  malloc(int i )
 -{
 -	#line 222
 -	return & _SLAM_alloc_dummy;
 -}
--
++void * malloc(unsigned);
+ 
  #line 230
  __declspec(dllimport) void ExAcquireFastMutex(PFAST_MUTEX FastMutex )
- {
-diff -urN nt-drivers/kbfiltr.c nt-drivers.new/kbfiltr.c
---- nt-drivers/kbfiltr.c	2010-11-11 23:57:55.000000000 +0100
-+++ nt-drivers.new/kbfiltr.c	2010-11-16 14:48:53.000000000 +0100
+diff -urN nt-drivers.orig/kbfiltr.c nt-drivers/kbfiltr.c
+--- nt-drivers.orig/kbfiltr.c	2010-11-11 23:57:55.000000000 +0100
++++ nt-drivers/kbfiltr.c	2010-11-20 09:25:04.000000000 +0100
 @@ -405,54 +405,15 @@
  
  #pragma warning(disable:4035)
@@ -749,10 +758,11 @@ diff -urN nt-drivers/kbfiltr.c nt-drivers.new/kbfiltr.c
  
  
  #pragma warning(pop)
-@@ -11415,21 +11237,6 @@
+@@ -11414,21 +11236,7 @@
+ }
  
  char _SLAM_alloc_dummy ;
- 
+-
 -char *  malloc(int i )
 -{
 -	#line 224
@@ -767,13 +777,13 @@ diff -urN nt-drivers/kbfiltr.c nt-drivers.new/kbfiltr.c
 -		#line 228
 -		return (char *  )1;
 -}
--
++void * malloc(unsigned);
+ 
  #line 237
  __declspec(dllimport) void ExAcquireFastMutex(PFAST_MUTEX FastMutex )
- {
-diff -urN nt-drivers/parclass.c nt-drivers.new/parclass.c
---- nt-drivers/parclass.c	2010-11-16 14:51:19.000000000 +0100
-+++ nt-drivers.new/parclass.c	2010-11-16 14:56:00.000000000 +0100
+diff -urN nt-drivers.orig/parclass.c nt-drivers/parclass.c
+--- nt-drivers.orig/parclass.c	2010-11-16 14:51:19.000000000 +0100
++++ nt-drivers/parclass.c	2010-11-20 09:25:08.000000000 +0100
 @@ -405,48 +405,15 @@
  
  #pragma warning(disable:4035)
@@ -2938,10 +2948,11 @@ diff -urN nt-drivers/parclass.c nt-drivers.new/parclass.c
  }
  
  #line 22
-@@ -137423,21 +136048,6 @@
+@@ -137422,21 +136047,7 @@
+ }
  
  char _SLAM_alloc_dummy ;
- 
+-
 -char *  malloc(int i )
 -{
 -	#line 247
@@ -2956,13 +2967,13 @@ diff -urN nt-drivers/parclass.c nt-drivers.new/parclass.c
 -		#line 251
 -		return (char *  )1;
 -}
--
++void * malloc(unsigned);
+ 
  #line 260
  __declspec(dllimport) void ExAcquireFastMutex(PFAST_MUTEX FastMutex )
- {
-diff -urN nt-drivers/parport.c nt-drivers.new/parport.c
---- nt-drivers/parport.c	2005-05-27 18:03:04.000000000 +0200
-+++ nt-drivers.new/parport.c	2010-11-16 14:48:53.000000000 +0100
+diff -urN nt-drivers.orig/parport.c nt-drivers/parport.c
+--- nt-drivers.orig/parport.c	2005-05-27 18:03:04.000000000 +0200
++++ nt-drivers/parport.c	2010-11-20 09:25:13.000000000 +0100
 @@ -405,48 +405,15 @@
  
  #pragma warning(disable:4035)
@@ -3971,10 +3982,11 @@ diff -urN nt-drivers/parport.c nt-drivers.new/parport.c
  
  
  #pragma warning(pop)
-@@ -60846,21 +60197,6 @@
+@@ -60845,21 +60196,7 @@
+ }
  
  char _SLAM_alloc_dummy ;
- 
+-
 -char *  malloc(int i )
 -{
 -	#line 247
@@ -3989,7 +4001,7 @@ diff -urN nt-drivers/parport.c nt-drivers.new/parport.c
 -		#line 251
 -		return (char *  )1;
 -}
--
++void * malloc(unsigned);
+ 
  #line 260
  __declspec(dllimport) void ExAcquireFastMutex(PFAST_MUTEX FastMutex )
- {
