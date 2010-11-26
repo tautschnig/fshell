@@ -53,7 +53,7 @@
   "(ppc-macos)(unsigned-char)" \
   "(outfile):(show-test-goals)" \
   "(no-arch)(query-file):(statistics)(use-instrumentation)" \
-  "(sat-coverage-check)" \
+  "(sat-coverage-check)(no-internal-coverage-check)" \
   "(tco-location)(tco-called-functions)(tco-assign-globals)"
 
 FSHELL2_NAMESPACE_BEGIN;

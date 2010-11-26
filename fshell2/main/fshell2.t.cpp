@@ -186,6 +186,7 @@ of
 	options.set_option("statistics", true);
 	options.set_option("use-instrumentation", use_instrumentation);
 	options.set_option("sat-coverage-check", use_instrumentation);
+	options.set_option("internal-coverage-check", !use_instrumentation);
 	l.set_verbosity(0);
 	::goto_functionst gf;
 

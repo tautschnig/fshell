@@ -142,6 +142,7 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 	cnf.copy_to(minisat);
 		
 	bool const use_sat(m_opts.get_bool_option("sat-coverage-check"));
+	bool const use_internal_check(m_opts.get_bool_option("internal-coverage-check"));
 	while (!unsat_goals.empty() && (limit == 0 || tcs.size() < limit)) {
 		::std::ostringstream status;
 		status << unsat_goals.size() << " test goals remain to be covered";
@@ -170,7 +171,8 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 		timer1.start_timer();
 		::fshell2::fql::test_goal_ids_t test_goal_set;
 		sub_timer.start_timer();
-		bool const has_internal_check(ctg.get_satisfied_test_goals(tcs.back().second, test_goal_set));
+		bool const has_internal_check(use_internal_check &&
+				ctg.get_satisfied_test_goals(tcs.back().second, test_goal_set));
 		sub_timer.stop_timer();
 		if (has_internal_check) {
 			tcs.back().first.swap(test_goal_set);

@@ -157,8 +157,11 @@ bool Parseoptions::get_command_line_options()
 	m_options.set_option("show-test-goals", cmdline.isset("show-test-goals"));
 	m_options.set_option("show-loops", cmdline.isset("show-loops"));
 	m_options.set_option("use-instrumentation", cmdline.isset("use-instrumentation"));
+	m_options.set_option("internal-coverage-check",
+			!cmdline.isset("no-internal-coverage-check"));
 	m_options.set_option("sat-coverage-check", cmdline.isset("sat-coverage-check") ||
-			m_options.get_bool_option("use-instrumentation"));
+			m_options.get_bool_option("use-instrumentation") ||
+			!m_options.get_bool_option("internal-coverage-check"));
 	m_options.set_option("tco-location", cmdline.isset("tco-location"));
 	m_options.set_option("tco-called-functions", cmdline.isset("tco-called-functions"));
 	m_options.set_option("tco-assign-globals", cmdline.isset("tco-assign-globals"));
@@ -358,6 +361,7 @@ void Parseoptions::help()
 		" --show-test-goals            print test goals derived from query\n"
 		" --use-instrumentation        instrument trace automata into GOTO program\n"
 		" --sat-coverage-check         use SAT solver for internal coverage analysis (implied by --use-instrumentation)\n"
+		" --no-internal-coverage-check disable built-in coverage analysis (implies --sat-coverage-check)\n"
 		"\n";
 }
 
