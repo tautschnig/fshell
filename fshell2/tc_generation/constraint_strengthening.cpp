@@ -142,6 +142,7 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 	cnf.copy_to(minisat);
 		
 	bool const use_sat(m_opts.get_bool_option("sat-coverage-check"));
+	::std::list< ::bvt > coverage_cl;
 	bool const use_internal_check(m_opts.get_bool_option("internal-coverage-check"));
 	while (!unsat_goals.empty() && (limit == 0 || tcs.size() < limit)) {
 		::std::ostringstream status;
@@ -209,28 +210,30 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 		::std::list< ::bvt > more_cl;
 		num_sat += find_sat_test_goals(minisat, more_cl, goals, unsat_goals,
 				fixed_literals, has_internal_check, test_goal_set, tcs.back().first);
-		while (!more_cl.empty()) {
-			minisat.lcnf(more_cl.front());
-			cnf.lcnf(more_cl.front());
-			more_cl.pop_front();
-		}
+		for (::std::list< ::bvt >::const_iterator iter(more_cl.begin());
+				iter != more_cl.end(); ++iter)
+			minisat.lcnf(*iter);
+		coverage_cl.splice(coverage_cl.end(), more_cl);
 		
 		::satcheck_minisatt tmp_minisat;
 		tmp_minisat.set_message_handler(cnf.get_message_handler());
 		tmp_minisat.set_verbosity(cnf.get_verbosity());
 		cnf.copy_to(tmp_minisat);
+		for (::std::list< ::bvt >::const_iterator iter(coverage_cl.begin());
+				iter != coverage_cl.end(); ++iter)
+			tmp_minisat.lcnf(*iter);
 		while (!unsat_goals.empty()) {
 			tmp_minisat.set_assumptions(fixed_literals);
 			if (::propt::P_UNSATISFIABLE == tmp_minisat.prop_solve()) break;
 			
 			num_sat += find_sat_test_goals(tmp_minisat, more_cl, goals, unsat_goals,
 					fixed_literals, has_internal_check, test_goal_set, tcs.back().first);
-			while (!more_cl.empty()) {
-				minisat.lcnf(more_cl.front());
-				tmp_minisat.lcnf(more_cl.front());
-				cnf.lcnf(more_cl.front());
-				more_cl.pop_front();
+			for (::std::list< ::bvt >::const_iterator iter(more_cl.begin());
+					iter != more_cl.end(); ++iter) {
+				minisat.lcnf(*iter);
+				tmp_minisat.lcnf(*iter);
 			}
+			coverage_cl.splice(coverage_cl.end(), more_cl);
 		}
 
 		timer2.stop_timer();
