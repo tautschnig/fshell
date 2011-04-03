@@ -335,6 +335,8 @@ void Parseoptions::help()
 		" --no-simplify                UNDOCUMENTED\n"
 		" --partial-loops              don't generate unwinding assumptions (also implies --no-unwinding-assertions)\n"
 		" --enable-assert              don't ignore user assertions\n"
+    	" --fixedbv                    fixed-point arithmetic\n"
+    	" --floatbv                    IEEE floating point arithmetic (default)\n"
 		"\n"
 		"BMC options:\n"
 		" --function name              set main function name\n"

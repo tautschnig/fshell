@@ -42,6 +42,7 @@
   "(no-simplify)(unwind):(unwindset):(slice-formula)" \
   "D:I:(depth):" \
   "(no-assumptions)(no-unwinding-assertions)" \
+  "(floatbv)(fixedbv)" \
   "(enable-assert)" \
   "(partial-loops)(xml-ui)" \
   "(show-goto-functions)(show-loops)" \
