@@ -5,24 +5,20 @@ BENCHMARKS = ase-examples busybox-1.14.0 engine-controllers joplift \
 all: $(BENCHMARKS:=.prep)
 
 clean:
-	rm -rf $(BENCHMARKS) $(BENCHMARKS:=.prep)
+	set -e ; for b in $(BENCHMARKS) ; do \
+		if [ -d $$b ] ; then \
+			cd $$b ; cpbm update ../$$b.tar.* ; cd .. ; \
+			rm -r $$b ; \
+		fi ; \
+		rm -f $$b.prep ; \
+	done
 
-%.prep: %.tar.gz %.patch
-	tar xzf $<
-	cd $(subst .prep,,$@) && cat ../$(filter %.patch, $^) | patch -p1
+%.prep: %.tar.gz %.cprover-bm.tar.gz
+	cpbm unpack $^
 	touch $@
 
-%.prep: %.tar.bz2 %.patch
-	tar xjf $<
-	cd $(subst .prep,,$@) && cat ../$(filter %.patch, $^) | patch -p1
-	touch $@
-
-%.prep: %.tar.gz
-	tar xzf $<
-	touch $@
-
-%.prep: %.tar.bz2
-	tar xjf $<
+%.prep: %.tar.bz2 %.cprover-bm.tar.gz
+	cpbm unpack $^
 	touch $@
 
 .PHONY: all clean
