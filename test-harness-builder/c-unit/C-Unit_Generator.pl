@@ -57,6 +57,7 @@ sub process_input () {
   $is_global = 1 if ($loc =~ / #global/);
   $val = "1" if ($val eq "TRUE");
   $val = "0" if ($val eq "FALSE");
+  $val = "$1.0$2" if ($val =~ /^(-?\d+)([fl])$/);
   my $key = "$sym\@$loc";
     
   ($loc =~ /^file (\S+) line (\d+)(\s+.*)?$/)
