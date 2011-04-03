@@ -10,7 +10,7 @@ SUBDIRS =
 
 AM_CPPFLAGS += -DCPP_CMD="\"@CPP@\""
 
-CBMC_OBJS = $(top_builddir)/cbmc/src/util/util.o \
+CBMC_OBJS = $(top_builddir)/cbmc/src/util/util.a \
 						$(top_builddir)/cbmc/src/big-int/bigint.o
 
 noinst_LTLIBRARIES = libmacro.la

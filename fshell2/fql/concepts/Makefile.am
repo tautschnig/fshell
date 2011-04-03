@@ -8,12 +8,12 @@ include $(top_srcdir)/model.am
 # SUBDIRS = dir1 dir2 dirX
 SUBDIRS =
 
-CBMC_OBJS = $(top_builddir)/cbmc/src/goto-programs/goto-programs.o \
-						$(top_builddir)/cbmc/src/pointer-analysis/pointer-analysis.o \
-						$(top_builddir)/cbmc/src/util/util.o \
+CBMC_OBJS = $(top_builddir)/cbmc/src/goto-programs/goto-programs.a \
+						$(top_builddir)/cbmc/src/pointer-analysis/pointer-analysis.a \
+						$(top_builddir)/cbmc/src/util/util.a \
 						$(top_builddir)/cbmc/src/big-int/bigint.o \
-						$(top_builddir)/cbmc/src/langapi/langapi.o \
-						$(top_builddir)/cbmc/src/ansi-c/ansi-c.o
+						$(top_builddir)/cbmc/src/langapi/langapi.a \
+						$(top_builddir)/cbmc/src/ansi-c/ansi-c.a
 
 noinst_LTLIBRARIES = libconcepts.la
 libconcepts_la_SOURCES = cfa.cpp    trace_automaton.cpp

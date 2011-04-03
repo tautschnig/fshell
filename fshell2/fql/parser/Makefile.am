@@ -8,9 +8,9 @@ include $(top_srcdir)/model.am
 # SUBDIRS = dir1 dir2 dirX
 SUBDIRS =
 
-CBMC_OBJS = $(top_builddir)/cbmc/src/util/util.o \
+CBMC_OBJS = $(top_builddir)/cbmc/src/util/util.a \
 						$(top_builddir)/cbmc/src/big-int/bigint.o \
-						$(top_builddir)/cbmc/src/ansi-c/ansi-c.o
+						$(top_builddir)/cbmc/src/ansi-c/ansi-c.a
 
 if DIAGNOSTICS
 BUILT_SOURCES += parser.h

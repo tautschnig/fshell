@@ -8,7 +8,7 @@ include $(top_srcdir)/model.am
 # SUBDIRS = dir1 dir2 dirX
 SUBDIRS =
 
-CBMC_OBJS = $(top_builddir)/cbmc/src/util/util.o \
+CBMC_OBJS = $(top_builddir)/cbmc/src/util/util.a \
 						$(top_builddir)/cbmc/src/big-int/bigint.o
 
 MINISAT_OBJS = $(top_builddir)/minisat-2.2.0/utils/System.o
