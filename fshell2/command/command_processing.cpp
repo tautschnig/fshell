@@ -278,7 +278,7 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 		case CMD_SET_ABSTRACT:
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, arg != 0);
 			{
-				::symbolst::iterator sym_entry(manager.context.symbols.find(
+				::contextt::symbolst::iterator sym_entry(manager.context.symbols.find(
 							::std::string("c::") + arg));
 				FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,
 						sym_entry != manager.context.symbols.end(),
@@ -317,7 +317,7 @@ bool Command_Processing::finalize(::language_uit & manager) {
 	m_finalized = ! manager.final();
 	// this must never fail, given all the previous sanity checks
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_finalized);
-    ::symbolst::iterator init_iter(manager.context.symbols.find("c::__CPROVER_initialize"));
+    ::contextt::symbolst::iterator init_iter(manager.context.symbols.find("c::__CPROVER_initialize"));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 			init_iter != manager.context.symbols.end());
 
@@ -344,7 +344,7 @@ bool Command_Processing::finalize(::language_uit & manager) {
 
 	// convert all symbols; iterators are unstable, copy symbol names first
 	::std::vector< ::irep_idt > symbols;
-	for(::symbolst::iterator iter(manager.context.symbols.begin()); iter !=
+	for(::contextt::symbolst::iterator iter(manager.context.symbols.begin()); iter !=
 			manager.context.symbols.end(); ++iter)
 		if(iter->second.type.id() == ID_code)
 			symbols.push_back(iter->first);

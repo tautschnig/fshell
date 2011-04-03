@@ -172,7 +172,7 @@ void test_use_case2( Test_Data & data )
 	func_symb.base_name = "tmp_func";
 	l.context.move(func_symb);
 	TEST_CHECK(!l.final());
-	::symbolst::iterator main_iter(l.context.symbols.find(ID_main));
+	::contextt::symbolst::iterator main_iter(l.context.symbols.find(ID_main));
 	TEST_CHECK(main_iter != l.context.symbols.end());
     ::goto_convert_functionst converter(l.context, options, cfg, l.ui_message_handler);
     converter.convert_function(main_iter->first);

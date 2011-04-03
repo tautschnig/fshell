@@ -101,7 +101,7 @@ void test( Test_Data & data )
 				FQL_CREATE1(Edgecov, id)));
 	eval.do_query(gf, cfg, *q);
 	target_graph_t const& id_entries(eval.get(*id));
-	TEST_ASSERT_RELATION(5, ==, id_entries.get_E().size());
+	TEST_ASSERT_RELATION(4, ==, id_entries.get_E().size());
 	
 	::exprt sym(ID_symbol);
 	sym.set(ID_base_name, "argc");

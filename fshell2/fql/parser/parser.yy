@@ -446,7 +446,10 @@ Predicate: TOK_ARBITRARY_PRED
 		   FSHELL2_PROD_CHECK1(::fshell2::Query_Processing_Error, !result,
 		     ::std::string("Failed to parse predicate ") + $1);
 		   FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-		     1 == ansi_c_parser.parse_tree.items.size());
+		     2 == ansi_c_parser.parse_tree.items.size());
+		   FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+		     ansi_c_parser.parse_tree.items.front().value().is_nil());
+		   ansi_c_parser.parse_tree.items.pop_front();
 		   FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 		     1 == (static_cast<const exprt&>(ansi_c_parser.parse_tree.items.front().find(ID_value))).operands().size());
 		   FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,

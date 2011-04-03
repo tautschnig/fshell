@@ -99,7 +99,7 @@ void GOTO_Transformation::make_function_call(::goto_programt::targett ins,
 ::symbolt const& GOTO_Transformation::new_var(::std::string const& name,
 		::typet const& type, bool global) {
 	::std::string const var_name("c::" + name);
-	::symbolst::const_iterator symb_entry(m_manager.context.symbols.find(var_name));
+	::contextt::symbolst::const_iterator symb_entry(m_manager.context.symbols.find(var_name));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, symb_entry == m_manager.context.symbols.end());
 	
 	::symbolt symbol;
@@ -228,7 +228,7 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 			if ((*iter)->get(ID_identifier) == symb.base_name) alt_names.push_back(::symbol_expr(symb));
 		}
 		// check globals
-		symbolst::const_iterator global_symb(
+		::contextt::symbolst::const_iterator global_symb(
 				m_manager.context.symbols.find(::std::string("c::") + (*iter)->get(ID_identifier).as_string()));
 		if (global_symb != m_manager.context.symbols.end() && global_symb->second.static_lifetime)
 			alt_names.push_back(::symbol_expr(global_symb->second));

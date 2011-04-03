@@ -91,6 +91,7 @@ void test( Test_Data & data )
 	::goto_convert(l.context, options, gf, l.ui_message_handler);
 	::fshell2::instrumentation::CFG cfg;
 	cfg.compute_edges(gf);
+	// gf.output(namespacet(l.context), ::std::cerr);
 	Evaluate_Filter eval(l);
 	
 	{
@@ -117,7 +118,7 @@ void test( Test_Data & data )
 					FQL_CREATE1(Edgecov, FQL_CREATE_FF0(F_IDENTITY))));
 		eval.do_query(gf, cfg, *q);
 		target_graph_t const& ff_entries(eval.get(*ff));
-		TEST_ASSERT_RELATION(5, ==, ff_entries.get_E().size());
+		TEST_ASSERT_RELATION(4, ==, ff_entries.get_E().size());
 	}
 }
 

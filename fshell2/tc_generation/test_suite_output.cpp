@@ -222,8 +222,7 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 	seen_vars_t vars;
 	
 	// select the init procedure chosen by the user
-	::std::string const start_proc_prefix(::std::string("c::") +
-			ti.m_main_symbol.module.as_string() + "::" + config.main + "::");
+	::std::string const start_proc_prefix(::std::string("c::$file::") + config.main + "::");
 
 	// track calls and returns
 	::std::list< called_functions_t::iterator > call_stack;
@@ -263,6 +262,8 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !call_stack.empty());
 						// handle sequences of functions without explicit return
 						while (iter->source.pc->function != call_stack.back()->first.second) {
+							// ::std::cerr << "Want POP-more because of " << call_stack.back()->first.second << " vs. current pc: " << iter->source.pc->function << ::std::endl;
+							FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !call_stack.empty());
 							call_stack.pop_back();
 							// ::std::cerr << "POP-more" << ::std::endl;
 						}
@@ -272,6 +273,8 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 		
 			::goto_programt::const_targett next(iter->source.pc);
 			++next;
+			// ::std::cerr << "this func: " << iter->source.pc->function << " next func: " << next->function << ::std::endl;
+			// tmp.output_instruction(m_equation.get_ns(), "", ::std::cerr, next);
 			if (iter->is_location() && iter->source.pc->is_function_call()) {
 				calls.push_back(::std::make_pair< ::std::pair< ::goto_programt::const_targett,
 						::irep_idt const >, ::exprt const* >(::std::make_pair(iter->source.pc,
@@ -596,8 +599,8 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 		xml_obj.set_attribute("kind", (iter->m_symbol->type.id() == ID_code ? "undefined-function" : "variable"));
 
 		if (print_loc)
-			xml_obj.new_element("identifier").data = ::xmlt::escape(::id2string(iter->m_name->get(ID_identifier)));
-		xml_obj.new_element("base_name").data = ::xmlt::escape(::id2string(iter->m_symbol->base_name));
+			xml_obj.new_element("identifier").data = ::id2string(iter->m_name->get(ID_identifier));
+		xml_obj.new_element("base_name").data = ::id2string(iter->m_symbol->base_name);
 	
 		if (print_loc) {
 			::xmlt xml_loc("location");
@@ -605,9 +608,9 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 			xml_obj.new_element().swap(xml_loc);
 		}
 		
-		xml_obj.new_element("value").data = ::xmlt::escape(iter->m_value_str);
+		xml_obj.new_element("value").data = iter->m_value_str;
 		if (print_loc)
-			xml_obj.new_element("type").data = ::xmlt::escape(iter->m_type_str);
+			xml_obj.new_element("type").data = iter->m_type_str;
 		
 		xml_tc.new_element().swap(xml_obj);
 	}
@@ -620,7 +623,7 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 			::symbolt const * sym(0);
 			m_equation.get_ns().lookup(iter->first.second, sym);
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, sym);
-			xml_obj.new_element("base_name").data = ::xmlt::escape(::id2string(sym->base_name));
+			xml_obj.new_element("base_name").data = ::id2string(sym->base_name);
 
 			if (print_loc) {
 				::xmlt xml_loc("location");
@@ -632,8 +635,8 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 				FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, bv.map.mapping.end() !=
 						bv.map.mapping.find(iter->second->get(ID_identifier)),
 						::diagnostics::internal::to_string("Failed to lookup ", iter->second->get(ID_identifier)));
-				xml_obj.new_element("return-value").data = ::xmlt::escape(
-						::from_expr(m_equation.get_ns(), iter->second->get(ID_identifier), bv.get(*(iter->second))));
+				xml_obj.new_element("return-value").data =
+						::from_expr(m_equation.get_ns(), iter->second->get(ID_identifier), bv.get(*(iter->second)));
 			}
 		
 			xml_tc.new_element().swap(xml_obj);
@@ -650,8 +653,8 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 			m_equation.get_ns().lookup(var.m_var_name, sym);
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, sym);
 			if (print_loc)
-				xml_obj.new_element("identifier").data = ::xmlt::escape(::id2string(lhs.get(ID_identifier)));
-			xml_obj.new_element("base_name").data = ::xmlt::escape(::id2string(sym->base_name));
+				xml_obj.new_element("identifier").data = ::id2string(lhs.get(ID_identifier));
+			xml_obj.new_element("base_name").data = ::id2string(sym->base_name);
 
 			if (print_loc) {
 				::xmlt xml_loc("location");
@@ -662,8 +665,8 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 			FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, bv.map.mapping.end() !=
 					bv.map.mapping.find(lhs.get(ID_identifier)),
 					::diagnostics::internal::to_string("Failed to lookup ", lhs.get(ID_identifier)));
-			xml_obj.new_element("value").data = ::xmlt::escape(
-					::from_expr(m_equation.get_ns(), lhs.get(ID_identifier), bv.get(lhs)));
+			xml_obj.new_element("value").data =
+					::from_expr(m_equation.get_ns(), lhs.get(ID_identifier), bv.get(lhs));
 		
 			xml_tc.new_element().swap(xml_obj);
 		}
