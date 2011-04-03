@@ -58,7 +58,7 @@ extern int CMDparse(CMDFlexLexer *,
 /* end parser */
 
 #define COMMAND_HELP \
-"<Statement> ::= `QUIT' | `EXIT' | `HELP'" << ::std::endl << \
+"<Statement> ::= `QUIT' | `EXIT' | `HELP'" << ::std::endl << \
 "              | `ADD' `SOURCECODE' <Defines> <File name>" << ::std::endl << \
 "              | `SHOW' `FILENAMES'" << ::std::endl << \
 "              | `SHOW' `SOURCECODE' <File name>" << ::std::endl << \
