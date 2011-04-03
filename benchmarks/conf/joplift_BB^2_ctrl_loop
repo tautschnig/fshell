@@ -1,7 +1,7 @@
 # vi: set ft=sh:
 
 source="joplift"
-extra_params="code/joplift/*.c"
+extra_params="code/joplift/{lift_control,lift_io,main}.c"
 prepare="set no_zero_init"
 query="cover (@basicblockentry & @func(ctrl_loop)) -> (@basicblockentry & @func(ctrl_loop))"
 tg=18496

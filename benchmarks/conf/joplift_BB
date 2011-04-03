@@ -1,7 +1,7 @@
 # vi: set ft=sh:
 
 source="joplift"
-extra_params="code/joplift/*.c --unwind 15"
+extra_params="code/joplift/{lift_control,lift_io,main}.c --unwind 15"
 prepare="set no_zero_init"
 query="cover edges(@basicblockentry)"
 tg=152

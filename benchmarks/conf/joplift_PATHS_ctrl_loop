@@ -1,7 +1,7 @@
 # vi: set ft=sh:
 
 source="joplift"
-extra_params="code/joplift/*.c --unwind 1 --partial-loops --function ctrl_loop"
+extra_params="code/joplift/{lift_control,lift_io,main}.c --unwind 1 --partial-loops --function ctrl_loop"
 prepare="set no_zero_init"
 query="cover paths(@func(ctrl_loop),1)"
 tg=35504
