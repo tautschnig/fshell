@@ -314,12 +314,19 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 			most_recent_non_hidden_is_true = instr_enabled;
 		if (!most_recent_non_hidden_is_true || !iter->is_assignment()) continue;
 		
-		::std::map< ::exprt const*, ::exprt const* > stmt_vars_and_parents;
+		typedef ::std::map< ::exprt const*, ::exprt const* > stmt_vars_and_parents_t;
+		stmt_vars_and_parents_t stmt_vars_and_parents;
 		::fshell2::instrumentation::collect_expr_with_parents(iter->rhs, stmt_vars_and_parents);
+		::std::list< stmt_vars_and_parents_t::const_iterator > nondet_syms_in_rhs;
+		for (stmt_vars_and_parents_t::const_iterator
+				v_iter(stmt_vars_and_parents.begin());
+				v_iter != stmt_vars_and_parents.end(); ++v_iter)
+			if (ID_nondet_symbol == v_iter->first->id()) nondet_syms_in_rhs.push_back(v_iter);
+
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, iter->lhs.id() == ID_symbol);
 		stmt_vars_and_parents.insert(::std::make_pair< ::exprt const*, ::exprt const* >(&(iter->lhs), 0));
 			
-		for (::std::map< ::exprt const*, ::exprt const* >::const_iterator
+		for (stmt_vars_and_parents_t::const_iterator
 				v_iter(stmt_vars_and_parents.begin());
 				v_iter != stmt_vars_and_parents.end(); ++v_iter) {
 			if (v_iter->first->id() != ID_symbol) continue;
@@ -327,7 +334,7 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 			// we don't care about variables where only the address of some other
 			// object is taken
 			bool has_address_of(false);
-			::std::map< ::exprt const*, ::exprt const* >::const_iterator p_iter(v_iter);
+			stmt_vars_and_parents_t::const_iterator p_iter(v_iter);
 			while (p_iter != stmt_vars_and_parents.end() && p_iter->second && !has_address_of) {
 				has_address_of = (ID_address_of == p_iter->second->id());
 				p_iter = stmt_vars_and_parents.find(p_iter->second);
@@ -366,12 +373,19 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 						// this point as reads to other indices may require the
 						// entire array/struct to be added
 						nondet_expr = &(v_iter->second->op2());
+					} else if (is_lhs && iter->rhs.id() == ID_struct && ::symex_targett::HIDDEN != iter->assignment_type &&
+							!nondet_syms_in_rhs.empty()) {
+						// assignment to struct variable with nondet components;
+						// again, it seems safer not to add the entire array
+						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+								1 == nondet_syms_in_rhs.size());
+						nondet_expr = nondet_syms_in_rhs.front()->first;
 					} else if (is_lhs && iter->rhs.id() == ID_nondet_symbol && ::symex_targett::HIDDEN != iter->assignment_type) {
 						// assignment to simple variable using undef function
 						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 								vars.end() == vars.find(var.m_identifier));
 						vars.insert(var.m_identifier);
-						nondet_expr = &(iter->rhs);
+						nondet_expr = v_iter->first;
 						// ::std::cerr << "Added LHS var " << var.m_identifier << " [" << var.m_vt << "]" << ::std::endl;
 						if (Symbol_Identifier::CBMC_TMP_RETURN_VALUE != var.m_vt) vars.insert(var.m_var_name + "@" + var.m_level1);
 						// ::std::cerr << "Also added var " << (var.m_var_name + "@" + var.m_level1) << " [" << var.m_vt << "]" << ::std::endl;
@@ -392,7 +406,7 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 						::code_function_callt const& fct(::to_code_function_call(iter->source.pc->code));
 						iv.m_name = &(fct.function());
 						iv.m_pretty_name = fct.function().get(ID_identifier);
-						iv.m_value = is_lhs ? v_iter->first : nondet_expr;
+						iv.m_value = nondet_expr;
 						iv.m_symbol = 0;
 						m_equation.get_ns().lookup(iv.m_pretty_name, iv.m_symbol);
 						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, iv.m_symbol);
