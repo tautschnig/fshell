@@ -1,3 +1,29 @@
+2011-02-23  Michael Tautschnig  <michael.tautschnig@comlab.ox.ac.uk>
+
+	* Release 1.3
+	* Updated to most recent CPROVER from CVS
+	* Added command line options {fixed,float}bv
+	* Properly deal with struct elements initialized via nondet symbols
+	* Make CBMC floating point output valid ANSI C
+
+2010-12-26  Michael Tautschnig  <tautschnig@forsyte.at>
+
+	* Fixed invalid character in help text
+
+2010-12-05  Michael Tautschnig  <tautschnig@forsyte.at>
+
+	* Make SAT coverage analysis compatible with multiple_coverage
+
+2010-11-26  Michael Tautschnig  <tautschnig@forsyte.at>
+
+	* Added --no-internal-coverage-check to disable built-in coverage check
+	* Also use $CPP for internal macro processing
+	* Install signal handler for SIGINT to cleanup files
+	* Update all goto functions after insert for consistent location numbers
+	* Added statistics about minimization overhead (memory+time)
+	* Fix for 64bit architecture semantics, more architecture command line
+	options
+
 2010-11-15  Michael Tautschnig  <tautschnig@forsyte.at>
 
 		* Release 1.2
