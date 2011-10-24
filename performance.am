@@ -1,7 +1,7 @@
 # vi: set ft=automake:
 
 PROF_BENCH = \
-						 "$(MAKE) -C $(top_srcdir)/benchmarks/code joplift.prep":"$(top_srcdir)/benchmarks/code/joplift/*.c --unwind 1 --partial-loops --function ctrl_loop":"set no_zero_init":"cover @basicblockentry" \
+						 "$(MAKE) -C $(top_srcdir)/benchmarks/code joplift.prep":"$(top_srcdir)/benchmarks/code/joplift/lift_control.c $(top_srcdir)/benchmarks/code/joplift/lift_io.c $(top_srcdir)/benchmarks/code/joplift/main.c --unwind 1 --partial-loops --function ctrl_loop":"set no_zero_init":"cover @basicblockentry" \
 						 "$(MAKE) -C $(top_srcdir)/benchmarks/code ase-examples.prep":"$(top_srcdir)/benchmarks/code/ase-examples/list2.c --unwind 3":"":"cover @BASICBLOCKENTRY->@BASICBLOCKENTRY->@BASICBLOCKENTRY->@BASICBLOCKENTRY->@BASICBLOCKENTRY" \
 						 "$(MAKE) -C $(top_srcdir)/benchmarks/code picosat-913.prep":"$(top_srcdir)/benchmarks/code/picosat-913/*.c --unwind 2 --no-unwinding-assertions":"":"cover @BASICBLOCKENTRY->@BASICBLOCKENTRY"
 PROF_CLIENT = $(top_builddir)/fshell2/main/fshell
