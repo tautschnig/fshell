@@ -450,13 +450,23 @@ Predicate: TOK_ARBITRARY_PRED
 		   FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 		     ansi_c_parser.parse_tree.items.front().value().is_nil());
 		   ansi_c_parser.parse_tree.items.pop_front();
+#if FSHELL2_DEBUG__LEVEL__ >= 2
+		   const ::exprt & tl_expr(static_cast<const ::exprt&>(
+		     ansi_c_parser.parse_tree.items.front().find(ID_value)));
+#endif
 		   FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-		     1 == (static_cast<const exprt&>(ansi_c_parser.parse_tree.items.front().find(ID_value))).operands().size());
+		     1 == tl_expr.operands().size());
 		   FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-		     (static_cast<const exprt&>(ansi_c_parser.parse_tree.items.front().find(ID_value))).operands().front().op0().op0().get("identifier") == "PRED");
-		   (static_cast<exprt &>(ansi_c_parser.parse_tree.items.front().add(ID_value))).operands().front().op0().op0().set("identifier", "!PRED!");
-		   $$ = ::fshell2::fql::Predicate::Factory::get_instance().create(new
-		     ::exprt((static_cast<const exprt&>(ansi_c_parser.parse_tree.items.front().find(ID_value))).operands().front()));
+		     ID_code == tl_expr.operands().front().id());
+		   FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+		     ID_sideeffect == tl_expr.operands().front().op0().id());
+		   ::exprt & assign_expr((static_cast< ::exprt &>(
+		     ansi_c_parser.parse_tree.items.front().add(ID_value))).operands().front().op0());
+		   FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+		     assign_expr.op0().get("identifier") == "PRED");
+		   assign_expr.op0().set("identifier", "!PRED!");
+		   $$ = ::fshell2::fql::Predicate::Factory::get_instance().create(
+		     new ::exprt(assign_expr));
 		   needs_cleanup.insert($$);
 		   // clean up the things we don't need anymore
 		   ansi_c_parser.clear();

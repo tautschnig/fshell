@@ -158,7 +158,6 @@ bool Evaluate_Filter::ignore_instruction(::goto_programt::instructiont const& e)
 		case DEAD:
 		case THROW:
 		case CATCH:
-		case PREDICATE:
 			return false;
 	}
 

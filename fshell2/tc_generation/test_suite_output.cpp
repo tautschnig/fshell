@@ -435,7 +435,7 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 						//   unsigned s;
 						//   buffer=(char*)malloc(s);
 						if (!is_lhs && iter->original_lhs.get(ID_identifier) == "c::__CPROVER_alloc_size" &&
-								bv.map.mapping.end() == bv.map.mapping.find(v_iter->first->get(ID_identifier))) break;
+								bv.get(*(v_iter->first)).is_nil()) break;
 						iv_in_use = true;
 						iv.m_name = v_iter->first;
 						// @ comes before #, also strip off possible $object
@@ -461,24 +461,19 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 				// obtain the value; if variable was used in pointer context, it will
 				// lack #0; _Bool is handled by prop_convt, no entry in mapping
 				//// ::std::cerr << "Fetching value for " << iv.m_value->pretty() << ::std::endl;
-				if (ID_bool == iv.m_symbol->type.id()) {
-					iv.m_value_str = ::from_expr(m_equation.get_ns(), iv.m_name->get(ID_identifier), bv.get(*iv.m_value));
-				} else if (iv.m_value->id() != ID_nondet_symbol &&
-						::std::string::npos == iv.m_value->get(ID_identifier).as_string().rfind("#")) {
-					::symbol_exprt new_sym(iv.m_value->get(ID_identifier).as_string() + "#0");
+				::exprt val_copy(*iv.m_value);
+				if (ID_bool != iv.m_symbol->type.id() && val_copy.id() != ID_nondet_symbol &&
+						::std::string::npos == val_copy.get(ID_identifier).as_string().rfind("#")) {
+					val_copy.set(ID_identifier, ::diagnostics::internal::to_string(val_copy.get(ID_identifier), "#0"));
 					// not sure whether this is needed
-					// if (bv.map.mapping.end() == bv.map.mapping.find(new_sym.get(ID_identifier))) {
-					//   new_sym.set(ID_identifier, ::diagnostics::internal::to_string(iv.m_value->get(ID_identifier), "$object#0"));
-					// }
-					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, bv.map.mapping.end() !=
-							bv.map.mapping.find(new_sym.get(ID_identifier)));
-					iv.m_value_str = ::from_expr(m_equation.get_ns(), iv.m_name->get(ID_identifier), bv.get(new_sym));
-				} else {
-					FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, bv.map.mapping.end() !=
-							bv.map.mapping.find(iv.m_value->get(ID_identifier)),
-							::diagnostics::internal::to_string("Failed to lookup ", iv.m_value->get(ID_identifier)));
-					iv.m_value_str = ::from_expr(m_equation.get_ns(), iv.m_name->get(ID_identifier), bv.get(*iv.m_value));
+					// if (bv.get(val_copy).is_nil())
+					//   val_copy.set(ID_identifier, ::diagnostics::internal::to_string(val_copy.get(ID_identifier), "$object#0"));
 				}
+				
+				::exprt val(bv.get(val_copy));
+				FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, !val.is_nil(),
+						::diagnostics::internal::to_string("Failed to lookup ", val_copy.get(ID_identifier)));
+				iv.m_value_str = ::from_expr(m_equation.get_ns(), iv.m_name->get(ID_identifier), val);
 				/* // beautify dynamic_X_name
 				   if(0 == val.find("&dynamic_")) {
 				   ::std::map< ::std::string, ::std::string >::const_iterator entry(
@@ -553,10 +548,10 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 		if (print_loc)
 			os << "@[" << iter->first.first->location << "]";
 		if (iter->second) {
-			FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, bv.map.mapping.end() !=
-					bv.map.mapping.find(iter->second->get(ID_identifier)),
+			::exprt val(bv.get(*(iter->second)));
+			FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, !val.is_nil(),
 					::diagnostics::internal::to_string("Failed to lookup ", iter->second->get(ID_identifier)));
-			os << "=" << ::from_expr(m_equation.get_ns(), iter->second->get(ID_identifier), bv.get(*(iter->second)));
+			os << "=" << ::from_expr(m_equation.get_ns(), iter->second->get(ID_identifier), val);
 		}
 		os << ::std::endl;
 	}
@@ -580,10 +575,10 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 		os << sym->base_name;
 		if (print_loc)
 			os << "@[" << (*iter)->source.pc->location << "]";
-		FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, bv.map.mapping.end() !=
-				bv.map.mapping.find(lhs.get(ID_identifier)),
+		::exprt val(bv.get(lhs));
+		FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, !val.is_nil(),
 				::diagnostics::internal::to_string("Failed to lookup ", lhs.get(ID_identifier)));
-		os << "=" << ::from_expr(m_equation.get_ns(), lhs.get(ID_identifier), bv.get(lhs));
+		os << "=" << ::from_expr(m_equation.get_ns(), lhs.get(ID_identifier), val);
 		os << ::std::endl;
 	}
 	
@@ -646,11 +641,11 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 			}
 
 			if (iter->second) {
-				FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, bv.map.mapping.end() !=
-						bv.map.mapping.find(iter->second->get(ID_identifier)),
+				::exprt val(bv.get(*(iter->second)));
+				FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, !val.is_nil(),
 						::diagnostics::internal::to_string("Failed to lookup ", iter->second->get(ID_identifier)));
 				xml_obj.new_element("return-value").data =
-						::from_expr(m_equation.get_ns(), iter->second->get(ID_identifier), bv.get(*(iter->second)));
+						::from_expr(m_equation.get_ns(), iter->second->get(ID_identifier), val);
 			}
 		
 			xml_tc.new_element().swap(xml_obj);
@@ -676,11 +671,11 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 				xml_obj.new_element().swap(xml_loc);
 			}
 
-			FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, bv.map.mapping.end() !=
-					bv.map.mapping.find(lhs.get(ID_identifier)),
+			::exprt val(bv.get(lhs));
+			FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, !val.is_nil(),
 					::diagnostics::internal::to_string("Failed to lookup ", lhs.get(ID_identifier)));
 			xml_obj.new_element("value").data =
-					::from_expr(m_equation.get_ns(), lhs.get(ID_identifier), bv.get(lhs));
+					::from_expr(m_equation.get_ns(), lhs.get(ID_identifier), val);
 		
 			xml_tc.new_element().swap(xml_obj);
 		}

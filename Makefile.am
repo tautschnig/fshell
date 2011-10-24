@@ -53,7 +53,7 @@ check-local:
 	if ! test x$(build_os) = xmingw32 ; then \
 		$(MAKE) $(AM_MAKEFLAGS) -C astl check ; \
 	fi
-				
+
 all-local:
 	if [ "$(top_srcdir)" = "." ] ; then \
 		$(top_srcdir)/config/update-makefiles.pl @enable_install_headers@ @disable_update_makefiles@ fshell2/ ; \
@@ -92,7 +92,7 @@ all-local:
 			$(MAKE) $(AM_MAKEFLAGS) -C cbmc/src/ clean ; \
 		fi ; \
 	fi
-	$(MAKE) $(filter-out CXXFLAGS="$(CXXFLAGS)", $(AM_MAKEFLAGS)) CXXFLAGS="$(CXXFLAGS) -Wno-parentheses -Wno-sign-compare" -C cbmc/src
+	$(MAKE) $(filter-out CXXFLAGS="$(CXXFLAGS)", $(AM_MAKEFLAGS)) MAKEOVERRIDES="" CXXFLAGS="" GCCFLAGS="$(filter-out -pedantic, $(CXXFLAGS)) -MMD -Wno-long-long -Wno-sign-compare -Wno-parentheses" -C cbmc/src cbmc.dir
 if BUILD_LINENOISE
 	$(MAKE) $(AM_MAKEFLAGS) -C linenoise CC=$(CC) CFLAGS="$(CXXFLAGS)"
 endif
@@ -100,7 +100,9 @@ endif
 cbmc-src.tar.gz: $(shell find cbmc -name "*.cpp" -o -name "*.h")
 	rm -f $@
 	make -C cbmc/src/ clean
-	tar czf $@ --exclude .git cbmc/src/
+	tar czf $@ cbmc/src/{Makefile,ansi-c,big-int,cbmc,common,config.inc} \
+		cbmc/src/{cpp,floatbv,goto-programs,goto-symex,langapi} \
+		cbmc/src/{pointer-analysis,solvers,util,xmllang}
 
 astl-src.tar.gz: $(shell find astl -name "*.cpp" -o -name "*.cc" -o -name "*.h")
 	rm -f $@

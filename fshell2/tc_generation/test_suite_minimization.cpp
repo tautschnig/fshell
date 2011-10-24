@@ -36,7 +36,7 @@
 #include <cbmc/src/solvers/flattening/bv_utils.h>
 #include <cbmc/src/solvers/flattening/boolbv.h>
 #include <cbmc/src/solvers/sat/cnf_clause_list.h>
-#include <cbmc/src/solvers/sat/satcheck_minisat2.h>
+#include <cbmc/src/solvers/sat/satcheck.h>
 
 FSHELL2_NAMESPACE_BEGIN;
 	

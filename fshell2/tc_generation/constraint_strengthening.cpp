@@ -36,7 +36,10 @@
 #include <fshell2/util/statistics.hpp>
 #include <fshell2/fql/evaluation/compute_test_goals.hpp>
 
-#include <cbmc/src/solvers/sat/satcheck_minisat2.h>
+#include <cbmc/src/solvers/sat/satcheck.h>
+#ifndef USE_MINISAT_SIMPLIFIER
+#error "Expected minisat with simplifier"
+#endif
 // #include <cbmc/src/goto-symex/build_goto_trace.h>
 // #include <cbmc/src/solvers/sat/dimacs_cnf.h>
 
@@ -92,14 +95,26 @@ static int find_sat_test_goals(::satcheck_minisatt const& minisat, ::std::list< 
 
 static void get_test_case_literals(::cnf_clause_list_assignmentt const& tc,
 		::bvt & tcs_lits, ::boolbvt const& bv) {
-	for (::boolbv_mapt::mappingt::const_iterator iter(bv.map.mapping.begin());
-			iter != bv.map.mapping.end(); ++iter) {
+	::boolbv_mapt const& map(bv.get_map());
+	for (::boolbv_mapt::mappingt::const_iterator iter(map.mapping.begin());
+			iter != map.mapping.end(); ++iter) {
 		if (iter->first.as_string().substr(0, 12) == "c::$fshell2$") continue;
 		for (::boolbv_mapt::literal_mapt::const_iterator m_iter(iter->second.literal_map.begin());
 				m_iter != iter->second.literal_map.end(); ++m_iter)
 			if (!m_iter->l.is_constant()) tcs_lits.push_back(::literalt(m_iter->l.var_no(), 
 						m_iter->l.sign() ? !tc.l_get(m_iter->l).is_false() : tc.l_get(m_iter->l).is_false()));
 	}
+}
+
+static void freeze_goal_vars(::satcheck_minisatt & minisat, 
+		::fshell2::fql::test_goal_id_map_t const& goals)
+{
+	for (::fshell2::fql::test_goal_id_map_t::const_iterator iter(goals.begin());
+			iter != goals.end(); ++iter)
+		for (::std::vector< ::literalt >::const_iterator iter2(iter->begin());
+				iter2 != iter->end(); ++iter2)
+			if (!iter2->is_constant())
+				minisat.set_frozen(*iter2);
 }
 
 void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const& ctg,
@@ -140,6 +155,7 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 	minisat.set_message_handler(cnf.get_message_handler());
 	minisat.set_verbosity(cnf.get_verbosity());
 	cnf.copy_to(minisat);
+	freeze_goal_vars(minisat, goals);
 		
 	bool const use_sat(m_opts.get_bool_option("sat-coverage-check"));
 	::std::list< ::bvt > coverage_cl;
@@ -219,6 +235,7 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 		tmp_minisat.set_message_handler(cnf.get_message_handler());
 		tmp_minisat.set_verbosity(cnf.get_verbosity());
 		cnf.copy_to(tmp_minisat);
+		freeze_goal_vars(tmp_minisat, goals);
 		for (::std::list< ::bvt >::const_iterator iter(coverage_cl.begin());
 				iter != coverage_cl.end(); ++iter)
 			tmp_minisat.lcnf(*iter);

@@ -283,7 +283,8 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 
 			::optionst options;
 			::goto_programt dest;
-			::goto_convert(::to_code(pred_copy), m_manager.context, options, dest, m_manager.get_message_handler());
+			::goto_convert(::code_expressiont(pred_copy), m_manager.context, options,
+					dest, m_manager.get_message_handler());
 			tmp.destructive_append(dest);
 		}
 
