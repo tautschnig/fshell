@@ -464,7 +464,7 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 				::exprt val_copy(*iv.m_value);
 				if (ID_bool != iv.m_symbol->type.id() && val_copy.id() != ID_nondet_symbol &&
 						::std::string::npos == val_copy.get(ID_identifier).as_string().rfind("#")) {
-					val_copy.set(ID_identifier, ::diagnostics::internal::to_string(val_copy.get(ID_identifier), "#0"));
+					val_copy.set(ID_identifier, val_copy.get(ID_identifier).as_string() + "#0");
 					// not sure whether this is needed
 					// if (bv.get(val_copy).is_nil())
 					//   val_copy.set(ID_identifier, ::diagnostics::internal::to_string(val_copy.get(ID_identifier), "$object#0"));
