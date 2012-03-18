@@ -41,36 +41,11 @@
 #include <cbmc/src/ansi-c/expr2c.h>
 #include <cbmc/src/util/config.h>
 #include <cbmc/src/util/std_code.h>
+#include <cbmc/src/util/std_expr.h>
 #include <cbmc/src/util/xml.h>
 #include <cbmc/src/util/xml_irep.h>
 
 FSHELL2_NAMESPACE_BEGIN;
-
-class Symbol_Identifier
-{
-	public:
-		typedef enum {
-			CBMC_INTERNAL,
-			CBMC_GUARD,
-			CBMC_DYNAMIC_MEMORY,
-			CBMC_TMP_RETURN_VALUE,
-			FSHELL2_INTERNAL,
-			LOCAL,
-			LOCAL_STATIC,
-			GLOBAL,
-			GLOBAL_STATIC,
-			PARAMETER,
-			UNKNOWN
-		} variable_type_t;
-
-		explicit Symbol_Identifier(::exprt const& sym);
-
-		::irep_idt const& m_identifier;
-		variable_type_t m_vt;
-		::std::string m_var_name;
-		::std::string m_level1, m_level2;
-		int m_failed_object_level;
-};
 
 ::std::ostream & operator<<(::std::ostream & os, Symbol_Identifier::variable_type_t const& vt) {
 	switch (vt) {
@@ -98,9 +73,6 @@ class Symbol_Identifier
 		case Symbol_Identifier::GLOBAL:
 			os << "GLOBAL";
 			break;
-		case Symbol_Identifier::GLOBAL_STATIC:
-			os << "GLOBAL_STATIC";
-			break;
 		case Symbol_Identifier::PARAMETER:
 			os << "PARAMETER";
 			break;
@@ -111,30 +83,36 @@ class Symbol_Identifier
 	return os;
 }
 
-Symbol_Identifier::Symbol_Identifier(::exprt const& sym) :
-	m_identifier(sym.get(ID_identifier)),
+Symbol_Identifier::Symbol_Identifier(::symbol_exprt const& sym) :
+	m_identifier(sym.get_identifier()),
 	m_vt(UNKNOWN),
 	m_var_name(m_identifier.as_string()),
+	m_level0("-1"),
 	m_level1("-1"),
 	m_level2("-1"),
 	m_failed_object_level(-1)
 {
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Invalid_Argument, sym.id() == ID_symbol);
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Invalid_Argument, m_var_name.size() > 2);
-	
+
 	using ::std::string;
 
 	// argc' and argv' used in the CBMC main routine
-	if (string::npos != m_var_name.find('\'')) 
+	if (string::npos != m_var_name.find('\''))
 		m_vt = CBMC_INTERNAL;
 	// other __CPROVER variables
-	else if (0 == m_var_name.compare(0, string::traits_type::length("c::__CPROVER_"), "c::__CPROVER_")) 
+	else if (0 == m_var_name.compare(0,
+				string::traits_type::length("c::__CPROVER_"),
+				"c::__CPROVER_"))
 		m_vt = CBMC_INTERNAL;
 	// guards
-	else if (0 == m_var_name.compare(0, string::traits_type::length("goto_symex::\\guard#"), "goto_symex::\\guard#")) 
+	else if (0 == m_var_name.compare(0,
+				string::traits_type::length("goto_symex::\\guard#"),
+				"goto_symex::\\guard#"))
 		m_vt = CBMC_GUARD;
 	// generated symbol
-	else if (0 == m_var_name.compare(0, string::traits_type::length("c::$fshell2$"), "c::$fshell2$"))
+	else if (0 == m_var_name.compare(0,
+				string::traits_type::length("c::$fshell2$"),
+				"c::$fshell2$"))
 		m_vt = FSHELL2_INTERNAL;
 	// we don't care about the above
 	if (UNKNOWN != m_vt) return;
@@ -150,13 +128,30 @@ Symbol_Identifier::Symbol_Identifier(::exprt const& sym) :
 	// strip off @xx (level1 renaming/frame numbers)
 	string::size_type const at_start(m_var_name.rfind('@'));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-			string::npos == at_start || 
+			string::npos == at_start ||
 			string::npos == hash_start ||
 			at_start < hash_start);
 	if (string::npos == at_start) m_level1 = "";
 	else {
 		m_level1 = m_var_name.substr(at_start + 1);
 		m_var_name.erase(at_start);
+	}
+
+	// strip off !xx (level0 renaming/threads)
+	string::size_type const exc_start(m_var_name.rfind('!'));
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+			(string::npos == exc_start ||
+			 string::npos != at_start) &&
+			(string::npos != exc_start ||
+			 string::npos == at_start));
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+			string::npos == exc_start ||
+			string::npos == at_start ||
+			exc_start < at_start);
+	if (string::npos == exc_start) m_level0 = "";
+	else {
+		m_level0 = m_var_name.substr(exc_start + 1);
+		m_var_name.erase(exc_start);
 	}
 
 	// strip off $object (added to failed objects)
@@ -168,24 +163,28 @@ Symbol_Identifier::Symbol_Identifier(::exprt const& sym) :
 	}
 
 	// dynamically allocated memory
-	if (0 == m_var_name.compare(0, string::traits_type::length("symex_dynamic::"), "symex_dynamic::")
-			|| 0 == m_var_name.compare(0, string::traits_type::length("symex::invalid_object"), "symex::invalid_object"))
+	if (0 == m_var_name.compare(0,
+				string::traits_type::length("symex_dynamic::"),
+				"symex_dynamic::") ||
+			0 == m_var_name.compare(0,
+				string::traits_type::length("symex::invalid_object"),
+				"symex::invalid_object"))
 		m_vt = CBMC_DYNAMIC_MEMORY;
 	// function call used outside assignment
 	else if (string::npos != m_var_name.find("::$tmp::return_value_"))
 		m_vt = CBMC_TMP_RETURN_VALUE;
-	// global variables only have c:: and no other ::
-	else if (string::npos == m_var_name.find("::", 3))
+	// parameters or other local variables
+	else if (string::npos != m_var_name.find("::", 3)) {
+		// parameters have one more ::
+		if (string::npos == m_var_name.find("::", m_var_name.find("::", 3) + 2))
+			m_vt = PARAMETER;
+		// local vars have two more ::, static ones have no @ marking the frame
+		else
+			m_vt = (m_level1.empty()) ? LOCAL_STATIC : LOCAL;
+	}
+	// global variables only have no thread and no frame
+	else if (m_level0.empty() && m_level1.empty())
 		m_vt = GLOBAL;
-	// global static variables have one more ::
-	else if (string::npos == m_var_name.find("::", m_var_name.find("::", 3) + 2))
-		m_vt = GLOBAL_STATIC;
-	// parameters have two more ::
-	else if (string::npos == m_var_name.find("::", m_var_name.find("::", m_var_name.find("::", 3) + 2) + 2))
-		m_vt = PARAMETER;
-	// local static vars have more :: but no @ marking the frame
-	else if (string::npos != m_var_name.find("::", m_var_name.find("::", m_var_name.find("::", 3) + 2) + 2))
-		m_vt = (m_level1 != "") ? LOCAL : LOCAL_STATIC;
 	
 	FSHELL2_AUDIT_ASSERT1(::diagnostics::Not_Implemented, UNKNOWN != m_vt,
 			::std::string("Cannot determine variable type of ") + m_identifier.as_string());
@@ -209,11 +208,13 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 	
 	::boolbvt const& bv(m_equation.get_bv());
 
-	//// for (::boolbv_mapt::mappingt::const_iterator iter(bv.map.mapping.begin()); iter != bv.map.mapping.end(); ++iter) {
+	//// ::boolbv_mapt const& map(bv.get_map());
+	//// for (::boolbv_mapt::mappingt::const_iterator iter(map.mapping.begin());
+	//// 		iter != map.mapping.end(); ++iter) {
 	//// 	::symbol_exprt sym(iter->first);
 	//// 	Symbol_Identifier v(sym);
 	//// 	if (Symbol_Identifier::FSHELL2_INTERNAL != v.m_vt)
-	//// 		::std::cerr << "SYMB: " << iter->first << " VALUE: " << ::expr2c(bv.get(sym), m_equation.get_ns()) << ::std::endl;
+	//// 		::std::cerr << "SYMB: " << iter->first << " [" << v.m_vt << "] VALUE: " << ::expr2c(bv.get(sym), m_equation.get_ns()) << ::std::endl;
 	//// }
 
 	// collect variables that are used or defined, skipping level2 counters
@@ -222,7 +223,7 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 	seen_vars_t vars;
 	
 	// select the init procedure chosen by the user
-	::std::string const start_proc_prefix(::std::string("c::$file::") + config.main + "::");
+	::std::string const start_proc_prefix(::std::string("c::") + config.main + "::");
 
 	// track calls and returns
 	::std::list< called_functions_t::iterator > call_stack;
@@ -236,7 +237,7 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 		//// ::std::cerr << "#########################################################" << ::std::endl;
 		//// tmp.output_instruction(m_equation.get_ns(), "", ::std::cerr, iter->source.pc);
 		//// iter->output(m_equation.get_ns(), ::std::cerr);
-		//// ::std::cerr << "LHS: " << iter->ssa_full_lhs << ::std::endl;
+		//// ::std::cerr << "LHS: " << iter->ssa_lhs << ::std::endl;
 		//// ::std::cerr << "ORIG_LHS: " << iter->original_full_lhs << ::std::endl;
 		//// ::std::cerr << "RHS: " << iter->ssa_rhs << ::std::endl;
 	
@@ -303,7 +304,7 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 			} else if (iter->is_assignment() && iter->source.pc->is_return()) {
 				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !call_stack.empty());
 				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 0 == call_stack.back()->second);
-				call_stack.back()->second = &(iter->ssa_full_lhs);
+				call_stack.back()->second = &(iter->ssa_lhs);
 				// required for recursive functions
 				call_stack.pop_back();
 				// ::std::cerr << "POP-return" << ::std::endl;
@@ -323,8 +324,7 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 				v_iter != stmt_vars_and_parents.end(); ++v_iter)
 			if (ID_nondet_symbol == v_iter->first->id()) nondet_syms_in_rhs.push_back(v_iter);
 
-		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, iter->ssa_full_lhs.id() == ID_symbol);
-		stmt_vars_and_parents.insert(::std::make_pair< ::exprt const*, ::exprt const* >(&(iter->ssa_full_lhs), 0));
+		stmt_vars_and_parents.insert(::std::make_pair< ::exprt const*, ::exprt const* >(&(iter->ssa_lhs), 0));
 			
 		for (stmt_vars_and_parents_t::const_iterator
 				v_iter(stmt_vars_and_parents.begin());
@@ -341,13 +341,13 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 			}
 			if (has_address_of) continue;
 
-			bool is_lhs(v_iter->first == &(iter->ssa_full_lhs));
+			bool is_lhs(v_iter->first == &(iter->ssa_lhs));
 
 			Test_Input::program_variable_t iv;
 			bool iv_in_use(false);
 			::exprt const * nondet_expr(0);
 		
-			Symbol_Identifier var(*(v_iter->first));
+			Symbol_Identifier var(::to_symbol_expr(*(v_iter->first)));
 			// ::std::cerr << "Analyzing " << var.m_identifier << "(" << var.m_var_name << ") [" << var.m_vt << "]" << ::std::endl;
 		
 			switch (var.m_vt) {
@@ -362,9 +362,8 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 				case Symbol_Identifier::LOCAL:
 				case Symbol_Identifier::LOCAL_STATIC:
 				case Symbol_Identifier::GLOBAL:
-				case Symbol_Identifier::GLOBAL_STATIC:
 					if (is_lhs && ::symex_targett::HIDDEN != iter->assignment_type &&
-							(Symbol_Identifier::GLOBAL == var.m_vt || Symbol_Identifier::GLOBAL_STATIC == var.m_vt))
+							Symbol_Identifier::GLOBAL == var.m_vt)
 						global_assign.push_back(iter);
 					
 					if (v_iter->second && ID_with == v_iter->second->id() && v_iter->second->op2().id() == ID_nondet_symbol) {
@@ -422,7 +421,7 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 						 iv.m_pretty_name = "malloc()";
 						 iv.m_location = &(iter->source.pc->location);
 						 iv.m_value = &(iter->ssa_rhs);
-						 ::std::cerr << "LHS: " << iter->ssa_full_lhs << ::std::endl;
+						 ::std::cerr << "LHS: " << iter->ssa_lhs << ::std::endl;
 						 ::std::cerr << "ORIG_LHS: " << iter->original_full_lhs << ::std::endl;
 						 ::std::cerr << "RHS: " << iter->ssa_rhs << ::std::endl; */
 					} else if (!is_lhs || Symbol_Identifier::PARAMETER == var.m_vt) {
@@ -522,7 +521,7 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 			if (print_loc) os << iter->m_type_str << " ";
 			os << iter->m_symbol->base_name;
 			Symbol_Identifier var(::symbol_exprt(iter->m_symbol->name));
-			global = (Symbol_Identifier::GLOBAL == var.m_vt || Symbol_Identifier::GLOBAL_STATIC == var.m_vt);
+			global = Symbol_Identifier::GLOBAL == var.m_vt;
 		}
 		if (print_loc)
 			os << "@[" << *(iter->m_location) << (global ? " #global":"") << "]";
@@ -567,7 +566,7 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 
 	for (assignments_t::const_iterator iter(as.begin()); iter != as.end(); ++iter) { 
 		os << "  ";
-		::exprt const& lhs((*iter)->ssa_full_lhs);
+		::symbol_exprt const& lhs((*iter)->ssa_lhs);
 		Symbol_Identifier var(lhs);
 		::symbolt const * sym(0);
 		m_equation.get_ns().lookup(var.m_var_name, sym);
@@ -656,7 +655,7 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 		for (assignments_t::const_iterator iter(as.begin()); iter != as.end(); ++iter) { 
 			::xmlt xml_obj("assign-global");
 			
-			::exprt const& lhs((*iter)->ssa_full_lhs);
+			::symbol_exprt const& lhs((*iter)->ssa_lhs);
 			Symbol_Identifier var(lhs);
 			::symbolt const * sym(0);
 			m_equation.get_ns().lookup(var.m_var_name, sym);

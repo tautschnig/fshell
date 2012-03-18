@@ -32,6 +32,7 @@
 #include <fshell2/config/config.hpp>
 
 #include <iostream>
+#include <string>
 
 #include <fshell2/tc_generation/constraint_strengthening.hpp>
 
@@ -40,6 +41,7 @@
 #include <cbmc/src/goto-symex/symex_target_equation.h>
 
 class optionst;
+class symbol_exprt;
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
@@ -109,6 +111,35 @@ class Test_Suite_Output
 	 */
 	Self& operator=( Self const& rhs );
 };
+
+/*! \brief TODO
+*/
+class Symbol_Identifier
+{
+	public:
+		typedef enum {
+			CBMC_INTERNAL,
+			CBMC_GUARD,
+			CBMC_DYNAMIC_MEMORY,
+			CBMC_TMP_RETURN_VALUE,
+			FSHELL2_INTERNAL,
+			LOCAL,
+			LOCAL_STATIC,
+			GLOBAL,
+			PARAMETER,
+			UNKNOWN
+		} variable_type_t;
+
+		explicit Symbol_Identifier(::symbol_exprt const& sym);
+
+		::irep_idt const& m_identifier;
+		variable_type_t m_vt;
+		::std::string m_var_name;
+		::std::string m_level0, m_level1, m_level2;
+		int m_failed_object_level;
+};
+
+::std::ostream & operator<<(::std::ostream & os, Symbol_Identifier::variable_type_t const& vt);
 
 FSHELL2_NAMESPACE_END;
 

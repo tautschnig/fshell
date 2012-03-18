@@ -73,6 +73,118 @@ using namespace ::diagnostics::unittest;
  * @test A test of Test_Suite_Output
  *
  */
+void test_sym_classes( Test_Data & data )
+{
+	// we need a fixed filename here for comparable results
+	::std::string const tempname_str("__tmp.src.c");
+	struct stat info;
+	TEST_CHECK_RELATION(0, !=, ::stat(tempname_str.c_str(), &info));
+	::std::ofstream of(tempname_str.c_str());
+	TEST_CHECK(of.is_open());
+	of << "int shared;" << std::endl
+		<< "int normal_fun(int y)" << std::endl
+		<< "{" << std::endl
+		<< "if(y) return 1;" << std::endl
+		<< "return 0;" << std::endl
+		<< "}" << std::endl
+		<< "static int local_fun(int x)" << std::endl
+		<< "{" << std::endl
+		<< "int ls;" << std::endl
+		<< "if(ls) ls=1;" << std::endl
+		<< "return ls;" << std::endl
+		<< "}" << std::endl
+		<< "int main(int argc, char* argv[])" << std::endl
+		<< "{" << std::endl
+		<< "int ln;" << std::endl
+		<< "static int stat;" << std::endl
+		<< "if(ln) local_fun(ln);" << std::endl
+		<< "if(stat) normal_fun(stat);" << std::endl
+		<< "return stat;" << std::endl
+		<< "}" << std::endl;
+	of.close();
+
+	::register_language(new_ansi_c_language);
+	::cmdlinet cmdline;
+	::config.set(cmdline);
+	::language_uit l("FShell2", cmdline);
+	::optionst options;
+	::goto_functionst gf;
+
+	TEST_CHECK(!l.parse(tempname_str));
+	::unlink(tempname_str.c_str());
+	TEST_CHECK(!l.typecheck());
+	TEST_CHECK(!l.final());
+
+	::goto_convert(l.context, options, gf, l.ui_message_handler);
+
+	fql::Path_Pattern_Expr * id_kleene(FQL_CREATE3(Repeat, FQL_CREATE1(Edgecov,
+					FQL_CREATE_FF0(F_IDENTITY)), 0, -1));
+	fql::Coverage_Pattern_Expr * id_kleene_q(FQL_CREATE1(Quote, id_kleene));
+	fql::Filter_Expr * cc(FQL_CREATE_FF0(F_CONDITIONEDGE));
+	fql::Edgecov * e(FQL_CREATE1(Edgecov, cc));
+	fql::Coverage_Pattern_Expr * c(FQL_CREATE2(CP_Concat, id_kleene_q,
+				FQL_CREATE2(CP_Concat, e, id_kleene_q)));
+	fql::Query * q(FQL_CREATE3(Query, 0, c, id_kleene));
+
+	fql::Compute_Test_Goals_From_Instrumentation goals(l, options);
+	fql::CNF_Conversion & eq(goals.do_query(gf, *q));
+	TEST_CHECK_RELATION(8, ==, eq.get_test_goal_id_map().size());
+
+	statistics::Statistics stats;
+	Constraint_Strengthening cs(eq, options);
+	Constraint_Strengthening::test_cases_t test_suite, atc;
+	options.set_option("sat-coverage-check", true);
+	cs.generate(goals, test_suite, 0, stats, atc);
+	Constraint_Strengthening::test_cases_t::size_type const size(test_suite.size());
+	TEST_CHECK_RELATION(size, >=, 3);
+	TEST_CHECK_RELATION(size, <=, 4);
+	
+	Test_Suite_Minimization ts_min(l);
+	ts_min.minimize(test_suite);
+	TEST_CHECK_RELATION(test_suite.size(), >=, 3);
+	TEST_CHECK_RELATION(test_suite.size(), <=, size);
+	
+	::config.main = "main";
+	::cnf_clause_list_assignmentt & cnf(eq.get_cnf());
+	::boolbvt const& bv(eq.get_bv());
+	for (::fshell2::Constraint_Strengthening::test_cases_t::const_iterator iter(
+				test_suite.begin()); iter != test_suite.end(); ++iter) {
+		cnf.copy_assignment_from(iter->second);
+		::boolbv_mapt const& map(bv.get_map());
+		TEST_CHECK_RELATION(map.mapping.size(), >=, 16);
+		for (::boolbv_mapt::mappingt::const_iterator iter2(map.mapping.begin());
+				iter2 != map.mapping.end(); ++iter2) {
+			::symbol_exprt sym(iter2->first);
+			::fshell2::Symbol_Identifier v(sym);
+			if (::fshell2::Symbol_Identifier::FSHELL2_INTERNAL == v.m_vt) continue;
+
+			std::string const name(iter2->first.as_string());
+			if(std::string::npos != name.find("main::argc") ||
+					std::string::npos != name.find("main::argv") ||
+					std::string::npos != name.find("::x") ||
+					std::string::npos != name.find("::y"))
+				TEST_ASSERT_RELATION(v.m_vt, ==, ::fshell2::Symbol_Identifier::PARAMETER);
+			else if(std::string::npos != name.find("::ln") ||
+					std::string::npos != name.find("::ls"))
+				TEST_ASSERT_RELATION(v.m_vt, ==, ::fshell2::Symbol_Identifier::LOCAL);
+			else if(std::string::npos != name.find("::stat"))
+				TEST_ASSERT_RELATION(v.m_vt, ==, ::fshell2::Symbol_Identifier::LOCAL_STATIC);
+			else if(std::string::npos != name.find("::shared"))
+				TEST_ASSERT_RELATION(v.m_vt, ==, ::fshell2::Symbol_Identifier::GLOBAL);
+			else if(std::string::npos != name.find("argc'") ||
+					std::string::npos != name.find("::__CPROVER_"))
+				TEST_ASSERT_RELATION(v.m_vt, ==, ::fshell2::Symbol_Identifier::CBMC_INTERNAL);
+			else
+				TEST_CHECK(false);
+		}
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * @test A test of Test_Suite_Output
+ *
+ */
 void test( Test_Data & data )
 {
 	// we need a fixed filename here for comparable results
@@ -124,7 +236,7 @@ void test( Test_Data & data )
 	cs.generate(goals, test_suite, 0, stats, atc);
 	Constraint_Strengthening::test_cases_t::size_type const size(test_suite.size());
 	TEST_CHECK_RELATION(size, >=, 2);
-	TEST_CHECK_RELATION(size, <=, 3);
+	TEST_CHECK_RELATION(size, <=, 5);
 	
 	Test_Suite_Minimization ts_min(l);
 	ts_min.minimize(test_suite);
@@ -167,6 +279,7 @@ TEST_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;
 
 TEST_SUITE_BEGIN;
+TEST_NORMAL_CASE( &test_sym_classes, LEVEL_PROD );
 TEST_NORMAL_CASE( &test, LEVEL_PROD );
 TEST_SUITE_END;
 

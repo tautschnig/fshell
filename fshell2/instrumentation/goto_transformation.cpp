@@ -261,8 +261,10 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 			make_nondet = true;
 			break;
 		}
-		FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Renaming ", (*iter)->get(ID_identifier), " to ", alt_names.back().get(ID_identifier)));
-		(*iter)->set(ID_identifier, alt_names.back().get(ID_identifier));
+		std::string a_n(alt_names.back().get(ID_identifier).as_string());
+		if(a_n.size()>3 && a_n.substr(0,3)=="c::") a_n=a_n.substr(3);
+		FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Renaming ", (*iter)->get(ID_identifier), " to ", a_n));
+		(*iter)->set(ID_identifier, a_n);
 	}
 	::goto_programt tmp;
 
@@ -273,7 +275,7 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 		decl->code = ::code_declt(::symbol_expr(cond_symbol));
 
 		if (special_pred_symb && !make_nondet) {
-			special_pred_symb->set(ID_identifier, cond_symbol.name);
+			special_pred_symb->set(ID_identifier, cond_symbol.name.as_string().substr(3));
 			
 			FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Trying to typecheck: ", pred_copy.pretty()));
 			bool const tc_failed(::ansi_c_typecheck(pred_copy, m_manager.get_message_handler(), ns));
