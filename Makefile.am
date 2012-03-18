@@ -112,7 +112,7 @@ astl-src.tar.gz: $(shell find astl -name "*.cpp" -o -name "*.cc" -o -name "*.h")
 
 examples:
 	mkdir -p examples
-	$(MAKE) -C $(top_srcdir)/benchmarks/code ase-examples.prep
+	cd $(top_srcdir)/benchmarks/code ; tar xjf ase-examples.tar.bz2
 	cp $(top_srcdir)/benchmarks/code/ase-examples/*.c examples/
 	echo "Queries described in our ASE'10 paper" > examples/ase-queries.txt
 	echo >> examples/ase-queries.txt

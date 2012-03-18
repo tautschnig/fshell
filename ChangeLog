@@ -1,3 +1,18 @@
+2012-03-18  Michael Tautschnig  <michael.tautschnig@cs.ox.ac.uk>
+
+	* Release 1.4
+	* Updated CBMC license terms
+	* Fixes for new variable renaming conventions in CBMC, added test case
+	* Basic build fixes for new CBMC release
+	* Moving towards CBMC SVN trunk (added as SVN external)
+
+2011-10-24  Michael Tautschnig  <michael.tautschnig@cs.ox.ac.uk>
+
+	* Compile fixes for Linux and without diagnostics
+	* Additional statistics for multiple coverage as requested by Sven
+	* Added KLEE testing and more appropriate comparision code
+	* Updated CBMC to latest CVS and restricted to minimal code base
+
 2011-02-23  Michael Tautschnig  <michael.tautschnig@comlab.ox.ac.uk>
 
 	* Release 1.3
