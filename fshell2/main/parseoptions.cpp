@@ -33,6 +33,7 @@
 #include <fshell2/command/command_processing.hpp>
 
 #include <fstream>
+#include <cstdlib>
 
 #include <cbmc/src/util/config.h>
 #include <cbmc/src/goto-programs/goto_convert_functions.h>

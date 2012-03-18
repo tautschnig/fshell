@@ -46,6 +46,7 @@
 #include <cerrno>
 #include <fstream>
 #include <sys/stat.h>
+#include <cstdlib>
 
 /* parser */
 #define yyFlexLexer CMDFlexLexer
