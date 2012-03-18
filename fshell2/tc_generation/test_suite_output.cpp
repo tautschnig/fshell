@@ -236,9 +236,9 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 		//// ::std::cerr << "#########################################################" << ::std::endl;
 		//// tmp.output_instruction(m_equation.get_ns(), "", ::std::cerr, iter->source.pc);
 		//// iter->output(m_equation.get_ns(), ::std::cerr);
-		//// ::std::cerr << "LHS: " << iter->lhs << ::std::endl;
-		//// ::std::cerr << "ORIG_LHS: " << iter->original_lhs << ::std::endl;
-		//// ::std::cerr << "RHS: " << iter->rhs << ::std::endl;
+		//// ::std::cerr << "LHS: " << iter->ssa_full_lhs << ::std::endl;
+		//// ::std::cerr << "ORIG_LHS: " << iter->original_full_lhs << ::std::endl;
+		//// ::std::cerr << "RHS: " << iter->ssa_rhs << ::std::endl;
 	
 		bool const instr_enabled(iter->guard_expr.is_true() || cnf.l_get(iter->guard_literal) == ::tvt(true));
 
@@ -303,7 +303,7 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 			} else if (iter->is_assignment() && iter->source.pc->is_return()) {
 				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !call_stack.empty());
 				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 0 == call_stack.back()->second);
-				call_stack.back()->second = &(iter->lhs);
+				call_stack.back()->second = &(iter->ssa_full_lhs);
 				// required for recursive functions
 				call_stack.pop_back();
 				// ::std::cerr << "POP-return" << ::std::endl;
@@ -316,15 +316,15 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 		
 		typedef ::std::map< ::exprt const*, ::exprt const* > stmt_vars_and_parents_t;
 		stmt_vars_and_parents_t stmt_vars_and_parents;
-		::fshell2::instrumentation::collect_expr_with_parents(iter->rhs, stmt_vars_and_parents);
+		::fshell2::instrumentation::collect_expr_with_parents(iter->ssa_rhs, stmt_vars_and_parents);
 		::std::list< stmt_vars_and_parents_t::const_iterator > nondet_syms_in_rhs;
 		for (stmt_vars_and_parents_t::const_iterator
 				v_iter(stmt_vars_and_parents.begin());
 				v_iter != stmt_vars_and_parents.end(); ++v_iter)
 			if (ID_nondet_symbol == v_iter->first->id()) nondet_syms_in_rhs.push_back(v_iter);
 
-		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, iter->lhs.id() == ID_symbol);
-		stmt_vars_and_parents.insert(::std::make_pair< ::exprt const*, ::exprt const* >(&(iter->lhs), 0));
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, iter->ssa_full_lhs.id() == ID_symbol);
+		stmt_vars_and_parents.insert(::std::make_pair< ::exprt const*, ::exprt const* >(&(iter->ssa_full_lhs), 0));
 			
 		for (stmt_vars_and_parents_t::const_iterator
 				v_iter(stmt_vars_and_parents.begin());
@@ -341,7 +341,7 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 			}
 			if (has_address_of) continue;
 
-			bool is_lhs(v_iter->first == &(iter->lhs));
+			bool is_lhs(v_iter->first == &(iter->ssa_full_lhs));
 
 			Test_Input::program_variable_t iv;
 			bool iv_in_use(false);
@@ -373,14 +373,14 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 						// this point as reads to other indices may require the
 						// entire array/struct to be added
 						nondet_expr = &(v_iter->second->op2());
-					} else if (is_lhs && iter->rhs.id() == ID_struct && ::symex_targett::HIDDEN != iter->assignment_type &&
+					} else if (is_lhs && iter->ssa_rhs.id() == ID_struct && ::symex_targett::HIDDEN != iter->assignment_type &&
 							!nondet_syms_in_rhs.empty()) {
 						// assignment to struct variable with nondet components;
 						// again, it seems safer not to add the entire array
 						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 								1 == nondet_syms_in_rhs.size());
 						nondet_expr = nondet_syms_in_rhs.front()->first;
-					} else if (is_lhs && iter->rhs.id() == ID_nondet_symbol && ::symex_targett::HIDDEN != iter->assignment_type) {
+					} else if (is_lhs && iter->ssa_rhs.id() == ID_nondet_symbol && ::symex_targett::HIDDEN != iter->assignment_type) {
 						// assignment to simple variable using undef function
 						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 								vars.end() == vars.find(var.m_identifier));
@@ -416,15 +416,15 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 						/* we assume malloc doesn't return NULL, should check for
 						 * invalid PTR
 						 } else if (iter->source.pc->is_assign() &&
-						 ::to_code_assign(iter->source.pc->code).rhs().get("statement") == "malloc") {
+						 ::to_code_assign(iter->source.pc->code).ssa_rhs().get("statement") == "malloc") {
 						 iv_in_use = true;
-						 iv.m_name = &(iter->lhs);
+						 iv.m_name = &(iter->ssh_full_lhs);
 						 iv.m_pretty_name = "malloc()";
 						 iv.m_location = &(iter->source.pc->location);
-						 iv.m_value = &(iter->rhs);
-						 ::std::cerr << "LHS: " << iter->lhs << ::std::endl;
-						 ::std::cerr << "ORIG_LHS: " << iter->original_lhs << ::std::endl;
-						 ::std::cerr << "RHS: " << iter->rhs << ::std::endl; */
+						 iv.m_value = &(iter->ssa_rhs);
+						 ::std::cerr << "LHS: " << iter->ssa_full_lhs << ::std::endl;
+						 ::std::cerr << "ORIG_LHS: " << iter->original_full_lhs << ::std::endl;
+						 ::std::cerr << "RHS: " << iter->ssa_rhs << ::std::endl; */
 					} else if (!is_lhs || Symbol_Identifier::PARAMETER == var.m_vt) {
 						if (Symbol_Identifier::PARAMETER == var.m_vt &&
 								0 != var.m_var_name.compare(0, start_proc_prefix.size(), start_proc_prefix)) break;
@@ -434,7 +434,7 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 						//   char * buffer;
 						//   unsigned s;
 						//   buffer=(char*)malloc(s);
-						if (!is_lhs && iter->original_lhs.get(ID_identifier) == "c::__CPROVER_alloc_size" &&
+						if (!is_lhs && iter->original_full_lhs.get(ID_identifier) == "c::__CPROVER_alloc_size" &&
 								bv.get(*(v_iter->first)).is_nil()) break;
 						iv_in_use = true;
 						iv.m_name = v_iter->first;
@@ -567,7 +567,7 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 
 	for (assignments_t::const_iterator iter(as.begin()); iter != as.end(); ++iter) { 
 		os << "  ";
-		::exprt const& lhs((*iter)->lhs);
+		::exprt const& lhs((*iter)->ssa_full_lhs);
 		Symbol_Identifier var(lhs);
 		::symbolt const * sym(0);
 		m_equation.get_ns().lookup(var.m_var_name, sym);
@@ -656,7 +656,7 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 		for (assignments_t::const_iterator iter(as.begin()); iter != as.end(); ++iter) { 
 			::xmlt xml_obj("assign-global");
 			
-			::exprt const& lhs((*iter)->lhs);
+			::exprt const& lhs((*iter)->ssa_full_lhs);
 			Symbol_Identifier var(lhs);
 			::symbolt const * sym(0);
 			m_equation.get_ns().lookup(var.m_var_name, sym);

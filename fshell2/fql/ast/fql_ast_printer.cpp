@@ -51,6 +51,8 @@
 #include <fshell2/fql/ast/quote.hpp>
 #include <fshell2/fql/ast/repeat.hpp>
 
+#include <cbmc/src/util/context.h>
+#include <cbmc/src/util/namespace.h>
 #include <cbmc/src/ansi-c/expr2c.h>
 
 FSHELL2_NAMESPACE_BEGIN;

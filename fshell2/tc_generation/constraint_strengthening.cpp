@@ -36,10 +36,7 @@
 #include <fshell2/util/statistics.hpp>
 #include <fshell2/fql/evaluation/compute_test_goals.hpp>
 
-#include <cbmc/src/solvers/sat/satcheck.h>
-#ifndef USE_MINISAT_SIMPLIFIER
-#error "Expected minisat with simplifier"
-#endif
+#include <cbmc/src/solvers/sat/satcheck_minisat2.h>
 // #include <cbmc/src/goto-symex/build_goto_trace.h>
 // #include <cbmc/src/solvers/sat/dimacs_cnf.h>
 
@@ -51,7 +48,7 @@ Constraint_Strengthening::Constraint_Strengthening(::fshell2::fql::CNF_Conversio
 {
 }
 	
-static int find_sat_test_goals(::satcheck_minisatt const& minisat, ::std::list< ::bvt > & more_clauses,
+static int find_sat_test_goals(::satcheck_minisat_simplifiert const& minisat, ::std::list< ::bvt > & more_clauses,
 		::fshell2::fql::test_goal_id_map_t const& goals, ::fshell2::fql::test_goal_ids_t & unsat_goals, ::bvt & fixed_literals,
 		bool const has_internal_check, ::fshell2::fql::test_goal_ids_t & tgs,
 		::fshell2::fql::test_goal_ids_t & tgs_done)
@@ -106,7 +103,7 @@ static void get_test_case_literals(::cnf_clause_list_assignmentt const& tc,
 	}
 }
 
-static void freeze_goal_vars(::satcheck_minisatt & minisat, 
+static void freeze_goal_vars(::satcheck_minisat_simplifiert & minisat, 
 		::fshell2::fql::test_goal_id_map_t const& goals)
 {
 	for (::fshell2::fql::test_goal_id_map_t::const_iterator iter(goals.begin());
@@ -151,7 +148,7 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 	dimacs.write_dimacs_cnf(::std::cerr);
 	*/
 	
-	::satcheck_minisatt minisat;
+	::satcheck_minisat_simplifiert minisat;
 	minisat.set_message_handler(cnf.get_message_handler());
 	minisat.set_verbosity(cnf.get_verbosity());
 	cnf.copy_to(minisat);
@@ -231,7 +228,7 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 			minisat.lcnf(*iter);
 		coverage_cl.splice(coverage_cl.end(), more_cl);
 		
-		::satcheck_minisatt tmp_minisat;
+		::satcheck_minisat_simplifiert tmp_minisat;
 		tmp_minisat.set_message_handler(cnf.get_message_handler());
 		tmp_minisat.set_verbosity(cnf.get_verbosity());
 		cnf.copy_to(tmp_minisat);

@@ -33,6 +33,8 @@
 #  include <diagnostics/basic_exceptions/violated_invariance.hpp>
 #endif
 
+#include <cbmc/src/util/namespace.h>
+#include <cbmc/src/util/context.h>
 #include <cbmc/src/solvers/flattening/bv_utils.h>
 #include <cbmc/src/solvers/flattening/boolbv.h>
 #include <cbmc/src/solvers/sat/cnf_clause_list.h>
@@ -106,11 +108,14 @@ void Test_Suite_Minimization::minimize(Constraint_Strengthening::test_cases_t &
 	// sum shall be less than upper bound
 	cnf.lcnf(::bvt(1, bv_utils.unsigned_less_than(sum_operands.front(), upper_bound)));
 	
-	::satcheck_minisatt minisat;
-	minisat.set_message_handler(m_message.get_message_handler());
-	minisat.set_verbosity(m_message.get_verbosity());
-	cnf.copy_to(minisat);
-	boolbvt bv(::namespacet(::contextt()), minisat);
+	::satcheckt solver;
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+			solver.has_set_assumptions());
+	
+	solver.set_message_handler(m_message.get_message_handler());
+	solver.set_verbosity(m_message.get_verbosity());
+	cnf.copy_to(solver);
+	boolbvt bv(::namespacet(::contextt()), solver);
 
 	::mp_integer num_tcs(test_suite.size());
 	while (num_tcs > 1) {
@@ -121,11 +126,11 @@ void Test_Suite_Minimization::minimize(Constraint_Strengthening::test_cases_t &
 				++iter, ++c_iter)
 			iter->cond_invert(iter->sign() != c_iter->is_false());
 
-		minisat.set_assumptions(upper_bound);
-		if (::propt::P_UNSATISFIABLE == minisat.prop_solve()) break;
+		solver.set_assumptions(upper_bound);
+		if (::propt::P_UNSATISFIABLE == solver.prop_solve()) break;
 
 		// backup assignment
-		cnf.copy_assignment_from(minisat);
+		cnf.copy_assignment_from(solver);
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 				bv.get_value(sum_operands.front()) < num_tcs);
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,

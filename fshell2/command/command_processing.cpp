@@ -39,7 +39,7 @@
 #include <cbmc/src/langapi/language_ui.h>
 #include <cbmc/src/goto-programs/goto_convert_functions.h>
 #include <cbmc/src/pointer-analysis/add_failed_symbols.h>
-#include <cbmc/src/goto-programs/goto_function_pointers.h>
+#include <cbmc/src/goto-programs/remove_function_pointers.h>
 #include <cbmc/src/goto-programs/goto_inline.h>
 #include <cbmc/src/goto-programs/loop_numbers.h>
 
@@ -367,7 +367,7 @@ void Command_Processing::finalize_goto_program(::language_uit & manager) {
 	::namespacet ns(manager.context);
 
 	manager.status("Function Pointer Removal");
-	::remove_function_pointers(ns, m_gf);
+	::remove_function_pointers(ns, m_gf, false);
 
 	manager.status("Partial Inlining");
 	// do partial inlining

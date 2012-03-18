@@ -64,14 +64,8 @@ FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 CNF_Conversion::CNF_Conversion(::language_uit & manager, ::optionst const& opts) :
-	::bmct(manager.context, manager.ui_message_handler),
+	::bmct(opts, manager.context, manager.ui_message_handler),
 	m_cnf(), m_bv(this->ns, m_cnf) {
-	this->options = opts;
-	this->options.set_option("dimacs", false);
-	this->options.set_option("cvc", false);
-	this->options.set_option("smt", false);
-	this->options.set_option("refine", false);
-	this->options.set_option("cvc", false);
 	this->set_verbosity(manager.get_verbosity());
 	this->set_ui(manager.ui_message_handler.get_ui());
 

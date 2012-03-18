@@ -34,14 +34,14 @@ endif
 
 distclean-local:
 	[ ! -d astl ] || $(MAKE) $(AM_MAKEFLAGS) -C astl distclean
-	[ ! -d cbmc ] || $(MAKE) $(AM_MAKEFLAGS) -C cbmc/src distclean
+	[ ! -d cbmc ] || $(MAKE) $(AM_MAKEFLAGS) -C cbmc/src clean
 if BUILD_LINENOISE
 	$(MAKE) $(AM_MAKEFLAGS) -C linenoise distclean
 endif
 
 maintainer-clean-local:
 	[ ! -d astl ] || $(MAKE) $(AM_MAKEFLAGS) -C astl maintainer-clean
-	[ ! -d cbmc ] || $(MAKE) $(AM_MAKEFLAGS) -C cbmc/src maintainer-clean
+	[ ! -d cbmc ] || $(MAKE) $(AM_MAKEFLAGS) -C cbmc/src clean
 if BUILD_LINENOISE
 	$(MAKE) $(AM_MAKEFLAGS) -C linenoise maintainer-clean
 endif
@@ -84,7 +84,7 @@ all-local:
 		cp -p $(top_srcdir)/linenoise/{Makefile,linenoise.c,linenoise.h} linenoise ; \
 	fi
 	$(MAKE) $(AM_MAKEFLAGS) -C minisat-2.2.0
-	if [ ! -d cbmc/.git ] ; then \
+	if [ ! -d cbmc/.svn ] ; then \
 		if [ ! -d cbmc ] ; then \
 			tar xzf $(top_srcdir)/cbmc-src.tar.gz ; \
 		elif [ -z "`find cbmc -cnewer $(top_srcdir)/cbmc-src.tar.gz -type f`" ] ; then \
@@ -92,7 +92,9 @@ all-local:
 			$(MAKE) $(AM_MAKEFLAGS) -C cbmc/src/ clean ; \
 		fi ; \
 	fi
-	$(MAKE) $(filter-out CXXFLAGS="$(CXXFLAGS)", $(AM_MAKEFLAGS)) MAKEOVERRIDES="" CXXFLAGS="" GCCFLAGS="$(filter-out -pedantic, $(CXXFLAGS)) -MMD -Wno-long-long -Wno-sign-compare -Wno-parentheses" -C cbmc/src cbmc.dir
+	$(MAKE) $(filter-out CXXFLAGS="$(CXXFLAGS)", $(AM_MAKEFLAGS)) MAKEOVERRIDES="" \
+		CXXFLAGS="$(CXXFLAGS) -Wno-long-long -Wno-sign-compare -Wno-parentheses" \
+		-C cbmc/src cbmc.dir
 if BUILD_LINENOISE
 	$(MAKE) $(AM_MAKEFLAGS) -C linenoise CC=$(CC) CFLAGS="$(CXXFLAGS)"
 endif
@@ -100,9 +102,7 @@ endif
 cbmc-src.tar.gz: $(shell find cbmc -name "*.cpp" -o -name "*.h")
 	rm -f $@
 	make -C cbmc/src/ clean
-	tar czf $@ cbmc/src/{Makefile,ansi-c,big-int,cbmc,common,config.inc} \
-		cbmc/src/{cpp,floatbv,goto-programs,goto-symex,langapi} \
-		cbmc/src/{pointer-analysis,solvers,util,xmllang}
+	tar czf $@ cbmc/src/
 
 astl-src.tar.gz: $(shell find astl -name "*.cpp" -o -name "*.cc" -o -name "*.h")
 	rm -f $@

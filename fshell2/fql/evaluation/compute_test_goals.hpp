@@ -124,7 +124,7 @@ inline ::boolbvt const& CNF_Conversion::get_bv() const {
 }
 	
 inline ::symex_target_equationt const& CNF_Conversion::get_equation() const {
-	return this->_equation;
+	return this->equation;
 }
 
 inline ::namespacet const& CNF_Conversion::get_ns() const {

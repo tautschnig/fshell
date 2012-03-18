@@ -30,6 +30,7 @@ CBMC_OBJS = $(top_builddir)/cbmc/src/goto-programs/goto-programs.a \
 						$(top_builddir)/cbmc/src/util/util.a \
 						$(top_builddir)/cbmc/src/big-int/bigint.o \
 						$(top_builddir)/cbmc/src/goto-symex/goto-symex.a \
+						$(top_builddir)/cbmc/src/cbmc/cover.o \
 						$(top_builddir)/cbmc/src/cbmc/bmc.o \
 						$(top_builddir)/cbmc/src/cbmc/show_vcc.o \
 						$(top_builddir)/cbmc/src/cbmc/cbmc_solvers.o \
