@@ -51,6 +51,7 @@
 #include <sys/stat.h>
 
 #include <cbmc/src/util/config.h>
+#include <cbmc/src/util/cmdline.h>
 #include <cbmc/src/langapi/language_ui.h>
 #include <cbmc/src/goto-programs/goto_convert_functions.h>
 #include <cbmc/src/langapi/mode.h>

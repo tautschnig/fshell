@@ -189,8 +189,7 @@ void test_use_case2( Test_Data & data )
 		(++(targets.begin()))->second->make_skip();
 		(++(++(targets.begin())))->second->make_skip();
 	
-		::bmct bmc(l.context, l.ui_message_handler);
-		bmc.options = options;
+		::bmct bmc(options, l.context, l.ui_message_handler);
 		bmc.set_verbosity(l.get_verbosity());
 		TEST_ASSERT(bmc.run(cfg));
 	}
@@ -201,8 +200,7 @@ void test_use_case2( Test_Data & data )
 		(++(targets.begin()))->second->make_assertion(f);
 		(++(++(targets.begin())))->second->make_skip();
 
-		::bmct bmc(l.context, l.ui_message_handler);
-		bmc.options = options;
+		::bmct bmc(options, l.context, l.ui_message_handler);
 		bmc.set_verbosity(l.get_verbosity());
 		TEST_ASSERT(bmc.run(cfg));
 	}
@@ -213,8 +211,7 @@ void test_use_case2( Test_Data & data )
 		(++(targets.begin()))->second->make_skip();
 		(++(++(targets.begin())))->second->make_assertion(f);
 
-		::bmct bmc(l.context, l.ui_message_handler);
-		bmc.options = options;
+		::bmct bmc(options, l.context, l.ui_message_handler);
 		bmc.set_verbosity(l.get_verbosity());
 		TEST_ASSERT(bmc.run(cfg));
 	}
@@ -233,8 +230,7 @@ void test_use_case2( Test_Data & data )
 		ndchoice3.second->make_skip();
 		loc->make_assertion(f);
 
-		::bmct bmc(l.context, l.ui_message_handler);
-		bmc.options = options;
+		::bmct bmc(options, l.context, l.ui_message_handler);
 		bmc.set_verbosity(l.get_verbosity());
 		TEST_ASSERT(!bmc.run(cfg));
 	}
@@ -254,8 +250,7 @@ void test_use_case2( Test_Data & data )
 		::false_exprt f;
 		loc->make_assertion(f);
 
-		::bmct bmc(l.context, l.ui_message_handler);
-		bmc.options = options;
+		::bmct bmc(options, l.context, l.ui_message_handler);
 		bmc.set_verbosity(l.get_verbosity());
 		TEST_ASSERT(bmc.run(cfg));
 	}
