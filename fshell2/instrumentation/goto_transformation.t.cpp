@@ -37,6 +37,7 @@
 #include <fstream>
 
 #include <cbmc/src/util/config.h>
+#include <cbmc/src/util/cmdline.h>
 #include <cbmc/src/util/tempfile.h>
 #include <cbmc/src/langapi/language_ui.h>
 #include <cbmc/src/goto-programs/goto_convert_functions.h>
