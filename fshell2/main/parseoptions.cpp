@@ -125,11 +125,13 @@ bool Parseoptions::get_command_line_options()
 	if(cmdline.isset("unwindset"))
 		m_options.set_option("unwindset", cmdline.getval("unwindset"));
 
-	m_options.set_option("substitution", true);
+	// constant propagation
+	m_options.set_option("propagation", true);
 
 	m_options.set_option("bounds-check", false);
 	m_options.set_option("div-by-zero-check", false);
-	m_options.set_option("overflow-check", false);
+	m_options.set_option("signed-overflow-check", false);
+	m_options.set_option("unsigned-overflow-check", false);
 	m_options.set_option("nan-check", false);
 	m_options.set_option("pointer-check", false);
 	m_options.set_option("assertions", cmdline.isset("enable-assert"));

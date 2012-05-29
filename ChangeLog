@@ -1,3 +1,9 @@
+2012-05-29  Michael Tautschnig  <michael.tautschnig@cs.ox.ac.uk>
+
+	* Release 1.4.1
+	* Updated to latest CBMC trunk
+	* Re-enable constant propagation
+
 2012-03-18  Michael Tautschnig  <michael.tautschnig@cs.ox.ac.uk>
 
 	* Release 1.4
