@@ -43,6 +43,22 @@
 
 #include <fstream>
 
+#ifdef __linux__
+#include <unistd.h>
+#endif
+
+#ifdef __FreeBSD_kernel__
+#include <unistd.h>
+#endif
+
+#ifdef __GNU__
+#include <unistd.h>
+#endif
+
+#ifdef __MACH__
+#include <unistd.h>
+#endif
+
 #include <cbmc/src/util/config.h>
 #include <cbmc/src/util/cmdline.h>
 #include <cbmc/src/util/tempfile.h>

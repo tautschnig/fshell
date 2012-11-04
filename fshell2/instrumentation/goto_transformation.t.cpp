@@ -36,6 +36,22 @@
 
 #include <fstream>
 
+#ifdef __linux__
+#include <unistd.h>
+#endif
+
+#ifdef __FreeBSD_kernel__
+#include <unistd.h>
+#endif
+
+#ifdef __GNU__
+#include <unistd.h>
+#endif
+
+#ifdef __MACH__
+#include <unistd.h>
+#endif
+
 #include <util/config.h>
 #include <util/cmdline.h>
 #include <util/tempfile.h>

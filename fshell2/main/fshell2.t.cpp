@@ -36,6 +36,23 @@
 
 #include <cerrno>
 #include <fstream>
+
+#ifdef __linux__
+#include <unistd.h>
+#endif
+
+#ifdef __FreeBSD_kernel__
+#include <unistd.h>
+#endif
+
+#ifdef __GNU__
+#include <unistd.h>
+#endif
+
+#ifdef __MACH__
+#include <unistd.h>
+#endif
+
 #include <fshell2/config/features.hpp>
 
 #ifdef FSHELL2_HAVE_LIBREADLINE

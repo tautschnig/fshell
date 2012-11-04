@@ -65,7 +65,7 @@ extern "C" {
 #endif
 
 #include <cbmc/bmc.h>
-#include <minisat-2.2.0/utils/System.h>
+#include <utils/System.h>
 
 namespace std {
 template<>

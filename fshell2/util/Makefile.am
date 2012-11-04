@@ -11,7 +11,7 @@ SUBDIRS =
 CBMC_OBJS = @CBMCDIR@/src/util/util.a \
 						@CBMCDIR@/src/big-int/bigint.o
 
-MINISAT_OBJS = $(top_builddir)/minisat-2.2.0/utils/System.o
+MINISAT_OBJS = @MINISATDIR@/utils/System.o
 
 include_fshell2_utildir = $(includedir)/fshell2/util
 noinst_LTLIBRARIES = libutil.la
