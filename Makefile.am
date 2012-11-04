@@ -83,7 +83,9 @@ all-local:
 		mkdir -p linenoise ; \
 		cp -p $(top_srcdir)/linenoise/{Makefile,linenoise.c,linenoise.h} linenoise ; \
 	fi
-	$(MAKE) $(AM_MAKEFLAGS) -C minisat-2.2.0
+	if [ "`cd minisat-2.2.0 ; pwd`" = "@MINISATDIR@" ] ; then \
+		$(MAKE) $(AM_MAKEFLAGS) -C minisat-2.2.0 ; \
+	fi
 	if [ ! -d cbmc/.svn ] ; then \
 		if [ ! -d cbmc ] ; then \
 			tar xzf $(top_srcdir)/cbmc-src.tar.gz ; \
@@ -92,10 +94,12 @@ all-local:
 			$(MAKE) $(AM_MAKEFLAGS) -C cbmc/src/ clean ; \
 		fi ; \
 	fi
-	$(MAKE) $(filter-out CXXFLAGS="$(CXXFLAGS)", $(AM_MAKEFLAGS)) \
-		CXXFLAGS="$(CXXFLAGS) -Wno-long-long -Wno-sign-compare -Wno-parentheses" \
-		MAKEOVERRIDES="MINISAT2=../../../minisat-2.2.0/" \
-		-C cbmc/src cbmc.dir
+	if [ "`cd cbmc ; pwd`" = "@CBMCDIR@" ] ; then \
+		$(MAKE) $(filter-out CXXFLAGS="$(CXXFLAGS)", $(AM_MAKEFLAGS)) \
+			CXXFLAGS="$(CXXFLAGS) -Wno-long-long -Wno-sign-compare -Wno-parentheses" \
+			MAKEOVERRIDES="MINISAT2=../../../minisat-2.2.0/" \
+			-C cbmc/src cbmc.dir ; \
+	fi
 if BUILD_LINENOISE
 	$(MAKE) $(AM_MAKEFLAGS) -C linenoise CC=$(CC) CFLAGS="$(CXXFLAGS)"
 endif
