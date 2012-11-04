@@ -41,13 +41,7 @@
 
 #ifdef __ICC
 #  define YY_NO_UNISTD_H
-#elif ! __APPLE__
-/* flex redefines isatty without an exception specification, but unistd.h 
-does; this breaks compilation with -pedantic */
-#  define isatty( t ) isatty( t ) throw()
-#endif
-
-#ifdef WIN32
+#elif WIN32
 #  define YY_NO_UNISTD_H
 #  include <errno.h>
 #  include <iostream>
@@ -56,6 +50,11 @@ does; this breaks compilation with -pedantic */
   using ::std::cout;
   using ::std::istream;
   using ::std::ostream;
+#elif ! __APPLE__
+/* flex redefines isatty without an exception specification, but unistd.h 
+does; this breaks compilation with -pedantic */
+#  include <unistd.h>
+#  define isatty( t ) isatty( t ) __THROW
 #endif
 
 #define yyparse CMDparse
