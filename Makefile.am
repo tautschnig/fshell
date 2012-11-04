@@ -101,7 +101,7 @@ all-local:
 			-C cbmc/src cbmc.dir ; \
 	fi
 if BUILD_LINENOISE
-	$(MAKE) $(AM_MAKEFLAGS) -C linenoise CC=$(CC) CFLAGS="$(CXXFLAGS)"
+	$(MAKE) $(AM_MAKEFLAGS) -C linenoise CC="$(CC)" CFLAGS="$(CXXFLAGS)"
 endif
 
 cbmc-src.tar.gz: $(shell find cbmc -name "*.cpp" -o -name "*.h")
