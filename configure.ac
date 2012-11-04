@@ -57,8 +57,7 @@ AC_CXX_HAVE_STL
 if test "x$ac_cv_cxx_have_stl" != "xyes" ; then
   AC_MSG_ERROR([C++ standard template library not found])
 fi
-AC_CHECK_HEADERS([FlexLexer.h \
-                  signal.h \
+AC_CHECK_HEADERS([signal.h \
                   sys/stat.h \
                   ctime \
                   cerrno \
@@ -69,7 +68,8 @@ AC_CHECK_HEADERS([FlexLexer.h \
                   AC_MSG_ERROR([Essential header $ac_header missing]))
 
 # platform specific or non-essential headers
-AC_CHECK_HEADERS([tr1/unordered_map \
+AC_CHECK_HEADERS([FlexLexer.h \
+                  tr1/unordered_map \
                   ext/hash_map \
                   ])
 
