@@ -33,9 +33,9 @@
 
 #include <fshell2/util/statistics.hpp>
 
-#include <cbmc/src/langapi/language_ui.h>
-#include <cbmc/src/util/parseoptions.h>
-#include <cbmc/src/util/options.h>
+#include <langapi/language_ui.h>
+#include <util/parseoptions.h>
+#include <util/options.h>
 
 #define FSHELL2_OPTIONS \
   "(function):(slice-by-trace):" \

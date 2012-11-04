@@ -34,7 +34,7 @@
 #include <string>
 #include <vector>
 
-#include <cbmc/src/util/timer.h>
+#include <util/timer.h>
 
 class messaget;
 

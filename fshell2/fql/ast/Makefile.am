@@ -8,9 +8,10 @@ include $(top_srcdir)/model.am
 # SUBDIRS = dir1 dir2 dirX
 SUBDIRS =
 
-CBMC_OBJS = $(top_builddir)/cbmc/src/util/util.a \
-						$(top_builddir)/cbmc/src/big-int/bigint.o \
-						$(top_builddir)/cbmc/src/ansi-c/ansi-c.a
+CBMC_OBJS = @CBMCDIR@/src/util/util.a \
+						@CBMCDIR@/src/big-int/bigint.o \
+						@CBMCDIR@/src/ansi-c/ansi-c.a \
+						@CBMCDIR@/src/linking/linking.a
 
 include_fshell2_fql_astdir = $(includedir)/fshell2/fql/ast
 noinst_LTLIBRARIES = libast.la

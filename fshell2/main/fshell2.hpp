@@ -37,7 +37,7 @@
 #include <fshell2/macro/macro_processing.hpp>
 #include <fshell2/fql/parser/query_parser.hpp>
 
-#include <cbmc/src/goto-programs/goto_functions.h>
+#include <goto-programs/goto_functions.h>
 
 class language_uit;
 class optionst;

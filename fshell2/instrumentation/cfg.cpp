@@ -28,7 +28,7 @@
 
 #include <fshell2/instrumentation/cfg.hpp>
 
-#include <cbmc/src/util/std_expr.h>
+#include <util/std_expr.h>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_INSTRUMENTATION_NAMESPACE_BEGIN;

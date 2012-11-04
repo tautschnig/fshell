@@ -35,13 +35,13 @@
 #  include <diagnostics/basic_exceptions/invalid_argument.hpp>
 #endif
 
-#include <cbmc/src/util/config.h>
-#include <cbmc/src/langapi/language_ui.h>
-#include <cbmc/src/goto-programs/goto_convert_functions.h>
-#include <cbmc/src/pointer-analysis/add_failed_symbols.h>
-#include <cbmc/src/goto-programs/remove_function_pointers.h>
-#include <cbmc/src/goto-programs/goto_inline.h>
-#include <cbmc/src/goto-programs/loop_numbers.h>
+#include <util/config.h>
+#include <langapi/language_ui.h>
+#include <goto-programs/goto_convert_functions.h>
+#include <pointer-analysis/add_failed_symbols.h>
+#include <goto-programs/remove_function_pointers.h>
+#include <goto-programs/goto_inline.h>
+#include <goto-programs/loop_numbers.h>
 
 #include <cerrno>
 #include <fstream>

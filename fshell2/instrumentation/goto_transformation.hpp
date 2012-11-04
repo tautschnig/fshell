@@ -31,7 +31,7 @@
 
 #include <fshell2/config/config.hpp>
 
-#include <cbmc/src/goto-programs/goto_functions.h>
+#include <goto-programs/goto_functions.h>
 
 class language_uit;
 

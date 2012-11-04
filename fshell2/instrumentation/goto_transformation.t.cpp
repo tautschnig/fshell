@@ -36,18 +36,18 @@
 
 #include <fstream>
 
-#include <cbmc/src/util/config.h>
-#include <cbmc/src/util/cmdline.h>
-#include <cbmc/src/util/tempfile.h>
-#include <cbmc/src/langapi/language_ui.h>
-#include <cbmc/src/goto-programs/goto_convert_functions.h>
-#include <cbmc/src/util/std_code.h>
-#include <cbmc/src/util/std_expr.h>
-#include <cbmc/src/util/arith_tools.h>
-#include <cbmc/src/util/expr_util.h>
-#include <cbmc/src/langapi/mode.h>
-#include <cbmc/src/ansi-c/ansi_c_language.h>
-#include <cbmc/src/cbmc/bmc.h>
+#include <util/config.h>
+#include <util/cmdline.h>
+#include <util/tempfile.h>
+#include <langapi/language_ui.h>
+#include <goto-programs/goto_convert_functions.h>
+#include <util/std_code.h>
+#include <util/std_expr.h>
+#include <util/arith_tools.h>
+#include <util/expr_util.h>
+#include <langapi/mode.h>
+#include <ansi-c/ansi_c_language.h>
+#include <cbmc/bmc.h>
 
 #define TEST_COMPONENT_NAME GOTO_Transformation
 #define TEST_COMPONENT_NAMESPACE fshell2::instrumentation

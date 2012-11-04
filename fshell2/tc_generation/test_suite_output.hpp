@@ -36,9 +36,9 @@
 
 #include <fshell2/tc_generation/constraint_strengthening.hpp>
 
-#include <cbmc/src/util/ui_message.h>
-#include <cbmc/src/goto-programs/goto_program.h>
-#include <cbmc/src/goto-symex/symex_target_equation.h>
+#include <util/ui_message.h>
+#include <goto-programs/goto_program.h>
+#include <goto-symex/symex_target_equation.h>
 
 class optionst;
 class symbol_exprt;

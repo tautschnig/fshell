@@ -47,12 +47,12 @@ extern "C" {
 #define rl_instream linenoiseInStream
 #endif
 
-#include <cbmc/src/util/config.h>
-#include <cbmc/src/util/cmdline.h>
-#include <cbmc/src/util/tempfile.h>
-#include <cbmc/src/langapi/language_ui.h>
-#include <cbmc/src/langapi/mode.h>
-#include <cbmc/src/ansi-c/ansi_c_language.h>
+#include <util/config.h>
+#include <util/cmdline.h>
+#include <util/tempfile.h>
+#include <langapi/language_ui.h>
+#include <langapi/mode.h>
+#include <ansi-c/ansi_c_language.h>
 
 #define TEST_COMPONENT_NAME FShell2
 #define TEST_COMPONENT_NAMESPACE fshell2

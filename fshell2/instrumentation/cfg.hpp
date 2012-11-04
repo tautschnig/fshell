@@ -33,7 +33,7 @@
 
 #include <fshell2/instrumentation/goto_lt_compare.hpp>
 
-#include <cbmc/src/goto-programs/goto_functions.h>
+#include <goto-programs/goto_functions.h>
 
 #include <list>
 #include <map>

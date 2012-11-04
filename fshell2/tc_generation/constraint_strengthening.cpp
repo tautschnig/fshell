@@ -36,9 +36,9 @@
 #include <fshell2/util/statistics.hpp>
 #include <fshell2/fql/evaluation/compute_test_goals.hpp>
 
-#include <cbmc/src/solvers/sat/satcheck_minisat2.h>
-// #include <cbmc/src/goto-symex/build_goto_trace.h>
-// #include <cbmc/src/solvers/sat/dimacs_cnf.h>
+#include <solvers/sat/satcheck_minisat2.h>
+// #include <goto-symex/build_goto_trace.h>
+// #include <solvers/sat/dimacs_cnf.h>
 
 FSHELL2_NAMESPACE_BEGIN;
 

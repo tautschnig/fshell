@@ -36,7 +36,7 @@
 #include <cstdlib>
 #include <unistd.h>
 
-#include <cbmc/src/util/message.h>
+#include <util/message.h>
 
 #define TEST_COMPONENT_NAME Statistics
 #define TEST_COMPONENT_NAMESPACE fshell2::statistics

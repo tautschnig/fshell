@@ -35,12 +35,12 @@
 #include <fstream>
 #include <cstdlib>
 
-#include <cbmc/src/util/config.h>
-#include <cbmc/src/goto-programs/goto_convert_functions.h>
-#include <cbmc/src/goto-programs/read_goto_binary.h>
-#include <cbmc/src/ansi-c/ansi_c_language.h>
-#include <cbmc/src/cbmc/version.h>
-#include <cbmc/src/langapi/mode.h>
+#include <util/config.h>
+#include <goto-programs/goto_convert_functions.h>
+#include <goto-programs/read_goto_binary.h>
+#include <ansi-c/ansi_c_language.h>
+#include <cbmc/version.h>
+#include <langapi/mode.h>
 
 FSHELL2_NAMESPACE_BEGIN;
 

@@ -28,7 +28,7 @@
 
 #include <fshell2/instrumentation/goto_utils.hpp>
 
-#include <cbmc/src/util/expr.h>
+#include <util/expr.h>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_INSTRUMENTATION_NAMESPACE_BEGIN;

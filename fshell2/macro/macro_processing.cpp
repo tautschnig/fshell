@@ -49,7 +49,7 @@
 
 #include <fshell2/exception/macro_processing_error.hpp>
 
-#include <cbmc/src/util/tempfile.h>
+#include <util/tempfile.h>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_MACRO_NAMESPACE_BEGIN;

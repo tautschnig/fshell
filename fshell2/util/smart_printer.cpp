@@ -28,7 +28,7 @@
 
 #include <fshell2/util/smart_printer.hpp>
 
-#include <cbmc/src/langapi/language_ui.h>
+#include <langapi/language_ui.h>
 
 FSHELL2_NAMESPACE_BEGIN;
 

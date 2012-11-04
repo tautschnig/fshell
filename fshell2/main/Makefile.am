@@ -25,25 +25,25 @@ fshell_LDADD = libmain.la \
 								../exception/libexception.la \
 								$(LINENOISE_OBJS) $(CBMC_OBJS) $(MINISAT_OBJS)
 
-CBMC_OBJS = $(top_builddir)/cbmc/src/goto-programs/goto-programs.a \
-						$(top_builddir)/cbmc/src/pointer-analysis/pointer-analysis.a \
-						$(top_builddir)/cbmc/src/util/util.a \
-						$(top_builddir)/cbmc/src/big-int/bigint.o \
-						$(top_builddir)/cbmc/src/goto-symex/goto-symex.a \
-						$(top_builddir)/cbmc/src/cbmc/cover.o \
-						$(top_builddir)/cbmc/src/cbmc/bmc.o \
-						$(top_builddir)/cbmc/src/cbmc/show_vcc.o \
-						$(top_builddir)/cbmc/src/cbmc/cbmc_solvers.o \
-						$(top_builddir)/cbmc/src/solvers/solvers.a \
-						$(top_builddir)/cbmc/src/cbmc/dimacs.o \
-						$(top_builddir)/cbmc/src/cbmc/bv_cbmc.o \
-						$(top_builddir)/cbmc/src/cbmc/counterexample_beautification_greedy.o \
-						$(top_builddir)/cbmc/src/cbmc/counterexample_beautification.o \
-						$(top_builddir)/cbmc/src/cbmc/symex_bmc.o \
-						$(top_builddir)/cbmc/src/langapi/langapi.a \
-						$(top_builddir)/cbmc/src/ansi-c/ansi-c.a
+CBMC_OBJS = @CBMCDIR@/src/goto-programs/goto-programs.a \
+						@CBMCDIR@/src/pointer-analysis/pointer-analysis.a \
+						@CBMCDIR@/src/util/util.a \
+						@CBMCDIR@/src/big-int/bigint.o \
+						@CBMCDIR@/src/goto-symex/goto-symex.a \
+						@CBMCDIR@/src/cbmc/cover.o \
+						@CBMCDIR@/src/cbmc/bmc.o \
+						@CBMCDIR@/src/cbmc/show_vcc.o \
+						@CBMCDIR@/src/cbmc/cbmc_solvers.o \
+						@CBMCDIR@/src/solvers/solvers.a \
+						@CBMCDIR@/src/cbmc/dimacs.o \
+						@CBMCDIR@/src/cbmc/bv_cbmc.o \
+						@CBMCDIR@/src/cbmc/counterexample_beautification.o \
+						@CBMCDIR@/src/cbmc/symex_bmc.o \
+						@CBMCDIR@/src/langapi/langapi.a \
+						@CBMCDIR@/src/ansi-c/ansi-c.a \
+						@CBMCDIR@/src/linking/linking.a
 
-MINISAT_OBJS = $(top_builddir)/minisat-2.2.0/utils/System.o
+MINISAT_OBJS = @MINISATDIR@/utils/System.o
 
 if BUILD_LINENOISE
 LINENOISE_OBJS = $(top_builddir)/linenoise/linenoise.o

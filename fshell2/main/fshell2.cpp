@@ -64,7 +64,7 @@ extern "C" {
 #define add_history(x) linenoiseHistoryAdd(x)
 #endif
 
-#include <cbmc/src/cbmc/bmc.h>
+#include <cbmc/bmc.h>
 #include <minisat-2.2.0/utils/System.h>
 
 namespace std {

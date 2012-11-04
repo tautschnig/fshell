@@ -33,12 +33,12 @@
 #  include <diagnostics/basic_exceptions/violated_invariance.hpp>
 #endif
 
-#include <cbmc/src/util/namespace.h>
-#include <cbmc/src/util/context.h>
-#include <cbmc/src/solvers/flattening/bv_utils.h>
-#include <cbmc/src/solvers/flattening/boolbv.h>
-#include <cbmc/src/solvers/sat/cnf_clause_list.h>
-#include <cbmc/src/solvers/sat/satcheck.h>
+#include <util/namespace.h>
+#include <util/context.h>
+#include <solvers/flattening/bv_utils.h>
+#include <solvers/flattening/boolbv.h>
+#include <solvers/sat/cnf_clause_list.h>
+#include <solvers/sat/satcheck.h>
 
 FSHELL2_NAMESPACE_BEGIN;
 	

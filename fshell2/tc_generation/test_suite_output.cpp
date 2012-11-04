@@ -38,12 +38,12 @@
 #include <fshell2/instrumentation/goto_utils.hpp>
 #include <fshell2/fql/evaluation/compute_test_goals.hpp>
 
-#include <cbmc/src/ansi-c/expr2c.h>
-#include <cbmc/src/util/config.h>
-#include <cbmc/src/util/std_code.h>
-#include <cbmc/src/util/std_expr.h>
-#include <cbmc/src/util/xml.h>
-#include <cbmc/src/util/xml_irep.h>
+#include <ansi-c/expr2c.h>
+#include <util/config.h>
+#include <util/std_code.h>
+#include <util/std_expr.h>
+#include <util/xml.h>
+#include <util/xml_irep.h>
 
 FSHELL2_NAMESPACE_BEGIN;
 

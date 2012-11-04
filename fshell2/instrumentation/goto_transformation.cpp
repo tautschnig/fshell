@@ -37,12 +37,12 @@
 #include <fshell2/exception/instrumentation_error.hpp>
 #include <fshell2/instrumentation/goto_utils.hpp>
 
-#include <cbmc/src/util/std_expr.h>
-#include <cbmc/src/util/expr_util.h>
-#include <cbmc/src/langapi/language_ui.h>
-#include <cbmc/src/ansi-c/ansi_c_typecheck.h>
-#include <cbmc/src/ansi-c/expr2c.h>
-#include <cbmc/src/goto-programs/goto_convert.h>
+#include <util/std_expr.h>
+#include <util/expr_util.h>
+#include <langapi/language_ui.h>
+#include <ansi-c/ansi_c_typecheck.h>
+#include <ansi-c/expr2c.h>
+#include <goto-programs/goto_convert.h>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_INSTRUMENTATION_NAMESPACE_BEGIN;
@@ -107,8 +107,8 @@ void GOTO_Transformation::make_function_call(::goto_programt::targett ins,
 	symbol.name = var_name;
 	symbol.base_name = name;
 	symbol.type = type;
-	symbol.lvalue = true;
-	symbol.static_lifetime = global;
+	symbol.is_lvalue = true;
+	symbol.is_static_lifetime = global;
 	m_manager.context.move(symbol);
 	
 	symb_entry = m_manager.context.symbols.find(var_name);
@@ -230,7 +230,7 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 		// check globals
 		::contextt::symbolst::const_iterator global_symb(
 				m_manager.context.symbols.find(::std::string("c::") + (*iter)->get(ID_identifier).as_string()));
-		if (global_symb != m_manager.context.symbols.end() && global_symb->second.static_lifetime)
+		if (global_symb != m_manager.context.symbols.end() && global_symb->second.is_static_lifetime)
 			alt_names.push_back(::symbol_expr(global_symb->second));
 		// function arguments
 		FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, fct_entry != m_goto.function_map.end(),
