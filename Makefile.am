@@ -5,7 +5,7 @@ include $(top_srcdir)/performance.am
 AM_MAKEFLAGS = CXX="$(CXX)" CXXFLAGS="$(CXXFLAGS)"
 
 # add further subdirectories here
-SUBDIRS = . minisat-2.2.0 test doc fshell2 benchmarks
+SUBDIRS = . test doc fshell2 benchmarks
 
 # just a hint for autoproject
 # _SOURCES = model.am performance.am ChangeLog NEWS README TODO
