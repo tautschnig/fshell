@@ -71,7 +71,8 @@ void Query_Parser::parse(::std::ostream & os, char const * query, Query ** query
 	try {
 		int parse(0);
 		parse = FQLparse(&lexer, &os, query_ast);
-		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 0 == parse);
+		if(0 != parse)
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, false);
 	} catch (::fshell2::Query_Processing_Error & e) {
 		FSHELL2_PROD_CHECK1(Query_Processing_Error, false,
 				::std::string("Query parsing failed: ") + e.what());
