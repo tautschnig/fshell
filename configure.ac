@@ -48,6 +48,7 @@ fi
 
 
 AC_SUBST(additional_args)
+additional_args="$additional_args --host=$host --target=$target"
 
 AM_CONDITIONAL(WIN32_BUILD, test x$build_os = xmingw32)
 
@@ -81,14 +82,16 @@ AM_CONDITIONAL(BUILD_LINENOISE, test "x$vl_cv_lib_readline" = "xno")
 AC_ARG_WITH(cbmc,
             [--with-cbmc=<path> path to CBMC build],
             [CBMCDIR=${with_cbmc}
-             model_REALPATH([CBMCDIR])],
+             model_REALPATH([CBMCDIR])
+             additional_args="$additional_args --with-cbmc=$CBMCDIR"],
             CBMCDIR=model_REALPATH(cbmc))
 AC_SUBST(CBMCDIR)
 
 AC_ARG_WITH(minisat,
             [--with-minisat=<path> path to MiniSat 2.2.0 build],
             [MINISATDIR=${with_minisat}
-             model_REALPATH([MINISATDIR])],
+             model_REALPATH([MINISATDIR])
+             additional_args="$additional_args --with-minisat=$MINISATDIR"],
             MINISATDIR=model_REALPATH(minisat-2.2.0))
 AC_SUBST(MINISATDIR)
 

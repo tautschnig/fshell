@@ -44,14 +44,18 @@ debug audit debug-check audit-check:
       cd $(top_srcdir) ; test -f config.status && mv config.status config.status.top || : ; \
       cd build/$$level ; \
 			../../configure --disable-update-makefiles --with-diagnostics=@DIAGNOSTICSDIR@,$$level \
-        @additional_args@ LEX=$(LEX) CXXFLAGS="$(CXXFLAGS)" LDFLAGS="$(LDFLAGS)" ; \
+        @additional_args@ \
+				CC="$(CC)" CXX="$(CXX)" AR="$(AR)" RANLIB="$(RANLIB)" LEX="$(LEX)" \
+				CXXFLAGS="$(CXXFLAGS)" LDFLAGS="$(LDFLAGS)" ; \
 			cd ../../ ; test -f config.status.top && mv config.status.top config.status || : )
 	cd $(top_srcdir)/build/`echo $@ | @AWK@ -F- '{print $$1}'``pwd | sed "s|^\`cd $(top_builddir) > /dev/null; pwd\`||"` && \
     $(MAKE) $(AM_MAKEFLAGS) `echo $@ | @AWK@ -F- '{print $$2}'`
 
 prod prod-check:
 	test -f $(top_srcdir)/Makefile || \
-    ( cd $(top_srcdir) ; ./configure --disable-update-makefiles --with-diagnostics=@DIAGNOSTICSDIR@,prod @additional_args@ LEX=$(LEX) )
+    ( cd $(top_srcdir) ; ./configure --disable-update-makefiles --with-diagnostics=@DIAGNOSTICSDIR@,prod @additional_args@ \
+			CC="$(CC)" CXX="$(CXX)" AR="$(AR)" RANLIB="$(RANLIB)" LEX="$(LEX)" \
+			CXXFLAGS="$(CXXFLAGS)" LDFLAGS="$(LDFLAGS)" )
 	cd $(top_srcdir)/`pwd | sed "s|^\`cd $(top_builddir) > /dev/null; pwd\`||"` && \
     $(MAKE) $(AM_MAKEFLAGS) `echo $@ | @AWK@ -F- '{print $$2}'`
 
@@ -65,7 +69,9 @@ release:
       cd $(top_srcdir) ; test -f config.status && mv config.status config.status.top || : ; \
       cd build/$@ ; \
 			../../configure --disable-update-makefiles --without-diagnostics \
-        @additional_args@ LEX=$(LEX) CXXFLAGS="$(CXXFLAGS)" LDFLAGS="$(LDFLAGS)" ; \
+        @additional_args@ \
+				CC="$(CC)" CXX="$(CXX)" AR="$(AR)" RANLIB="$(RANLIB)" LEX="$(LEX)" \
+				CXXFLAGS="$(CXXFLAGS)" LDFLAGS="$(LDFLAGS)" ; \
 			cd ../../ ; test -f config.status.top && mv config.status.top config.status || : )
 	cd $(top_srcdir)/build/`echo $@``pwd | sed "s|^\`cd $(top_builddir) > /dev/null; pwd\`||"` && \
     $(MAKE) $(AM_MAKEFLAGS)
