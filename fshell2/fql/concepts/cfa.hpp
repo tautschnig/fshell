@@ -34,7 +34,7 @@
 
 #include <set>
 
-#include <cbmc/src/goto-programs/goto_functions.h>
+#include <goto-programs/goto_functions.h>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;

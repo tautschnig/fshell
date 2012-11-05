@@ -47,11 +47,11 @@
 #include <algorithm>
 #include <iterator>
 
-#include <cbmc/src/util/std_code.h>
-#include <cbmc/src/util/std_expr.h>
-#include <cbmc/src/util/arith_tools.h>
-#include <cbmc/src/util/expr_util.h>
-#include <cbmc/src/langapi/language_ui.h>
+#include <util/std_code.h>
+#include <util/std_expr.h>
+#include <util/arith_tools.h>
+#include <util/expr_util.h>
+#include <langapi/language_ui.h>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;

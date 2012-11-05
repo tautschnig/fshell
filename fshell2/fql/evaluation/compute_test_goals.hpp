@@ -38,9 +38,9 @@
 #include <fshell2/fql/concepts/trace_automaton.hpp>
 #include <fshell2/fql/evaluation/automaton_inserter.hpp>
 
-#include <cbmc/src/cbmc/bmc.h>
-#include <cbmc/src/cbmc/bv_cbmc.h>
-#include <cbmc/src/solvers/sat/cnf_clause_list.h>
+#include <cbmc/bmc.h>
+#include <cbmc/bv_cbmc.h>
+#include <solvers/sat/cnf_clause_list.h>
 
 #include <vector>
 #include <set>

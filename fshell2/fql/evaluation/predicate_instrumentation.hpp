@@ -35,7 +35,7 @@
 #include <fshell2/fql/concepts/cfa.hpp>
 #include <fshell2/fql/concepts/target_graph.hpp>
 
-#include <cbmc/src/goto-programs/goto_functions.h>
+#include <goto-programs/goto_functions.h>
 
 #include <map>
 #include <set>

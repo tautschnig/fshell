@@ -61,8 +61,8 @@
 #include <iterator>
 #include <sstream>
 
-#include <cbmc/src/util/config.h>
-#include <cbmc/src/langapi/language_ui.h>
+#include <util/config.h>
+#include <langapi/language_ui.h>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;

@@ -36,8 +36,8 @@
 
 #include <fshell2/fql/ast/query.hpp>
 
-#include <cbmc/src/util/config.h>
-#include <cbmc/src/util/cmdline.h>
+#include <util/config.h>
+#include <util/cmdline.h>
 
 #define TEST_COMPONENT_NAME Query_Parser
 #define TEST_COMPONENT_NAMESPACE fshell2::fql

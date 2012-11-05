@@ -66,8 +66,8 @@
 #include <fshell2/fql/ast/quote.hpp>
 #include <fshell2/fql/ast/repeat.hpp>
 
-#include <cbmc/src/ansi-c/ansi_c_parser.h>
-#include <cbmc/src/ansi-c/ansi_c_parse_tree.h>
+#include <ansi-c/ansi_c_parser.h>
+#include <ansi-c/ansi_c_parse_tree.h>
 
 #define yyparse FQLparse
 #define yyerror FQLerror

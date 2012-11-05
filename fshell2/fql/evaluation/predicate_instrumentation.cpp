@@ -36,7 +36,7 @@
 
 #include <fshell2/fql/ast/predicate.hpp>
 
-#include <cbmc/src/langapi/language_ui.h>
+#include <langapi/language_ui.h>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;

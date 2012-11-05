@@ -35,7 +35,7 @@
 
 #include <set>
 
-#include <cbmc/src/util/expr.h>
+#include <util/expr.h>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
