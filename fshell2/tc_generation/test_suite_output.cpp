@@ -493,11 +493,6 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 			}
 		}
 	}
-
-	// we still have all recent tail calls on the stack
-	FSHELL2_AUDIT_ASSERT_RELATION(::diagnostics::Violated_Invariance, call_stack.size(), >=, 1);
-	FSHELL2_AUDIT_ASSERT_RELATION(::diagnostics::Violated_Invariance,
-			call_stack.front()->first.second, ==, "c::"+::config.main);
 }
 
 ::std::ostream & Test_Suite_Output::print_test_inputs_plain(::std::ostream & os,
