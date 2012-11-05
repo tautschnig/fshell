@@ -68,7 +68,7 @@ DIAGNOSTICS_NAMESPACE_END;
 #ifdef _WIN32
 namespace Minisat
 {
-	double memUsedPeak() { return memUsed(); }
+	double memUsedPeak() { return 0; }
 }
 #endif
 
