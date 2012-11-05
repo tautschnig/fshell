@@ -96,7 +96,7 @@ all-local:
 				tar xzf $(top_srcdir)/cbmc-src.tar.gz ; \
 				$(MAKE) $(AM_MAKEFLAGS) -C cbmc/src/ clean ; \
 			fi ; \
-		fi
+		fi ; \
 		$(MAKE) $(filter-out CXXFLAGS="$(CXXFLAGS)", $(AM_MAKEFLAGS)) \
 			CXXFLAGS="$(CXXFLAGS) -Wno-long-long -Wno-sign-compare -Wno-parentheses" \
 			MAKEOVERRIDES="MINISAT2=../../../minisat-2.2.0/" \
