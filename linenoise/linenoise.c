@@ -450,7 +450,7 @@ int linenoiseHistorySetMaxLen(int len) {
 
     if (len < 1) return 0;
     if (history) {
-        int tocopy = history_len;
+        int tocopy = history_max_len;
 
         new = malloc(sizeof(char*)*len);
         if (new == NULL) return 0;
