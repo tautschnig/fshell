@@ -74,27 +74,29 @@ all-local:
 		  echo >> benchmarks/Makefile ; \
 		  echo '.PHONY: all install install-strip uninstall check installcheck dist clean distclean maintainer-clean' >> benchmarks/Makefile ; \
 		fi ; \
-		mkdir -p minisat-2.2.0/{core,mtl,simp,utils} ; \
-		cp -p $(top_srcdir)/minisat-2.2.0/Makefile minisat-2.2.0 ; \
-		cp -p $(top_srcdir)/minisat-2.2.0/core/{Makefile,*.cc,*.h} minisat-2.2.0/core ; \
-		cp -p $(top_srcdir)/minisat-2.2.0/mtl/{*.h,*.mk} minisat-2.2.0/mtl ; \
-		cp -p $(top_srcdir)/minisat-2.2.0/simp/{Makefile,*.cc,*.h} minisat-2.2.0/simp ; \
-		cp -p $(top_srcdir)/minisat-2.2.0/utils/{Makefile,*.cc,*.h} minisat-2.2.0/utils ; \
+		if [ '$$(top_srcdir)/minisat-2.2.0' = "@MINISATDIR@" ] ; then \
+			mkdir -p minisat-2.2.0/{core,mtl,simp,utils} ; \
+			cp -p @MINISATDIR@/Makefile minisat-2.2.0 ; \
+			cp -p @MINISATDIR@/core/{Makefile,*.cc,*.h} minisat-2.2.0/core ; \
+			cp -p @MINISATDIR@/mtl/{*.h,*.mk} minisat-2.2.0/mtl ; \
+			cp -p @MINISATDIR@/simp/{Makefile,*.cc,*.h} minisat-2.2.0/simp ; \
+			cp -p @MINISATDIR@/utils/{Makefile,*.cc,*.h} minisat-2.2.0/utils ; \
+		fi ; \
 		mkdir -p linenoise ; \
 		cp -p $(top_srcdir)/linenoise/{Makefile,linenoise.c,linenoise.h} linenoise ; \
 	fi
-	if [ "`cd minisat-2.2.0 ; pwd`" = "@MINISATDIR@" ] ; then \
+	if [ '$$(top_srcdir)/minisat-2.2.0' = "@MINISATDIR@" ] ; then \
 		$(MAKE) $(AM_MAKEFLAGS) -C minisat-2.2.0 ; \
 	fi
-	if [ ! -d cbmc/.svn ] ; then \
-		if [ ! -d cbmc ] ; then \
-			tar xzf $(top_srcdir)/cbmc-src.tar.gz ; \
-		elif [ -z "`find cbmc -cnewer $(top_srcdir)/cbmc-src.tar.gz -type f`" ] ; then \
-			tar xzf $(top_srcdir)/cbmc-src.tar.gz ; \
-			$(MAKE) $(AM_MAKEFLAGS) -C cbmc/src/ clean ; \
-		fi ; \
-	fi
-	if [ "`cd cbmc ; pwd`" = "@CBMCDIR@" ] ; then \
+	if [ '$$(top_srcdir)/cbmc' = "@CBMCDIR@" ] ; then \
+		if [ ! -d cbmc/.svn ] ; then \
+			if [ ! -d cbmc ] ; then \
+				tar xzf $(top_srcdir)/cbmc-src.tar.gz ; \
+			elif [ -z "`find cbmc -cnewer $(top_srcdir)/cbmc-src.tar.gz -type f`" ] ; then \
+				tar xzf $(top_srcdir)/cbmc-src.tar.gz ; \
+				$(MAKE) $(AM_MAKEFLAGS) -C cbmc/src/ clean ; \
+			fi ; \
+		fi
 		$(MAKE) $(filter-out CXXFLAGS="$(CXXFLAGS)", $(AM_MAKEFLAGS)) \
 			CXXFLAGS="$(CXXFLAGS) -Wno-long-long -Wno-sign-compare -Wno-parentheses" \
 			MAKEOVERRIDES="MINISAT2=../../../minisat-2.2.0/" \

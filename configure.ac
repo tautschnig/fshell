@@ -84,7 +84,7 @@ AC_ARG_WITH(cbmc,
             [CBMCDIR=${with_cbmc}
              model_REALPATH([CBMCDIR])
              additional_args="$additional_args --with-cbmc=$CBMCDIR"],
-            CBMCDIR=model_REALPATH(cbmc))
+            CBMCDIR='$(top_srcdir)/cbmc')
 AC_SUBST(CBMCDIR)
 
 AC_ARG_WITH(minisat,
@@ -92,7 +92,7 @@ AC_ARG_WITH(minisat,
             [MINISATDIR=${with_minisat}
              model_REALPATH([MINISATDIR])
              additional_args="$additional_args --with-minisat=$MINISATDIR"],
-            MINISATDIR=model_REALPATH(minisat-2.2.0))
+            MINISATDIR='$(top_srcdir)/minisat-2.2.0')
 AC_SUBST(MINISATDIR)
 
 
