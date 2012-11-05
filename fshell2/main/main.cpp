@@ -64,6 +64,14 @@ DIAGNOSTICS_NAMESPACE_END;
 #endif
 /* end diagnostics related stuff */
 
+// workaround for Minisat bug
+#ifdef _WIN32
+namespace Minisat
+{
+	double memUsedPeak() { return memUsed(); }
+}
+#endif
+
 #include <fshell2/main/parseoptions.hpp>
 
 int main(int argc, const char* argv[])
