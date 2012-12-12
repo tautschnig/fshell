@@ -63,6 +63,8 @@ does; this breaks compilation with -pedantic */
 #define yylval CMDlval
 #define yychar CMDchar
 
+int CMDFlexLexer::yywrap() { return 1; }
+
 #include <fshell2/command/parser.h>
 
 #include <fshell2/config/annotations.hpp>
@@ -71,7 +73,7 @@ does; this breaks compilation with -pedantic */
 %}
 
 %option c++
-%option noyywrap
+/* %option noyywrap */
 %option case-insensitive
 %option prefix="CMD"
 

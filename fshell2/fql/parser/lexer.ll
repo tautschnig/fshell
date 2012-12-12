@@ -65,6 +65,8 @@ does; this breaks compilation with -pedantic */
 #define yylval FQLlval
 #define yychar FQLchar
 
+int FQLFlexLexer::yywrap() { return 1; }
+
 #include <fshell2/fql/ast/fql_node.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
@@ -95,7 +97,7 @@ yy_state_type backup_state;
 %}
 
 %option c++
-%option noyywrap
+/* %option noyywrap */
 %option case-insensitive
 %option prefix="FQL"
 
