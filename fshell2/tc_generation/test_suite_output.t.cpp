@@ -174,7 +174,7 @@ void test_sym_classes( Test_Data & data )
 			::fshell2::Symbol_Identifier v(sym);
 			if (::fshell2::Symbol_Identifier::FSHELL2_INTERNAL == v.m_vt) continue;
 
-			std::string const name(iter2->first.as_string());
+			std::string const name(id2string(iter2->first));
 			if(std::string::npos != name.find("main::argc") ||
 					std::string::npos != name.find("main::argv") ||
 					std::string::npos != name.find("::x") ||

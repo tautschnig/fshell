@@ -95,7 +95,7 @@ static void get_test_case_literals(::cnf_clause_list_assignmentt const& tc,
 	::boolbv_mapt const& map(bv.get_map());
 	for (::boolbv_mapt::mappingt::const_iterator iter(map.mapping.begin());
 			iter != map.mapping.end(); ++iter) {
-		if (iter->first.as_string().substr(0, 12) == "c::$fshell2$") continue;
+		if (id2string(iter->first).substr(0, 12) == "c::$fshell2$") continue;
 		for (::boolbv_mapt::literal_mapt::const_iterator m_iter(iter->second.literal_map.begin());
 				m_iter != iter->second.literal_map.end(); ++m_iter)
 			if (!m_iter->l.is_constant()) tcs_lits.push_back(::literalt(m_iter->l.var_no(), 

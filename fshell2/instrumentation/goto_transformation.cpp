@@ -130,9 +130,9 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert(::irep_idt co
 		::goto_program_instruction_typet const stmt_type, ::goto_programt const& prg) {
 	::goto_functionst::function_mapt::iterator entry(m_goto.function_map.find(f));
 	FSHELL2_DEBUG_CHECK1(::fshell2::Instrumentation_Error, entry != m_goto.function_map.end(),
-			"Function " + f.as_string() + " not found in goto program");
+			"Function " + id2string(f) + " not found in goto program");
 	FSHELL2_DEBUG_CHECK1(::fshell2::Instrumentation_Error, !entry->second.body.empty(),
-			"Body of function " + f.as_string() + " not available");
+			"Body of function " + id2string(f) + " not available");
 	FSHELL2_DEBUG_CHECK1(::fshell2::Instrumentation_Error, !entry->second.is_inlined(),
 			"Cannot instrument inlined functions");
 	
@@ -229,7 +229,7 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 		}
 		// check globals
 		::contextt::symbolst::const_iterator global_symb(
-				m_manager.context.symbols.find(::std::string("c::") + (*iter)->get(ID_identifier).as_string()));
+				m_manager.context.symbols.find(::std::string("c::") + (*iter)->get_string(ID_identifier)));
 		if (global_symb != m_manager.context.symbols.end() && global_symb->second.is_static_lifetime)
 			alt_names.push_back(::symbol_expr(global_symb->second));
 		// function arguments
@@ -261,7 +261,7 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 			make_nondet = true;
 			break;
 		}
-		std::string a_n(alt_names.back().get(ID_identifier).as_string());
+		std::string a_n(alt_names.back().get_string(ID_identifier));
 		if(a_n.size()>3 && a_n.substr(0,3)=="c::") a_n=a_n.substr(3);
 		FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Renaming ", (*iter)->get(ID_identifier), " to ", a_n));
 		(*iter)->set(ID_identifier, a_n);
@@ -275,7 +275,7 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 		decl->code = ::code_declt(::symbol_expr(cond_symbol));
 
 		if (special_pred_symb && !make_nondet) {
-			special_pred_symb->set(ID_identifier, cond_symbol.name.as_string().substr(3));
+			special_pred_symb->set(ID_identifier, id2string(cond_symbol.name).substr(3));
 			
 			FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Trying to typecheck: ", pred_copy.pretty()));
 			bool const tc_failed(::ansi_c_typecheck(pred_copy, m_manager.get_message_handler(), ns));

@@ -116,7 +116,7 @@ bool Evaluate_Filter::ignore_function(::goto_programt::instructiont const& e) {
 	static const ::std::string::size_type len(::std::string::traits_type::length("<builtin-library>-"));
 	if (!e.location.is_nil() &&
 			((e.location.get_file() == "<built-in>") ||
-			(0 == e.location.get_file().as_string().compare(
+			(0 == id2string(e.location.get_file()).compare(
 				0, len, "<builtin-library>-")))) return true;
 
 	return false;
@@ -391,7 +391,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 						if (ignore_instruction(*f_iter)) continue;
 						if (GOTO_Transformation::is_instrumented(f_iter)) continue;
 						if (!f_iter->is_function_call()) continue;
-						::std::string const& f(::to_code_function_call(f_iter->code).function().get(ID_identifier).as_string());
+						::std::string const& f(::to_code_function_call(f_iter->code).function().get_string(ID_identifier));
 						::std::string::size_type delim(f.rfind("::"));
 						if (arg != f.substr(::std::string::npos == delim?0:delim+2)) continue;
 						CFG::entries_t::iterator cfg_node(m_cfg->find(f_iter));
@@ -533,7 +533,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 						bool use_stmt(false);
 						for (::std::list< ::exprt const* >::const_iterator n_iter(symbols.begin());
 								n_iter != symbols.end(); ++n_iter) {
-							::std::string const& n((*n_iter)->get(ID_identifier).as_string());
+							::std::string const& n((*n_iter)->get_string(ID_identifier));
 							::std::string::size_type delim(n.rfind("::"));
 							if (base_name == n.substr(::std::string::npos == delim?0:delim+2)) {
 								use_stmt = true;
@@ -568,7 +568,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 						bool use_stmt(false);
 						for (::std::list< ::exprt const* >::const_iterator n_iter(symbols.begin());
 								n_iter != symbols.end(); ++n_iter) {
-							::std::string const& n((*n_iter)->get(ID_identifier).as_string());
+							::std::string const& n((*n_iter)->get_string(ID_identifier));
 							::std::string::size_type delim(n.rfind("::"));
 							if (base_name == n.substr(::std::string::npos == delim?0:delim+2)) {
 								use_stmt = true;

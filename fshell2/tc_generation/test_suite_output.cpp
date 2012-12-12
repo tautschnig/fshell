@@ -86,7 +86,7 @@ FSHELL2_NAMESPACE_BEGIN;
 Symbol_Identifier::Symbol_Identifier(::symbol_exprt const& sym) :
 	m_identifier(sym.get_identifier()),
 	m_vt(UNKNOWN),
-	m_var_name(m_identifier.as_string()),
+	m_var_name(id2string(m_identifier)),
 	m_level0("-1"),
 	m_level1("-1"),
 	m_level2("-1"),
@@ -187,7 +187,7 @@ Symbol_Identifier::Symbol_Identifier(::symbol_exprt const& sym) :
 		m_vt = GLOBAL;
 	
 	FSHELL2_AUDIT_ASSERT1(::diagnostics::Not_Implemented, UNKNOWN != m_vt,
-			::std::string("Cannot determine variable type of ") + m_identifier.as_string());
+			::std::string("Cannot determine variable type of ") + id2string(m_identifier));
 }
 		
 Test_Suite_Output::Test_Input::Test_Input(::symbolt const& main_sym,
@@ -462,8 +462,8 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 				//// ::std::cerr << "Fetching value for " << iv.m_value->pretty() << ::std::endl;
 				::exprt val_copy(*iv.m_value);
 				if (ID_bool != iv.m_symbol->type.id() && val_copy.id() != ID_nondet_symbol &&
-						::std::string::npos == val_copy.get(ID_identifier).as_string().rfind("#")) {
-					val_copy.set(ID_identifier, val_copy.get(ID_identifier).as_string() + "#0");
+						::std::string::npos == val_copy.get_string(ID_identifier).rfind("#")) {
+					val_copy.set(ID_identifier, val_copy.get_string(ID_identifier) + "#0");
 					// not sure whether this is needed
 					// if (bv.get(val_copy).is_nil())
 					//   val_copy.set(ID_identifier, ::diagnostics::internal::to_string(val_copy.get(ID_identifier), "$object#0"));
