@@ -48,7 +48,7 @@ fi
 
 
 AC_SUBST(additional_args)
-additional_args="$additional_args --host=$host --target=$target"
+additional_args="$additional_args --host=$host --target=$target --enable-shared=$enable_shared"
 
 AM_CONDITIONAL(WIN32_BUILD, test x$build_os = xmingw32)
 
