@@ -283,9 +283,8 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 					::std::string("Predicate ") + ::expr2c(pred_copy, ns) + " failed to typecheck");
 			FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Typecheck completed: ", pred_copy.pretty()));
 
-			::optionst options;
 			::goto_programt dest;
-			::goto_convert(::code_expressiont(pred_copy), m_manager.context, options,
+			::goto_convert(::code_expressiont(pred_copy), m_manager.context,
 					dest, m_manager.get_message_handler());
 			tmp.destructive_append(dest);
 		}

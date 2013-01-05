@@ -213,7 +213,7 @@ int Parseoptions::doit()
 			status("Generating GOTO Program");
 
 			goto_convert(
-					context, m_options, goto_functions,
+					context, goto_functions,
 					ui_message_handler);
 		}
 

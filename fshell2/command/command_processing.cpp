@@ -350,7 +350,7 @@ bool Command_Processing::finalize(::language_uit & manager) {
 		if(iter->second.type.id() == ID_code)
 			symbols.push_back(iter->first);
 	
-	::goto_convert_functionst converter(manager.context, m_opts, m_gf,
+	::goto_convert_functionst converter(manager.context, m_gf,
 			manager.ui_message_handler);
 	for(::std::vector< ::irep_idt >::const_iterator iter(symbols.begin());
 			iter != symbols.end(); ++iter) {
