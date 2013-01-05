@@ -97,7 +97,6 @@ void test( Test_Data & data )
 	::cmdlinet cmdline;
 	::config.set(cmdline);
 	::language_uit l("FShell2", cmdline);
-	::optionst options;
 	::goto_functionst gf;
 
 	TEST_CHECK(!l.parse(tempname_str));
@@ -105,7 +104,7 @@ void test( Test_Data & data )
 	TEST_CHECK(!l.typecheck());
 	TEST_CHECK(!l.final());
     
-	::goto_convert(l.context, options, gf, l.ui_message_handler);
+	::goto_convert(l.context, gf, l.ui_message_handler);
 	::fshell2::instrumentation::CFG cfg;
 	cfg.compute_edges(gf);
 	// gf.output(namespacet(l.context), ::std::cerr);

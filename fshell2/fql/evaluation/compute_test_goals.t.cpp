@@ -115,7 +115,7 @@ void test_instr( Test_Data & data )
 	TEST_CHECK(!l.typecheck());
 	TEST_CHECK(!l.final());
     
-	::goto_convert(l.context, options, gf, l.ui_message_handler);
+	::goto_convert(l.context, gf, l.ui_message_handler);
 	
 	Path_Pattern_Expr * id_kleene(FQL_CREATE3(Repeat, FQL_CREATE1(Edgecov,
 					FQL_CREATE_FF0(F_IDENTITY)), 0, -1));
@@ -170,7 +170,7 @@ void test_boolean( Test_Data & data )
 	TEST_CHECK(!l.typecheck());
 	TEST_CHECK(!l.final());
     
-	::goto_convert(l.context, options, gf, l.ui_message_handler);
+	::goto_convert(l.context, gf, l.ui_message_handler);
 	
 	Path_Pattern_Expr * id_kleene(FQL_CREATE3(Repeat, FQL_CREATE1(Edgecov,
 					FQL_CREATE_FF0(F_IDENTITY)), 0, -1));

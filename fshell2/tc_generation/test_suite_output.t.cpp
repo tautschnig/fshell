@@ -131,7 +131,7 @@ void test_sym_classes( Test_Data & data )
 	TEST_CHECK(!l.typecheck());
 	TEST_CHECK(!l.final());
 
-	::goto_convert(l.context, options, gf, l.ui_message_handler);
+	::goto_convert(l.context, gf, l.ui_message_handler);
 
 	fql::Path_Pattern_Expr * id_kleene(FQL_CREATE3(Repeat, FQL_CREATE1(Edgecov,
 					FQL_CREATE_FF0(F_IDENTITY)), 0, -1));
@@ -230,7 +230,7 @@ void test( Test_Data & data )
 	TEST_CHECK(!l.typecheck());
 	TEST_CHECK(!l.final());
     
-	::goto_convert(l.context, options, gf, l.ui_message_handler);
+	::goto_convert(l.context, gf, l.ui_message_handler);
 	
 	fql::Path_Pattern_Expr * id_kleene(FQL_CREATE3(Repeat, FQL_CREATE1(Edgecov,
 					FQL_CREATE_FF0(F_IDENTITY)), 0, -1));

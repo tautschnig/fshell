@@ -117,7 +117,6 @@ void test_use_case( Test_Data & data )
 	::cmdlinet cmdline;
 	::config.set(cmdline);
 	::language_uit l("FShell2", cmdline);
-	::optionst options;
 	::goto_functionst cfg;
 
 	TEST_CHECK(!l.parse(tempname_str));
@@ -125,7 +124,7 @@ void test_use_case( Test_Data & data )
 	TEST_CHECK(!l.typecheck());
 	TEST_CHECK(!l.final());
     
-	::goto_convert(l.context, options, cfg, l.ui_message_handler);
+	::goto_convert(l.context, cfg, l.ui_message_handler);
 	
 	::goto_programt tmp;
 	::goto_programt::targett as(tmp.add_instruction(ASSERT));
@@ -191,7 +190,7 @@ void test_use_case2( Test_Data & data )
 	TEST_CHECK(!l.final());
 	::contextt::symbolst::iterator main_iter(l.context.symbols.find(ID_main));
 	TEST_CHECK(main_iter != l.context.symbols.end());
-    ::goto_convert_functionst converter(l.context, options, cfg, l.ui_message_handler);
+    ::goto_convert_functionst converter(l.context, cfg, l.ui_message_handler);
     converter.convert_function(main_iter->first);
 		
 	::fshell2::instrumentation::GOTO_Transformation::inserted_t & targets(
