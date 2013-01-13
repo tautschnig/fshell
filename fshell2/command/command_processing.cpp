@@ -41,7 +41,7 @@
 #include <pointer-analysis/add_failed_symbols.h>
 #include <goto-programs/remove_function_pointers.h>
 #include <goto-programs/goto_inline.h>
-#include <goto-programs/loop_numbers.h>
+#include <goto-programs/loop_ids.h>
 
 #include <cerrno>
 #include <fstream>
@@ -385,7 +385,7 @@ void Command_Processing::finalize_goto_program(::language_uit & manager) {
 
 	// show loops, if requested
 	if (m_opts.get_bool_option("show-loops"))
-		::show_loop_numbers(manager.get_ui(), m_gf);
+		::show_loop_ids(manager.get_ui(), m_gf);
 }
 
 FSHELL2_COMMAND_NAMESPACE_END;
