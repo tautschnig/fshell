@@ -26,6 +26,7 @@ fshell_LDADD = libmain.la \
 								$(LINENOISE_OBJS) $(CBMC_OBJS) $(MINISAT_OBJS)
 
 CBMC_OBJS = @CBMCDIR@/src/goto-programs/goto-programs.a \
+						@CBMCDIR@/src/assembler/assembler.a \
 						@CBMCDIR@/src/pointer-analysis/pointer-analysis.a \
 						@CBMCDIR@/src/util/util.a \
 						@CBMCDIR@/src/big-int/bigint.o \
