@@ -21,7 +21,6 @@ AM_LFLAGS = -o$(LEX_OUTPUT_ROOT).c
 
 CBMC_OBJS = @CBMCDIR@/src/goto-programs/goto-programs.a \
 						@CBMCDIR@/src/assembler/assembler.a \
-						@CBMCDIR@/src/pointer-analysis/pointer-analysis.a \
 						@CBMCDIR@/src/util/util.a \
 						@CBMCDIR@/src/big-int/bigint.o \
 						@CBMCDIR@/src/langapi/langapi.a \

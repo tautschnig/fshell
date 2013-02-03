@@ -10,7 +10,11 @@ SUBDIRS =
 
 CBMC_OBJS = @CBMCDIR@/src/goto-programs/goto-programs.a \
 						@CBMCDIR@/src/assembler/assembler.a \
-						@CBMCDIR@/src/pointer-analysis/pointer-analysis.a \
+						@CBMCDIR@/src/pointer-analysis/value_set.o \
+						@CBMCDIR@/src/pointer-analysis/dereference.o \
+						@CBMCDIR@/src/pointer-analysis/add_failed_symbols.o \
+						@CBMCDIR@/src/pointer-analysis/rewrite_index.o \
+						@CBMCDIR@/src/pointer-analysis/goto_program_dereference.o \
 						@CBMCDIR@/src/util/util.a \
 						@CBMCDIR@/src/big-int/bigint.o \
 						@CBMCDIR@/src/goto-symex/goto-symex.a \
