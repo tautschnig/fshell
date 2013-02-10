@@ -99,8 +99,8 @@ void GOTO_Transformation::make_function_call(::goto_programt::targett ins,
 ::symbolt const& GOTO_Transformation::new_var(::std::string const& name,
 		::typet const& type, bool global) {
 	::std::string const var_name("c::" + name);
-	::contextt::symbolst::const_iterator symb_entry(m_manager.context.symbols.find(var_name));
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, symb_entry == m_manager.context.symbols.end());
+	::symbol_tablet::symbolst::const_iterator symb_entry(m_manager.symbol_table.symbols.find(var_name));
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, symb_entry == m_manager.symbol_table.symbols.end());
 	
 	::symbolt symbol;
 	symbol.mode = ID_C;
@@ -109,10 +109,10 @@ void GOTO_Transformation::make_function_call(::goto_programt::targett ins,
 	symbol.type = type;
 	symbol.is_lvalue = true;
 	symbol.is_static_lifetime = global;
-	m_manager.context.move(symbol);
+	m_manager.symbol_table.move(symbol);
 	
-	symb_entry = m_manager.context.symbols.find(var_name);
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, symb_entry != m_manager.context.symbols.end());
+	symb_entry = m_manager.symbol_table.symbols.find(var_name);
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, symb_entry != m_manager.symbol_table.symbols.end());
 	return symb_entry->second;
 }
 	
@@ -204,7 +204,7 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 		goto_node_t const& node, ::exprt const* pred) {
 	m_inserted.clear();
 
-	::namespacet const ns(m_manager.context);
+	::namespacet const ns(m_manager.symbol_table);
 	::exprt pred_copy(*pred);
 	::std::list< ::exprt * > symbols;
 	find_symbols(pred_copy, symbols);
@@ -228,9 +228,9 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 			if ((*iter)->get(ID_identifier) == symb.base_name) alt_names.push_back(::symbol_expr(symb));
 		}
 		// check globals
-		::contextt::symbolst::const_iterator global_symb(
-				m_manager.context.symbols.find(::std::string("c::") + (*iter)->get_string(ID_identifier)));
-		if (global_symb != m_manager.context.symbols.end() && global_symb->second.is_static_lifetime)
+		::symbol_tablet::symbolst::const_iterator global_symb(
+				m_manager.symbol_table.symbols.find(::std::string("c::") + (*iter)->get_string(ID_identifier)));
+		if (global_symb != m_manager.symbol_table.symbols.end() && global_symb->second.is_static_lifetime)
 			alt_names.push_back(::symbol_expr(global_symb->second));
 		// function arguments
 		FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, fct_entry != m_goto.function_map.end(),
@@ -284,7 +284,7 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 			FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Typecheck completed: ", pred_copy.pretty()));
 
 			::goto_programt dest;
-			::goto_convert(::code_expressiont(pred_copy), m_manager.context,
+			::goto_convert(::code_expressiont(pred_copy), m_manager.symbol_table,
 					dest, m_manager.get_message_handler());
 			tmp.destructive_append(dest);
 		}

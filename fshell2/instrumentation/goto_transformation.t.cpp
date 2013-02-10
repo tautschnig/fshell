@@ -124,7 +124,7 @@ void test_use_case( Test_Data & data )
 	TEST_CHECK(!l.typecheck());
 	TEST_CHECK(!l.final());
     
-	::goto_convert(l.context, cfg, l.ui_message_handler);
+	::goto_convert(l.symbol_table, cfg, l.ui_message_handler);
 	
 	::goto_programt tmp;
 	::goto_programt::targett as(tmp.add_instruction(ASSERT));
@@ -173,7 +173,7 @@ void test_use_case2( Test_Data & data )
 		func_symb.mode = ID_C;
 		func_symb.name = "c::__CPROVER_initialize";
 		func_symb.base_name = "__CPROVER_initialize";
-		l.context.move(func_symb);
+		l.symbol_table.move(func_symb);
 	}
 	
 	cfg.function_map["c::tmp_func"].body_available = true;
@@ -186,11 +186,11 @@ void test_use_case2( Test_Data & data )
 	func_symb.mode = ID_C;
 	func_symb.name = "c::tmp_func";
 	func_symb.base_name = "tmp_func";
-	l.context.move(func_symb);
+	l.symbol_table.move(func_symb);
 	TEST_CHECK(!l.final());
-	::contextt::symbolst::iterator main_iter(l.context.symbols.find(ID_main));
-	TEST_CHECK(main_iter != l.context.symbols.end());
-    ::goto_convert_functionst converter(l.context, cfg, l.ui_message_handler);
+	::symbol_tablet::symbolst::iterator main_iter(l.symbol_table.symbols.find(ID_main));
+	TEST_CHECK(main_iter != l.symbol_table.symbols.end());
+    ::goto_convert_functionst converter(l.symbol_table, cfg, l.ui_message_handler);
     converter.convert_function(main_iter->first);
 		
 	::fshell2::instrumentation::GOTO_Transformation::inserted_t & targets(
@@ -205,7 +205,7 @@ void test_use_case2( Test_Data & data )
 		(++(targets.begin()))->second->make_skip();
 		(++(++(targets.begin())))->second->make_skip();
 	
-		::bmct bmc(options, l.context, l.ui_message_handler);
+		::bmct bmc(options, l.symbol_table, l.ui_message_handler);
 		bmc.set_verbosity(l.get_verbosity());
 		TEST_ASSERT(bmc.run(cfg));
 	}
@@ -216,7 +216,7 @@ void test_use_case2( Test_Data & data )
 		(++(targets.begin()))->second->make_assertion(f);
 		(++(++(targets.begin())))->second->make_skip();
 
-		::bmct bmc(options, l.context, l.ui_message_handler);
+		::bmct bmc(options, l.symbol_table, l.ui_message_handler);
 		bmc.set_verbosity(l.get_verbosity());
 		TEST_ASSERT(bmc.run(cfg));
 	}
@@ -227,7 +227,7 @@ void test_use_case2( Test_Data & data )
 		(++(targets.begin()))->second->make_skip();
 		(++(++(targets.begin())))->second->make_assertion(f);
 
-		::bmct bmc(options, l.context, l.ui_message_handler);
+		::bmct bmc(options, l.symbol_table, l.ui_message_handler);
 		bmc.set_verbosity(l.get_verbosity());
 		TEST_ASSERT(bmc.run(cfg));
 	}
@@ -246,7 +246,7 @@ void test_use_case2( Test_Data & data )
 		ndchoice3.second->make_skip();
 		loc->make_assertion(f);
 
-		::bmct bmc(options, l.context, l.ui_message_handler);
+		::bmct bmc(options, l.symbol_table, l.ui_message_handler);
 		bmc.set_verbosity(l.get_verbosity());
 		TEST_ASSERT(!bmc.run(cfg));
 	}
@@ -260,13 +260,13 @@ void test_use_case2( Test_Data & data )
 		::goto_programt::targett loc(ndchoice3.second);
 		--(--loc);
 		TEST_ASSERT(loc->type == LOCATION);
-		/*::namespacet const ns(l.context);
+		/*::namespacet const ns(l.symbol_table);
 		cfg.output(ns, ::std::cerr);*/
 		TEST_ASSERT_RELATION(20, ==, cfg.function_map["c::tmp_func"].body.instructions.size());
 		::false_exprt f;
 		loc->make_assertion(f);
 
-		::bmct bmc(options, l.context, l.ui_message_handler);
+		::bmct bmc(options, l.symbol_table, l.ui_message_handler);
 		bmc.set_verbosity(l.get_verbosity());
 		TEST_ASSERT(bmc.run(cfg));
 	}

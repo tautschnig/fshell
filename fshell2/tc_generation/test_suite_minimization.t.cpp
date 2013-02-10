@@ -114,7 +114,7 @@ void test( Test_Data & data )
 	TEST_CHECK(!l.typecheck());
 	TEST_CHECK(!l.final());
     
-	::goto_convert(l.context, gf, l.ui_message_handler);
+	::goto_convert(l.symbol_table, gf, l.ui_message_handler);
 	
 	fql::Path_Pattern_Expr * id_kleene(FQL_CREATE3(Repeat, FQL_CREATE1(Edgecov,
 					FQL_CREATE_FF0(F_IDENTITY)), 0, -1));

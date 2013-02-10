@@ -51,7 +51,7 @@
 #include <fshell2/fql/ast/quote.hpp>
 #include <fshell2/fql/ast/repeat.hpp>
 
-#include <util/context.h>
+#include <util/symbol_table.h>
 #include <util/namespace.h>
 #include <ansi-c/expr2c.h>
 
@@ -281,7 +281,7 @@ void FQL_AST_Printer::visit(Pathcov const* n) {
 }
 
 void FQL_AST_Printer::visit(Predicate const* n) {
-	::contextt ctx;
+	::symbol_tablet ctx;
 	::namespacet ns(ctx);
 	::std::string c_expr(::expr2c(*(n->get_expr()), ns));
 	::std::string::size_type no_ws_start(0);

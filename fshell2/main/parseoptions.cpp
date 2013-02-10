@@ -199,10 +199,10 @@ int Parseoptions::doit()
 			status("Reading GOTO program from file");
 
 			if(read_goto_binary(cmdline.args[0],
-						context, goto_functions, get_message_handler()))
+						symbol_table, goto_functions, get_message_handler()))
 				return 1;
 
-			config.ansi_c.set_from_context(context);
+			config.ansi_c.set_from_symbol_table(symbol_table);
 		}
 		else if(0!=cmdline.args.size())
 		{
@@ -213,7 +213,7 @@ int Parseoptions::doit()
 			status("Generating GOTO Program");
 
 			goto_convert(
-					context, goto_functions,
+					symbol_table, goto_functions,
 					ui_message_handler);
 		}
 

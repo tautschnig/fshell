@@ -111,7 +111,7 @@ void test( Test_Data & data )
 	TEST_CHECK(!l.typecheck());
 	TEST_CHECK(!l.final());
     
-	::goto_convert(l.context, gf, l.ui_message_handler);
+	::goto_convert(l.symbol_table, gf, l.ui_message_handler);
 	::fshell2::instrumentation::CFG cfg;
 	cfg.compute_edges(gf);
 	

@@ -122,15 +122,15 @@ class Context_Backup {
 		~Context_Backup();
 	private:
 		::language_uit & m_manager;
-		::contextt m_context;
+		::symbol_tablet m_context;
 };
 
 Context_Backup::Context_Backup(::language_uit & manager) :
-	m_manager(manager), m_context(m_manager.context) {
+	m_manager(manager), m_context(m_manager.symbol_table) {
 }
 
 Context_Backup::~Context_Backup() {
-	m_manager.context.swap(m_context);
+	m_manager.symbol_table.swap(m_context);
 }
 
 void FShell2::try_query(::language_uit & manager, char const * line,
@@ -155,7 +155,7 @@ void FShell2::try_query(::language_uit & manager, char const * line,
 	// be skipped and all extra checks be disabled using CBMC cmdline, but that
 	// must include unwinding assertions et al.
 	if (mod || m_first_run) {
-		::bmct bmc(m_opts, manager.context, manager.ui_message_handler);
+		::bmct bmc(m_opts, manager.symbol_table, manager.ui_message_handler);
 		bmc.set_verbosity(manager.get_verbosity());
 		bmc.set_ui(manager.ui_message_handler.get_ui());
 		FSHELL2_PROD_CHECK1(::fshell2::FShell2_Error, !bmc.run(m_gf),

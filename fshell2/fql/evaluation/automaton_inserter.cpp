@@ -315,7 +315,7 @@ void Automaton_Inserter::add_transition_function(::goto_functionst & gf,
 	func_symb.mode = ID_C;
 	func_symb.name = func_name;
 	func_symb.base_name = func_name.substr(3, ::std::string::npos);
-	m_manager.context.move(func_symb);
+	m_manager.symbol_table.move(func_symb);
 
 	::goto_programt & body(entry.first->second.body);
 	::goto_programt tmp_target;

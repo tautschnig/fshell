@@ -734,7 +734,6 @@ Test_Suite_Output::Test_Suite_Output(::fshell2::fql::CNF_Conversion & equation,
 				print_test_case_xml(os, ti, cf, as);
 				break;
 			case ::ui_message_handlert::PLAIN:
-			case ::ui_message_handlert::OLD_GUI:
 				os << "IN:" << ::std::endl;
 				print_test_inputs_plain(os, ti);
 #ifdef CALL_STACK_EXP

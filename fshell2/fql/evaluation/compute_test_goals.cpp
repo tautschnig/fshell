@@ -64,7 +64,7 @@ FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 CNF_Conversion::CNF_Conversion(::language_uit & manager, ::optionst const& opts) :
-	::bmct(opts, manager.context, manager.ui_message_handler),
+	::bmct(opts, manager.symbol_table, manager.ui_message_handler),
 	m_cnf(), m_bv(this->ns, m_cnf) {
 	this->set_verbosity(manager.get_verbosity());
 	this->set_ui(manager.ui_message_handler.get_ui());

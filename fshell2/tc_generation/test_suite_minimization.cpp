@@ -34,7 +34,7 @@
 #endif
 
 #include <util/namespace.h>
-#include <util/context.h>
+#include <util/symbol_table.h>
 #include <solvers/flattening/bv_utils.h>
 #include <solvers/flattening/boolbv.h>
 #include <solvers/sat/cnf_clause_list.h>
@@ -115,7 +115,7 @@ void Test_Suite_Minimization::minimize(Constraint_Strengthening::test_cases_t &
 	solver.set_message_handler(m_message.get_message_handler());
 	solver.set_verbosity(m_message.get_verbosity());
 	cnf.copy_to(solver);
-	boolbvt bv(::namespacet(::contextt()), solver);
+	boolbvt bv(::namespacet(::symbol_tablet()), solver);
 
 	::mp_integer num_tcs(test_suite.size());
 	while (num_tcs > 1) {

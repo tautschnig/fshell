@@ -205,7 +205,7 @@ void Command_Processing::add_sourcecode(::language_uit & manager, char const * f
 	// build the full list of loaded files
 	manager.language_files.filemap.insert(prev_files.begin(), prev_files.end());
 	// reset entry routine
-	if (m_finalized) manager.context.remove(ID_main);
+	if (m_finalized) manager.symbol_table.remove(ID_main);
 	m_finalized = false;
 }
 
@@ -262,7 +262,7 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, arg != 0);
 			{
 				::config.main = arg;
-				if (m_finalized) manager.context.remove(ID_main);
+				if (m_finalized) manager.symbol_table.remove(ID_main);
 				m_finalized = false;
 			}
 			return DONE;
@@ -279,10 +279,10 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 		case CMD_SET_ABSTRACT:
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, arg != 0);
 			{
-				::contextt::symbolst::iterator sym_entry(manager.context.symbols.find(
-							::std::string("c::") + arg));
+				::symbol_tablet::symbolst::iterator sym_entry(
+						manager.symbol_table.symbols.find(::std::string("c::") + arg));
 				FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,
-						sym_entry != manager.context.symbols.end(),
+						sym_entry != manager.symbol_table.symbols.end(),
 						::std::string("Function ") + arg + " not found");
 				sym_entry->second.value.make_nil();
 				m_finalized = false;
@@ -302,13 +302,13 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 
 bool Command_Processing::finalize(::language_uit & manager) {
 	FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,
-			!manager.context.symbols.empty(),
+			!manager.symbol_table.symbols.empty(),
 			"No source files loaded!");
 				
 	::std::string entry("c::");
 	entry += ::config.main;
 	FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,
-			manager.context.has_symbol(entry),
+			manager.symbol_table.has_symbol(entry),
 			::std::string("Could not find entry function " + ::config.main));
 	
 	if (m_finalized) return false;
@@ -318,9 +318,10 @@ bool Command_Processing::finalize(::language_uit & manager) {
 	m_finalized = ! manager.final();
 	// this must never fail, given all the previous sanity checks
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_finalized);
-    ::contextt::symbolst::iterator init_iter(manager.context.symbols.find("c::__CPROVER_initialize"));
+    ::symbol_tablet::symbolst::iterator init_iter(
+			manager.symbol_table.symbols.find("c::__CPROVER_initialize"));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-			init_iter != manager.context.symbols.end());
+			init_iter != manager.symbol_table.symbols.end());
 
 	// remove 0-initialization of global variables, if requested by user
 	if (m_remove_zero_init) {
@@ -345,12 +346,12 @@ bool Command_Processing::finalize(::language_uit & manager) {
 
 	// convert all symbols; iterators are unstable, copy symbol names first
 	::std::vector< ::irep_idt > symbols;
-	for(::contextt::symbolst::iterator iter(manager.context.symbols.begin()); iter !=
-			manager.context.symbols.end(); ++iter)
+	for(::symbol_tablet::symbolst::iterator iter(manager.symbol_table.symbols.begin());
+			iter != manager.symbol_table.symbols.end(); ++iter)
 		if(iter->second.type.id() == ID_code)
 			symbols.push_back(iter->first);
 	
-	::goto_convert_functionst converter(manager.context, m_gf,
+	::goto_convert_functionst converter(manager.symbol_table, m_gf,
 			manager.ui_message_handler);
 	for(::std::vector< ::irep_idt >::const_iterator iter(symbols.begin());
 			iter != symbols.end(); ++iter) {
@@ -365,7 +366,7 @@ bool Command_Processing::finalize(::language_uit & manager) {
 }
 
 void Command_Processing::finalize_goto_program(::language_uit & manager) {
-	::namespacet ns(manager.context);
+	::namespacet ns(manager.symbol_table);
 
 	manager.status("Function Pointer Removal");
 	::remove_function_pointers(ns, m_gf, false);
@@ -375,7 +376,7 @@ void Command_Processing::finalize_goto_program(::language_uit & manager) {
 	::goto_partial_inline(m_gf, ns, manager.ui_message_handler);
 
 	// add failed symbols
-	::add_failed_symbols(manager.context);
+	::add_failed_symbols(manager.symbol_table);
 
 	// recalculate numbers, etc.
 	m_gf.update();

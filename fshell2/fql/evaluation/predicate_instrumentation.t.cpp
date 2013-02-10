@@ -107,7 +107,7 @@ void test( Test_Data & data )
 	TEST_CHECK(!l.typecheck());
 	TEST_CHECK(!l.final());
     
-	::goto_convert(l.context, gf, l.ui_message_handler);
+	::goto_convert(l.symbol_table, gf, l.ui_message_handler);
 	::fshell2::instrumentation::CFG cfg;
 	cfg.compute_edges(gf);
 	Evaluate_Filter eval(l);
@@ -135,7 +135,7 @@ void test( Test_Data & data )
 	Predicate_Instrumentation::node_set_t nodes(id_entries.get_L());
 	CFA::edges_t edges;
 	pi.insert_predicate(gf, nodes, pred, edges);
-	// gf.output(namespacet(l.context), ::std::cerr);
+	// gf.output(namespacet(l.symbol_table), ::std::cerr);
 
 	for (target_graph_t::edges_t::const_iterator e_iter(id_entries.get_E().begin());
 			e_iter != id_entries.get_E().end(); ++e_iter)
