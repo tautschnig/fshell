@@ -366,13 +366,13 @@ bool Command_Processing::finalize(::language_uit & manager) {
 }
 
 void Command_Processing::finalize_goto_program(::language_uit & manager) {
-	::namespacet ns(manager.symbol_table);
 
 	manager.status("Function Pointer Removal");
-	::remove_function_pointers(ns, m_gf, false);
+	::remove_function_pointers(manager.symbol_table, m_gf, false);
 
 	manager.status("Partial Inlining");
 	// do partial inlining
+	::namespacet ns(manager.symbol_table);
 	::goto_partial_inline(m_gf, ns, manager.ui_message_handler);
 
 	// add failed symbols
