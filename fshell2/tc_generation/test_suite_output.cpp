@@ -243,7 +243,7 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 		//// ::std::cerr << "ORIG_LHS: " << iter->original_full_lhs << ::std::endl;
 		//// ::std::cerr << "RHS: " << iter->ssa_rhs << ::std::endl;
 	
-		bool const instr_enabled(iter->guard_expr.is_true() || cnf.l_get(iter->guard_literal) == ::tvt(true));
+		bool const instr_enabled(iter->guard.is_true() || cnf.l_get(iter->guard_literal) == ::tvt(true));
 
 #if CALL_STACK_EXP
 		if (instr_enabled && !::fshell2::instrumentation::GOTO_Transformation::is_instrumented(

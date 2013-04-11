@@ -755,9 +755,8 @@ void Compute_Test_Goals_Boolean::do_step(::cnf_clause_list_assignmentt & cnf,
 
 	// determine the guard literals for goto-edges
 	::literalt goto_guard(::const_literal(false));
-	if (pc->is_goto()) {
+	if (pc->is_goto() && step->is_location()) {
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == pc->targets.size());
-		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, step->is_location());
 		if (!pc->guard.is_true()) {
 			::symex_target_equationt::SSA_stepst::const_iterator guard_finder(step);
 			++guard_finder;
