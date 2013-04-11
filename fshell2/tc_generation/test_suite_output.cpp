@@ -248,7 +248,7 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 #if CALL_STACK_EXP
 		if (instr_enabled && !::fshell2::instrumentation::GOTO_Transformation::is_instrumented(
 					iter->source.pc) && 
-				(!iter->is_assignment() || ::symex_targett::HIDDEN != iter->assignment_type)) {
+				(!iter->is_assignment() || ::symex_targett::STATE == iter->assignment_type)) {
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !iter->source.pc->function.empty());
 			
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
@@ -315,7 +315,7 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 		}
 #endif
 		
-		if (!iter->is_assignment() || ::symex_targett::HIDDEN != iter->assignment_type)
+		if (!iter->is_assignment() || ::symex_targett::STATE == iter->assignment_type)
 			most_recent_non_hidden_is_true = instr_enabled;
 		if (!most_recent_non_hidden_is_true || !iter->is_assignment()) continue;
 		
@@ -366,7 +366,7 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 				case Symbol_Identifier::LOCAL:
 				case Symbol_Identifier::LOCAL_STATIC:
 				case Symbol_Identifier::GLOBAL:
-					if (is_lhs && ::symex_targett::HIDDEN != iter->assignment_type &&
+					if (is_lhs && ::symex_targett::STATE == iter->assignment_type &&
 							Symbol_Identifier::GLOBAL == var.m_vt)
 						global_assign.push_back(iter);
 					
@@ -376,14 +376,14 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 						// this point as reads to other indices may require the
 						// entire array/struct to be added
 						nondet_expr = &(v_iter->second->op2());
-					} else if (is_lhs && iter->ssa_rhs.id() == ID_struct && ::symex_targett::HIDDEN != iter->assignment_type &&
+					} else if (is_lhs && iter->ssa_rhs.id() == ID_struct && ::symex_targett::STATE == iter->assignment_type &&
 							!nondet_syms_in_rhs.empty()) {
 						// assignment to struct variable with nondet components;
 						// again, it seems safer not to add the entire array
 						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 								1 == nondet_syms_in_rhs.size());
 						nondet_expr = nondet_syms_in_rhs.front()->first;
-					} else if (is_lhs && iter->ssa_rhs.id() == ID_nondet_symbol && ::symex_targett::HIDDEN != iter->assignment_type) {
+					} else if (is_lhs && iter->ssa_rhs.id() == ID_nondet_symbol && ::symex_targett::STATE == iter->assignment_type) {
 						// assignment to simple variable using undef function
 						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 								vars.end() == vars.find(var.m_identifier));

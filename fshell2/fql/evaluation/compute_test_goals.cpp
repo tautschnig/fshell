@@ -399,7 +399,10 @@ CNF_Conversion & Compute_Test_Goals_From_Instrumentation::do_query(::goto_functi
 	{
 		if (iter->source.pc->is_function_call()) most_recent_caller = iter->source.pc;
 		//if (!iter->is_location()) continue;
-		if (!iter->is_assignment() || iter->assignment_type == ::symex_targett::HIDDEN) continue;
+		if (!iter->is_assignment() ||
+			iter->assignment_type == ::symex_targett::HIDDEN ||
+			iter->assignment_type == ::symex_targett::GUARD ||
+			iter->assignment_type == ::symex_targett::PHI) continue;
 		// ::goto_programt tmp;
 		// tmp.output_instruction(m_equation.get_ns(), "", ::std::cerr, iter->source.pc);
 		// iter->output(m_equation.get_ns(), ::std::cerr);
@@ -713,7 +716,10 @@ void Compute_Test_Goals_Boolean::build(trace_automaton_t const& aut, bool map_tg
 		if (Evaluate_Filter::ignore_instruction(*(iter->source.pc))) continue;
 
 		// ignore hidden assignments
-		if (iter->is_assignment() && iter->assignment_type == ::symex_targett::HIDDEN) continue;
+		if (iter->is_assignment() &&
+			(iter->assignment_type == ::symex_targett::HIDDEN ||
+			 iter->assignment_type == ::symex_targett::GUARD ||
+			 iter->assignment_type == ::symex_targett::PHI)) continue;
 		// some instructions produce multiple steps; ignore all but the first;
 		// examples of such are:
 		// function calls (assignment of parameters)
@@ -760,7 +766,7 @@ void Compute_Test_Goals_Boolean::do_step(::cnf_clause_list_assignmentt & cnf,
 		if (!pc->guard.is_true()) {
 			::symex_target_equationt::SSA_stepst::const_iterator guard_finder(step);
 			++guard_finder;
-			if (guard_finder->is_assignment() && guard_finder->assignment_type == ::symex_targett::HIDDEN)
+			if (guard_finder->is_assignment() && guard_finder->assignment_type == ::symex_targett::GUARD)
 				++guard_finder;
 			goto_guard = guard_finder->guard_literal;
 		}
