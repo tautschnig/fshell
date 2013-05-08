@@ -44,6 +44,7 @@ CBMC_OBJS = @CBMCDIR@/src/goto-programs/goto-programs.a \
 						@CBMCDIR@/src/cbmc/bv_cbmc.o \
 						@CBMCDIR@/src/cbmc/counterexample_beautification.o \
 						@CBMCDIR@/src/cbmc/symex_bmc.o \
+						@CBMCDIR@/src/cbmc/all_claims.o \
 						@CBMCDIR@/src/langapi/langapi.a \
 						@CBMCDIR@/src/ansi-c/ansi-c.a \
 						@CBMCDIR@/src/linking/linking.a
