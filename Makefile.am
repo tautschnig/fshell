@@ -74,7 +74,7 @@ all-local:
 		  echo >> benchmarks/Makefile ; \
 		  echo '.PHONY: all install install-strip uninstall check installcheck dist clean distclean maintainer-clean' >> benchmarks/Makefile ; \
 		fi ; \
-		if [ '$$(top_srcdir)/minisat-2.2.0' = "@MINISATDIR@" ] ; then \
+		if [ '$(top_srcdir)/minisat-2.2.0' = "@MINISATDIR@" ] ; then \
 			mkdir -p minisat-2.2.0/{core,mtl,simp,utils} ; \
 			cp -p @MINISATDIR@/Makefile minisat-2.2.0 ; \
 			cp -p @MINISATDIR@/core/{Makefile,*.cc,*.h} minisat-2.2.0/core ; \
@@ -85,10 +85,10 @@ all-local:
 		mkdir -p linenoise ; \
 		cp -p $(top_srcdir)/linenoise/{Makefile,linenoise.c,linenoise.h} linenoise ; \
 	fi
-	if [ '$$(top_srcdir)/minisat-2.2.0' = "@MINISATDIR@" ] ; then \
+	if [ '$(top_srcdir)/minisat-2.2.0' = "@MINISATDIR@" ] ; then \
 		$(MAKE) $(AM_MAKEFLAGS) -C minisat-2.2.0 ; \
 	fi
-	if [ '$$(top_srcdir)/cbmc' = "@CBMCDIR@" ] ; then \
+	if [ '$(top_srcdir)/cbmc' = "@CBMCDIR@" ] ; then \
 		if [ ! -d cbmc/.svn ] ; then \
 			if [ ! -d cbmc ] ; then \
 				tar xzf $(top_srcdir)/cbmc-src.tar.gz ; \
