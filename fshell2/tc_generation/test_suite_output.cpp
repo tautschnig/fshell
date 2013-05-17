@@ -226,9 +226,7 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 	::std::string const start_proc_prefix(::std::string("c::") + config.main + "::");
 
 	// track calls and returns
-#if CALL_STACK_EXP
 	::std::list< called_functions_t::iterator > call_stack;
-#endif
 
 	bool most_recent_non_hidden_is_true(false);
 	// does a DEF-USE + call stack analysis
@@ -245,9 +243,9 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 	
 		bool const instr_enabled(iter->guard.is_true() || cnf.l_get(iter->guard_literal) == ::tvt(true));
 
-#if CALL_STACK_EXP
-		if (instr_enabled && !::fshell2::instrumentation::GOTO_Transformation::is_instrumented(
-					iter->source.pc) && 
+		if (instr_enabled &&
+			!::fshell2::instrumentation::GOTO_Transformation::is_instrumented( iter->source.pc) &&
+			!iter->is_function_return() && /* we figure these out ourselves */
 				(!iter->is_assignment() || ::symex_targett::STATE == iter->assignment_type)) {
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !iter->source.pc->function.empty());
 			
@@ -318,7 +316,6 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 				FSHELL2_AUDIT_TRACE("POP-return");
 			} 
 		}
-#endif
 		
 		if (!iter->is_assignment() || ::symex_targett::STATE == iter->assignment_type)
 			most_recent_non_hidden_is_true = instr_enabled;
@@ -728,12 +725,10 @@ Test_Suite_Output::Test_Suite_Output(::fshell2::fql::CNF_Conversion & equation,
 		called_functions_t cf;
 		assignments_t as;
 		get_test_case(ti, cf, as);
-#ifdef CALL_STACK_EXP
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !cf.empty());
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 
 				cf.front().first.second == "c::__CPROVER_initialize");
 		cf.pop_front();
-#endif
 		switch (ui) {
 			case ::ui_message_handlert::XML_UI:
 				print_test_case_xml(os, ti, cf, as);
@@ -741,12 +736,10 @@ Test_Suite_Output::Test_Suite_Output(::fshell2::fql::CNF_Conversion & equation,
 			case ::ui_message_handlert::PLAIN:
 				os << "IN:" << ::std::endl;
 				print_test_inputs_plain(os, ti);
-#ifdef CALL_STACK_EXP
 				if (m_opts.get_bool_option("tco-called-functions")) {
 					os << "Function calls:" << ::std::endl;
 					print_function_calls(os, cf);
 				}
-#endif
 				if (m_opts.get_bool_option("tco-assign-globals")) {
 					os << "Assignments to global variables:" << ::std::endl;
 					print_assignments_to_globals(os, as);
