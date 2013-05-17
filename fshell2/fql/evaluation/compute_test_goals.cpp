@@ -736,6 +736,7 @@ void Compute_Test_Goals_Boolean::build(trace_automaton_t const& aut, bool map_tg
 				(iter->source.pc != previous_pc->source.pc))
 			previous_pc = iter;
 		else if ((iter->is_assignment() && previous_pc->is_location()) ||
+				 (iter->is_function_call() && previous_pc->is_location()) ||
 				((iter->is_assume() || iter->is_assert()) && iter->source.pc->is_goto() && previous_pc->is_location()))
 				continue;
 

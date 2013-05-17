@@ -137,6 +137,7 @@ bool Evaluate_Filter::ignore_instruction(::goto_programt::instructiont const& e)
 		case ATOMIC_BEGIN:
 		case ATOMIC_END:
 		case DECL:
+		case DEAD:
 			return true;
 		case OTHER:
 			{
@@ -155,7 +156,6 @@ bool Evaluate_Filter::ignore_instruction(::goto_programt::instructiont const& e)
 		case FUNCTION_CALL:
 		case START_THREAD:
 		case END_THREAD:
-		case DEAD:
 		case THROW:
 		case CATCH:
 			return false;
