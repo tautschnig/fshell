@@ -260,16 +260,19 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 					
 				::irep_idt const fname(call_stack.back()->first.second);
 				if (iter->source.pc->function != fname) {
-					// ::std::cerr << "POP " << call_stack.back()->first.second << ::std::endl;
+					FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
+						"POP ", call_stack.back()->first.second));
 					call_stack.pop_back();
 					if (iter->source.pc->function != ID_main) {
 						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !call_stack.empty());
 						// handle sequences of functions without explicit return
 						while (iter->source.pc->function != call_stack.back()->first.second) {
-							// ::std::cerr << "Want POP-more because of " << call_stack.back()->first.second << " vs. current pc: " << iter->source.pc->function << ::std::endl;
+							FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
+								"Want POP-more because of ", call_stack.back()->first.second,
+								" vs. current pc: ", iter->source.pc->function));
 							FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !call_stack.empty());
 							call_stack.pop_back();
-							// ::std::cerr << "POP-more" << ::std::endl;
+							FSHELL2_AUDIT_TRACE("POP-more");
 						}
 					}
 				}
@@ -277,7 +280,8 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 		
 			::goto_programt::const_targett next(iter->source.pc);
 			++next;
-			// ::std::cerr << "this func: " << iter->source.pc->function << " next func: " << next->function << ::std::endl;
+			FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
+				"this func: ", iter->source.pc->function, " next func: ", next->function));
 			// tmp.output_instruction(m_equation.get_ns(), "", ::std::cerr, next);
 			if (iter->is_location() && iter->source.pc->is_function_call()) {
 				calls.push_back(::std::make_pair< ::std::pair< ::goto_programt::const_targett,
@@ -285,7 +289,8 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 								::to_code_function_call(iter->source.pc->code).function().get(ID_identifier)), 0));
 				call_stack.push_back(calls.end());
 				--call_stack.back();
-				// ::std::cerr << "PUSH " << call_stack.back()->first.second << ::std::endl;
+				FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
+					"PUSH ", call_stack.back()->first.second));
 			} else if (iter->is_location() &&
 					iter->source.pc->function != next->function) {
 				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
@@ -295,14 +300,14 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 						(*--(--call_stack.end()))->first.second == next->function) {
 					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 0 == call_stack.back()->second);
 					call_stack.pop_back();
-					// ::std::cerr << "POP-inline" << ::std::endl;
+					FSHELL2_AUDIT_TRACE("POP-inline");
 				} else {
 					calls.push_back(::std::make_pair< ::std::pair< ::goto_programt::const_targett,
 							::irep_idt const >, ::exprt const* >(::std::make_pair(iter->source.pc,
 									next->function), 0));
 					call_stack.push_back(calls.end());
 					--call_stack.back();
-					// ::std::cerr << "PUSH-inline" << ::std::endl;
+					FSHELL2_AUDIT_TRACE("PUSH-inline");
 				}
 			} else if (iter->is_assignment() && iter->source.pc->is_return()) {
 				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !call_stack.empty());
@@ -310,7 +315,7 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 				call_stack.back()->second = &(iter->ssa_lhs);
 				// required for recursive functions
 				call_stack.pop_back();
-				// ::std::cerr << "POP-return" << ::std::endl;
+				FSHELL2_AUDIT_TRACE("POP-return");
 			} 
 		}
 #endif

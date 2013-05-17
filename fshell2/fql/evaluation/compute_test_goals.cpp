@@ -637,6 +637,7 @@ CNF_Conversion & Compute_Test_Goals_Boolean::do_query(::goto_functionst & gf, Qu
 }
 
 void Compute_Test_Goals_Boolean::build(trace_automaton_t const& aut, bool map_tg) {
+	FSHELL2_AUDIT_TRACE("Building trace automaton simulation");
 	ta_state_map_t state_map, reverse_state_map;
 	ta_state_set_t compact_final;
 	compact_state_numbers(aut, state_map, reverse_state_map, compact_final);
@@ -657,7 +658,13 @@ void Compute_Test_Goals_Boolean::build(trace_automaton_t const& aut, bool map_tg
 				// store the mapping from edges to target graphs
 				for (target_graph_t::edges_t::const_iterator tg_iter(tgg.get_E().begin());
 						tg_iter != tgg.get_E().end(); ++tg_iter)
+				{
 					m_loc_to_edge_target_graphs_map[ tg_iter->first.second ][ *tg_iter ].insert(e_iter->first);
+					FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
+						"Edge ", tg_iter->first.second->location_number, "->",
+						tg_iter->second.second->location_number,
+						" maps to ", e_iter->first));
+				}
 				// store the mapping from nodes to target graphs
 				for (target_graph_t::nodes_t::const_iterator tg_iter(tgg.get_disconnected_nodes().begin());
 						tg_iter != tgg.get_disconnected_nodes().end(); ++tg_iter)
@@ -732,6 +739,15 @@ void Compute_Test_Goals_Boolean::build(trace_automaton_t const& aut, bool map_tg
 				((iter->is_assume() || iter->is_assert()) && iter->source.pc->is_goto() && previous_pc->is_location()))
 				continue;
 
+#if FSHELL2_DEBUG__LEVEL__ >= 2
+		::std::ostringstream oss;
+		oss << "--------------------------------------------------------------------------------" << ::std::endl;
+		::goto_programt tmp;
+		tmp.output_instruction(m_equation.get_ns(), "", oss, iter->source.pc);
+		iter->output(m_equation.get_ns(), oss);
+		oss << "Guard literal: " << iter->guard_literal.dimacs();
+		FSHELL2_AUDIT_TRACE(oss.str());
+#endif
 		do_step(cnf, bv_utils, bv_cache, prev_eq_cache, next_eq_cache,
 				prev_state, possibly_reached_states, width, iter,
 				local_target_graph_set, map_tg, transitions, reverse_state_map);
@@ -840,7 +856,8 @@ void Compute_Test_Goals_Boolean::do_step(::cnf_clause_list_assignmentt & cnf,
 										::literalt::unused_var_no() == land.var_no());
 								if (m_cp_eval.is_test_goal_state(unmapped_state)) {
 									land = cnf.land(step->guard_literal, dests.back());
-									// ::std::cerr << "State " << unmapped_state << " maps to " << land.dimacs() << ::std::endl;
+									FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
+										"State ", unmapped_state, " maps to ", land.dimacs()));
 									m_tg_to_lit_map[ unmapped_state ][ ::std::make_pair(entry.begin()->first, entry.begin()->first) ].insert(land);
 								}
 								m_node_step_to_trans.insert(::std::make_pair(step, Edge_Goal(step->guard_literal, land,
@@ -939,8 +956,15 @@ void Compute_Test_Goals_Boolean::do_step(::cnf_clause_list_assignmentt & cnf,
 						dests.push_back(make_equals(bv_utils, next_eq_cache,
 									next_state, bv_cache, *s_iter, width));
 						possibly_reached_states.insert(*s_iter);
-						//// ::std::cerr << "Adding trans " << t_iter->first << "-[" <<
-						////	*tgg_iter << "]>" << *s_iter << " next==" << *s_iter << ": " << dests.back().dimacs() << ::std::endl;
+#if FSHELL2_DEBUG__LEVEL__ >= 2
+						{
+							std::ostringstream oss;
+							oss << "Adding trans " << t_iter->first << "-["
+							<< *tgg_iter << "]>" << *s_iter << " next==" << *s_iter
+							<< ": " << dests.back().dimacs();
+							FSHELL2_AUDIT_TRACE(oss.str());
+						}
+#endif
 						if (map_tg) {
 							FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 
 									reverse_state_map.end() != reverse_state_map.find(*s_iter));
@@ -951,7 +975,8 @@ void Compute_Test_Goals_Boolean::do_step(::cnf_clause_list_assignmentt & cnf,
 									::literalt::unused_var_no() == land.var_no());
 							if (m_cp_eval.is_test_goal_state(unmapped_state)) {
 								land = cnf.land(al, dests.back());
-								// ::std::cerr << "State " << unmapped_state << " maps to " << land.dimacs() << ::std::endl;
+								FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
+									"State2 ", unmapped_state, " maps to ", land.dimacs()));
 								m_tg_to_lit_map[ unmapped_state ][ e_iter->first ].insert(land);
 							}
 							//// ::std::cerr << "================================================================================" << ::std::endl;
@@ -1015,8 +1040,14 @@ void Compute_Test_Goals_Boolean::do_atom(Coverage_Pattern_Expr const* n,
 			has_initial = true;
 		// some states might be impossible to reach
 		state_edge_lit_map_t::const_iterator entry(m_tg_to_lit_map.find(*iter));
-		if (m_tg_to_lit_map.end() != entry) selected.push_back(entry);
+		if (m_tg_to_lit_map.end() != entry) {
+			FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
+				"Selecting state ", *iter));
+			selected.push_back(entry);
+		}
 	}
+	FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
+		"has_initial=", has_initial, ", selected.size()=", selected.size()));
 
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, epsilon_permitted || !has_initial);
 
@@ -1030,7 +1061,8 @@ void Compute_Test_Goals_Boolean::do_atom(Coverage_Pattern_Expr const* n,
 				c_iter != (*iter)->second.end(); ++c_iter) {
 			::std::copy(c_iter->second.begin(), c_iter->second.end(), ::std::back_inserter(set));
 			if (!make_single && !set.empty()) {
-				// ::std::cerr << "Adding1 subgoal composed of " << set.size() << " guards" << ::std::endl;
+				FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
+					"Adding1 subgoal composed of ", set.size(), " guards"));
 				::literalt const tg(m_equation.get_cnf().lor(set));
 				store_mapping(tg, set, c_iter->first.first.second,
 						c_iter->first.second.second);
@@ -1041,7 +1073,8 @@ void Compute_Test_Goals_Boolean::do_atom(Coverage_Pattern_Expr const* n,
 	}
 	if (!set.empty()) {
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, make_single);
-		// ::std::cerr << "Adding2 subgoal composed of " << set.size() << " guards" << ::std::endl;
+		FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
+			"Adding2 subgoal composed of ", set.size(), " guards"));
 		::literalt const tg(m_equation.get_cnf().lor(set));
 		ctx_coll_t contexts;
 		for (selected_t::const_iterator iter(selected.begin()); iter != selected.end(); ++iter)
