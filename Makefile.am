@@ -144,11 +144,11 @@ release-local: release
 	cd $(top_srcdir)/build/release && \
 	cp ../../{LICENSE,NOTICE,LGPL,THANKS,ChangeLog} $$distdir && \
 	cp -a examples $$distdir && \
-	if test x$(build_os) = xmingw32 ; then \
+	if test x$(target_os) = xmingw32 -o x$(target_os) = xcygwin ; then \
 		cp /usr/bin/libgcc_s_dw2-1.dll $$distdir ; \
-		zip -r -9 -x.svn -x.git $$distdir-$(build_cpu)-$(build_os).zip $$distdir ; \
+		zip -r -9 -x.svn -x.git $$distdir-$(target_cpu)-$(target_os).zip $$distdir ; \
 	else \
-		tar czf $$distdir-$(build_cpu)-$(build_os).tar.gz --exclude .git --exclude .svn $$distdir ; \
+		tar czf $$distdir-$(target_cpu)-$(target_os).tar.gz --exclude .git --exclude .svn $$distdir ; \
 	fi
 
 update-changelog:
