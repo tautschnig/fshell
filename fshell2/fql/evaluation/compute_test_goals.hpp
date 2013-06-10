@@ -89,6 +89,7 @@ class CNF_Conversion : public ::bmct
 	private:
 	virtual bool decide_default();
 	
+	::optionst const& m_opts;
 	::cnf_clause_list_assignmentt m_cnf;
 	::bv_cbmct m_bv;
 	test_goal_groups_t m_test_goal_groups;
