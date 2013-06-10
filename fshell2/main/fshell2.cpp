@@ -77,7 +77,7 @@ auto_ptr<char>::~auto_ptr()
 
 FSHELL2_NAMESPACE_BEGIN;
 
-FShell2::FShell2(::optionst const& opts, ::goto_functionst & gf) :
+FShell2::FShell2(::optionst & opts, ::goto_functionst & gf) :
 	m_opts(opts), m_gf(gf), m_cmd(opts, gf), m_first_run(true) {
 	// try to read history from file, ignore errors
 	::read_history(".fshell2_history"); errno = 0;
@@ -197,8 +197,10 @@ void FShell2::try_query(::language_uit & manager, char const * line,
 	::fshell2::Constraint_Strengthening cs(equation, m_opts);
 	::fshell2::Constraint_Strengthening::test_cases_t all_test_cases;
 	::fshell2::statistics::Statistics * ts_stats(&stats);
-	unsigned const mult(m_cmd.get_multiple_coverage());
-	unsigned const limit(m_cmd.get_limit());
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_opts.get_int_option(F2_O_MULTIPLE_COVERAGE) > 0);
+	unsigned const mult(m_opts.get_int_option(F2_O_MULTIPLE_COVERAGE));
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_opts.get_int_option(F2_O_LIMIT) >= 0);
+	unsigned const limit(m_opts.get_int_option(F2_O_LIMIT));
 
 	::fshell2::statistics::Statistics aggregated_cpu_time;
 	::fshell2::statistics::CPU_Timer * aggr_cpu_time(0);

@@ -59,7 +59,7 @@ class FShell2
 	typedef FShell2 Self;
 
 	public:
-	FShell2(::optionst const& opts, ::goto_functionst & gf);
+	FShell2(::optionst & opts, ::goto_functionst & gf);
 
 	bool process_line(::language_uit & manager, char const * line);
 	bool process_line(::language_uit & manager, char const * line,
@@ -70,7 +70,7 @@ class FShell2
 	~FShell2();
 
 	private:
-	::optionst const& m_opts;
+	::optionst & m_opts;
 	::goto_functionst & m_gf;
 	::fshell2::command::Command_Processing m_cmd;
 	::fshell2::macro::Macro_Processing m_macro;

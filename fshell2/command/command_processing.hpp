@@ -42,6 +42,9 @@
 class language_uit;
 class optionst;
 
+#define F2_O_LIMIT "fshell::limit"
+#define F2_O_MULTIPLE_COVERAGE "fshell::multiple_coverage"
+
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_COMMAND_NAMESPACE_BEGIN;
 
@@ -76,27 +79,21 @@ class Command_Processing
 		DONE
 	} status_t;
 
-	Command_Processing(::optionst const& opts, ::goto_functionst & gf);
+	Command_Processing(::optionst & opts, ::goto_functionst & gf);
 
 	status_t process(::language_uit & manager, ::std::ostream & os, char const * cmd);
 
 	static ::std::ostream & help(::std::ostream & os);
 
-	inline unsigned get_limit() const;
-
-	inline unsigned get_multiple_coverage() const;
-
 	bool finalize(::language_uit & manager);
 	void finalize_goto_program(::language_uit & manager);
 	
 	private:
-	::optionst const& m_opts;
+	::optionst & m_opts;
 	::goto_functionst & m_gf;
 	::std::map< ::std::string, time_t > m_parse_time;
 	bool m_finalized;
 	bool m_remove_zero_init;
-	unsigned m_limit;
-	unsigned m_multiple_coverage;
 	
 	::std::ostream & print_file_contents(::std::ostream & os, char const * name) const;
 
@@ -111,14 +108,6 @@ class Command_Processing
 	 */
 	Self& operator=( Self const& rhs );
 };
-	
-inline unsigned Command_Processing::get_limit() const {
-	return m_limit;
-}
-
-inline unsigned Command_Processing::get_multiple_coverage() const {
-	return m_multiple_coverage;
-}
 
 ::std::ostream & operator<<(::std::ostream & os, Command_Processing::status_t const& s);
 

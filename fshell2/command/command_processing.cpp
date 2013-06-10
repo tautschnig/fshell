@@ -124,10 +124,12 @@ Cleanup::~Cleanup() {
 	}
 }
 
-Command_Processing::Command_Processing(::optionst const& opts, ::goto_functionst & gf) :
+Command_Processing::Command_Processing(::optionst & opts, ::goto_functionst & gf) :
 	m_opts(opts), m_gf(gf), m_finalized(true),
-	m_remove_zero_init(false), m_limit(0), m_multiple_coverage(1) {
+	m_remove_zero_init(false) {
 	if (::config.main.empty()) ::config.main = "main";
+	m_opts.set_option(F2_O_LIMIT, 0);
+	m_opts.set_option(F2_O_MULTIPLE_COVERAGE, 1);
 }
 
 ::std::ostream & Command_Processing::help(::std::ostream & os) {
@@ -270,7 +272,7 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, numeric_arg >= 0);
 			FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error, numeric_arg > 0,
 					"Limit must be greater than 0");
-			m_limit = numeric_arg;
+			m_opts.set_option(F2_O_LIMIT, numeric_arg);
 			return DONE;
 		case CMD_SET_NO_ZERO_INIT:
 			m_remove_zero_init = true;	
@@ -292,7 +294,7 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, numeric_arg >= 0);
 			FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error, numeric_arg > 1,
 					"Multiplicity must be greater than 1");
-			m_multiple_coverage = numeric_arg;
+			m_opts.set_option(F2_O_MULTIPLE_COVERAGE, numeric_arg);
 			return DONE;
 	}
 			
