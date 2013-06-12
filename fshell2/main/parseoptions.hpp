@@ -38,23 +38,26 @@
 #include <util/options.h>
 
 #define FSHELL2_OPTIONS \
-  "(function):(slice-by-trace):" \
-  "(no-simplify)(unwind):(unwindset):(slice-formula)" \
+  "(function):" \
+  "(unwind):(unwindset):" \
   "D:I:(depth):" \
-  "(no-assumptions)(no-unwinding-assertions)" \
-  "(floatbv)(fixedbv)" \
-  "(enable-assert)" \
-  "(partial-loops)(xml-ui)" \
-  "(show-goto-functions)(show-loops)" \
+  "(no-unwinding-assertions)" \
+  "(partial-loops)" \
+  "(xml-ui)" \
+  "(floatbv)(fixedbv)(no-assumptions)" \
   "(16)(32)(64)(LP64)(ILP64)(LLP64)(ILP32)(LP32)" \
   "(little-endian)(big-endian)" \
+  "(show-goto-functions)(show-loops)(dump-c)" \
   "(verbosity):(no-library)" \
   "(version)" \
-  "(i386-linux)(i386-macos)(i386-win32)(win32)(winx64)" \
+  "(i386-linux)(i386-macos)(i386-win32)(win32)(winx64)(gcc)" \
   "(ppc-macos)(unsigned-char)" \
   "(outfile):(show-test-goals)" \
-  "(no-arch)(query-file):(statistics)(use-instrumentation)" \
+  "(no-arch)" \
+  "(round-to-nearest)(round-to-plus-inf)(round-to-minus-inf)(round-to-zero)" \
+  "(query-file):(statistics)(use-instrumentation)" \
   "(sat-coverage-check)(no-internal-coverage-check)" \
+  "(enable-assert)" \
   "(tco-location)(tco-called-functions)(tco-assign-globals)"
 
 FSHELL2_NAMESPACE_BEGIN;

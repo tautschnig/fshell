@@ -110,7 +110,7 @@ bool Parseoptions::get_command_line_options()
 		return true;
 	}
 
-	m_options.set_option("simplify", !cmdline.isset("no-simplify"));
+	m_options.set_option("simplify", true);
 	m_options.set_option("all-claims", false);
 
 	if(cmdline.isset("unwind"))
@@ -118,9 +118,6 @@ bool Parseoptions::get_command_line_options()
 
 	if(cmdline.isset("depth"))
 		m_options.set_option("depth", cmdline.getval("depth"));
-
-	if(cmdline.isset("slice-by-trace"))
-		m_options.set_option("slice-by-trace", cmdline.getval("slice-by-trace"));
 
 	if(cmdline.isset("unwindset"))
 		m_options.set_option("unwindset", cmdline.getval("unwindset"));
@@ -147,7 +144,7 @@ bool Parseoptions::get_command_line_options()
 	m_options.set_option("partial-loops", cmdline.isset("partial-loops"));
 
 	// remove unused equations
-	m_options.set_option("slice-formula", cmdline.isset("slice-formula"));
+	m_options.set_option("slice-formula", true);
 
 	m_options.set_option("simplify-if", true);
 	m_options.set_option("arrays-uf", "auto");
@@ -157,6 +154,7 @@ bool Parseoptions::get_command_line_options()
 		m_options.set_option("outfile", cmdline.getval("outfile"));
 
 	m_options.set_option("show-goto-functions", cmdline.isset("show-goto-functions"));
+	m_options.set_option("dump-c", cmdline.isset("dump-c"));
 	m_options.set_option("show-test-goals", cmdline.isset("show-test-goals"));
 	m_options.set_option("show-loops", cmdline.isset("show-loops"));
 	m_options.set_option("use-instrumentation", cmdline.isset("use-instrumentation"));
@@ -289,7 +287,13 @@ void Parseoptions::help()
 		"\n"
 		"FShell 2 links to components of CBMC " CBMC_VERSION ":\n"
 		"\n"
-		"* *            CBMC " CBMC_VERSION " - Copyright (C) 2001-2008           * *\n"
+		"* *   CBMC " CBMC_VERSION " - Copyright (C) 2001-2011 ";
+
+	std::cout << "(" << (sizeof(void *)*8) << "-bit version)";
+
+	std::cout << "   * *\n";
+
+	std::cout <<
 		"* *              Daniel Kroening, Edmund Clarke             * *\n"
 		"* * Carnegie Mellon University, Computer Science Department * *\n"
 		"* *                 kroening@kroening.com                   * *\n"
@@ -328,18 +332,24 @@ void Parseoptions::help()
 		" --winx64                     set Windows/X64 architecture\n"
 #endif
 #endif
+#ifdef _WIN32
+		" --gcc                        use GCC as preprocessor\n"
+#endif
 		" --no-arch                    don't set up an architecture\n"
 		" --no-library                 disable built-in abstract C library\n"
+		" --fixedbv                    fixed-point arithmetic\n"
+		" --floatbv                    IEEE floating point arithmetic (default)\n"
+		" --round-to-nearest           IEEE floating point rounding mode (default)\n"
+		" --round-to-plus-inf          IEEE floating point rounding mode\n"
+		" --round-to-minus-inf         IEEE floating point rounding mode\n"
+		" --round-to-zero              IEEE floating point rounding mode\n"
 		"\n"
 		"Program instrumentation options:\n"
 		" --show-goto-functions        show goto program\n"
+		" --dump-c                     show instrumented program as C code\n"
 		" --show-loops                 show the loops in the program\n"
 		" --no-assumptions             ignore user assumptions\n"
-		" --no-simplify                UNDOCUMENTED\n"
-		" --partial-loops              don't generate unwinding assumptions (also implies --no-unwinding-assertions)\n"
-		" --enable-assert              don't ignore user assertions\n"
-    	" --fixedbv                    fixed-point arithmetic\n"
-    	" --floatbv                    IEEE floating point arithmetic (default)\n"
+		" --partial-loops              permit paths with partial loops\n"
 		"\n"
 		"BMC options:\n"
 		" --function name              set main function name\n"
@@ -348,8 +358,6 @@ void Parseoptions::help()
 		" --unwindset L:B,...          unwind loop L with a bound of B\n"
 		"                              (use --show-loops to get the loop IDs)\n"
 		" --no-unwinding-assertions    do not generate unwinding assertions\n"
-		" --slice-formula              remove assignments unrelated to property\n"
-		" --slice-by-trace             UNDOCUMENTED\n"
 		"\n"
 		"Test case output options:\n"
 		" --tco-location               show locations and type info in listing of test cases\n"
@@ -357,11 +365,13 @@ void Parseoptions::help()
 		" --tco-assign-globals         show assignments to global variables performed by test case\n"
 		"\n"
 		"Other options:\n"
+		" --version                    show version and exit\n"
+		" --xml-ui                     use XML-formatted output\n"
+		" --enable-assert              don't ignore user assertions\n"
 		" --query-file Filename        read FShell query from Filename\n"
 		" --version                    show version and exit\n"
 		" --verbosity level            set verbosity of status reports (0-9)\n"
 		" --statistics                 display statistics (implied by --verbosity > 2)\n"
-		" --xml-ui                     use XML-formatted output\n"
 		" --outfile Filename           write test inputs to Filename (appends)\n"
 		" --show-test-goals            print test goals derived from query\n"
 		" --use-instrumentation        instrument trace automata into GOTO program\n"

@@ -56,6 +56,8 @@
 #include <fshell2/fql/ast/query.hpp>
 #include <fshell2/fql/ast/quote.hpp>
 
+#include <goto-instrument/dump_c.h>
+
 #include <limits>
 #include <algorithm>
 #include <iterator>
@@ -385,6 +387,9 @@ CNF_Conversion & Compute_Test_Goals_From_Instrumentation::do_query(::goto_functi
 	if (m_opts.get_bool_option("show-goto-functions")) {
 		Smart_Printer smp(m_manager);
 		gf.output(m_equation.get_ns(), smp.get_ostream());
+	} else if (m_opts.get_bool_option("dump-c")) {
+		Smart_Printer smp(m_manager);
+		::dump_c(gf, m_equation.get_ns(), smp.get_ostream());
 	}
 
 	// convert CFA to CNF
@@ -577,6 +582,9 @@ CNF_Conversion & Compute_Test_Goals_Boolean::do_query(::goto_functionst & gf, Qu
 	if (m_opts.get_bool_option("show-goto-functions")) {
 		Smart_Printer smp(m_manager);
 		gf.output(m_equation.get_ns(), smp.get_ostream());
+	} else if (m_opts.get_bool_option("dump-c")) {
+		Smart_Printer smp(m_manager);
+		::dump_c(gf, m_equation.get_ns(), smp.get_ostream());
 	}
 
 	// convert CFA to CNF
