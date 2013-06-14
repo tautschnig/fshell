@@ -63,7 +63,6 @@ AC_CHECK_HEADERS([signal.h \
                   ctime \
                   cerrno \
                   unistd.h \
-                  zlib.h \
                   ],
                   [],
                   AC_MSG_ERROR([Essential header $ac_header missing]))
@@ -72,6 +71,7 @@ AC_CHECK_HEADERS([signal.h \
 AC_CHECK_HEADERS([FlexLexer.h \
                   tr1/unordered_map \
                   ext/hash_map \
+                  zlib.h \
                   ])
 
 # Checks for library functions.
