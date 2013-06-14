@@ -19,6 +19,22 @@ endif
 AM_YFLAGS = -d
 AM_LFLAGS = -o$(LEX_OUTPUT_ROOT).c
 
+EXTRA_DIST = grammar.hpp
+
+MAINTAINERCLEANFILES += grammar.hpp grammar.txt lexer.txt
+
+lexer.txt: lexer.ll
+	@GREP@ ^TOK $^ | @SED@ 's/\\//g' | @EGREP@ -v '(TOK_C_IDENT|TOK_QUOTED_STRING|TOK_NAT_NUMBER)' > $@
+
+grammar.txt: parser.yy lexer.txt
+	@AWK@ -f $(top_srcdir)/config/y2l -- -p -tlexer.txt $< > $@
+
+grammar.hpp: grammar.txt
+	echo "#define COMMAND_HELP \\" > $@
+	$(top_srcdir)/config/y2l-postproc.pl < $< >> $@
+
+BUILT_SOURCES += grammar.hpp
+
 CBMC_OBJS = @CBMCDIR@/src/goto-programs/goto-programs.a \
 						@CBMCDIR@/src/assembler/assembler.a \
 						@CBMCDIR@/src/pointer-analysis/value_set.o \

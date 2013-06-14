@@ -58,23 +58,7 @@ extern int CMDparse(CMDFlexLexer *,
 // extern int yydebug;
 /* end parser */
 
-#define COMMAND_HELP \
-"<Statement> ::= `QUIT' | `EXIT' | `HELP'" << ::std::endl << \
-"              | `ADD' `SOURCECODE' <Defines> <File name>" << ::std::endl << \
-"              | `SHOW' `FILENAMES'" << ::std::endl << \
-"              | `SHOW' `SOURCECODE' <File name>" << ::std::endl << \
-"              | `SHOW' `SOURCECODE' `ALL'" << ::std::endl << \
-"              | `SET' <Options>" << ::std::endl << \
-"<Options> ::= `ENTRY' <Identifier>" << ::std::endl << \
-"            | `LIMIT' `COUNT' <Number>" << ::std::endl << \
-"            | `NO_ZERO_INIT'" << ::std::endl << \
-"            | `ABSTRACT' <Identifier>" << ::std::endl << \
-"            | `MULTIPLE_COVERAGE' <Number>" << ::std::endl << \
-"<File name> ::= <Singly Quoted String>" << ::std::endl << \
-"<Defines> ::=" << ::std::endl << \
-"            | `-D' <Identifier> <Defines>" << ::std::endl << \
-"            | `-D' <Identifier> `=' <Singly Quoted String> <Defines>" << ::std::endl << \
-"Comments start with `//' and end at the end of the line"
+#include <fshell2/command/grammar.hpp>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_COMMAND_NAMESPACE_BEGIN;
@@ -133,7 +117,8 @@ Command_Processing::Command_Processing(::optionst & opts, ::goto_functionst & gf
 }
 
 ::std::ostream & Command_Processing::help(::std::ostream & os) {
-	os << "Control commands:" << ::std::endl << COMMAND_HELP << ::std::endl;
+	os << "Control commands:" << ::std::endl << COMMAND_HELP
+		<< "Comments start with `//' and end at the end of the line" << ::std::endl;
 	return os;
 }
 	
