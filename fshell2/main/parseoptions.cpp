@@ -41,6 +41,7 @@
 #include <ansi-c/ansi_c_language.h>
 #include <cbmc/version.h>
 #include <langapi/mode.h>
+#include <goto-programs/link_to_library.h>
 
 FSHELL2_NAMESPACE_BEGIN;
 
@@ -214,6 +215,10 @@ int Parseoptions::doit()
 					symbol_table, goto_functions,
 					ui_message_handler);
 		}
+
+		// finally add the library
+		status("Adding CPROVER library");
+		link_to_library(symbol_table, goto_functions, ui_message_handler);
 
 		if(0!=cmdline.args.size()) {
 			::fshell2::command::Command_Processing proc(m_options, goto_functions);
