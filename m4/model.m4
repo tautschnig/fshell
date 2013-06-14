@@ -119,7 +119,7 @@ AC_DEFUN([model_LEX_YACC_CPLUSPLUS],[
   if ! test -x "`which $LEX`" ; then
     AC_MSG_ERROR([lex/flex not found. Please install it first.])
   else
-    flexv=`$LEX --version | sed 's/.* //'`
+    flexv=`$LEX --version | $AWK '{ print [$]2 }'`
     flexv1=`echo $flexv | $AWK -F. '{ print [$]1 }'`
     flexv2=`echo $flexv | $AWK -F. '{ print [$]2 }'`
     flexv3=`echo $flexv | $AWK -F. '{ print [$]3 }' | sed 's/[[a-z]]*$//'`
