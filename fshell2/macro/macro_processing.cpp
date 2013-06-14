@@ -84,12 +84,17 @@ Macro_Processing::Macro_Processing() :
 	m_has_defines(false),
 	m_deffilename(::get_temporary_file("tmp.defs", ".c")),
 	m_checkfilename(::get_temporary_file("tmp.check", ".c")),
-#if defined(_WIN32) && !defined(__MINGW32__)
+#if defined(_WIN32)
 	m_cpp_cmdline("CL /nologo /E")
 #else
-	m_cpp_cmdline(::std::getenv("CPP")?::std::getenv("CPP"):CPP_CMD " -dP -undef -Werror")
+	m_cpp_cmdline(CPP_CMD " -dP -undef -Werror")
 #endif
 {
+#if defined(_WIN32)
+	if(::config.ansi_c.mode==::configt::ansi_ct::MODE_GCC)
+		m_cpp_cmdline=CPP_CMD " -dP -undef -Werror";
+#endif
+
 	errno = 0;
 	::std::signal(SIGINT, remove_macro_files);
 	FSHELL2_PROD_ASSERT1(::fshell2::Macro_Processing_Error, 0 == errno,
