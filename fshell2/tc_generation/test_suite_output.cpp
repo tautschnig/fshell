@@ -287,23 +287,26 @@ void Test_Suite_Output::analyze_symbol(
 	bool is_lhs(&sym == &(step.ssa_lhs));
 
 	Test_Input::program_variable_t iv;
-	bool iv_in_use(false);
 	::exprt const * nondet_expr(0);
 
 	::boolbvt const& bv(m_equation.get_bv());
 
 	Symbol_Identifier var(sym);
-	// ::std::cerr << "Analyzing " << var.m_identifier << "(" << var.m_var_name << ") [" << var.m_vt << "]" << ::std::endl;
+	//// ::std::cerr << "Analyzing " << var.m_identifier << "(" << var.m_var_name << ") [" << var.m_vt << "]" << ::std::endl;
 
 	switch (var.m_vt)
 	{
+		case Symbol_Identifier::UNKNOWN:
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, false);
+			return;
 		case Symbol_Identifier::CBMC_INTERNAL: // we don't care
 		case Symbol_Identifier::CBMC_GUARD: // we don't care
 		case Symbol_Identifier::FSHELL2_INTERNAL: // we don't care
-			break;
+			return;
 		case Symbol_Identifier::CBMC_DYNAMIC_MEMORY: // ignore in RHS
 		case Symbol_Identifier::CBMC_TMP_RETURN_VALUE: // ignore in RHS
-			if (!is_lhs) break;
+			if (!is_lhs)
+				return;
 		case Symbol_Identifier::PARAMETER:
 		case Symbol_Identifier::LOCAL:
 		case Symbol_Identifier::LOCAL_STATIC:
@@ -313,20 +316,30 @@ void Test_Suite_Output::analyze_symbol(
 				Symbol_Identifier::GLOBAL == var.m_vt)
 				global_assign.push_back(&step);
 
-			if (parent && ID_with == parent->id() && parent->op2().id() == ID_nondet_symbol) {
-				// array/struct element assignment using undefined
-				// function; we do not add the array/struct variable at
-				// this point as reads to other indices may require the
-				// entire array/struct to be added
-				nondet_expr = &(parent->op2());
+			if (is_lhs &&
+				::symex_targett::STATE == step.assignment_type &&
+				step.ssa_rhs.id() == ID_with &&
+				!nondet_syms_in_rhs.empty())
+			{
+				// assignment to array element with nondet components
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+									 vars.end() == vars.find(var.m_identifier));
+				vars.insert(var.m_identifier);
+				// only a single one of them
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+						1 == nondet_syms_in_rhs.size());
+				nondet_expr = nondet_syms_in_rhs.front()->first;
 			}
 			else if (is_lhs &&
 					 ::symex_targett::STATE == step.assignment_type &&
 					 step.ssa_rhs.id() == ID_struct &&
 					 !nondet_syms_in_rhs.empty())
 			{
-				// assignment to struct variable with nondet components;
-				// again, it seems safer not to add the entire array
+				// assignment to struct variable with nondet components
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+									 vars.end() == vars.find(var.m_identifier));
+				vars.insert(var.m_identifier);
+				// only a single one of them
 				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 						1 == nondet_syms_in_rhs.size());
 				nondet_expr = nondet_syms_in_rhs.front()->first;
@@ -346,11 +359,12 @@ void Test_Suite_Output::analyze_symbol(
 				// ::std::cerr << "Also added var " << (var.m_var_name + "@" + var.m_level1) << " [" << var.m_vt << "]" << ::std::endl;
 			}
 			else if (!is_lhs &&
-					 var.m_level2 == "0" &&
+					 var.m_level2 == "1" &&
 					 vars.end() == vars.find(var.m_var_name + "@" + var.m_level1))
 			{
 				// reading use of undefined variable
-				if (!vars.insert(var.m_identifier).second) break;
+				if (!vars.insert(var.m_identifier).second)
+					return;
 				// ::std::cerr << "Added #0 var " << var.m_identifier << " [" << var.m_vt << "]" << ::std::endl;
 				vars.insert(var.m_var_name + "@" + var.m_level1);
 				// ::std::cerr << "Also added var " << (var.m_var_name + "@" + var.m_level1) << " [" << var.m_vt << "]" << ::std::endl;
@@ -358,70 +372,68 @@ void Test_Suite_Output::analyze_symbol(
 			else
 			{
 				if (!vars.insert(var.m_var_name + "@" + var.m_level1).second)
-					break;
+					return;
 				// ::std::cerr << "Added var " << (var.m_var_name + "@" + var.m_level1) << " [" << var.m_vt << "]" << ::std::endl;
 			}
-			
-			if (Symbol_Identifier::PARAMETER != var.m_vt &&
-				nondet_expr &&
-				step.source.pc->is_function_call())
-			{
-				iv_in_use = true;
-				::code_function_callt const& fct(::to_code_function_call(step.source.pc->code));
-				iv.m_name = &(fct.function());
-				iv.m_pretty_name = fct.function().get(ID_identifier);
-				iv.m_value = nondet_expr;
-				iv.m_symbol = 0;
-				m_equation.get_ns().lookup(iv.m_pretty_name, iv.m_symbol);
-				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, iv.m_symbol);
-				iv.m_location = &(step.source.pc->location);
-				// remove return values of defined (but inlined) functions
-				if (Symbol_Identifier::CBMC_TMP_RETURN_VALUE == var.m_vt && !iv.m_symbol->value.is_nil()) iv_in_use = false;
-				/* we assume malloc doesn't return NULL, should check for
-				 * invalid PTR
-				 } else if (step.source.pc->is_assign() &&
-				 ::to_code_assign(step.source.pc->code).ssa_rhs().get("statement") == "malloc") {
-				 iv_in_use = true;
-				 iv.m_name = &(step.ssh_full_lhs);
-				 iv.m_pretty_name = "malloc()";
-				 iv.m_location = &(step.source.pc->location);
-				 iv.m_value = &(step.ssa_rhs);
-				 ::std::cerr << "LHS: " << step.ssa_lhs << ::std::endl;
-				 ::std::cerr << "ORIG_LHS: " << step.original_full_lhs << ::std::endl;
-				 ::std::cerr << "RHS: " << step.ssa_rhs << ::std::endl; */
-			}
-			else if (!is_lhs || Symbol_Identifier::PARAMETER == var.m_vt)
-			{
-				// select the init procedure chosen by the user
-				::std::string const start_proc_prefix(::std::string("c::") + config.main + "::");
-				if (Symbol_Identifier::PARAMETER == var.m_vt &&
-					!::has_prefix(var.m_var_name, start_proc_prefix)) break;
-				// it may happen that the value is not even known to the
-				// mapping, which happens for the following code (and
-				// variable s):
-				//   char * buffer;
-				//   unsigned s;
-				//   buffer=(char*)malloc(s);
-				if (!is_lhs && step.original_full_lhs.get(ID_identifier) == "c::__CPROVER_alloc_size" &&
-						bv.get(sym).is_nil()) break;
-				iv_in_use = true;
-				iv.m_name = &sym;
-				// @ comes before #, also strip off possible $object
-				// (failed symbols)
-				iv.m_pretty_name = var.m_var_name;
-				iv.m_value = &sym;
-				iv.m_symbol = 0;
-				m_equation.get_ns().lookup(iv.m_pretty_name, iv.m_symbol);
-				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, iv.m_symbol);
-				iv.m_location = &(iv.m_symbol->location);
-			}
-			break;
-		case Symbol_Identifier::UNKNOWN:
-			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, false);
 			break;
 	}
 
-	if (!iv_in_use)
+	// select the init procedure chosen by the user
+	::std::string const start_proc_prefix(::std::string("c::") + config.main + "::");
+
+	if (Symbol_Identifier::PARAMETER != var.m_vt &&
+		nondet_expr &&
+		step.source.pc->is_function_call())
+	{
+		::code_function_callt const& fct(::to_code_function_call(step.source.pc->code));
+		iv.m_name = &(fct.function());
+		iv.m_pretty_name = fct.function().get(ID_identifier);
+		iv.m_value = nondet_expr;
+		iv.m_symbol = 0;
+		m_equation.get_ns().lookup(iv.m_pretty_name, iv.m_symbol);
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, iv.m_symbol);
+		iv.m_location = &(step.source.pc->location);
+		// remove return values of defined (but inlined) functions
+		if (Symbol_Identifier::CBMC_TMP_RETURN_VALUE == var.m_vt && !iv.m_symbol->value.is_nil())
+			return;
+		/* we assume malloc doesn't return NULL, should check for
+		 * invalid PTR
+		 } else if (step.source.pc->is_assign() &&
+		 ::to_code_assign(step.source.pc->code).ssa_rhs().get("statement") == "malloc") {
+		 iv_in_use = true;
+		 iv.m_name = &(step.ssh_full_lhs);
+		 iv.m_pretty_name = "malloc()";
+		 iv.m_location = &(step.source.pc->location);
+		 iv.m_value = &(step.ssa_rhs);
+		 ::std::cerr << "LHS: " << step.ssa_lhs << ::std::endl;
+		 ::std::cerr << "ORIG_LHS: " << step.original_full_lhs << ::std::endl;
+		 ::std::cerr << "RHS: " << step.ssa_rhs << ::std::endl; */
+	}
+	else if (!is_lhs || Symbol_Identifier::PARAMETER == var.m_vt)
+	{
+		if (Symbol_Identifier::PARAMETER == var.m_vt &&
+			!::has_prefix(var.m_var_name, start_proc_prefix))
+			return;
+		// it may happen that the value is not even known to the
+		// mapping, which happens for the following code (and
+		// variable s):
+		//   char * buffer;
+		//   unsigned s;
+		//   buffer=(char*)malloc(s);
+		if (!is_lhs && step.original_full_lhs.get(ID_identifier) == "c::__CPROVER_alloc_size" &&
+			bv.get(sym).is_nil())
+			return;
+		iv.m_name = &sym;
+		// @ comes before #, also strip off possible $object
+		// (failed symbols)
+		iv.m_pretty_name = var.m_var_name;
+		iv.m_value = &sym;
+		iv.m_symbol = 0;
+		m_equation.get_ns().lookup(iv.m_pretty_name, iv.m_symbol);
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, iv.m_symbol);
+		iv.m_location = &(iv.m_symbol->location);
+	}
+	else
 		return;
 
 	//// ::std::cerr << "Test input: " << iv.m_pretty_name << ::std::endl;
@@ -481,8 +493,7 @@ void Test_Suite_Output::analyze_symbols(
 		if (ID_nondet_symbol == v_iter->first->id())
 			nondet_syms_in_rhs.push_back(v_iter);
 
-	stmt_vars_and_parents.insert(::std::make_pair< ::exprt const*, ::exprt const* >(&(step.ssa_lhs), 0));
-
+	// RHS first
 	for (stmt_vars_and_parents_t::const_iterator
 		 v_iter(stmt_vars_and_parents.begin());
 		 v_iter != stmt_vars_and_parents.end(); ++v_iter)
@@ -509,6 +520,16 @@ void Test_Suite_Output::analyze_symbols(
 			  ti,
 			  global_assign);
 	}
+
+	// LHS
+	analyze_symbol(
+	  step,
+	  step.ssa_lhs,
+	  0,
+	  nondet_syms_in_rhs,
+	  vars,
+	  ti,
+	  global_assign);
 }
 
 void Test_Suite_Output::do_step(
