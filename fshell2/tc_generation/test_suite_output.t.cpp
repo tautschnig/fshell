@@ -277,7 +277,6 @@ void test( Test_Data & data )
 	out.print_ts(test_suite, 0, os_xml, ::ui_message_handlert::XML_UI);
 	TEST_ASSERT(data.compare("test_results_xml_1", os_xml.str()));
 	
-#ifdef CALL_TREE_EXP
 	options.set_option("tco-called-functions", true);
 	options.set_option("tco-assign-globals", true);
 	::std::ostringstream os_ext;
@@ -286,7 +285,6 @@ void test( Test_Data & data )
 	::std::ostringstream os_xml_ext;
 	out.print_ts(test_suite, 0, os_xml_ext, ::ui_message_handlert::XML_UI);
 	TEST_ASSERT(data.compare("test_results_ext_xml_1", os_xml_ext.str()));
-#endif
 }
 
 /** @cond */
