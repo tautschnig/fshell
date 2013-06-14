@@ -309,6 +309,7 @@ void Automaton_Inserter::add_transition_function(::goto_functionst & gf,
 	entry.first->second.body_available = true;
 	entry.first->second.type.return_type() = ::empty_typet();
 	::symbol_exprt func_expr(func_name, ::code_typet());
+	::to_code_type(func_expr.type()).return_type() = ::empty_typet();
 	::symbolt func_symb;
 	func_symb.from_irep(func_expr);
 	func_symb.value = ::code_blockt();
