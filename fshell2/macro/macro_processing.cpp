@@ -66,6 +66,7 @@
 #include <fshell2/exception/macro_processing_error.hpp>
 
 #include <util/tempfile.h>
+#include <util/config.h>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_MACRO_NAMESPACE_BEGIN;
