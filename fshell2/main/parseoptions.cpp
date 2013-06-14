@@ -145,7 +145,7 @@ bool Parseoptions::get_command_line_options()
 	m_options.set_option("partial-loops", cmdline.isset("partial-loops"));
 
 	// remove unused equations
-	m_options.set_option("slice-formula", true);
+	m_options.set_option("slice-formula", cmdline.isset("use-instrumentation"));
 
 	m_options.set_option("simplify-if", true);
 	m_options.set_option("arrays-uf", "auto");
