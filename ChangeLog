@@ -1,3 +1,117 @@
+2013-06-14  Michael Tautschnig  <mt@debian.org>
+
+	* Release 1.5
+	* Fix flex detection for OX X 10.8
+	* Refactored def-use analysis
+	* Use more elaborate slicing only if instrumentation is used
+	* Refactoring test output code
+	* Link CBMC's libraries
+	* Respect --gcc for macro processing, don't use CPP environment variable
+	* Fixed return type of transition functions
+	* -I <cbmc>/util isn't necessary anymore
+	* Auto-generate command help
+
+2013-06-12  Michael Tautschnig  <mt@debian.org>
+
+	* Added --dump-c, -gcc options, cleanup of command line options and help
+
+2013-06-10  Michael Tautschnig  <mt@debian.org>
+
+	* Make options available to CNF_Conversion
+	* Use optionst to communicate command line options
+
+2013-06-03  Michael Tautschnig  <mt@debian.org>
+
+	* Use target_os/target_cpu for output file names
+
+2013-05-17  Michael Tautschnig  <mt@debian.org>
+
+	* Fixed and re-enabled --tco-called-functions
+	* Fixed bugs in PATHS(...) evaluation
+	* Proper audit logging instead of std::cerr hacks
+
+2013-05-15  Michael Tautschnig  <mt@debian.org>
+
+	* Fixed $ escape in Makefile
+
+2013-05-08  Michael Tautschnig  <mt@debian.org>
+
+	* Fix build for recent changes in CBMC
+
+2013-04-11  Michael Tautschnig  <mt@debian.org>
+
+	* Redundant test case being generated (and removed)
+	* Fix for new ::symex_targett::{GUARD,PHI} of r2324
+	* Update to work with CBMC after changes in r2307
+
+2013-03-19  Michael Tautschnig  <mt@debian.org>
+
+	* Updated linenoise from upstream git, merged some of the previous changes
+	* Fixes to work with new expr2c output
+
+2013-03-17  Michael Tautschnig  <mt@debian.org>
+
+	* Updated test output with recent expr2c changes
+
+2013-02-16  Michael Tautschnig  <mt@debian.org>
+
+	* Update for new remove_function_pointers API
+
+2013-02-10  Michael Tautschnig  <mt@debian.org>
+
+	* Update for context -> symbol_table change
+	* Updated test results for new signed int (instead of "int") output
+
+2013-02-03  Michael Tautschnig  <mt@debian.org>
+
+	* New CBMC directory structure (analyses moved)
+
+2013-01-23  Michael Tautschnig  <mt@debian.org>
+
+	* Link to new assembler parser
+
+2013-01-13  Michael Tautschnig  <mt@debian.org>
+
+	* Updated to match new CBMC interface for loop ids
+
+2013-01-05  Michael Tautschnig  <mt@debian.org>
+
+	* Updated goto_convert interface
+	* Updated test suite output
+
+2012-12-16  Michael Tautschnig  <mt@debian.org>
+
+	* Pass shared-library mode to sub-builds
+
+2012-12-12  Michael Tautschnig  <mt@debian.org>
+
+	* Disable tests for call tree output
+	* Disable call tree construction as it is broken
+	* noyywrap not supported by all versions of FlexLexer.h
+	* Don't use as_string
+
+2012-11-05  Michael Tautschnig  <mt@debian.org>
+
+	* Fixed undefined behaviour
+	* Fixed bug in linenoise
+	* Removed apparently invalid assertion
+	* Don't pull in CBMC
+	* Fix set-but-not-used variable
+	* Proper cross-build support in add-on targets
+	* Workaround Minisat bug (missing memUsedPeak in win32)
+
+2012-11-04  Michael Tautschnig  <mt@debian.org>
+
+	* Proper quoting of CC variable
+	* Portability and proper use of @MINISATDIR@
+	* Fix isatty issue
+	* Don't do minisat-2.2.0 dir by default
+	* Mark FlexLexer.h non-essential to enable workarounds
+	* GCC fixes
+	* Updating to current CBMC SVN HEAD and use of proper CBMCDIR, MINISATDIR
+	* Added support for out-of-tree builds of CBMC, MiniSat
+	* Make ASTL work with recent GCC
+
 2012-05-29  Michael Tautschnig  <michael.tautschnig@cs.ox.ac.uk>
 
 	* Release 1.4.1
