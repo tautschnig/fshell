@@ -44,6 +44,7 @@
 #include <util/std_expr.h>
 #include <util/xml.h>
 #include <util/xml_irep.h>
+#include <util/prefix.h>
 
 FSHELL2_NAMESPACE_BEGIN;
 
@@ -83,40 +84,8 @@ FSHELL2_NAMESPACE_BEGIN;
 	return os;
 }
 
-Symbol_Identifier::Symbol_Identifier(::symbol_exprt const& sym) :
-	m_identifier(sym.get_identifier()),
-	m_vt(UNKNOWN),
-	m_var_name(id2string(m_identifier)),
-	m_level0("-1"),
-	m_level1("-1"),
-	m_level2("-1"),
-	m_failed_object_level(-1)
+void Symbol_Identifier::strip_SSA_renaming()
 {
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Invalid_Argument, m_var_name.size() > 2);
-
-	using ::std::string;
-
-	// argc' and argv' used in the CBMC main routine
-	if (string::npos != m_var_name.find('\''))
-		m_vt = CBMC_INTERNAL;
-	// other __CPROVER variables
-	else if (0 == m_var_name.compare(0,
-				string::traits_type::length("c::__CPROVER_"),
-				"c::__CPROVER_"))
-		m_vt = CBMC_INTERNAL;
-	// guards
-	else if (0 == m_var_name.compare(0,
-				string::traits_type::length("goto_symex::\\guard#"),
-				"goto_symex::\\guard#"))
-		m_vt = CBMC_GUARD;
-	// generated symbol
-	else if (0 == m_var_name.compare(0,
-				string::traits_type::length("c::$fshell2$"),
-				"c::$fshell2$"))
-		m_vt = FSHELL2_INTERNAL;
-	// we don't care about the above
-	if (UNKNOWN != m_vt) return;
-
 	// first strip off #xx (level2 renaming)
 	string::size_type const hash_start(m_var_name.rfind('#'));
 	if (string::npos == hash_start) m_level2 = "";
@@ -154,6 +123,39 @@ Symbol_Identifier::Symbol_Identifier(::symbol_exprt const& sym) :
 		m_var_name.erase(exc_start);
 	}
 
+}
+
+Symbol_Identifier::Symbol_Identifier(::symbol_exprt const& sym) :
+	m_identifier(sym.get_identifier()),
+	m_vt(UNKNOWN),
+	m_var_name(id2string(m_identifier)),
+	m_level0("-1"),
+	m_level1("-1"),
+	m_level2("-1"),
+	m_failed_object_level(-1)
+{
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Invalid_Argument, m_var_name.size() > 2);
+
+	using ::std::string;
+
+	// argc' and argv' used in the CBMC main routine
+	if (string::npos != m_var_name.find('\''))
+		m_vt = CBMC_INTERNAL;
+	// other __CPROVER variables
+	else if (::has_prefix(m_var_name, "c::__CPROVER_"))
+		m_vt = CBMC_INTERNAL;
+	// guards
+	else if (::has_prefix(m_var_name, "goto_symex::\\guard#"))
+		m_vt = CBMC_GUARD;
+	// generated symbol
+	else if (::has_prefix(m_var_name, "c::$fshell2$"))
+		m_vt = FSHELL2_INTERNAL;
+	// we don't care about the above
+	if (UNKNOWN != m_vt) return;
+
+	// level2, level1, level0
+	strip_SSA_renaming();
+
 	// strip off $object (added to failed objects)
 	string::size_type obj_start(m_var_name.rfind("$object"));
 	while (string::npos != obj_start) {
@@ -163,12 +165,8 @@ Symbol_Identifier::Symbol_Identifier(::symbol_exprt const& sym) :
 	}
 
 	// dynamically allocated memory
-	if (0 == m_var_name.compare(0,
-				string::traits_type::length("symex_dynamic::"),
-				"symex_dynamic::") ||
-			0 == m_var_name.compare(0,
-				string::traits_type::length("symex::invalid_object"),
-				"symex::invalid_object"))
+	if (::has_prefix(m_var_name, "symex_dynamic::") ||
+		::has_prefix(m_var_name, "symex::invalid_object"))
 		m_vt = CBMC_DYNAMIC_MEMORY;
 	// function call used outside assignment
 	else if (string::npos != m_var_name.find("::$tmp::return_value_"))
@@ -197,17 +195,358 @@ Test_Suite_Output::Test_Input::Test_Input(::symbolt const& main_sym,
 	m_main_location(main_loc) {
 }
 
+void Test_Suite_Output::update_call_stack(
+  ::symex_target_equationt::SSA_stept const& step,
+  called_functions_t &calls,
+  call_stack_t &call_stack) const
+{
+	if(::fshell2::instrumentation::GOTO_Transformation::is_instrumented( step.source.pc) ||
+	   step.is_function_return() || /* we figure these out ourselves */
+	   (step.is_assignment() && ::symex_targett::STATE != step.assignment_type))
+		return;
+
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !step.source.pc->function.empty());
+
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+						 step.source.pc->function == ID_main || !call_stack.empty());
+	if (!call_stack.empty() && step.source.pc != call_stack.back()->first.first) {
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+							 call_stack.back()->first.first->is_function_call() ||
+							 call_stack.back()->first.first->is_location());
+
+		::irep_idt const fname(call_stack.back()->first.second);
+		if (step.source.pc->function != fname) {
+			FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
+				"POP ", call_stack.back()->first.second));
+			call_stack.pop_back();
+			if (step.source.pc->function != ID_main) {
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !call_stack.empty());
+				// handle sequences of functions without explicit return
+				while (step.source.pc->function != call_stack.back()->first.second) {
+					FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
+						"Want POP-more because of ", call_stack.back()->first.second,
+						" vs. current pc: ", step.source.pc->function));
+					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !call_stack.empty());
+					call_stack.pop_back();
+					FSHELL2_AUDIT_TRACE("POP-more");
+				}
+			}
+		}
+	}
+
+	::goto_programt::const_targett next(step.source.pc);
+	++next;
+	FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
+		"this func: ", step.source.pc->function, " next func: ", next->function));
+	// tmp.output_instruction(m_equation.get_ns(), "", ::std::cerr, next);
+	if (step.is_location() && step.source.pc->is_function_call()) {
+		calls.push_back(::std::make_pair< ::std::pair< ::goto_programt::const_targett,
+						::irep_idt const >, ::exprt const* >(::std::make_pair(step.source.pc,
+																			  ::to_code_function_call(step.source.pc->code).function().get(ID_identifier)), 0));
+		call_stack.push_back(calls.end());
+		--call_stack.back();
+		FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
+			"PUSH ", call_stack.back()->first.second));
+	} else if (step.is_location() &&
+			   step.source.pc->function != next->function) {
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+							 !call_stack.back()->first.first->is_location() || call_stack.size() >= 2);
+		// inlined function
+		if (call_stack.back()->first.first->is_location() &&
+			(*--(--call_stack.end()))->first.second == next->function) {
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 0 == call_stack.back()->second);
+			call_stack.pop_back();
+			FSHELL2_AUDIT_TRACE("POP-inline");
+		} else {
+			calls.push_back(::std::make_pair< ::std::pair< ::goto_programt::const_targett,
+							::irep_idt const >, ::exprt const* >(::std::make_pair(step.source.pc,
+																				  next->function), 0));
+			call_stack.push_back(calls.end());
+			--call_stack.back();
+			FSHELL2_AUDIT_TRACE("PUSH-inline");
+		}
+	} else if (step.is_assignment() && step.source.pc->is_return()) {
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !call_stack.empty());
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 0 == call_stack.back()->second);
+		call_stack.back()->second = &(step.ssa_lhs);
+		// required for recursive functions
+		call_stack.pop_back();
+		FSHELL2_AUDIT_TRACE("POP-return");
+	}
+}
+
+void Test_Suite_Output::analyze_symbol(
+  ::symex_target_equationt::SSA_stept const& step,
+  ::symbol_exprt const& sym,
+  ::exprt const* parent,
+  nondet_syms_in_rhs_t const& nondet_syms_in_rhs,
+  seen_vars_t & vars,
+  Test_Input & ti,
+  assignments_t & global_assign) const
+{
+	bool is_lhs(&sym == &(step.ssa_lhs));
+
+	Test_Input::program_variable_t iv;
+	bool iv_in_use(false);
+	::exprt const * nondet_expr(0);
+
+	::boolbvt const& bv(m_equation.get_bv());
+
+	Symbol_Identifier var(sym);
+	// ::std::cerr << "Analyzing " << var.m_identifier << "(" << var.m_var_name << ") [" << var.m_vt << "]" << ::std::endl;
+
+	switch (var.m_vt)
+	{
+		case Symbol_Identifier::CBMC_INTERNAL: // we don't care
+		case Symbol_Identifier::CBMC_GUARD: // we don't care
+		case Symbol_Identifier::FSHELL2_INTERNAL: // we don't care
+			break;
+		case Symbol_Identifier::CBMC_DYNAMIC_MEMORY: // ignore in RHS
+		case Symbol_Identifier::CBMC_TMP_RETURN_VALUE: // ignore in RHS
+			if (!is_lhs) break;
+		case Symbol_Identifier::PARAMETER:
+		case Symbol_Identifier::LOCAL:
+		case Symbol_Identifier::LOCAL_STATIC:
+		case Symbol_Identifier::GLOBAL:
+			if (is_lhs &&
+				::symex_targett::STATE == step.assignment_type &&
+				Symbol_Identifier::GLOBAL == var.m_vt)
+				global_assign.push_back(&step);
+
+			if (parent && ID_with == parent->id() && parent->op2().id() == ID_nondet_symbol) {
+				// array/struct element assignment using undefined
+				// function; we do not add the array/struct variable at
+				// this point as reads to other indices may require the
+				// entire array/struct to be added
+				nondet_expr = &(parent->op2());
+			}
+			else if (is_lhs &&
+					 ::symex_targett::STATE == step.assignment_type &&
+					 step.ssa_rhs.id() == ID_struct &&
+					 !nondet_syms_in_rhs.empty())
+			{
+				// assignment to struct variable with nondet components;
+				// again, it seems safer not to add the entire array
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+						1 == nondet_syms_in_rhs.size());
+				nondet_expr = nondet_syms_in_rhs.front()->first;
+			}
+			else if (is_lhs &&
+					 ::symex_targett::STATE == step.assignment_type &&
+					 step.ssa_rhs.id() == ID_nondet_symbol)
+			{
+				// assignment to simple variable using undef function
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+						vars.end() == vars.find(var.m_identifier));
+				vars.insert(var.m_identifier);
+				nondet_expr = &sym;
+				// ::std::cerr << "Added LHS var " << var.m_identifier << " [" << var.m_vt << "]" << ::std::endl;
+				if (Symbol_Identifier::CBMC_TMP_RETURN_VALUE != var.m_vt)
+					vars.insert(var.m_var_name + "@" + var.m_level1);
+				// ::std::cerr << "Also added var " << (var.m_var_name + "@" + var.m_level1) << " [" << var.m_vt << "]" << ::std::endl;
+			}
+			else if (!is_lhs &&
+					 var.m_level2 == "0" &&
+					 vars.end() == vars.find(var.m_var_name + "@" + var.m_level1))
+			{
+				// reading use of undefined variable
+				if (!vars.insert(var.m_identifier).second) break;
+				// ::std::cerr << "Added #0 var " << var.m_identifier << " [" << var.m_vt << "]" << ::std::endl;
+				vars.insert(var.m_var_name + "@" + var.m_level1);
+				// ::std::cerr << "Also added var " << (var.m_var_name + "@" + var.m_level1) << " [" << var.m_vt << "]" << ::std::endl;
+			}
+			else
+			{
+				if (!vars.insert(var.m_var_name + "@" + var.m_level1).second)
+					break;
+				// ::std::cerr << "Added var " << (var.m_var_name + "@" + var.m_level1) << " [" << var.m_vt << "]" << ::std::endl;
+			}
+			
+			if (Symbol_Identifier::PARAMETER != var.m_vt &&
+				nondet_expr &&
+				step.source.pc->is_function_call())
+			{
+				iv_in_use = true;
+				::code_function_callt const& fct(::to_code_function_call(step.source.pc->code));
+				iv.m_name = &(fct.function());
+				iv.m_pretty_name = fct.function().get(ID_identifier);
+				iv.m_value = nondet_expr;
+				iv.m_symbol = 0;
+				m_equation.get_ns().lookup(iv.m_pretty_name, iv.m_symbol);
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, iv.m_symbol);
+				iv.m_location = &(step.source.pc->location);
+				// remove return values of defined (but inlined) functions
+				if (Symbol_Identifier::CBMC_TMP_RETURN_VALUE == var.m_vt && !iv.m_symbol->value.is_nil()) iv_in_use = false;
+				/* we assume malloc doesn't return NULL, should check for
+				 * invalid PTR
+				 } else if (step.source.pc->is_assign() &&
+				 ::to_code_assign(step.source.pc->code).ssa_rhs().get("statement") == "malloc") {
+				 iv_in_use = true;
+				 iv.m_name = &(step.ssh_full_lhs);
+				 iv.m_pretty_name = "malloc()";
+				 iv.m_location = &(step.source.pc->location);
+				 iv.m_value = &(step.ssa_rhs);
+				 ::std::cerr << "LHS: " << step.ssa_lhs << ::std::endl;
+				 ::std::cerr << "ORIG_LHS: " << step.original_full_lhs << ::std::endl;
+				 ::std::cerr << "RHS: " << step.ssa_rhs << ::std::endl; */
+			}
+			else if (!is_lhs || Symbol_Identifier::PARAMETER == var.m_vt)
+			{
+				// select the init procedure chosen by the user
+				::std::string const start_proc_prefix(::std::string("c::") + config.main + "::");
+				if (Symbol_Identifier::PARAMETER == var.m_vt &&
+					!::has_prefix(var.m_var_name, start_proc_prefix)) break;
+				// it may happen that the value is not even known to the
+				// mapping, which happens for the following code (and
+				// variable s):
+				//   char * buffer;
+				//   unsigned s;
+				//   buffer=(char*)malloc(s);
+				if (!is_lhs && step.original_full_lhs.get(ID_identifier) == "c::__CPROVER_alloc_size" &&
+						bv.get(sym).is_nil()) break;
+				iv_in_use = true;
+				iv.m_name = &sym;
+				// @ comes before #, also strip off possible $object
+				// (failed symbols)
+				iv.m_pretty_name = var.m_var_name;
+				iv.m_value = &sym;
+				iv.m_symbol = 0;
+				m_equation.get_ns().lookup(iv.m_pretty_name, iv.m_symbol);
+				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, iv.m_symbol);
+				iv.m_location = &(iv.m_symbol->location);
+			}
+			break;
+		case Symbol_Identifier::UNKNOWN:
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, false);
+			break;
+	}
+
+	if (!iv_in_use)
+		return;
+
+	//// ::std::cerr << "Test input: " << iv.m_pretty_name << ::std::endl;
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !iv.m_location->is_nil());
+	iv.m_type_str = ::from_type(m_equation.get_ns(), iv.m_name->get(ID_identifier), iv.m_symbol->type);
+
+	// obtain the value; if variable was used in pointer context, it will
+	// lack #0; _Bool is handled by prop_convt, no entry in mapping
+	//// ::std::cerr << "Fetching value for " << iv.m_value->pretty() << ::std::endl;
+	::exprt val_copy(*iv.m_value);
+	if (ID_bool != iv.m_symbol->type.id() &&
+		val_copy.id() != ID_nondet_symbol &&
+		::std::string::npos == val_copy.get_string(ID_identifier).rfind("#"))
+	{
+		val_copy.set(ID_identifier, val_copy.get_string(ID_identifier) + "#0");
+		// not sure whether this is needed
+		// if (bv.get(val_copy).is_nil())
+		//   val_copy.set(ID_identifier, ::diagnostics::internal::to_string(val_copy.get(ID_identifier), "$object#0"));
+	}
+	
+	::exprt val(bv.get(val_copy));
+	FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, !val.is_nil(),
+			::diagnostics::internal::to_string("Failed to lookup ", val_copy.get(ID_identifier)));
+	iv.m_value_str = ::from_expr(m_equation.get_ns(), iv.m_name->get(ID_identifier), val);
+	/* // beautify dynamic_X_name
+	   if(0 == val.find("&dynamic_")) {
+	   ::std::map< ::std::string, ::std::string >::const_iterator entry(
+	   beautified_name.find( val ) );
+	   if( beautified_name.end() == entry )
+	   {
+	   ::std::string new_name( ::diagnostics::internal::to_string( "LOC",
+	   beautified_name.size() + 1 ) );
+	   beautified_name[ val ] = new_name;
+	   val.swap( new_name );
+	   }
+	   else val = entry->second;
+	   }
+	   */
+		
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !iv.m_value_str.empty());
+	ti.m_test_inputs.push_back(iv);
+}
+
+void Test_Suite_Output::analyze_symbols(
+  ::symex_target_equationt::SSA_stept const& step,
+  seen_vars_t & vars,
+  Test_Input & ti,
+  assignments_t & global_assign) const
+{
+	stmt_vars_and_parents_t stmt_vars_and_parents;
+	nondet_syms_in_rhs_t nondet_syms_in_rhs;
+	::fshell2::instrumentation::collect_expr_with_parents(step.ssa_rhs, stmt_vars_and_parents);
+
+	for (stmt_vars_and_parents_t::const_iterator
+		 v_iter(stmt_vars_and_parents.begin());
+		 v_iter != stmt_vars_and_parents.end(); ++v_iter)
+		if (ID_nondet_symbol == v_iter->first->id())
+			nondet_syms_in_rhs.push_back(v_iter);
+
+	stmt_vars_and_parents.insert(::std::make_pair< ::exprt const*, ::exprt const* >(&(step.ssa_lhs), 0));
+
+	for (stmt_vars_and_parents_t::const_iterator
+		 v_iter(stmt_vars_and_parents.begin());
+		 v_iter != stmt_vars_and_parents.end(); ++v_iter)
+	{
+		if (v_iter->first->id() != ID_symbol)
+			continue;
+
+		// we don't care about variables where only the address of some other
+		// object is taken
+		bool has_address_of(false);
+		stmt_vars_and_parents_t::const_iterator p_iter(v_iter);
+		while (p_iter != stmt_vars_and_parents.end() && p_iter->second && !has_address_of) {
+			has_address_of = (ID_address_of == p_iter->second->id());
+			p_iter = stmt_vars_and_parents.find(p_iter->second);
+		}
+
+		if (!has_address_of)
+			analyze_symbol(
+			  step,
+			  ::to_symbol_expr(*(v_iter->first)),
+			  v_iter->second,
+			  nondet_syms_in_rhs,
+			  vars,
+			  ti,
+			  global_assign);
+	}
+}
+
+void Test_Suite_Output::do_step(
+  ::symex_target_equationt::SSA_stept const& step,
+  seen_vars_t &vars,
+  called_functions_t &calls,
+  call_stack_t &call_stack,
+  bool &most_recent_non_hidden_is_true,
+  Test_Input & ti,
+  assignments_t & global_assign) const
+{
+	//// ::goto_programt tmp;
+	//// ::std::cerr << "#########################################################" << ::std::endl;
+	//// tmp.output_instruction(m_equation.get_ns(), "", ::std::cerr, step.source.pc);
+	//// step.output(m_equation.get_ns(), ::std::cerr);
+	//// ::std::cerr << "LHS: " << step.ssa_lhs << ::std::endl;
+	//// ::std::cerr << "ORIG_LHS: " << step.original_full_lhs << ::std::endl;
+	//// ::std::cerr << "RHS: " << step.ssa_rhs << ::std::endl;
+
+	::cnf_clause_list_assignmentt const& cnf(m_equation.get_cnf());
+	bool const instr_enabled(step.guard.is_true() || cnf.l_get(step.guard_literal) == ::tvt(true));
+
+	if (instr_enabled)
+		update_call_stack(step, calls, call_stack);
+
+	if (!step.is_assignment() || ::symex_targett::STATE == step.assignment_type)
+		most_recent_non_hidden_is_true = instr_enabled;
+	if (most_recent_non_hidden_is_true && step.is_assignment())
+		analyze_symbols(step, vars, ti, global_assign);
+}
+
 void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & calls,
 			assignments_t & global_assign) const
 {
-	::symex_target_equationt::SSA_stepst const& equation(m_equation.get_equation().SSA_steps);
-	::cnf_clause_list_assignmentt const& cnf(m_equation.get_cnf());
-
 	// beautify pointers
 	// ::std::map< ::std::string, ::std::string > beautified_name;
-	
-	::boolbvt const& bv(m_equation.get_bv());
 
+	//// ::boolbvt const& bv(m_equation.get_bv());
 	//// ::boolbv_mapt const& map(bv.get_map());
 	//// for (::boolbv_mapt::mappingt::const_iterator iter(map.mapping.begin());
 	//// 		iter != map.mapping.end(); ++iter) {
@@ -219,286 +558,24 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 
 	// collect variables that are used or defined, skipping level2 counters
 	// (unless the variable is a CBMC_TMP_RETURN_VALUE)
-	typedef ::std::set< ::irep_idt > seen_vars_t;
 	seen_vars_t vars;
-	
-	// select the init procedure chosen by the user
-	::std::string const start_proc_prefix(::std::string("c::") + config.main + "::");
 
 	// track calls and returns
-	::std::list< called_functions_t::iterator > call_stack;
+	call_stack_t call_stack;
 
 	bool most_recent_non_hidden_is_true(false);
 	// does a DEF-USE + call stack analysis
-	for (::symex_target_equationt::SSA_stepst::const_iterator iter( 
+	::symex_target_equationt::SSA_stepst const& equation(m_equation.get_equation().SSA_steps);
+	for (::symex_target_equationt::SSA_stepst::const_iterator iter(
 				equation.begin() ); iter != equation.end(); ++iter)
-	{
-		//// ::goto_programt tmp;
-		//// ::std::cerr << "#########################################################" << ::std::endl;
-		//// tmp.output_instruction(m_equation.get_ns(), "", ::std::cerr, iter->source.pc);
-		//// iter->output(m_equation.get_ns(), ::std::cerr);
-		//// ::std::cerr << "LHS: " << iter->ssa_lhs << ::std::endl;
-		//// ::std::cerr << "ORIG_LHS: " << iter->original_full_lhs << ::std::endl;
-		//// ::std::cerr << "RHS: " << iter->ssa_rhs << ::std::endl;
-	
-		bool const instr_enabled(iter->guard.is_true() || cnf.l_get(iter->guard_literal) == ::tvt(true));
-
-		if (instr_enabled &&
-			!::fshell2::instrumentation::GOTO_Transformation::is_instrumented( iter->source.pc) &&
-			!iter->is_function_return() && /* we figure these out ourselves */
-				(!iter->is_assignment() || ::symex_targett::STATE == iter->assignment_type)) {
-			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !iter->source.pc->function.empty());
-			
-			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-					iter->source.pc->function == ID_main || !call_stack.empty());
-			if (!call_stack.empty() && iter->source.pc != call_stack.back()->first.first) {
-				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-						call_stack.back()->first.first->is_function_call() ||
-						call_stack.back()->first.first->is_location());
-					
-				::irep_idt const fname(call_stack.back()->first.second);
-				if (iter->source.pc->function != fname) {
-					FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
-						"POP ", call_stack.back()->first.second));
-					call_stack.pop_back();
-					if (iter->source.pc->function != ID_main) {
-						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !call_stack.empty());
-						// handle sequences of functions without explicit return
-						while (iter->source.pc->function != call_stack.back()->first.second) {
-							FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
-								"Want POP-more because of ", call_stack.back()->first.second,
-								" vs. current pc: ", iter->source.pc->function));
-							FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !call_stack.empty());
-							call_stack.pop_back();
-							FSHELL2_AUDIT_TRACE("POP-more");
-						}
-					}
-				}
-			}
-		
-			::goto_programt::const_targett next(iter->source.pc);
-			++next;
-			FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
-				"this func: ", iter->source.pc->function, " next func: ", next->function));
-			// tmp.output_instruction(m_equation.get_ns(), "", ::std::cerr, next);
-			if (iter->is_location() && iter->source.pc->is_function_call()) {
-				calls.push_back(::std::make_pair< ::std::pair< ::goto_programt::const_targett,
-						::irep_idt const >, ::exprt const* >(::std::make_pair(iter->source.pc,
-								::to_code_function_call(iter->source.pc->code).function().get(ID_identifier)), 0));
-				call_stack.push_back(calls.end());
-				--call_stack.back();
-				FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
-					"PUSH ", call_stack.back()->first.second));
-			} else if (iter->is_location() &&
-					iter->source.pc->function != next->function) {
-				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-						!call_stack.back()->first.first->is_location() || call_stack.size() >= 2);
-				// inlined function
-				if (call_stack.back()->first.first->is_location() &&
-						(*--(--call_stack.end()))->first.second == next->function) {
-					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 0 == call_stack.back()->second);
-					call_stack.pop_back();
-					FSHELL2_AUDIT_TRACE("POP-inline");
-				} else {
-					calls.push_back(::std::make_pair< ::std::pair< ::goto_programt::const_targett,
-							::irep_idt const >, ::exprt const* >(::std::make_pair(iter->source.pc,
-									next->function), 0));
-					call_stack.push_back(calls.end());
-					--call_stack.back();
-					FSHELL2_AUDIT_TRACE("PUSH-inline");
-				}
-			} else if (iter->is_assignment() && iter->source.pc->is_return()) {
-				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !call_stack.empty());
-				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 0 == call_stack.back()->second);
-				call_stack.back()->second = &(iter->ssa_lhs);
-				// required for recursive functions
-				call_stack.pop_back();
-				FSHELL2_AUDIT_TRACE("POP-return");
-			} 
-		}
-		
-		if (!iter->is_assignment() || ::symex_targett::STATE == iter->assignment_type)
-			most_recent_non_hidden_is_true = instr_enabled;
-		if (!most_recent_non_hidden_is_true || !iter->is_assignment()) continue;
-		
-		typedef ::std::map< ::exprt const*, ::exprt const* > stmt_vars_and_parents_t;
-		stmt_vars_and_parents_t stmt_vars_and_parents;
-		::fshell2::instrumentation::collect_expr_with_parents(iter->ssa_rhs, stmt_vars_and_parents);
-		::std::list< stmt_vars_and_parents_t::const_iterator > nondet_syms_in_rhs;
-		for (stmt_vars_and_parents_t::const_iterator
-				v_iter(stmt_vars_and_parents.begin());
-				v_iter != stmt_vars_and_parents.end(); ++v_iter)
-			if (ID_nondet_symbol == v_iter->first->id()) nondet_syms_in_rhs.push_back(v_iter);
-
-		stmt_vars_and_parents.insert(::std::make_pair< ::exprt const*, ::exprt const* >(&(iter->ssa_lhs), 0));
-			
-		for (stmt_vars_and_parents_t::const_iterator
-				v_iter(stmt_vars_and_parents.begin());
-				v_iter != stmt_vars_and_parents.end(); ++v_iter) {
-			if (v_iter->first->id() != ID_symbol) continue;
-			
-			// we don't care about variables where only the address of some other
-			// object is taken
-			bool has_address_of(false);
-			stmt_vars_and_parents_t::const_iterator p_iter(v_iter);
-			while (p_iter != stmt_vars_and_parents.end() && p_iter->second && !has_address_of) {
-				has_address_of = (ID_address_of == p_iter->second->id());
-				p_iter = stmt_vars_and_parents.find(p_iter->second);
-			}
-			if (has_address_of) continue;
-
-			bool is_lhs(v_iter->first == &(iter->ssa_lhs));
-
-			Test_Input::program_variable_t iv;
-			bool iv_in_use(false);
-			::exprt const * nondet_expr(0);
-		
-			Symbol_Identifier var(::to_symbol_expr(*(v_iter->first)));
-			// ::std::cerr << "Analyzing " << var.m_identifier << "(" << var.m_var_name << ") [" << var.m_vt << "]" << ::std::endl;
-		
-			switch (var.m_vt) {
-				case Symbol_Identifier::CBMC_INTERNAL: // we don't care
-				case Symbol_Identifier::CBMC_GUARD: // we don't care
-				case Symbol_Identifier::FSHELL2_INTERNAL: // we don't care
-					break;
-				case Symbol_Identifier::CBMC_DYNAMIC_MEMORY: // ignore in RHS
-				case Symbol_Identifier::CBMC_TMP_RETURN_VALUE: // ignore in RHS
-					if (!is_lhs) break;
-				case Symbol_Identifier::PARAMETER:
-				case Symbol_Identifier::LOCAL:
-				case Symbol_Identifier::LOCAL_STATIC:
-				case Symbol_Identifier::GLOBAL:
-					if (is_lhs && ::symex_targett::STATE == iter->assignment_type &&
-							Symbol_Identifier::GLOBAL == var.m_vt)
-						global_assign.push_back(iter);
-					
-					if (v_iter->second && ID_with == v_iter->second->id() && v_iter->second->op2().id() == ID_nondet_symbol) {
-						// array/struct element assignment using undefined
-						// function; we do not add the array/struct variable at
-						// this point as reads to other indices may require the
-						// entire array/struct to be added
-						nondet_expr = &(v_iter->second->op2());
-					} else if (is_lhs && iter->ssa_rhs.id() == ID_struct && ::symex_targett::STATE == iter->assignment_type &&
-							!nondet_syms_in_rhs.empty()) {
-						// assignment to struct variable with nondet components;
-						// again, it seems safer not to add the entire array
-						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-								1 == nondet_syms_in_rhs.size());
-						nondet_expr = nondet_syms_in_rhs.front()->first;
-					} else if (is_lhs && iter->ssa_rhs.id() == ID_nondet_symbol && ::symex_targett::STATE == iter->assignment_type) {
-						// assignment to simple variable using undef function
-						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-								vars.end() == vars.find(var.m_identifier));
-						vars.insert(var.m_identifier);
-						nondet_expr = v_iter->first;
-						// ::std::cerr << "Added LHS var " << var.m_identifier << " [" << var.m_vt << "]" << ::std::endl;
-						if (Symbol_Identifier::CBMC_TMP_RETURN_VALUE != var.m_vt) vars.insert(var.m_var_name + "@" + var.m_level1);
-						// ::std::cerr << "Also added var " << (var.m_var_name + "@" + var.m_level1) << " [" << var.m_vt << "]" << ::std::endl;
-					} else if (!is_lhs && var.m_level2 == "0" && vars.end() == vars.find(var.m_var_name + "@" + var.m_level1)) {
-						// reading use of undefined variable
-						if (!vars.insert(var.m_identifier).second) break;
-						// ::std::cerr << "Added #0 var " << var.m_identifier << " [" << var.m_vt << "]" << ::std::endl;
-						vars.insert(var.m_var_name + "@" + var.m_level1);
-						// ::std::cerr << "Also added var " << (var.m_var_name + "@" + var.m_level1) << " [" << var.m_vt << "]" << ::std::endl;
-					} else {
-						if (!vars.insert(var.m_var_name + "@" + var.m_level1).second) break;
-						// ::std::cerr << "Added var " << (var.m_var_name + "@" + var.m_level1) << " [" << var.m_vt << "]" << ::std::endl;
-					}
-					
-					if (Symbol_Identifier::PARAMETER != var.m_vt &&
-							nondet_expr && iter->source.pc->is_function_call()) {
-						iv_in_use = true;
-						::code_function_callt const& fct(::to_code_function_call(iter->source.pc->code));
-						iv.m_name = &(fct.function());
-						iv.m_pretty_name = fct.function().get(ID_identifier);
-						iv.m_value = nondet_expr;
-						iv.m_symbol = 0;
-						m_equation.get_ns().lookup(iv.m_pretty_name, iv.m_symbol);
-						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, iv.m_symbol);
-						iv.m_location = &(iter->source.pc->location);
-						// remove return values of defined (but inlined) functions
-						if (Symbol_Identifier::CBMC_TMP_RETURN_VALUE == var.m_vt && !iv.m_symbol->value.is_nil()) iv_in_use = false;
-						/* we assume malloc doesn't return NULL, should check for
-						 * invalid PTR
-						 } else if (iter->source.pc->is_assign() &&
-						 ::to_code_assign(iter->source.pc->code).ssa_rhs().get("statement") == "malloc") {
-						 iv_in_use = true;
-						 iv.m_name = &(iter->ssh_full_lhs);
-						 iv.m_pretty_name = "malloc()";
-						 iv.m_location = &(iter->source.pc->location);
-						 iv.m_value = &(iter->ssa_rhs);
-						 ::std::cerr << "LHS: " << iter->ssa_lhs << ::std::endl;
-						 ::std::cerr << "ORIG_LHS: " << iter->original_full_lhs << ::std::endl;
-						 ::std::cerr << "RHS: " << iter->ssa_rhs << ::std::endl; */
-					} else if (!is_lhs || Symbol_Identifier::PARAMETER == var.m_vt) {
-						if (Symbol_Identifier::PARAMETER == var.m_vt &&
-								0 != var.m_var_name.compare(0, start_proc_prefix.size(), start_proc_prefix)) break;
-						// it may happen that the value is not even known to the
-						// mapping, which happens for the following code (and
-						// variable s):
-						//   char * buffer;
-						//   unsigned s;
-						//   buffer=(char*)malloc(s);
-						if (!is_lhs && iter->original_full_lhs.get(ID_identifier) == "c::__CPROVER_alloc_size" &&
-								bv.get(*(v_iter->first)).is_nil()) break;
-						iv_in_use = true;
-						iv.m_name = v_iter->first;
-						// @ comes before #, also strip off possible $object
-						// (failed symbols)
-						iv.m_pretty_name = var.m_var_name;
-						iv.m_value = v_iter->first;
-						iv.m_symbol = 0;
-						m_equation.get_ns().lookup(iv.m_pretty_name, iv.m_symbol);
-						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, iv.m_symbol);
-						iv.m_location = &(iv.m_symbol->location);
-					}
-					break;
-				case Symbol_Identifier::UNKNOWN:
-					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, false);
-					break;
-			}
-		
-			if (iv_in_use) {
-				//// ::std::cerr << "Test input: " << iv.m_pretty_name << ::std::endl;
-				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !iv.m_location->is_nil());
-				iv.m_type_str = ::from_type(m_equation.get_ns(), iv.m_name->get(ID_identifier), iv.m_symbol->type);
-		
-				// obtain the value; if variable was used in pointer context, it will
-				// lack #0; _Bool is handled by prop_convt, no entry in mapping
-				//// ::std::cerr << "Fetching value for " << iv.m_value->pretty() << ::std::endl;
-				::exprt val_copy(*iv.m_value);
-				if (ID_bool != iv.m_symbol->type.id() && val_copy.id() != ID_nondet_symbol &&
-						::std::string::npos == val_copy.get_string(ID_identifier).rfind("#")) {
-					val_copy.set(ID_identifier, val_copy.get_string(ID_identifier) + "#0");
-					// not sure whether this is needed
-					// if (bv.get(val_copy).is_nil())
-					//   val_copy.set(ID_identifier, ::diagnostics::internal::to_string(val_copy.get(ID_identifier), "$object#0"));
-				}
-				
-				::exprt val(bv.get(val_copy));
-				FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, !val.is_nil(),
-						::diagnostics::internal::to_string("Failed to lookup ", val_copy.get(ID_identifier)));
-				iv.m_value_str = ::from_expr(m_equation.get_ns(), iv.m_name->get(ID_identifier), val);
-				/* // beautify dynamic_X_name
-				   if(0 == val.find("&dynamic_")) {
-				   ::std::map< ::std::string, ::std::string >::const_iterator entry(
-				   beautified_name.find( val ) );
-				   if( beautified_name.end() == entry )
-				   {
-				   ::std::string new_name( ::diagnostics::internal::to_string( "LOC",
-				   beautified_name.size() + 1 ) );
-				   beautified_name[ val ] = new_name;
-				   val.swap( new_name );
-				   }
-				   else val = entry->second;
-				   }
-				   */
-					
-				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !iv.m_value_str.empty());
-				ti.m_test_inputs.push_back(iv);
-			}
-		}
-	}
+		do_step(
+		  *iter,
+		  vars,
+		  calls,
+		  call_stack,
+		  most_recent_non_hidden_is_true,
+		  ti,
+		  global_assign);
 }
 
 ::std::ostream & Test_Suite_Output::print_test_inputs_plain(::std::ostream & os,

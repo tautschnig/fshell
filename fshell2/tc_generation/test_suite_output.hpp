@@ -89,10 +89,40 @@ class Test_Suite_Output
 	};
 	typedef ::std::list< ::std::pair< ::std::pair< ::goto_programt::const_targett,
 			::irep_idt const >, ::exprt const * > > called_functions_t;
-	typedef ::std::list< ::symex_target_equationt::SSA_stepst::const_iterator > assignments_t;
+	typedef ::std::list< called_functions_t::iterator > call_stack_t;
+	typedef ::std::list< ::symex_target_equationt::SSA_stept const* > assignments_t;
+	typedef ::std::set< ::irep_idt > seen_vars_t;
+	typedef ::std::map< ::exprt const*, ::exprt const* > stmt_vars_and_parents_t;
+	typedef ::std::list< stmt_vars_and_parents_t::const_iterator > nondet_syms_in_rhs_t;
 
 	void get_test_case(Test_Input & ti, called_functions_t & calls,
 			assignments_t & global_assign) const;
+	void analyze_symbols(
+	  ::symex_target_equationt::SSA_stept const& step,
+	  seen_vars_t & vars,
+	  Test_Input & ti,
+	  assignments_t & global_assign) const;
+	void analyze_symbol(
+	  ::symex_target_equationt::SSA_stept const& step,
+	  ::symbol_exprt const& sym,
+	  ::exprt const* parent,
+	  nondet_syms_in_rhs_t const& nondet_syms_in_rhs,
+	  seen_vars_t & vars,
+	  Test_Input & ti,
+	  assignments_t & global_assign) const;
+	void update_call_stack(
+	  ::symex_target_equationt::SSA_stept const& step,
+	  called_functions_t &calls,
+	  call_stack_t &call_stack) const;
+	void do_step(
+	  ::symex_target_equationt::SSA_stept const& step,
+	  seen_vars_t &vars,
+	  called_functions_t &calls,
+	  call_stack_t &call_stack,
+	  bool &most_recent_non_hidden_is_true,
+	  Test_Input & ti,
+	  assignments_t & global_assign) const;
+
 	::std::ostream & print_test_inputs_plain(::std::ostream & os, Test_Input const& ti) const;
 	::std::ostream & print_function_calls(::std::ostream & os, called_functions_t const& cf) const;
 	::std::ostream & print_assignments_to_globals(::std::ostream & os, assignments_t const& as) const;
@@ -131,6 +161,8 @@ class Symbol_Identifier
 		} variable_type_t;
 
 		explicit Symbol_Identifier(::symbol_exprt const& sym);
+
+		void strip_SSA_renaming();
 
 		::irep_idt const& m_identifier;
 		variable_type_t m_vt;
