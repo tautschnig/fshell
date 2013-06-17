@@ -9,7 +9,7 @@ include $(top_srcdir)/model.am
 SUBDIRS =
 
 CBMC_OBJS = @CBMCDIR@/src/util/util.a \
-						@CBMCDIR@/src/big-int/bigint.o
+						@CBMCDIR@/src/big-int/big-int.a
 
 MINISAT_OBJS = @MINISATDIR@/utils/System.o
 

@@ -11,7 +11,7 @@ SUBDIRS =
 AM_CPPFLAGS += -DCPP_CMD="\"@CPP@\""
 
 CBMC_OBJS = @CBMCDIR@/src/util/util.a \
-						@CBMCDIR@/src/big-int/bigint.o
+						@CBMCDIR@/src/big-int/big-int.a
 
 noinst_LTLIBRARIES = libmacro.la
 libmacro_la_SOURCES = macro_processing.cpp

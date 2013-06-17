@@ -30,7 +30,7 @@ CBMC_OBJS = @CBMCDIR@/src/goto-programs/goto-programs.a \
 						@CBMCDIR@/src/cpp/cpp.a \
 						@CBMCDIR@/src/assembler/assembler.a \
 						@CBMCDIR@/src/util/util.a \
-						@CBMCDIR@/src/big-int/bigint.o \
+						@CBMCDIR@/src/big-int/big-int.a \
 						@CBMCDIR@/src/goto-symex/goto-symex.a \
 						@CBMCDIR@/src/pointer-analysis/value_set.o \
 						@CBMCDIR@/src/pointer-analysis/dereference.o \

@@ -16,7 +16,7 @@ CBMC_OBJS = @CBMCDIR@/src/goto-programs/goto-programs.a \
 						@CBMCDIR@/src/pointer-analysis/rewrite_index.o \
 						@CBMCDIR@/src/pointer-analysis/goto_program_dereference.o \
 						@CBMCDIR@/src/util/util.a \
-						@CBMCDIR@/src/big-int/bigint.o \
+						@CBMCDIR@/src/big-int/big-int.a \
 						@CBMCDIR@/src/goto-symex/goto-symex.a \
 						@CBMCDIR@/src/cbmc/cover.o \
 						@CBMCDIR@/src/cbmc/bmc.o \

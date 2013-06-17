@@ -11,7 +11,7 @@ SUBDIRS =
 CBMC_OBJS = @CBMCDIR@/src/goto-programs/goto-programs.a \
 						@CBMCDIR@/src/assembler/assembler.a \
 						@CBMCDIR@/src/util/util.a \
-						@CBMCDIR@/src/big-int/bigint.o \
+						@CBMCDIR@/src/big-int/big-int.a \
 						@CBMCDIR@/src/langapi/langapi.a \
 						@CBMCDIR@/src/ansi-c/ansi-c.a \
 						@CBMCDIR@/src/linking/linking.a
