@@ -99,6 +99,7 @@ class Command_Processing
 
 	void add_sourcecode(::language_uit & manager, char const * file,
 			::std::list< ::std::pair< char*, char* > > const& defines);
+	void remove_zero_init(::language_uit & manager) const;
 
 	/*! \copydoc copy_constructor
 	*/

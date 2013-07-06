@@ -288,6 +288,30 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 	return NO_CONTROL_COMMAND;
 }
 
+void Command_Processing::remove_zero_init(::language_uit & manager) const {
+	::symbol_tablet::symbolst::iterator init_iter(
+	  manager.symbol_table.symbols.find("c::__CPROVER_initialize"));
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+						 init_iter != manager.symbol_table.symbols.end());
+
+	// check all operands
+	for (::exprt::operandst::iterator iter(init_iter->second.value.operands().begin());
+		 iter != init_iter->second.value.operands().end();)
+	{
+		if (iter->get(ID_statement) == ID_assign &&
+			iter->location().get_file() != "<built-in>") {
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 2 == iter->operands().size());
+			if (iter->op1().get_bool(ID_C_zero_initializer)) {
+				iter = init_iter->second.value.operands().erase(iter);
+			} else {
+				++iter;
+			}
+		} else {
+			++iter;
+		}
+	}
+}
+
 bool Command_Processing::finalize(::language_uit & manager) {
 	FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,
 			!manager.symbol_table.symbols.empty(),
@@ -306,31 +330,9 @@ bool Command_Processing::finalize(::language_uit & manager) {
 	m_finalized = ! manager.final();
 	// this must never fail, given all the previous sanity checks
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_finalized);
-    ::symbol_tablet::symbolst::iterator init_iter(
-			manager.symbol_table.symbols.find("c::__CPROVER_initialize"));
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-			init_iter != manager.symbol_table.symbols.end());
 
 	// remove 0-initialization of global variables, if requested by user
-	if (m_remove_zero_init) {
-		// check all operands
-		for (::exprt::operandst::iterator iter(init_iter->second.value.operands().begin());
-				iter != init_iter->second.value.operands().end();)
-		{
-			if (iter->get(ID_statement) == ID_assign &&
-					iter->location().get_file() != "<built-in>") {
-				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 2 == iter->operands().size());
-				if (iter->op1().get_bool(ID_C_zero_initializer)) {
-					iter = init_iter->second.value.operands().erase(iter);
-				} else {
-					++iter;
-				}
-			} else {
-				++iter;
-			}
-		}
-	}
-    
+	if (m_remove_zero_init) remove_zero_init(manager);
 
 	// convert all symbols; iterators are unstable, copy symbol names first
 	::std::vector< ::irep_idt > symbols;
