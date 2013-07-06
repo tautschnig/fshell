@@ -110,6 +110,10 @@ class Test_Suite_Output
 	  seen_vars_t & vars,
 	  Test_Input & ti,
 	  assignments_t & global_assign) const;
+	void beautify_argv(
+	  exprt &val,
+	  irep_idt const& identifier,
+	  seen_vars_t const& vars) const;
 	void update_call_stack(
 	  ::symex_target_equationt::SSA_stept const& step,
 	  called_functions_t &calls,

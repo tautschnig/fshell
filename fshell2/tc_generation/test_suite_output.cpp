@@ -45,6 +45,8 @@
 #include <util/xml.h>
 #include <util/xml_irep.h>
 #include <util/prefix.h>
+#include <util/arith_tools.h>
+#include <ansi-c/string_constant.h>
 
 FSHELL2_NAMESPACE_BEGIN;
 
@@ -465,6 +467,11 @@ void Test_Suite_Output::analyze_symbol(
 	FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, !val.is_nil(),
 			::diagnostics::internal::to_string("Failed to lookup ", val_copy.get(ID_identifier)));
 	iv.m_value_str = ::from_expr(m_equation.get_ns(), iv.m_name->get(ID_identifier), val);
+	if(iv.m_value_str=="argv'")
+	{
+		beautify_argv(val, iv.m_name->get(ID_identifier), vars);
+		iv.m_value_str = ::from_expr(m_equation.get_ns(), iv.m_name->get(ID_identifier), val);
+	}
 	/* // beautify dynamic_X_name
 	   if(0 == val.find("&dynamic_")) {
 	   ::std::map< ::std::string, ::std::string >::const_iterator entry(
@@ -482,6 +489,68 @@ void Test_Suite_Output::analyze_symbol(
 		
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !iv.m_value_str.empty());
 	ti.m_test_inputs.push_back(iv);
+}
+
+void Test_Suite_Output::beautify_argv(
+  exprt &val,
+  irep_idt const& identifier,
+  seen_vars_t const& vars) const
+{
+	if(val.id() == ID_constant &&
+	   val.has_operands() &&
+	   val.type().id() == ID_pointer &&
+	   val.op0().id() == ID_address_of &&
+	   to_address_of_expr(val.op0()).object().id() == ID_index &&
+	   to_index_expr(to_address_of_expr(val.op0()).object()).index().is_constant() &&
+	   to_index_expr(to_address_of_expr(val.op0()).object()).array().id()==ID_symbol)
+	{
+		index_exprt val_copy=to_index_expr(to_address_of_expr(val.op0()).object());
+		exprt val_a=val_copy.array();
+		Symbol_Identifier val_sym(to_symbol_expr(val_a));
+		seen_vars_t::const_iterator entry=
+			vars.find(val_sym.m_var_name+"!"+val_sym.m_level0+"@"+val_sym.m_level1);
+		if(entry!=vars.end() &&
+		   !entry->second.empty())
+		{
+			val_a.set(
+			  ID_identifier,
+			  val_a.get_string(ID_identifier) + "#" + id2string(*(entry->second.rbegin())));
+
+			val=m_equation.get_bv().get(val_a);
+			if(val==val_a)
+			{
+				val=constant_exprt(ID_NULL, val_copy.type());
+				return;
+			}
+
+			mp_integer offset=-1;
+			if(val.id()==ID_array)
+			{
+				Forall_operands(it, val)
+					beautify_argv(*it, identifier, vars);
+
+				to_integer(val_copy.index(), offset);
+				while(offset > 0 && offset < val.operands().size())
+				{
+					val.operands().erase(
+					  val.operands().begin());
+					--offset;
+				}
+
+				string_constantt str;
+				if(!str.from_array_expr(to_array_expr(val)))
+				{
+					// use the shortest zero-terminated substring
+					std::string str_val=id2string(str.get_value());
+					str.set_value(std::string(str_val, 0, str_val.find((char)0)));
+					val=str;
+				}
+			}
+
+			if(val.id()==ID_array && offset != 0)
+				val=index_exprt(val, val_copy.index());
+		}
+	}
 }
 
 void Test_Suite_Output::analyze_symbols(
