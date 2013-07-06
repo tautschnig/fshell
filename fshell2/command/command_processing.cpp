@@ -42,6 +42,7 @@
 #include <goto-programs/remove_function_pointers.h>
 #include <goto-programs/goto_inline.h>
 #include <goto-programs/loop_ids.h>
+#include <analyses/goto_check.h>
 
 #include <cerrno>
 #include <fstream>
@@ -361,6 +362,10 @@ void Command_Processing::finalize_goto_program(::language_uit & manager) {
 	// do partial inlining
 	::namespacet ns(manager.symbol_table);
 	::goto_partial_inline(m_gf, ns, manager.ui_message_handler);
+
+	// add generic checks
+	manager.status("Generic Property Instrumentation");
+	::goto_check(ns, m_opts, m_gf);
 
 	// add failed symbols
 	::add_failed_symbols(manager.symbol_table);

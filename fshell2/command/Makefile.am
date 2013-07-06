@@ -42,6 +42,7 @@ CBMC_OBJS = @CBMCDIR@/src/goto-programs/goto-programs.a \
 						@CBMCDIR@/src/pointer-analysis/add_failed_symbols.o \
 						@CBMCDIR@/src/pointer-analysis/rewrite_index.o \
 						@CBMCDIR@/src/pointer-analysis/goto_program_dereference.o \
+						@CBMCDIR@/src/analyses/analyses.a \
 						@CBMCDIR@/src/util/util.a \
 						@CBMCDIR@/src/big-int/big-int.a \
 						@CBMCDIR@/src/langapi/langapi.a \
