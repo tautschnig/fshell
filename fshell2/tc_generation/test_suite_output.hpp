@@ -91,7 +91,7 @@ class Test_Suite_Output
 			::irep_idt const >, ::exprt const * > > called_functions_t;
 	typedef ::std::list< called_functions_t::iterator > call_stack_t;
 	typedef ::std::list< ::symex_target_equationt::SSA_stept const* > assignments_t;
-	typedef ::std::set< ::irep_idt > seen_vars_t;
+	typedef ::std::map< ::irep_idt, std::set< ::irep_idt > > seen_vars_t;
 	typedef ::std::map< ::exprt const*, ::exprt const* > stmt_vars_and_parents_t;
 	typedef ::std::list< stmt_vars_and_parents_t::const_iterator > nondet_syms_in_rhs_t;
 

@@ -96,10 +96,6 @@ void Symbol_Identifier::strip_SSA_renaming()
 
 	// strip off @xx (level1 renaming/frame numbers)
 	string::size_type const at_start(m_var_name.rfind('@'));
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-			string::npos == at_start ||
-			string::npos == hash_start ||
-			at_start < hash_start);
 	if (string::npos == at_start) m_level1 = "";
 	else {
 		m_level1 = m_var_name.substr(at_start + 1);
@@ -108,15 +104,6 @@ void Symbol_Identifier::strip_SSA_renaming()
 
 	// strip off !xx (level0 renaming/threads)
 	string::size_type const exc_start(m_var_name.rfind('!'));
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-			(string::npos == exc_start ||
-			 string::npos != at_start) &&
-			(string::npos != exc_start ||
-			 string::npos == at_start));
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-			string::npos == exc_start ||
-			string::npos == at_start ||
-			exc_start < at_start);
 	if (string::npos == exc_start) m_level0 = "";
 	else {
 		m_level0 = m_var_name.substr(exc_start + 1);
@@ -150,8 +137,6 @@ Symbol_Identifier::Symbol_Identifier(::symbol_exprt const& sym) :
 	// generated symbol
 	else if (::has_prefix(m_var_name, "c::$fshell2$"))
 		m_vt = FSHELL2_INTERNAL;
-	// we don't care about the above
-	if (UNKNOWN != m_vt) return;
 
 	// level2, level1, level0
 	strip_SSA_renaming();
@@ -163,6 +148,9 @@ Symbol_Identifier::Symbol_Identifier(::symbol_exprt const& sym) :
 		m_var_name.erase(obj_start);
 		obj_start = m_var_name.rfind("$object");
 	}
+
+	// name de-mangling done, just work on those variables not yet identified
+	if (UNKNOWN != m_vt) return;
 
 	// dynamically allocated memory
 	if (::has_prefix(m_var_name, "symex_dynamic::") ||
@@ -292,6 +280,9 @@ void Test_Suite_Output::analyze_symbol(
 	::boolbvt const& bv(m_equation.get_bv());
 
 	Symbol_Identifier var(sym);
+	const std::string l1_name=var.m_var_name+"!"+var.m_level0+"@"+var.m_level1;
+	std::set< ::irep_idt > &vars_l2=
+		vars.insert(std::make_pair(l1_name, std::set< ::irep_idt >())).first->second;
 	//// ::std::cerr << "Analyzing " << var.m_identifier << "(" << var.m_var_name << ") [" << var.m_vt << "]" << ::std::endl;
 
 	switch (var.m_vt)
@@ -302,11 +293,15 @@ void Test_Suite_Output::analyze_symbol(
 		case Symbol_Identifier::CBMC_INTERNAL: // we don't care
 		case Symbol_Identifier::CBMC_GUARD: // we don't care
 		case Symbol_Identifier::FSHELL2_INTERNAL: // we don't care
+			vars_l2.insert(var.m_level2);
 			return;
 		case Symbol_Identifier::CBMC_DYNAMIC_MEMORY: // ignore in RHS
 		case Symbol_Identifier::CBMC_TMP_RETURN_VALUE: // ignore in RHS
 			if (!is_lhs)
+			{
+				vars_l2.insert(var.m_level2);
 				return;
+			}
 		case Symbol_Identifier::PARAMETER:
 		case Symbol_Identifier::LOCAL:
 		case Symbol_Identifier::LOCAL_STATIC:
@@ -323,8 +318,8 @@ void Test_Suite_Output::analyze_symbol(
 			{
 				// assignment to array element with nondet components
 				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-									 vars.end() == vars.find(var.m_identifier));
-				vars.insert(var.m_identifier);
+									 vars_l2.end() == vars_l2.find(var.m_level2));
+				vars_l2.insert(var.m_level2);
 				// only a single one of them
 				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 						1 == nondet_syms_in_rhs.size());
@@ -337,8 +332,8 @@ void Test_Suite_Output::analyze_symbol(
 			{
 				// assignment to struct variable with nondet components
 				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-									 vars.end() == vars.find(var.m_identifier));
-				vars.insert(var.m_identifier);
+									 vars_l2.end() == vars_l2.find(var.m_level2));
+				vars_l2.insert(var.m_level2);
 				// only a single one of them
 				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 						1 == nondet_syms_in_rhs.size());
@@ -350,28 +345,31 @@ void Test_Suite_Output::analyze_symbol(
 			{
 				// assignment to simple variable using undef function
 				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-						vars.end() == vars.find(var.m_identifier));
-				vars.insert(var.m_identifier);
+									 vars_l2.end() == vars_l2.find(var.m_level2));
+				vars_l2.insert(var.m_level2);
 				nondet_expr = &sym;
 				// ::std::cerr << "Added LHS var " << var.m_identifier << " [" << var.m_vt << "]" << ::std::endl;
-				if (Symbol_Identifier::CBMC_TMP_RETURN_VALUE != var.m_vt)
-					vars.insert(var.m_var_name + "@" + var.m_level1);
+				/*if (Symbol_Identifier::CBMC_TMP_RETURN_VALUE != var.m_vt)
+					vars.insert(var.m_var_name + "@" + var.m_level1);*/
 				// ::std::cerr << "Also added var " << (var.m_var_name + "@" + var.m_level1) << " [" << var.m_vt << "]" << ::std::endl;
 			}
 			else if (!is_lhs &&
 					 var.m_level2 == "1" &&
-					 vars.end() == vars.find(var.m_var_name + "@" + var.m_level1))
+					 vars_l2.empty())
 			{
 				// reading use of undefined variable
-				if (!vars.insert(var.m_identifier).second)
-					return;
+				/*if (!vars.insert(var.m_identifier).second)
+					return;*/
 				// ::std::cerr << "Added #0 var " << var.m_identifier << " [" << var.m_vt << "]" << ::std::endl;
-				vars.insert(var.m_var_name + "@" + var.m_level1);
+				//vars.insert(var.m_var_name + "@" + var.m_level1);
+				vars_l2.insert(var.m_level2);
 				// ::std::cerr << "Also added var " << (var.m_var_name + "@" + var.m_level1) << " [" << var.m_vt << "]" << ::std::endl;
 			}
 			else
 			{
-				if (!vars.insert(var.m_var_name + "@" + var.m_level1).second)
+				const bool first=vars_l2.empty();
+				vars_l2.insert(var.m_level2);
+				if(!first)
 					return;
 				// ::std::cerr << "Added var " << (var.m_var_name + "@" + var.m_level1) << " [" << var.m_vt << "]" << ::std::endl;
 			}
@@ -445,13 +443,22 @@ void Test_Suite_Output::analyze_symbol(
 	//// ::std::cerr << "Fetching value for " << iv.m_value->pretty() << ::std::endl;
 	::exprt val_copy(*iv.m_value);
 	if (ID_bool != iv.m_symbol->type.id() &&
-		val_copy.id() != ID_nondet_symbol &&
-		::std::string::npos == val_copy.get_string(ID_identifier).rfind("#"))
+		val_copy.id() == ID_symbol)
 	{
-		val_copy.set(ID_identifier, val_copy.get_string(ID_identifier) + "#0");
+		Symbol_Identifier vaL_sym(to_symbol_expr(val_copy));
+		if(vaL_sym.m_level2=="-1")
+		{
+			seen_vars_t::const_iterator entry=
+				vars.find(vaL_sym.m_var_name+"!"+vaL_sym.m_level0+"@"+vaL_sym.m_level1);
+			if(entry!=vars.end() &&
+			   !entry->second.empty())
+				val_copy.set(
+				  ID_identifier,
+				  val_copy.get_string(ID_identifier) + "#" + id2string(*(entry->second.rbegin())));
 		// not sure whether this is needed
 		// if (bv.get(val_copy).is_nil())
 		//   val_copy.set(ID_identifier, ::diagnostics::internal::to_string(val_copy.get(ID_identifier), "$object#0"));
+		}
 	}
 	
 	::exprt val(bv.get(val_copy));
@@ -551,6 +558,7 @@ void Test_Suite_Output::do_step(
 
 	::cnf_clause_list_assignmentt const& cnf(m_equation.get_cnf());
 	bool const instr_enabled(step.guard.is_true() || cnf.l_get(step.guard_literal) == ::tvt(true));
+	//// std::cerr << "ENABLED? " << instr_enabled << std::endl;
 
 	if (instr_enabled)
 		update_call_stack(step, calls, call_stack);
