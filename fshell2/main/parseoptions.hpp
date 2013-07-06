@@ -58,7 +58,8 @@
   "(query-file):(statistics)(use-instrumentation)" \
   "(sat-coverage-check)(no-internal-coverage-check)" \
   "(enable-assert)" \
-  "(tco-location)(tco-called-functions)(tco-assign-globals)"
+  "(tco-location)(tco-called-functions)(tco-assign-globals)" \
+  "(max-argc):"
 
 FSHELL2_NAMESPACE_BEGIN;
 

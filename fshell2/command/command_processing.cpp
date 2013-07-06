@@ -36,6 +36,12 @@
 #endif
 
 #include <util/config.h>
+#include <util/arith_tools.h>
+#include <util/std_expr.h>
+#include <util/std_code.h>
+#include <util/replace_symbol.h>
+#include <ansi-c/c_types.h>
+#include <ansi-c/ansi_c_typecheck.h>
 #include <langapi/language_ui.h>
 #include <goto-programs/goto_convert_functions.h>
 #include <pointer-analysis/add_failed_symbols.h>
@@ -110,7 +116,7 @@ Cleanup::~Cleanup() {
 }
 
 Command_Processing::Command_Processing(::optionst & opts, ::goto_functionst & gf) :
-	m_opts(opts), m_gf(gf), m_finalized(true),
+	m_opts(opts), m_gf(gf), m_finalized(m_opts.get_int_option("max-argc") == 0),
 	m_remove_zero_init(false) {
 	if (::config.main.empty()) ::config.main = "main";
 	m_opts.set_option(F2_O_LIMIT, 0);
@@ -312,6 +318,276 @@ void Command_Processing::remove_zero_init(::language_uit & manager) const {
 	}
 }
 
+void Command_Processing::model_argv(::language_uit & manager) const {
+	::symbol_tablet &symbol_table=manager.symbol_table;
+	::namespacet const ns(symbol_table);
+
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, symbol_table.has_symbol("c::main"));
+	locationt const& main_loc=symbol_table.symbols.find("c::main")->second.location;
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, main_loc.is_not_nil());
+
+	/*
+	unsigned next=0;
+	unsigned i=0;
+   	__CPROVER_assume(argc'<=max_argc);
+   	while(i<argc' && i<max_argc)
+   	{
+    	unsigned len;
+     	__CPROVER_assume(len<4096);
+     	__CPROVER_assume(next+len<4096);
+     	argv'[i]=argv''+next;
+     	argv''[next+len]=0;
+     	next=next+len+1;
+		i=i+1;
+   	}
+	*/
+	int max_argc=m_opts.get_int_option("max-argc");
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, max_argc > 0);
+
+	::symbol_tablet::symbolst::iterator main_iter(
+	  symbol_table.symbols.find("main"));
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+						 main_iter != symbol_table.symbols.end());
+
+	// turn argv' into a bounded array
+	{
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, symbol_table.has_symbol("c::argv'"));
+		symbol_table.symbols.find("c::argv'")->second.type.set(ID_size, from_integer(max_argc+1, index_type()));
+
+		replace_symbolt replace_argvp;
+
+		::symbolt const& argvp_symbol(ns.lookup("c::argv'"));
+		symbol_exprt argvp(argvp_symbol.name, argvp_symbol.type);
+		replace_argvp.insert(argvp_symbol.name, argvp);
+
+		bool replaced=replace_argvp.replace(main_iter->second.value);
+		assert(!replaced);
+	}
+
+	// add argv'' to the symbol table
+	if(!symbol_table.has_symbol("c::main::1::argv''"))
+	{
+		// POSIX guarantees that at least 4096 characters can be passed as
+		// arguments
+		::array_typet argv_type(char_type(), from_integer(4096, index_type()));
+
+		::symbolt argv_symbol;
+		argv_symbol.pretty_name="argv''";
+		argv_symbol.base_name="main::1::argv''";
+		argv_symbol.name="c::main::1::argv''";
+		argv_symbol.type=argv_type;
+		argv_symbol.is_file_local=true;
+		argv_symbol.is_type=false;
+		argv_symbol.is_thread_local=false;
+		argv_symbol.is_static_lifetime=false;
+		argv_symbol.value.make_nil();
+		argv_symbol.location=main_loc;
+
+		symbol_table.add(argv_symbol);
+	}
+
+	// add counters/size
+	::irep_idt locals[] = { "next", "i", "len'" };
+	for(size_t i=0; i<sizeof(locals)/sizeof(::irep_idt); ++i)
+	{
+		::irep_idt name="c::main::1::"+id2string(locals[i]);
+		if(symbol_table.has_symbol(name))
+			continue;
+
+		symbolt next_symbol;
+		next_symbol.pretty_name=id2string(locals[i]);
+		next_symbol.base_name="main::1::"+id2string(locals[i]);
+		next_symbol.name=name;
+		next_symbol.type=unsigned_short_int_type();
+		next_symbol.is_file_local=true;
+		next_symbol.is_type=false;
+		next_symbol.is_thread_local=false;
+		next_symbol.is_static_lifetime=false;
+		next_symbol.is_lvalue=true;
+		next_symbol.value.make_nil();
+		next_symbol.location=main_loc;
+
+		symbol_table.add(next_symbol);
+	}
+
+	/*
+	char argv''[4096];
+	*/
+	::symbolt const& argvpp_symbol(ns.lookup("c::main::1::argv''"));
+	symbol_exprt argvpp(argvpp_symbol.base_name, argvpp_symbol.type);
+	code_declt argvpp_decl(argvpp);
+	argvpp_decl.location()=main_loc;
+
+	code_blockt code;
+
+	/*
+	unsigned next=0;
+	unsigned i=0;
+	*/
+	for(int i=0; i<2; ++i)
+	{
+		::symbolt const& symbol(ns.lookup("c::main::1::"+id2string(locals[i])));
+		::symbol_exprt symbol_expr(symbol.base_name, symbol.type);
+
+		code_declt decl(symbol_expr);
+		decl.location()=main_loc;
+		code.move_to_operands(decl);
+
+		code_assignt assign(symbol_expr, from_integer(0, unsigned_short_int_type()));
+		assign.location()=main_loc;
+		code.move_to_operands(assign);
+	}
+
+	/*
+   	__CPROVER_assume(argc'<=max_argc);
+	*/
+	::symbolt const& argcp_symbol(ns.lookup("c::argc'"));
+	symbol_exprt argcp("argc'", argcp_symbol.type); /* for some reason the base_name of c::argc' was set to argc */
+	{
+		binary_relation_exprt le(
+		  argcp,
+		  ID_le,
+		  from_integer(max_argc, argcp_symbol.type));
+		side_effect_expr_function_callt fc;
+		fc.function()=symbol_exprt("__CPROVER_assume", code_typet());
+		fc.arguments().push_back(le);
+		code_expressiont assume(fc);
+		assume.location()=main_loc;
+		code.move_to_operands(assume);
+	}
+
+	/*
+   	while(i<argc' && i<max_argc)
+   	{
+    	unsigned len;
+     	__CPROVER_assume(len<4096);
+     	__CPROVER_assume(next+len<4096);
+     	argv'[i]=argv''+next;
+     	argv''[next+len]=0;
+     	next=next+len+1;
+		i=i+1;
+   	}
+	*/
+	{
+		::symbolt const& next_symbol(ns.lookup("c::main::1::next"));
+		::symbol_exprt next(next_symbol.base_name, next_symbol.type);
+		::symbolt const& len_symbol(ns.lookup("c::main::1::len'"));
+		::symbol_exprt len(len_symbol.base_name, len_symbol.type);
+		::symbolt const& i_symbol(ns.lookup("c::main::1::i"));
+		symbol_exprt i(i_symbol.base_name, i_symbol.type);
+
+		::symbolt const& argvp_symbol(ns.lookup("c::argv'"));
+		symbol_exprt argvp(argvp_symbol.base_name, argvp_symbol.type);
+
+		code_whilet while_loop;
+		while_loop.location()=main_loc;
+
+		while_loop.cond()=and_exprt(
+		  binary_relation_exprt(i, ID_lt, argcp),
+		  binary_relation_exprt(i, ID_lt, from_integer(max_argc, i_symbol.type)));
+
+		while_loop.body()=code_blockt();
+
+		code_declt decl(len);
+		decl.location()=main_loc;
+		while_loop.body().move_to_operands(decl);
+
+		exprt e4096=from_integer(4096, len_symbol.type);
+		binary_relation_exprt lt1(len, ID_lt, e4096);
+		side_effect_expr_function_callt fc1;
+		fc1.function()=symbol_exprt("__CPROVER_assume", code_typet());
+		fc1.arguments().push_back(lt1);
+		code_expressiont assume1(fc1);
+		assume1.location()=main_loc;
+		while_loop.body().move_to_operands(assume1);
+		binary_relation_exprt lt2(plus_exprt(next, len), ID_lt, e4096);
+		side_effect_expr_function_callt fc2;
+		fc2.function()=symbol_exprt("__CPROVER_assume", code_typet());
+		fc2.arguments().push_back(lt2);
+		code_expressiont assume2(fc2);
+		assume2.location()=main_loc;
+		while_loop.body().move_to_operands(assume2);
+
+		code_assignt assign1(
+		  index_exprt(argvp, i),
+		  plus_exprt(argvpp, next));
+		assign1.location()=main_loc;
+		while_loop.body().move_to_operands(assign1);
+
+		code_assignt assign2(
+		  index_exprt(argvpp, plus_exprt(next, len)),
+		  from_integer(0, char_type()));
+		assign2.location()=main_loc;
+		while_loop.body().move_to_operands(assign2);
+
+		code_assignt assign3(next, plus_exprt(plus_exprt(next, len), from_integer(1, unsigned_short_int_type())));
+		assign3.location()=main_loc;
+		while_loop.body().move_to_operands(assign3);
+
+		code_assignt assign4(i, plus_exprt(i, from_integer(1, unsigned_short_int_type())));
+		assign4.location()=main_loc;
+		while_loop.body().move_to_operands(assign4);
+
+		code.move_to_operands(while_loop);
+	}
+
+	ansi_c_parse_treet ansi_c_parse_tree;
+	ansi_c_typecheckt ansi_c_typecheck(
+	  ansi_c_parse_tree, symbol_table, "", manager.get_message_handler());
+	try
+	{
+		side_effect_exprt expr(ID_statement_expression, empty_typet());
+		expr.move_to_operands(code);
+
+		ansi_c_typecheck.typecheck_expr(expr);
+		code.swap(expr.op0());
+
+		code_blockt dummyb;
+		dummyb.move_to_operands(argvpp_decl);
+		expr.op0()=dummyb;
+		ansi_c_typecheck.typecheck_expr(expr);
+		argvpp_decl.swap(to_code_block(to_code(expr.op0())).operands().front());
+	}
+
+	catch(int)
+	{
+		ansi_c_typecheck.error();
+	}
+
+	catch(const char *e)
+	{
+		ansi_c_typecheck.error(e);
+	}
+
+	catch(const std::string &e)
+	{
+		ansi_c_typecheck.error(e);
+	}
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+						 !ansi_c_typecheck.get_error_found());
+
+	// find main() call and insert code before
+	for (::exprt::operandst::iterator iter(main_iter->second.value.operands().begin());
+		 iter != main_iter->second.value.operands().end();
+		 ++iter)
+	{
+		if (iter->get(ID_statement) == ID_function_call &&
+			to_symbol_expr(to_code_function_call(to_code(*iter)).function()).get_identifier() == "c::main")
+		{
+			::exprt::operandst items;
+
+			items.push_back(argvpp_decl);
+			items.push_back(code);
+
+			main_iter->second.value.operands().insert(iter, items.begin(), items.end());
+
+			code.make_nil();
+			break;
+		}
+	}
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, code.is_nil());
+}
+
 bool Command_Processing::finalize(::language_uit & manager) {
 	FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,
 			!manager.symbol_table.symbols.empty(),
@@ -333,6 +609,12 @@ bool Command_Processing::finalize(::language_uit & manager) {
 
 	// remove 0-initialization of global variables, if requested by user
 	if (m_remove_zero_init) remove_zero_init(manager);
+
+	// create init code for argv, if max-argc was set
+	if (m_opts.get_int_option("max-argc") > 0 &&
+		entry=="c::main" &&
+		manager.symbol_table.has_symbol("c::argc'"))
+		model_argv(manager);
 
 	// convert all symbols; iterators are unstable, copy symbol names first
 	::std::vector< ::irep_idt > symbols;

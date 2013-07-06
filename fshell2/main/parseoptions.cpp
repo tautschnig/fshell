@@ -168,6 +168,9 @@ bool Parseoptions::get_command_line_options()
 	m_options.set_option("tco-called-functions", cmdline.isset("tco-called-functions"));
 	m_options.set_option("tco-assign-globals", cmdline.isset("tco-assign-globals"));
 
+	if(cmdline.isset("max-argc"))
+		m_options.set_option("max-argc", cmdline.getval("max-argc"));
+
 	set_verbosity(*this);
 
 	if(cmdline.isset("statistics") || get_verbosity() >= 8)
