@@ -77,6 +77,7 @@ class Predicate;
 class Path_Pattern_Expr;
 class Coverage_Pattern_Expr;
 class ECP_Atom;
+class Query;
 
 FSHELL2_FQL_NAMESPACE_END;
 FSHELL2_NAMESPACE_END;

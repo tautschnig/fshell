@@ -436,8 +436,8 @@ Predicate: TOK_ARBITRARY_PRED
 		   // run the CBMC C parser
 		   ansi_c_parser.clear();
 		   // the first line is artificial
-		   ansi_c_parser.line_no = 0;
-		   ansi_c_parser.filename = "<predicate>";
+		   ansi_c_parser.set_line_no(0);
+		   ansi_c_parser.set_file("<predicate>");
 		   ansi_c_parser.in = &is;
 		   ansi_c_parser.set_message_handler(cbmc_msg_handler);
 		   ansi_c_parser.grammar = ansi_c_parsert::LANGUAGE;
