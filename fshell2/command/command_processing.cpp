@@ -628,7 +628,14 @@ bool Command_Processing::finalize(::language_uit & manager) {
 	for(::std::vector< ::irep_idt >::const_iterator iter(symbols.begin());
 			iter != symbols.end(); ++iter) {
 		::goto_functionst::function_mapt::iterator fct(m_gf.function_map.find(*iter));
-		if (m_gf.function_map.end() != fct) m_gf.function_map.erase(fct);
+		if (m_gf.function_map.end() != fct)
+		{
+			if(*iter!=ID_main && // main was possibly modified
+			   fct->second.body_available && // ADD SOURCECODE may have added sth
+			   manager.symbol_table.symbols.find(*iter)->second.value.is_not_nil()) //not ABSTRACT
+				continue;
+			m_gf.function_map.erase(fct);
+		}
 		converter.convert_function(*iter);
 	}
 
