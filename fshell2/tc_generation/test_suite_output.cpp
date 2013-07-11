@@ -463,15 +463,11 @@ void Test_Suite_Output::analyze_symbol(
 		}
 	}
 	
-	::exprt val(bv.get(val_copy));
-	FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, !val.is_nil(),
+	iv.m_value_expr=bv.get(val_copy);
+	FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, iv.m_value_expr.is_not_nil(),
 			::diagnostics::internal::to_string("Failed to lookup ", val_copy.get(ID_identifier)));
-	iv.m_value_str = ::from_expr(m_equation.get_ns(), iv.m_name->get(ID_identifier), val);
-	if(iv.m_value_str=="argv'")
-	{
-		beautify_argv(val, iv.m_name->get(ID_identifier), vars);
-		iv.m_value_str = ::from_expr(m_equation.get_ns(), iv.m_name->get(ID_identifier), val);
-	}
+	if(::from_expr(m_equation.get_ns(), iv.m_name->get(ID_identifier), iv.m_value_expr)=="argv'")
+		beautify_argv(iv.m_value_expr, iv.m_name->get(ID_identifier), vars);
 	/* // beautify dynamic_X_name
 	   if(0 == val.find("&dynamic_")) {
 	   ::std::map< ::std::string, ::std::string >::const_iterator entry(
@@ -487,7 +483,6 @@ void Test_Suite_Output::analyze_symbol(
 	   }
 	   */
 		
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !iv.m_value_str.empty());
 	ti.m_test_inputs.push_back(iv);
 }
 
@@ -701,7 +696,7 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 		}
 		if (print_loc)
 			os << "@[" << *(iter->m_location) << (global ? " #global":"") << "]";
-		os << "=" << iter->m_value_str;
+		os << "=" << ::from_expr(m_equation.get_ns(), iter->m_name->get(ID_identifier), iter->m_value_expr);
 		os << ::std::endl;
 	}
 	
@@ -792,7 +787,8 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 			xml_obj.new_element().swap(xml_loc);
 		}
 		
-		xml_obj.new_element("value").data = iter->m_value_str;
+		xml_obj.new_element("value").data =
+			::from_expr(m_equation.get_ns(), iter->m_name->get(ID_identifier), iter->m_value_expr);
 		if (print_loc)
 			xml_obj.new_element("type").data = iter->m_type_str;
 		

@@ -74,7 +74,7 @@ class Test_Suite_Output
 			::exprt const * m_value;
 			::symbolt const * m_symbol;
 			::locationt const * m_location;
-			::std::string m_value_str;
+			::exprt m_value_expr;
 			::std::string m_type_str;
 		} program_variable_t;
 		typedef ::std::list< program_variable_t > test_inputs_t;
