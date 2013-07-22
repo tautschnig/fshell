@@ -740,6 +740,7 @@ void Compute_Test_Goals_Boolean::build(trace_automaton_t const& aut, bool map_tg
 		// function calls (assignment of parameters)
 		// returns (assignment of return values)
 		// goto + assume/assert produced by unwinding loops
+		if(iter->is_shared_write() || iter->is_shared_read()) continue;
 		if ((m_equation.get_equation().SSA_steps.end() == previous_pc) ||
 				(iter->source.pc != previous_pc->source.pc))
 			previous_pc = iter;
@@ -1182,6 +1183,7 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 				m_equation.get_equation().SSA_steps.begin() );
 			iter != m_equation.get_equation().SSA_steps.end(); ++iter)
 	{
+		if(iter->is_shared_write() || iter->is_shared_read()) continue;
 		if (!iter->guard_literal.is_true() && cnf.l_get(iter->guard_literal) != ::tvt(true)) continue;
 		//// ::std::cerr << "--------------------------------------------------------------------------------" << ::std::endl;
 		//// ::goto_programt tmp;
