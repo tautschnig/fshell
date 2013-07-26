@@ -38,7 +38,7 @@
 #include <util/options.h>
 
 #define FSHELL2_OPTIONS \
-  "(function):" \
+  "(program-only)(function):" \
   "(unwind):(unwindset):" \
   "D:I:(depth):" \
   "(no-unwinding-assertions)" \

@@ -117,6 +117,9 @@ bool Parseoptions::get_command_line_options()
 	if(cmdline.isset("unwind"))
 		m_options.set_option("unwind", cmdline.getval("unwind"));
 
+	if(cmdline.isset("program-only"))
+		m_options.set_option("program-only", true);
+
 	if(cmdline.isset("depth"))
 		m_options.set_option("depth", cmdline.getval("depth"));
 
@@ -361,6 +364,7 @@ void Parseoptions::help()
 		"\n"
 		"BMC options:\n"
 		" --function name              set main function name\n"
+        " --program-only               only show program expression\n"
 		" --depth nr                   limit search depth\n"
 		" --unwind nr                  unwind nr times\n"
 		" --unwindset L:B,...          unwind loop L with a bound of B\n"
