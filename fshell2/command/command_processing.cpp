@@ -61,11 +61,15 @@
 
 extern int CMDparse(CMDFlexLexer *,
 		::fshell2::command::Command_Processing::parsed_command_t &, char **,
-		int *, ::std::list< ::std::pair< char*, char* > > &);
+		int *, ::std::list< ::std::pair< char*, char* > > &,::std::list< char* > &);
 // extern int yydebug;
 /* end parser */
 
 #include <fshell2/command/grammar.hpp>
+
+#define TMP_EXEC_FILE "tempSUT"
+#define TMP_FOLDER "./temp/"
+//TODO WARNING same define in parseoptions.cpp
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_COMMAND_NAMESPACE_BEGIN;
@@ -121,6 +125,17 @@ Command_Processing::Command_Processing(::optionst & opts, ::goto_functionst & gf
 	if (::config.main.empty()) ::config.main = "main";
 	m_opts.set_option(F2_O_LIMIT, 0);
 	m_opts.set_option(F2_O_MULTIPLE_COVERAGE, 1);
+
+	m_opts.set_option(STANDARD_CBMC_MODE, true);
+	m_opts.set_option(FUNC_TO_COVER, "main");
+	m_opts.set_option(TC_CONDITIONS_FILENAME, CONDITIONS_FILE);
+	m_opts.set_option(TC_TRACE_FILENAME, "");
+	m_opts.set_option(TEST_SUITE_FOLDER, TMP_FOLDER);
+	m_opts.set_option(AUTOGENERATE_TESTSUITE,false);
+	m_opts.set_option(MAX_PATHS,20);
+	m_opts.set_option(PATH_DEPTH,10);
+
+
 }
 
 ::std::ostream & Command_Processing::help(::std::ostream & os) {
@@ -202,12 +217,490 @@ void Command_Processing::add_sourcecode(::language_uit & manager, char const * f
 	if (m_finalized) manager.symbol_table.remove(ID_main);
 	m_finalized = false;
 }
+/*
+ * takes the first test case from the list of possible test cases
+ * sets it as current test case and removes it from the list
+ *
+ * return 0 if successful and -1 if test-case-list was empty
+ */
+int Command_Processing::set_to_next_testcase(void)
+{
+	::std::string testcase;
+	if (!open_tc_names.empty())
+	{
+		testcase = open_tc_names.front();
+		::std::cerr << "USING TEST CASE: " << testcase << ::std::endl;
+
+		open_tc_names.erase(open_tc_names.begin());
+
+		for (::std::vector< ::std::string>::iterator it = open_tc_names.begin(); it != open_tc_names.end(); ++it)
+			::std::cerr << "POSSIBLE other test case in the list: " << *it << ::std::endl;
+
+		testcase += ".log";
+		m_opts.set_option(TC_TRACE_FILENAME,testcase);
+		return(0);
+	}
+
+	::std::cerr << "Found no test case which can be used, please select manually or generate new one" << ::std::endl;
+
+	return (-1); //FAIL
+}
+
+/*
+ * takes a string as parameter and checks, if a test case having this name exists
+ * i.e., that an entry with this name exists in the testcases.xml
+ *
+ * returns 0 if it does not yet exist and 1 if a test case with this name was found
+ */
+int Command_Processing::check_if_tc_name_exists(::std::string tc_name)
+{
+
+	::std::string strXML;
+	::std::ifstream testcasesXML;
+
+	strXML = m_opts.get_option(TEST_SUITE_FOLDER)+"testcases.xml";
+	testcasesXML.open(strXML.c_str());
+
+
+	while (testcasesXML.good())
+	{
+	  getline(testcasesXML,strXML);
+
+	  strXML = strXML.substr(strXML.find("ID=\"")+4);
+	  strXML = strXML.substr(0,strXML.find("\""));
+
+      if (!tc_name.compare(strXML))
+	  {
+	  	testcasesXML.close();
+	    return 1;
+      }
+	}
+
+	return 0;
+
+}
+
+/*
+ * Parses the conditions.xml file and stores the test cases where either the true or the false branch is not yet covered into a test case list
+ * then calls set_to_next_testcase
+ *
+ * return value is the resulting value of set_to_next_testcase
+ */
+int Command_Processing::update_testcase_list(void)
+{
+	static const char XML_CONDITION_BEGIN[] = "<condition ID=\"";
+	static const char XML_CONDITION_END[] = "</condition>";
+    static const char XML_TESTS_TRUE_END[] = "</tests_true>";
+	static const char XML_TESTS_FALSE_END[] = "</tests_false>";
+	static const char XML_TESTCASE_BEFORE_ID[] = "<testcase ID=\"";
+	static const char XML_TWO_SPACES[] = "  ";
+
+	::std::string str;
+	::std::string searchStr;
+	::std::string myXMLstr;
+	::std::string xmlLine;
+	::std::string dstDir;
+	::std::string true_tc;
+	::std::string false_tc;
+	::std::string function_to_cover;
+
+
+
+	::std::ifstream conditionsXML;
+
+	function_to_cover = m_opts.get_option(FUNC_TO_COVER);
+	//::std::cerr << "LOOKING FOR TESTCASE to cover function: " << function_to_cover << ::std::endl;
+	dstDir = m_opts.get_option(TEST_SUITE_FOLDER);
+	myXMLstr = dstDir+"conditions.xml";
+	str = "\" function=\""+function_to_cover+"\"";
+
+
+	conditionsXML.open(myXMLstr.c_str());
+	while (conditionsXML.good())
+	{
+		getline(conditionsXML,xmlLine);
+
+		::std::vector< ::std::string> true_tc_v;
+		::std::vector< ::std::string> false_tc_v;
+		::std::vector< ::std::string>::iterator it;
+
+		if ((xmlLine.find(XML_CONDITION_BEGIN) != ::std::string::npos) && (xmlLine.find(str.c_str()) != ::std::string::npos))
+		{
+			// here we found a condition in the function we want to cover, now check if true and false test cases exist
+			true_tc = "";
+			false_tc = "";
+			searchStr = XML_TWO_SPACES;
+			searchStr += XML_TESTS_TRUE_END;
+			while (conditionsXML.good() && xmlLine.compare(searchStr.c_str()))
+			{
+				getline(conditionsXML,xmlLine);
+				if (xmlLine.find(XML_TESTCASE_BEFORE_ID) != ::std::string::npos)
+				{
+					// store testcase ID, which is a testcase for true
+					true_tc = xmlLine.substr(xmlLine.find("\"")+1);
+					true_tc = true_tc.substr(0,true_tc.find("\""));
+					true_tc_v.push_back(true_tc);
+				}
+			}
+			searchStr = XML_TWO_SPACES;
+			searchStr += XML_TESTS_FALSE_END;
+			while (conditionsXML.good() && xmlLine.compare(searchStr.c_str()))
+			{
+				getline(conditionsXML,xmlLine);
+				if (xmlLine.find(XML_TESTCASE_BEFORE_ID) != ::std::string::npos)
+				{
+					// store testcase ID, which is a testcase for true
+					false_tc = xmlLine.substr(xmlLine.find("\"")+1);
+					false_tc = false_tc.substr(0,false_tc.find("\""));
+					false_tc_v.push_back(false_tc);
+				}
+			}
+
+			open_tc_names.clear();
+
+			if (true_tc_v.empty())
+			{
+				while (!false_tc_v.empty())
+				{
+					it = false_tc_v.begin();
+					false_tc = *it;
+					false_tc_v.erase(it);
+
+					it = open_tc_names.begin();
+
+					while (!open_tc_names.empty() && (it != open_tc_names.end()) && false_tc.compare(*it))
+						++it;
+
+					if (it == open_tc_names.end())
+						open_tc_names.push_back(false_tc);
+				}
+			}
+
+			if (false_tc_v.empty())
+			{
+				while (!true_tc_v.empty())
+				{
+					it = true_tc_v.begin();
+					true_tc = *it;
+					true_tc_v.erase(it);
+
+					it = open_tc_names.begin();
+
+					while (!open_tc_names.empty() && (it != open_tc_names.end()) && true_tc.compare(*it))
+						++it;
+
+					if (it == open_tc_names.end())
+						open_tc_names.push_back(true_tc);
+				}
+			}
+
+		}
+
+	}
+
+
+	conditionsXML.close();
+
+  return set_to_next_testcase();
+}
+
+/*
+ * parses the coverage log of a single test case (which is given as parameter) and integrates this test case into the testcase.xml file
+ */
+void Command_Processing::integrateInXML(::std::string tcFilename)
+{
+  static const char XML_TESTS_TRUE_BEGIN[] = "<tests_true>";
+  static const char XML_TESTS_TRUE_END[] = "</tests_true>";
+  static const char XML_TESTS_FALSE_BEGIN[] = "<tests_false>";
+  static const char XML_TESTS_FALSE_END[] = "</tests_false>";
+  static const char XML_CONDITION_END[] = "</condition>";
+  static const char XML_TESTCASE_BEFORE_ID[] = "<testcase ID=\"";
+  static const char XML_TESTCASE_AFTER_ID[] = "\" />";
+  static const char XML_TWO_SPACES[] = "  ";
+
+  ::std::string callString;
+  ::std::string str;
+  ::std::string oldXMLstr;
+  ::std::string newXMLstr;
+  ::std::string covLine;
+  ::std::string xmlLine;
+  ::std::string dstDir;
+  int pos;
+  bool trueVal;
+  bool foundCondition;
+  bool foundTC;
+
+  dstDir = m_opts.get_option(TEST_SUITE_FOLDER);
+
+  oldXMLstr = dstDir+"conditions.xml";
+  ::std::ifstream oldConditionsXML;
+  newXMLstr = dstDir+"conditions_temp.xml";
+  ::std::ofstream newConditionsXML;
+  callString = dstDir+tcFilename+".log";
+  ::std::ifstream testcase(callString.c_str());
+
+  while (testcase.good())
+  {
+	  getline(testcase,covLine);
+	 // os << covLine << ::std::endl;
+
+	  if ((pos = covLine.find("/> t")) != ::std::string::npos)
+		  trueVal = true;
+	  else if ((pos = covLine.find("/> f")) != ::std::string::npos)
+		  trueVal = false;
+	  else continue;
+
+	  covLine.replace(pos,4,">");
+	 // os << "line: " << covLine << ::std::endl;
+	 // oldConditionsXML.seekg(0,oldConditionsXML.beg);
+
+	  oldConditionsXML.open(oldXMLstr.c_str());
+	  newConditionsXML.open(newXMLstr.c_str());
+	  foundCondition = false;
+
+	  while (oldConditionsXML.good())
+	  {
+		  getline(oldConditionsXML,xmlLine);
+		  if (xmlLine.length() == 0)
+			  continue;
+
+		  newConditionsXML << xmlLine << "\n";
+
+		  if (covLine.compare(xmlLine))
+		  {
+			  // lines are not the same, write to file and goto next line
+			  continue;
+		  }
+		  else
+		  {
+			  foundCondition = true;
+
+			  callString = XML_TWO_SPACES;
+			  callString += XML_TWO_SPACES;
+			  callString += XML_TESTCASE_BEFORE_ID;
+			  callString += tcFilename;
+			  callString += XML_TESTCASE_AFTER_ID;
+
+			  foundTC = false;
+
+			  str = XML_TWO_SPACES;
+			  str += XML_TESTS_TRUE_END;
+
+			  getline(oldConditionsXML,xmlLine); //this should be line: XML_TWO_SPACES << XML_TESTS_TRUE_BEGIN which we have read above
+			  while (oldConditionsXML.good() && str.compare(xmlLine))
+			  {
+				  newConditionsXML << xmlLine << "\n";
+
+				  getline(oldConditionsXML,xmlLine);
+
+				  if (!callString.compare(xmlLine))
+					  foundTC = true;
+			  }
+			  if (!oldConditionsXML.good())
+				  assert(false);
+
+			  if (trueVal && !foundTC)
+				  newConditionsXML << XML_TWO_SPACES << XML_TWO_SPACES << XML_TESTCASE_BEFORE_ID << tcFilename << XML_TESTCASE_AFTER_ID << "\n";
+
+			  newConditionsXML << xmlLine << "\n"; //this should be line: XML_TWO_SPACES << XML_TESTS_TRUE_END
+
+			  foundTC = false;
+			  str = XML_TWO_SPACES;
+			  str += XML_TESTS_FALSE_END;
+
+			  getline(oldConditionsXML,xmlLine);//this should be line: XML_TWO_SPACES << XML_TESTS_FALSE_BEGIN which we have read above
+			  while (oldConditionsXML.good() && str.compare(xmlLine))
+			  {
+				  newConditionsXML << xmlLine << "\n";
+
+				  getline(oldConditionsXML,xmlLine);
+
+				  if (!callString.compare(xmlLine))
+					  foundTC = true;
+			  }
+			  if (!oldConditionsXML.good())
+			  	  assert(false);
+
+			  if (!trueVal&& !foundTC)
+				  newConditionsXML << XML_TWO_SPACES << XML_TWO_SPACES << XML_TESTCASE_BEFORE_ID << tcFilename << XML_TESTCASE_AFTER_ID << "\n";
+
+			  newConditionsXML << xmlLine << "\n"; //this should be line: XML_TWO_SPACES << XML_TESTS_FALSE_END
+
+			  callString = XML_TWO_SPACES;
+			  callString += XML_TESTS_FALSE_END;
+			  while (oldConditionsXML.good() && callString.compare(xmlLine))
+			  {
+				  getline(oldConditionsXML,xmlLine);
+				  newConditionsXML << xmlLine << "\n";
+			  }
+
+			  //os << "SAME " << xmlLine << ::std::endl;
+		  }
+
+	  }
+	  if (!foundCondition)
+	  {
+		  // ADD new condition to xml file
+		  //os << "new: " << covLine << ::std::endl;
+		  newConditionsXML << covLine << "\n";
+		  newConditionsXML << XML_TWO_SPACES << XML_TESTS_TRUE_BEGIN << "\n";
+		  if (trueVal)
+			  newConditionsXML << XML_TWO_SPACES << XML_TWO_SPACES << XML_TESTCASE_BEFORE_ID << tcFilename << XML_TESTCASE_AFTER_ID << "\n";
+		  newConditionsXML << XML_TWO_SPACES << XML_TESTS_TRUE_END << "\n";
+		  newConditionsXML << XML_TWO_SPACES << XML_TESTS_FALSE_BEGIN << "\n";
+		  if (!trueVal)
+			  newConditionsXML << XML_TWO_SPACES << XML_TWO_SPACES << XML_TESTCASE_BEFORE_ID << tcFilename << XML_TESTCASE_AFTER_ID << "\n";
+		  newConditionsXML << XML_TWO_SPACES << XML_TESTS_FALSE_END << "\n";
+		  newConditionsXML << XML_CONDITION_END << "\n";
+	  }
+	  else
+		  foundCondition = false;
+
+	  oldConditionsXML.close();
+	  newConditionsXML.close();
+	  remove(oldXMLstr.c_str());
+	  rename(newXMLstr.c_str(),oldXMLstr.c_str());
+	  //os << "--------" << ::std::endl;
+  }
+}
+/*
+ * takes the name of a test case and the shell-parameter-string and stores it to the file testcases.xml
+ */
+int Command_Processing::integrateTestCaseNameInXML(::std::string tcName, std::string paramStr)
+{
+  static const char XML_TESTCASE_BEFORE_ID[] = "<testcase ID=\"";
+  static const char XML_TESTCASE_AFTER_ID[] = "\">";
+  static const char XML_TESTCASE_END[] ="</testcase>";
+  static const char XML_TWO_SPACES[] = "  ";
+
+  ::std::string str;
+  ::std::string oldXMLstr;
+  ::std::string newXMLstr;
+  ::std::string xmlLine;
+  ::std::string dstDir;
+
+  if (check_if_tc_name_exists(tcName) == 1) //test case name already exists
+	  return FAIL;
+
+  dstDir = m_opts.get_option(TEST_SUITE_FOLDER);
+
+  oldXMLstr = dstDir+"testcases.xml";
+  ::std::ifstream oldTestcasesXML;
+  newXMLstr = dstDir+"testcases_temp.xml";
+  ::std::ofstream newTestcasesXML;
+
+  str = XML_TESTCASE_BEFORE_ID;
+  str += tcName;
+  str += XML_TESTCASE_AFTER_ID;
+  str += paramStr;
+  str += XML_TESTCASE_END;
+
+  oldTestcasesXML.open(oldXMLstr.c_str());
+  newTestcasesXML.open(newXMLstr.c_str());
+
+  while (oldTestcasesXML.good())
+  {
+	getline(oldTestcasesXML,xmlLine);
+
+	newTestcasesXML << xmlLine << "\n";
+
+	if (!str.compare(xmlLine))
+	{
+		oldTestcasesXML.close();
+		newTestcasesXML.close();
+		remove(newXMLstr.c_str());
+	    return FAIL;
+	}
+  }
+
+  // if we come here, we did not find the TC in the file
+
+  newTestcasesXML << XML_TESTCASE_BEFORE_ID << tcName << XML_TESTCASE_AFTER_ID << paramStr << XML_TESTCASE_END;
+
+  oldTestcasesXML.close();
+  newTestcasesXML.close();
+  remove(oldXMLstr.c_str());
+  rename(newXMLstr.c_str(),oldXMLstr.c_str());
+
+  return DONE;
+}
+
+/*
+ * execute a single testcase, with the name and shell-parameter
+ */
+int Command_Processing::run_testcase(::std::string tc_name, ::std::string tc_parameter)
+{
+	::std::string singleName;
+	::std::string callString;
+	::std::string str;
+	::std::string destDir;
+	::std::string covFile;
+	::std::string condFile;
+
+	//::std::ifstream readFile;
+
+	covFile = COVERAGE_FILE;//m_opts.get_option(TC_PATH_FILENAME);
+	condFile = m_opts.get_option(TC_CONDITIONS_FILENAME);
+	destDir = m_opts.get_option(TEST_SUITE_FOLDER);
+	singleName = TMP_EXEC_FILE;
+
+
+    if (integrateTestCaseNameInXML(tc_name,tc_parameter) != DONE)
+    	return FAIL;
+
+	remove(covFile.c_str());
+
+	callString = destDir+condFile;
+	rename(callString.c_str(),condFile.c_str());
+
+	callString = TMP_FOLDER;
+	callString += singleName+"instr.gcc.out "+tc_parameter;
+	system(callString.c_str());
+	::std::cerr << "Running testcase with parameter: " << tc_parameter << ::std::endl;
+
+	callString = tc_name;
+	if (callString.length() != 0)
+	  str = tc_name;
+	int pos;
+	while ((pos = str.find(" ")) != ::std::string::npos)
+		str.replace(pos,1,"_");
+
+	//callString = "mv ./"+covFile+" "+destDir+str+".log";
+	//system(callString.c_str());
+	callString = destDir+str+".log";
+	rename(covFile.c_str(),callString.c_str());
+
+	integrateInXML(str);
+
+	//callString = "cp ./"+condFile+" "+destDir+condFile;
+	//system(callString.c_str());
+	callString = destDir+condFile;
+	rename(condFile.c_str(),callString.c_str());
+
+	update_testcase_list();
+
+	return DONE;
+}
 
 Command_Processing::status_t Command_Processing::process(::language_uit & manager,
 		::std::ostream & os, char const * cmd) {
 	while (0 != *cmd && ::std::isspace(*cmd)) ++cmd;
 	if (0 == *cmd || ('/' == *cmd && '/' == *(cmd + 1))) return DONE;
 		
+	::std::string singleName;
+	::std::string callString;
+	::std::string destDir;
+	::std::string str;
+	::std::string covFile;
+	::std::string condFile;
+
+	::std::ifstream readFile;
+
+	covFile = COVERAGE_FILE;//m_opts.get_option(TC_PATH_FILENAME);
+	condFile = m_opts.get_option(TC_CONDITIONS_FILENAME);
+	destDir = m_opts.get_option(TEST_SUITE_FOLDER);
+	singleName = TMP_EXEC_FILE;
+
 	// new lexer
 	CMDFlexLexer lexer;
 	// put the input into a stream
@@ -221,9 +714,10 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 	char * arg(0);
 	int numeric_arg(-1);
 	::std::list< ::std::pair< char*, char* > > defines;
+	::std::list< char* > runParameter;
 	Cleanup cleanup(&arg, defines);
 	// yyparse returns 0 iff there was no error
-	if (0 != CMDparse(&lexer, parsed_cmd, &arg, &numeric_arg, defines)) return NO_CONTROL_COMMAND;
+	if (0 != CMDparse(&lexer, parsed_cmd, &arg, &numeric_arg, defines,runParameter)) return NO_CONTROL_COMMAND;
 
 	// parsing succeeded, what has to be done?
 	switch (parsed_cmd) {
@@ -288,6 +782,99 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 					"Multiplicity must be greater than 1");
 			m_opts.set_option(F2_O_MULTIPLE_COVERAGE, numeric_arg);
 			return DONE;
+		/*###### BEGIN frEDIT ####*/
+		case CMD_SET_FUNC_TO_COVER:
+		    FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, arg != 0);
+			m_opts.set_option(FUNC_TO_COVER,arg);
+			//os << "done" << ::std::endl;
+			update_testcase_list();
+			return DONE;
+		case CMD_SET_TC_CONDITIONS_FILENAME:
+		    FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, arg != 0);
+			m_opts.set_option(TC_CONDITIONS_FILENAME,arg);
+			//os << "done" << ::std::endl;
+			return DONE;
+		case CMD_SET_TC_TRACE_FILENAME:
+		    FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, arg != 0);
+			m_opts.set_option(TC_TRACE_FILENAME,arg);
+			//os << "done" << ::std::endl;
+			return DONE;
+		case CMD_SET_STANDARD_CBMC_MODE:
+			{
+			m_opts.set_option(STANDARD_CBMC_MODE,true);
+			m_opts.set_option(INTERNAL_COVERAGE_CHECK, m_opts.get_bool_option(ORIG_INTERNAL_COVERAGE_CHECK));
+			m_opts.set_option(SAT_COVERAGE_CHECK, m_opts.get_bool_option(ORIG_SAT_COVERAGE_CHECK));
+			return DONE;
+			}
+		case CMD_SET_PATHWALK_CBMC_MODE:
+			{
+			m_opts.set_option(STANDARD_CBMC_MODE,false);
+			m_opts.set_option(INTERNAL_COVERAGE_CHECK, false);
+			m_opts.set_option(SAT_COVERAGE_CHECK, true);
+
+			update_testcase_list();
+			return DONE;
+			}
+		case CMD_SET_AUTOGENERATE:
+		{
+			m_opts.set_option(AUTOGENERATE_TESTSUITE,true);
+			return DONE;
+		}
+		case CMD_SET_MAX_PATHS:
+		{
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, numeric_arg >= 0);
+			FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error, numeric_arg >= 0,
+					"MAX_PATHS must be greater than or equal to o");
+			m_opts.set_option(MAX_PATHS, numeric_arg);
+			return DONE;
+		}
+		case CMD_SET_PATH_DEPTH:
+		{
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, numeric_arg >= 0);
+			FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error, numeric_arg > 1,
+					"Path depth must be greater than 1");
+			m_opts.set_option(PATH_DEPTH, numeric_arg);
+			return DONE;
+		}
+		case CMD_SET_TESTSUITE_FOLDER:
+		    FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, arg != 0);
+			m_opts.set_option(TEST_SUITE_FOLDER,arg);
+			//os << "done" << ::std::endl;
+			return DONE;
+		case CMD_SET_TESTCASE:
+		    FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, arg != 0);
+		    {
+
+			callString = destDir+arg+".log";
+			readFile.open(callString.c_str());
+
+			if (readFile.good())
+			{
+				callString = arg;
+				callString = callString + ".log";
+				m_opts.set_option(TC_TRACE_FILENAME,callString.c_str());
+			}
+			else
+				os << "test case not found" << ::std::endl;
+
+			readFile.close();
+
+			return DONE;
+		    }
+		case CMD_RUN:
+		    FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, arg != 0);
+		    {
+				if (!runParameter.empty())
+				{
+					for (::std::list< char* >::const_iterator iter(runParameter.begin());
+							iter != runParameter.end(); ++iter)
+						str = str + " " + *iter;
+				}
+				if (run_testcase(arg, str) != DONE)
+					os << "Test case name already used, aborting ..." << ::std::endl;
+				return DONE;
+		    }
+		/*###### END frEDIT ####*/
 	}
 			
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, false);
@@ -341,6 +928,7 @@ void Command_Processing::model_argv(::language_uit & manager) const {
 		i=i+1;
    	}
 	*/
+
 	int max_argc=m_opts.get_int_option("max-argc");
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, max_argc > 0);
 
@@ -369,7 +957,7 @@ void Command_Processing::model_argv(::language_uit & manager) const {
 	{
 		// POSIX guarantees that at least 4096 characters can be passed as
 		// arguments
-		::array_typet argv_type(char_type(), from_integer(4096, index_type()));
+		::array_typet argv_type(char_type(), from_integer(42, index_type()));
 
 		::symbolt argv_symbol;
 		argv_symbol.pretty_name="argv''";
@@ -492,7 +1080,7 @@ void Command_Processing::model_argv(::language_uit & manager) const {
 		decl.location()=main_loc;
 		while_loop.body().move_to_operands(decl);
 
-		exprt e4096=from_integer(4096, len_symbol.type);
+		exprt e4096=from_integer(42, len_symbol.type);
 		binary_relation_exprt lt1(len, ID_lt, e4096);
 		side_effect_expr_function_callt fc1;
 		fc1.function()=symbol_exprt("__CPROVER_assume", code_typet());
@@ -625,22 +1213,27 @@ bool Command_Processing::finalize(::language_uit & manager) {
 	
 	::goto_convert_functionst converter(manager.symbol_table, m_gf,
 			manager.ui_message_handler);
+
+	//::std::cerr << "WITH _1 d found? " << manager.symbol_table.has_symbol("c::main::$tmp::return_value_setMyVal$1_1") << ::std::endl;
+
 	for(::std::vector< ::irep_idt >::const_iterator iter(symbols.begin());
 			iter != symbols.end(); ++iter) {
 		::goto_functionst::function_mapt::iterator fct(m_gf.function_map.find(*iter));
 		if (m_gf.function_map.end() != fct)
+			/* m_gf.function_map.erase(fct);
+		converter.convert_function(*iter);*/
 		{
-			if(*iter!=ID_main && // main was possibly modified
-			   fct->second.body_available && // ADD SOURCECODE may have added sth
-			   manager.symbol_table.symbols.find(*iter)->second.value.is_not_nil()) //not ABSTRACT
+			if (*iter!=ID_main)
 				continue;
 			m_gf.function_map.erase(fct);
 		}
 		converter.convert_function(*iter);
 	}
 
-	finalize_goto_program(manager);
 
+	//::std::cerr << "WITH _1 e found? " << manager.symbol_table.has_symbol("c::main::$tmp::return_value_setMyVal$1_1") << ::std::endl;
+
+	finalize_goto_program(manager);
 	return true;
 }
 

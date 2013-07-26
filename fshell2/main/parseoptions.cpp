@@ -43,6 +43,9 @@
 #include <langapi/mode.h>
 #include <goto-programs/link_to_library.h>
 
+#define TMP_EXEC_FILE "tempSUT"
+#define TMP_FOLDER "./temp/"
+
 FSHELL2_NAMESPACE_BEGIN;
 
 Parseoptions::Parseoptions(int argc, const char **argv) :
@@ -52,6 +55,50 @@ Parseoptions::Parseoptions(int argc, const char **argv) :
 	m_cpu_total(0),
 	m_session_total(0)
 {
+
+	::std::string inputFiles;
+	::std::string singleName;
+	::std::string callString;
+	::std::string destDir;
+
+	::std::ifstream readFile;
+
+	destDir = TMP_FOLDER;
+	inputFiles = "";
+	singleName = TMP_EXEC_FILE;
+
+	int size = cmdline.args.size();
+	for (int i=0;i<size;i++)
+	{
+	  inputFiles += cmdline.args.at(i);
+	  inputFiles += " ";
+	}
+	//printf("inputFiles: %s<--\n",inputFiles.c_str());
+
+	callString = "ls "+destDir;
+	if (system(callString.c_str()))
+	{
+		callString = "mkdir "+destDir;
+		system(callString.c_str());
+	}
+/*	callString = destDir+"conditions.xml";
+	readFile.open(callString.c_str());
+	if (!readFile.good())
+	{
+		callString = destDir+"conditions.xml";
+		::std::ofstream xmlFile(callString.c_str());
+	}
+	readFile.close();*/
+
+	callString = "/home/roeck/codebase/cprover/src/goto-cc/goto-cc "+inputFiles+"-o "+destDir+singleName+".goto.out";
+	system(callString.c_str());
+	callString = "/home/roeck/codebase/cprover/src/goto-instrument/goto-instrument --branch getBranchDecision "+destDir+singleName+".goto.out "+destDir+singleName+".goto.instr.out";
+	system(callString.c_str());
+	callString = "/home/roeck/codebase/cprover/src/goto-instrument/goto-instrument --dump-c "+destDir+singleName+".goto.instr.out "+destDir+singleName+".goto.instr.c";
+	system(callString.c_str());
+	callString = "gcc getBranchDecision.c "+destDir+singleName+".goto.instr.c -o "+destDir+singleName+"instr.gcc.out";
+	system(callString.c_str());
+
 	NEW_STAT(m_stats, CPU_Timer, cpu_timer, "Total CPU time");
 	cpu_timer.start_timer();
 	m_cpu_total = &cpu_timer;
@@ -164,9 +211,11 @@ bool Parseoptions::get_command_line_options()
 	m_options.set_option("use-instrumentation", cmdline.isset("use-instrumentation"));
 	m_options.set_option("internal-coverage-check",
 			!cmdline.isset("no-internal-coverage-check"));
+	m_options.set_option("original-internal-coverage-check",m_options.get_bool_option("internal-coverage-check"));
 	m_options.set_option("sat-coverage-check", cmdline.isset("sat-coverage-check") ||
 			m_options.get_bool_option("use-instrumentation") ||
 			!m_options.get_bool_option("internal-coverage-check"));
+	m_options.set_option("original-sat-coverage-check",m_options.get_bool_option("sat-coverage-check"));
 	m_options.set_option("tco-location", cmdline.isset("tco-location"));
 	m_options.set_option("tco-called-functions", cmdline.isset("tco-called-functions"));
 	m_options.set_option("tco-assign-globals", cmdline.isset("tco-assign-globals"));

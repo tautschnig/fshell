@@ -50,7 +50,7 @@
 extern "C"
 {
   void yyerror(CMDFlexLexer *, ::fshell2::command::Command_Processing::parsed_command_t &,
-  	char **, int*, ::std::list< ::std::pair< char*, char* > > &, char const*);
+  	char **, int*, ::std::list< ::std::pair< char*, char* > > &, ::std::list< char* > &,char const*);
 }
 
 #define yylex() lexer->yylex()
@@ -64,6 +64,7 @@ extern "C"
 %parse-param { char ** arg }
 %parse-param { int * numeric_arg }
 %parse-param { ::std::list< ::std::pair< char*, char* > > & defines }
+%parse-param { ::std::list< char* > & runParameter }
 
 %initial-action { *arg = 0; *numeric_arg = -1; }
 
@@ -76,6 +77,7 @@ extern "C"
 /* commands */
 %token TOK_QUIT
 %token TOK_HELP
+%token TOK_RUN
 /* preparing the CFG */
 %token TOK_ADD
 %token TOK_SOURCECODE
@@ -93,6 +95,16 @@ extern "C"
 %token TOK_NO_ZERO_INIT
 %token TOK_ABSTRACT
 %token TOK_MULTIPLE_COVERAGE
+%token TOK_FUNC_TO_COVER
+%token TOK_TC_CONDITIONS_FILENAME
+%token TOK_TC_TRACE_FILENAME
+%token TOK_STANDARD_CBMC_MODE
+%token TOK_PATHWALK_CBMC_MODE
+%token TOK_TESTSUITE_FOLDER
+%token TOK_TESTCASE
+%token TOK_AUTOGENERATE
+%token TOK_MAX_PATHS
+%token TOK_PATH_DEPTH
 /* C identifier */
 %token <STRING> TOK_C_IDENT
 /* a quoted string (no newline) */
@@ -111,6 +123,11 @@ Command: TOK_QUIT
        | TOK_HELP
        {
 	   	 cmd = ::fshell2::command::Command_Processing::CMD_HELP;
+       }
+       | TOK_RUN TOK_QUOTED_STRING RunParameter
+       {
+	   	 cmd = ::fshell2::command::Command_Processing::CMD_RUN;
+		 *arg = $2;
        }
        | TOK_ADD TOK_SOURCECODE Defines TOK_QUOTED_STRING
        {
@@ -132,6 +149,12 @@ Command: TOK_QUIT
        }
        | TOK_SET Options
 	   ;
+	   
+RunParameter: /* empty */
+       | RunParameter TOK_QUOTED_STRING
+       {
+         runParameter.push_back( $2 );
+       }
 
 Defines: /* empty */
        | Defines TOK_DEFINE TOK_C_IDENT
@@ -167,13 +190,60 @@ Options: TOK_ENTRY TOK_C_IDENT
 	     cmd = ::fshell2::command::Command_Processing::CMD_SET_MULTIPLE_COVERAGE;
 		 *numeric_arg = $2;
 	   }
+	   | TOK_FUNC_TO_COVER TOK_QUOTED_STRING
+	   {
+	     cmd = ::fshell2::command::Command_Processing::CMD_SET_FUNC_TO_COVER;
+		 *arg = $2;
+	   }
+	   | TOK_TC_CONDITIONS_FILENAME TOK_QUOTED_STRING
+	   {
+	     cmd = ::fshell2::command::Command_Processing::CMD_SET_TC_CONDITIONS_FILENAME;
+		 *arg = $2;
+	   }
+	   | TOK_TC_TRACE_FILENAME TOK_QUOTED_STRING
+	   {
+	     cmd = ::fshell2::command::Command_Processing::CMD_SET_TC_TRACE_FILENAME;
+		 *arg = $2;
+	   }
+	   | TOK_STANDARD_CBMC_MODE 
+	   {
+	     cmd = ::fshell2::command::Command_Processing::CMD_SET_STANDARD_CBMC_MODE;
+	   }
+	   | TOK_PATHWALK_CBMC_MODE 
+	   {
+	     cmd = ::fshell2::command::Command_Processing::CMD_SET_PATHWALK_CBMC_MODE;
+	   }
+	   | TOK_AUTOGENERATE 
+	   {
+	     cmd = ::fshell2::command::Command_Processing::CMD_SET_AUTOGENERATE;
+	   }
+	   | TOK_MAX_PATHS TOK_NAT_NUMBER
+	   {
+	     cmd = ::fshell2::command::Command_Processing::CMD_SET_MAX_PATHS;
+		 *numeric_arg = $2;
+	   }
+	   | TOK_PATH_DEPTH TOK_NAT_NUMBER
+	   {
+	     cmd = ::fshell2::command::Command_Processing::CMD_SET_PATH_DEPTH;
+		 *numeric_arg = $2;
+	   }
+	   | TOK_TESTSUITE_FOLDER TOK_QUOTED_STRING
+	   {
+	     cmd = ::fshell2::command::Command_Processing::CMD_SET_TESTSUITE_FOLDER;
+		 *arg = $2;
+	   }
+	   | TOK_TESTCASE TOK_QUOTED_STRING
+	   {
+	     cmd = ::fshell2::command::Command_Processing::CMD_SET_TESTCASE;
+		 *arg = $2;
+	   }
        ;
 
 
 %%
 
 void yyerror(CMDFlexLexer *, ::fshell2::command::Command_Processing::parsed_command_t &,
-	char **, int *, ::std::list< ::std::pair< char*, char* > > &, char const*)
+	char **, int *, ::std::list< ::std::pair< char*, char* > > &, ::std::list< char* > &, char const*)
 {
 	// no-op
 }

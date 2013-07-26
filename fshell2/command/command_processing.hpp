@@ -45,6 +45,22 @@ class optionst;
 #define F2_O_LIMIT "fshell::limit"
 #define F2_O_MULTIPLE_COVERAGE "fshell::multiple_coverage"
 
+#define STANDARD_CBMC_MODE "StandardCBMCmode"
+#define FUNC_TO_COVER "FuncToCover"
+#define TC_CONDITIONS_FILENAME "TestCaseConditionsFileName"
+#define TC_TRACE_FILENAME "TestCaseTraceFileName"
+#define TEST_SUITE_FOLDER "TestSuiteFolder"
+#define INTERNAL_COVERAGE_CHECK "internal-coverage-check"
+#define SAT_COVERAGE_CHECK "sat-coverage-check"
+#define ORIG_INTERNAL_COVERAGE_CHECK "original-internal-coverage-check"
+#define ORIG_SAT_COVERAGE_CHECK "original-sat-coverage-check"
+#define AUTOGENERATE_TESTSUITE "autogenerate-testsuite"
+#define MAX_PATHS "max-paths"
+#define PATH_DEPTH "path-depth"
+
+#define CONDITIONS_FILE "conditions.log"
+#define COVERAGE_FILE "coverage.log"
+
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_COMMAND_NAMESPACE_BEGIN;
 
@@ -69,7 +85,20 @@ class Command_Processing
 		CMD_SET_LIMIT_COUNT,
 		CMD_SET_NO_ZERO_INIT,
 		CMD_SET_ABSTRACT,
-		CMD_SET_MULTIPLE_COVERAGE
+		CMD_SET_MULTIPLE_COVERAGE,
+		/*###### BEGIN frEDIT ####*/
+		CMD_SET_FUNC_TO_COVER,
+		CMD_SET_TC_CONDITIONS_FILENAME,
+		CMD_SET_TC_TRACE_FILENAME,
+		CMD_SET_STANDARD_CBMC_MODE,
+		CMD_SET_PATHWALK_CBMC_MODE,
+		CMD_SET_TESTSUITE_FOLDER,
+		CMD_RUN,
+		CMD_SET_TESTCASE,
+		CMD_SET_AUTOGENERATE,
+		CMD_SET_MAX_PATHS,
+		CMD_SET_PATH_DEPTH
+		/*###### END frEDIT ####*/
 	} parsed_command_t;
 	
 	typedef enum {
@@ -88,6 +117,11 @@ class Command_Processing
 	bool finalize(::language_uit & manager);
 	void finalize_goto_program(::language_uit & manager);
 	
+	int run_testcase(::std::string tc_name, ::std::string tc_parameter);
+	int set_to_next_testcase(void);
+
+	int check_if_tc_name_exists(::std::string tc_name);
+
 	private:
 	::optionst & m_opts;
 	::goto_functionst & m_gf;
@@ -95,6 +129,10 @@ class Command_Processing
 	bool m_finalized;
 	bool m_remove_zero_init;
 	
+	::std::vector< ::std::string> open_tc_names;
+
+	int update_testcase_list(void);
+
 	::std::ostream & print_file_contents(::std::ostream & os, char const * name) const;
 
 	void add_sourcecode(::language_uit & manager, char const * file,
@@ -102,6 +140,8 @@ class Command_Processing
 	void remove_zero_init(::language_uit & manager) const;
 	void model_argv(::language_uit & manager) const;
 
+	void integrateInXML(::std::string tcFilename);
+	int integrateTestCaseNameInXML(::std::string tcName, std::string paramStr);
 	/*! \copydoc copy_constructor
 	*/
 	Command_Processing( Self const& rhs );

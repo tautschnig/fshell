@@ -104,6 +104,7 @@ bool CNF_Conversion::decide_default() {
 
 void CNF_Conversion::convert(::goto_functionst const& gf) {
 	// build the Boolean equation
+
 	FSHELL2_PROD_CHECK1(::fshell2::FShell2_Error, !this->run(gf),
 			"Failed to build Boolean program representation");
 }
@@ -567,6 +568,8 @@ CNF_Conversion & Compute_Test_Goals_Boolean::do_query(::goto_functionst & gf, Qu
 	::fshell2::instrumentation::CFG cfg;
 	cfg.compute_edges(gf);
 	
+	if (m_opts.get_bool_option("StandardCBMCmode"))
+	{
 	// compute trace automata for coverage and path patterns
 	m_test_goal_states = &(m_cp_eval.do_query(gf, cfg, query));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_test_goal_states);
@@ -577,7 +580,7 @@ CNF_Conversion & Compute_Test_Goals_Boolean::do_query(::goto_functionst & gf, Qu
 	
 	::fshell2::instrumentation::GOTO_Transformation inserter(m_manager, gf);
 	inserter.insert(ID_main, ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::END_FUNCTION, tmp);
-
+	}
 	// print instrumented program, if requested
 	if (m_opts.get_bool_option("show-goto-functions")) {
 		Smart_Printer smp(m_manager);
@@ -587,9 +590,20 @@ CNF_Conversion & Compute_Test_Goals_Boolean::do_query(::goto_functionst & gf, Qu
 		::dump_c(gf, m_equation.get_ns(), smp.get_ostream());
 	}
 
+	//assert(m_equation.get_ns().get_symbol_table().has_symbol("c::main::$tmp::return_value_setMyVal$1_1"));
 	// convert CFA to CNF
 	m_equation.convert(gf);
-	
+	//std::cerr << "MAPPING-SIZE: " << m_equation.get_bv().get_map().mapping.size() << std::endl;
+	if (m_opts.get_bool_option("StandardCBMCmode"))
+	  FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance ,m_equation.get_bv().get_map().mapping.size() != 0);
+	else
+	{
+		if (m_equation.get_bv().get_map().mapping.size() == 0)
+			::std::cerr << "CERR<< FINISHED AUTO GENERATION" << ::std::endl;
+	}
+
+	if (m_opts.get_bool_option("StandardCBMCmode"))
+	{
 	unsigned cnt_vars_before(m_equation.get_cnf().no_variables());
 	unsigned cnt_cl_before(m_equation.get_cnf().no_clauses());
 
@@ -610,7 +624,15 @@ CNF_Conversion & Compute_Test_Goals_Boolean::do_query(::goto_functionst & gf, Qu
 	more_vars_cnt2.inc(m_equation.get_cnf().no_variables() - cnt_vars_before);
 	NEW_STAT(m_stats, Counter< unsigned >, more_cl_cnt2, "Additional clauses from query");
 	more_cl_cnt2.inc(m_equation.get_cnf().no_clauses() - cnt_cl_before);
-	
+	}
+	else
+	{
+		test_goal_id_map_t tmp;
+		tmp.push_back(bvt());
+		tmp.back().push_back(::const_literal(true));
+		test_goal_groups_t bla;
+		m_equation.set_test_goal_groups(bla,tmp);
+	}
 	return m_equation;
 }
 

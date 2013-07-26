@@ -36,6 +36,7 @@
 %start command
 /* setting options */
 %start options
+%start param
 
 %{
 
@@ -80,6 +81,7 @@ int CMDFlexLexer::yywrap() { return 1; }
 /* commands */
 TOK_QUIT                (QUIT|EXIT)
 TOK_HELP                HELP
+TOK_RUN                 RUN
 /* preparing the CFG */
 TOK_ADD                 ADD
 TOK_SOURCECODE          SOURCECODE
@@ -97,6 +99,17 @@ TOK_COUNT               COUNT
 TOK_NO_ZERO_INIT        NO_ZERO_INIT  
 TOK_ABSTRACT            ABSTRACT
 TOK_MULTIPLE_COVERAGE   MULTIPLE_COVERAGE
+TOK_FUNC_TO_COVER       FUNC_TO_COVER
+TOK_TC_CONDITIONS_FILENAME	TC_CONDITIONS_FILENAME
+TOK_TC_TRACE_FILENAME	TC_TRACE_FILENAME
+TOK_STANDARD_CBMC_MODE  STANDARD_CBMC_MODE
+TOK_PATHWALK_CBMC_MODE  PATHWALK_CBMC_MODE
+TOK_TESTSUITE_FOLDER    TESTSUITE_FOLDER
+TOK_TESTCASE            TESTCASE
+TOK_AUTOGENERATE		AUTOGENERATE
+TOK_MAX_PATHS			MAX_PATHS
+TOK_PATH_DEPTH			PATH_DEPTH
+
 /* C identifier */
 TOK_C_IDENT             [_a-zA-Z][_a-zA-Z0-9]*
 /* a quoted string (no newline) */
@@ -111,6 +124,8 @@ TOK_NAT_NUMBER          [0-9]+
 
 <INITIAL>{TOK_QUIT}				      { return TOK_QUIT; }
 <INITIAL>{TOK_HELP}				      { return TOK_HELP; }
+
+<INITIAL>{TOK_RUN}   { BEGIN param; return TOK_RUN; }
 
 <INITIAL>{TOK_ADD}   { BEGIN command; return TOK_ADD; }
 <command>{TOK_SOURCECODE}   { return TOK_SOURCECODE; }
@@ -128,6 +143,16 @@ TOK_NAT_NUMBER          [0-9]+
 <options>{TOK_NO_ZERO_INIT}   { return TOK_NO_ZERO_INIT; }
 <options>{TOK_ABSTRACT}   { return TOK_ABSTRACT; }
 <options>{TOK_MULTIPLE_COVERAGE}   { return TOK_MULTIPLE_COVERAGE; }
+<options>{TOK_FUNC_TO_COVER}   { return TOK_FUNC_TO_COVER; } 
+<options>{TOK_TC_CONDITIONS_FILENAME}   { return TOK_TC_CONDITIONS_FILENAME; } 
+<options>{TOK_TC_TRACE_FILENAME}   { return TOK_TC_TRACE_FILENAME; } 
+<options>{TOK_STANDARD_CBMC_MODE}   { return TOK_STANDARD_CBMC_MODE; } 
+<options>{TOK_PATHWALK_CBMC_MODE}   { return TOK_PATHWALK_CBMC_MODE; } 
+<options>{TOK_TESTSUITE_FOLDER}   { return TOK_TESTSUITE_FOLDER; } 
+<options>{TOK_TESTCASE}   { return TOK_TESTCASE; } 
+<options>{TOK_AUTOGENERATE}   { return TOK_AUTOGENERATE; } 
+<options>{TOK_MAX_PATHS}   { return TOK_MAX_PATHS; } 
+<options>{TOK_PATH_DEPTH}   { return TOK_PATH_DEPTH; } 
 
 <command,options>{TOK_C_IDENT}  { 
                                         yylval.STRING = strdup( yytext );
@@ -135,7 +160,7 @@ TOK_NAT_NUMBER          [0-9]+
                                           yylval.STRING != 0, "Out of memory" );
                                         return TOK_C_IDENT; 
                                       }
-<command>{TOK_QUOTED_STRING}	{
+<command,options,param>{TOK_QUOTED_STRING}	{
                                         /* only return the string between the quotes */
                                         int len = strlen( yytext );
                                         yylval.STRING = static_cast<char*>(malloc((len - 1)*sizeof(char)));
@@ -145,7 +170,7 @@ TOK_NAT_NUMBER          [0-9]+
                                         yylval.STRING[ len - 2 ] = '\0';
                                         return TOK_QUOTED_STRING; 
                                       }
-<options>{TOK_NAT_NUMBER}				  { 
+<options,param>{TOK_NAT_NUMBER}				  { 
                                         yylval.NUMBER = strtol( yytext, 0, 10 );
                                         FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error, 
                                           EINVAL != errno, "Invalid number" );

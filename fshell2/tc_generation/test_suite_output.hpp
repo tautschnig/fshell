@@ -64,6 +64,12 @@ class Test_Suite_Output
 	::std::ostream & print_ts(Constraint_Strengthening::test_cases_t & test_suite,
 			unsigned const index, ::std::ostream & os, ::ui_message_handlert::uit const ui);
 
+
+	::std::string get_auto_testcase_parameter()
+	{
+		return m_auto_testcase_parameter;
+	}
+
 	private:
 	class Test_Input
 	{
@@ -137,6 +143,8 @@ class Test_Suite_Output
 	::fshell2::fql::CNF_Conversion & m_equation;
 	::optionst const& m_opts;
 	
+	::std::string m_auto_testcase_parameter;
+
 	/*! \copydoc copy_constructor
 	*/
 	Test_Suite_Output( Self const& rhs );
