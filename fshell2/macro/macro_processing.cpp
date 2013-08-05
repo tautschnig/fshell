@@ -92,7 +92,7 @@ Macro_Processing::Macro_Processing() :
 #endif
 {
 #if defined(_WIN32)
-	if(::config.ansi_c.mode==::configt::ansi_ct::PP_GCC)
+	if(::config.ansi_c.preprocessor==::configt::ansi_ct::PP_GCC)
 		m_cpp_cmdline=CPP_CMD " -dP -undef -Werror";
 #endif
 
