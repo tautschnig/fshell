@@ -192,6 +192,7 @@ void Test_Suite_Output::update_call_stack(
 {
 	if(::fshell2::instrumentation::GOTO_Transformation::is_instrumented( step.source.pc) ||
 	   step.is_function_return() || /* we figure these out ourselves */
+	   step.source.pc->is_end_function() ||
 	   (step.is_assignment() && ::symex_targett::STATE != step.assignment_type))
 		return;
 
@@ -224,6 +225,8 @@ void Test_Suite_Output::update_call_stack(
 		}
 	}
 
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
+						 !step.source.pc->is_end_function());
 	::goto_programt::const_targett next(step.source.pc);
 	++next;
 	FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
