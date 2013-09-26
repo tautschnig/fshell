@@ -62,7 +62,7 @@ class CP_Alternative : public Coverage_Pattern_Expr
 
 	private:
 	friend Self * FQL_Node_Factory<Self>::create(Coverage_Pattern_Expr * a, Coverage_Pattern_Expr * b);
-	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
+	friend FQL_Node_Factory<Self>::~FQL_Node_Factory();
 
 	Coverage_Pattern_Expr * m_cp_a;
 	Coverage_Pattern_Expr * m_cp_b;

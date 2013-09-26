@@ -67,7 +67,7 @@ class Predicate : public ECP_Atom
 
 	private:
 	friend Self * FQL_Node_Factory<Self>::create(::exprt *);
-	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
+	friend FQL_Node_Factory<Self>::~FQL_Node_Factory();
 
 	::exprt * m_expr;
 

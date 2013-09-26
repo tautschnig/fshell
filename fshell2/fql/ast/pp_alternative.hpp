@@ -62,7 +62,7 @@ class PP_Alternative : public Path_Pattern_Expr
 
 	private:
 	friend Self * FQL_Node_Factory<Self>::create(Path_Pattern_Expr *, Path_Pattern_Expr *);
-	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
+	friend FQL_Node_Factory<Self>::~FQL_Node_Factory();
 
 	Path_Pattern_Expr * m_pp_a;
 	Path_Pattern_Expr * m_pp_b;

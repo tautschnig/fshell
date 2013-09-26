@@ -88,7 +88,7 @@ class Parseoptions :
 		::fshell2::statistics::Wallclock_Timer * m_session_total;
 		::optionst m_options;
 
-		void set_verbosity(::messaget &message);
+		void eval_verbosity();
 		bool get_command_line_options();
 
 		/*! \copydoc copy_constructor

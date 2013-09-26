@@ -63,7 +63,7 @@ class Repeat : public Path_Pattern_Expr
 
 	private:
 	friend Self * FQL_Node_Factory<Self>::create(Path_Pattern_Expr *, int, int);
-	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
+	friend FQL_Node_Factory<Self>::~FQL_Node_Factory();
 
 	Path_Pattern_Expr * m_pp;
 	int m_lower_bound, m_upper_bound;

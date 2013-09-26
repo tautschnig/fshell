@@ -68,7 +68,7 @@ class Query : public FQL_Node
 	private:
 	friend Self * FQL_Node_Factory<Self>::create(Filter_Expr * prefix, Coverage_Pattern_Expr * cover,
 			Path_Pattern_Expr * passing);
-	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
+	friend FQL_Node_Factory<Self>::~FQL_Node_Factory();
 
 	Filter_Expr * m_prefix;
 	Coverage_Pattern_Expr * m_cover;

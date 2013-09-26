@@ -87,7 +87,7 @@ Parseoptions::~Parseoptions() {
 		m_stats.print(*this);
 }
 
-void Parseoptions::set_verbosity(::messaget &message)
+void Parseoptions::eval_verbosity()
 {
 	int v(8);
 
@@ -100,7 +100,7 @@ void Parseoptions::set_verbosity(::messaget &message)
 			v=9;
 	}
 
-	message.set_verbosity(v);
+	set_verbosity(v);
 }
 
 bool Parseoptions::get_command_line_options()
@@ -174,7 +174,7 @@ bool Parseoptions::get_command_line_options()
 	if(cmdline.isset("max-argc"))
 		m_options.set_option("max-argc", cmdline.getval("max-argc"));
 
-	set_verbosity(*this);
+	eval_verbosity();
 
 	if(cmdline.isset("statistics") || get_verbosity() >= 8)
 		m_options.set_option("statistics", true);

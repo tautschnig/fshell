@@ -108,8 +108,8 @@ void CFA::m_class_invariance() const {
 CFA::nodes_t const CFA::get_L() const {
 	nodes_t all_nodes(m_disconnected_nodes);
 	for (edges_t::const_iterator iter(m_edges.begin()); iter != m_edges.end(); ++iter) {
-		all_nodes.insert(iter->first).second;
-		all_nodes.insert(iter->second).second;
+		all_nodes.insert(iter->first);
+		all_nodes.insert(iter->second);
 	}
 	return all_nodes;
 }

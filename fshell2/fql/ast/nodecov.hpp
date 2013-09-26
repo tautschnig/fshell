@@ -63,7 +63,7 @@ class Nodecov : public ECP_Atom
 
 	private:
 	friend Self * FQL_Node_Factory<Self>::create(Filter_Expr * filter);
-	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
+	friend FQL_Node_Factory<Self>::~FQL_Node_Factory();
 
 	Filter_Expr * m_filter_expr;
 

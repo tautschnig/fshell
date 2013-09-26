@@ -128,7 +128,7 @@ class Counter : public Statistics_Interface
 	private:
 	T m_value;
 	
-	friend Self & Statistics::new_stat<Self>(::std::string const&);
+	template <typename TT> friend TT & Statistics::new_stat(::std::string const&);
 	friend Statistics::~Statistics();
 	
 	Counter(::std::string const& name);

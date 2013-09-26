@@ -88,12 +88,12 @@ Macro_Processing::Macro_Processing() :
 #if defined(_WIN32)
 	m_cpp_cmdline("CL /nologo /E")
 #else
-	m_cpp_cmdline(CPP_CMD " -dP -undef -Werror")
+	m_cpp_cmdline(CPP_CMD " -undef -Werror")
 #endif
 {
 #if defined(_WIN32)
 	if(::config.ansi_c.preprocessor==::configt::ansi_ct::PP_GCC)
-		m_cpp_cmdline=CPP_CMD " -dP -undef -Werror";
+		m_cpp_cmdline=CPP_CMD " -undef -Werror";
 #endif
 
 	errno = 0;

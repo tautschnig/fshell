@@ -64,13 +64,14 @@ class Filter_Function : public Filter_Expr
 	inline ::std::string const& get_string_arg() const;
 
 	private:
-	template <filter_function_t Filter_Function>
+	template <>
 	friend Self * FQL_Node_Factory<Self>::create();
-	template <filter_function_t Filter_Function>
+	template <>
 	friend Self * FQL_Node_Factory<Self>::create(int val);
-	template <filter_function_t Filter_Function>
+	template <>
 	friend Self * FQL_Node_Factory<Self>::create(::std::string const& val);
-	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
+	template <>
+	friend FQL_Node_Factory<Self>::~FQL_Node_Factory();
 
 	filter_function_t m_type;
 	int m_int_value;

@@ -65,7 +65,7 @@ class Depcov : public ECP_Atom
 
 	private:
 	friend Self * FQL_Node_Factory<Self>::create(Filter_Expr * a, Filter_Expr * b, Filter_Expr * c);
-	friend FQL_Node_Factory<Self>::~FQL_Node_Factory<Self>();
+	friend FQL_Node_Factory<Self>::~FQL_Node_Factory();
 
 	Filter_Expr * m_filter_a;
 	Filter_Expr * m_filter_b;
