@@ -946,7 +946,7 @@ void Compute_Test_Goals_Boolean::do_step(::cnf_clause_list_assignmentt & cnf,
 					::std::inserter(target_graphs, target_graphs.begin()));
 
 			::literalt const al(cnf.land(step->guard_literal,
-						(goto_edge == e_iter ? goto_guard : goto_guard.negation())));
+						(goto_edge == e_iter ? goto_guard : !goto_guard)));
 			edge_guards.push_back(al);
 
 			// collect all possible transitions

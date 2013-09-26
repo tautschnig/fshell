@@ -124,7 +124,7 @@ void Test_Suite_Minimization::minimize(Constraint_Strengthening::test_cases_t &
 		::bvt::const_iterator c_iter(bound_constant.begin());
 		for (::bvt::iterator iter(upper_bound.begin()); iter != upper_bound.end();
 				++iter, ++c_iter)
-			iter->cond_invert(iter->sign() != c_iter->is_false());
+			*iter^=iter->sign() != c_iter->is_false();
 
 		solver.set_assumptions(upper_bound);
 		if (::propt::P_UNSATISFIABLE == solver.prop_solve()) break;
