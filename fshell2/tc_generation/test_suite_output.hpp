@@ -34,6 +34,8 @@
 #include <iostream>
 #include <string>
 
+#include <stack>
+
 #include <fshell2/tc_generation/constraint_strengthening.hpp>
 
 #include <util/ui_message.h>
@@ -68,6 +70,17 @@ class Test_Suite_Output
 	::std::string get_auto_testcase_parameter()
 	{
 		return m_auto_testcase_parameter;
+	}
+
+	int pop_testcase_parameter (::std::string &str)
+	{
+		if (m_auto_testcase_parameter_stack.size() > 0)
+		{
+			str = m_auto_testcase_parameter_stack.top();
+			m_auto_testcase_parameter_stack.pop();
+			return(1);
+		}
+		return(0);
 	}
 
 	private:
@@ -144,6 +157,8 @@ class Test_Suite_Output
 	::optionst const& m_opts;
 	
 	::std::string m_auto_testcase_parameter;
+	typedef ::std::stack< ::std::string> testcase_parameter_t;
+	testcase_parameter_t m_auto_testcase_parameter_stack;
 
 	/*! \copydoc copy_constructor
 	*/

@@ -273,21 +273,27 @@ void FShell2::try_query(::language_uit & manager, char const * line,
 			else if (once_more)
 			{
 
-				std::cerr << "ONCE MORE with " << paramString << std::endl;
-
-				::std::stringstream ss;
-				do
+				std::string strdummy;
+				strdummy = "";
+				while (out.pop_testcase_parameter(strdummy))
 				{
-				  ss.str("");
-				  ss << "AutoTC" << rand() % 1000000000;
-				  //TODO if name already existed generate new name
-				} while (m_cmd.check_if_tc_name_exists(ss.str()) != 0);
 
-				m_cmd.run_testcase(ss.str(), paramString);
+					std::cerr << "TRYING TO RUN NEW TESTCASE with parameter string: " << strdummy << std::endl;
+
+					::std::stringstream ss;
+					do
+					{
+					  ss.str("");
+					  ss << "AutoTC" << rand() % 1000000000;
+					  //TODO if name already existed generate new name
+					} while (m_cmd.check_if_tc_name_exists(ss.str()) != 0);
+
+					m_cmd.run_testcase(ss.str(), strdummy);
+				}
 
 				//once_more = false; // avoid looping
 			}
-			else if (m_opts.get_bool_option(AUTOGENERATE_TESTSUITE) && (m_cmd.set_to_next_testcase() == 0))
+			else if (m_opts.get_bool_option(AUTOGENERATE_TESTSUITE) && (m_cmd.set_to_next_testcase() == 0))  // use next testcase
 				once_more = true;
 			/*FR END EDIT*/
 
@@ -302,6 +308,7 @@ void FShell2::try_query(::language_uit & manager, char const * line,
 				ts_stats = &stats;
 			}
 		}
+
 
 		of.close();
 		timer.stop_timer();

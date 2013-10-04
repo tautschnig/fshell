@@ -57,6 +57,10 @@ class optionst;
 #define AUTOGENERATE_TESTSUITE "autogenerate-testsuite"
 #define MAX_PATHS "max-paths"
 #define PATH_DEPTH "path-depth"
+#define SEARCH_IN_REDUCED_CFG "search-in-reduced-cfg"
+#define USE_SEARCH_IN_REDUCED_CFG "use-search-in-reduced-cfg"
+#define SKIP_BACKTRACE_BRANCHING "skip-backtrace-branching"
+
 
 #define CONDITIONS_FILE "conditions.log"
 #define COVERAGE_FILE "coverage.log"
@@ -97,7 +101,9 @@ class Command_Processing
 		CMD_SET_TESTCASE,
 		CMD_SET_AUTOGENERATE,
 		CMD_SET_MAX_PATHS,
-		CMD_SET_PATH_DEPTH
+		CMD_SET_PATH_DEPTH,
+		CMD_SET_REDUCED_CFG_SEARCH,
+		CMD_SET_SKIP_BACKTRACE_BRANCHING
 		/*###### END frEDIT ####*/
 	} parsed_command_t;
 	

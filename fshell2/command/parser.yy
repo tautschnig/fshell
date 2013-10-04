@@ -105,6 +105,8 @@ extern "C"
 %token TOK_AUTOGENERATE
 %token TOK_MAX_PATHS
 %token TOK_PATH_DEPTH
+%token TOK_REDUCED_CFG_SEARCH
+%token TOK_SKIP_BACKTRACE_BRANCHING
 /* C identifier */
 %token <STRING> TOK_C_IDENT
 /* a quoted string (no newline) */
@@ -213,13 +215,24 @@ Options: TOK_ENTRY TOK_C_IDENT
 	   {
 	     cmd = ::fshell2::command::Command_Processing::CMD_SET_PATHWALK_CBMC_MODE;
 	   }
-	   | TOK_AUTOGENERATE 
+	   | TOK_AUTOGENERATE TOK_NAT_NUMBER
 	   {
 	     cmd = ::fshell2::command::Command_Processing::CMD_SET_AUTOGENERATE;
+		 *numeric_arg = $2;
 	   }
 	   | TOK_MAX_PATHS TOK_NAT_NUMBER
 	   {
 	     cmd = ::fshell2::command::Command_Processing::CMD_SET_MAX_PATHS;
+		 *numeric_arg = $2;
+	   }
+	   | TOK_REDUCED_CFG_SEARCH TOK_NAT_NUMBER
+	   {
+	     cmd = ::fshell2::command::Command_Processing::CMD_SET_REDUCED_CFG_SEARCH;
+		 *numeric_arg = $2;
+	   }
+	   | TOK_SKIP_BACKTRACE_BRANCHING TOK_NAT_NUMBER
+	   {
+	     cmd = ::fshell2::command::Command_Processing::CMD_SET_SKIP_BACKTRACE_BRANCHING;
 		 *numeric_arg = $2;
 	   }
 	   | TOK_PATH_DEPTH TOK_NAT_NUMBER

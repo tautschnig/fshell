@@ -568,13 +568,13 @@ CNF_Conversion & Compute_Test_Goals_Boolean::do_query(::goto_functionst & gf, Qu
 	::fshell2::instrumentation::CFG cfg;
 	cfg.compute_edges(gf);
 	
-	if (m_opts.get_bool_option("StandardCBMCmode"))
+	//if (m_opts.get_bool_option("StandardCBMCmode"))
 	{
 	// compute trace automata for coverage and path patterns
 	m_test_goal_states = &(m_cp_eval.do_query(gf, cfg, query));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_test_goal_states);
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_test_goal_states->m_cp == query.get_cover());
-	
+
 	::goto_programt tmp;
 	tmp.add_instruction(ASSERT)->make_assertion(::false_exprt());
 	
@@ -594,16 +594,17 @@ CNF_Conversion & Compute_Test_Goals_Boolean::do_query(::goto_functionst & gf, Qu
 	// convert CFA to CNF
 	m_equation.convert(gf);
 	//std::cerr << "MAPPING-SIZE: " << m_equation.get_bv().get_map().mapping.size() << std::endl;
-	if (m_opts.get_bool_option("StandardCBMCmode"))
+	if (m_opts.get_bool_option("StandardCBMCmode") )
 	  FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance ,m_equation.get_bv().get_map().mapping.size() != 0);
 	else
 	{
 		if (m_equation.get_bv().get_map().mapping.size() == 0)
-			::std::cerr << "CERR<< FINISHED AUTO GENERATION" << ::std::endl;
+			::std::cerr << "CERR<< mapping.size() is 0" << ::std::endl;
 	}
 
-	if (m_opts.get_bool_option("StandardCBMCmode"))
+	if (m_opts.get_bool_option("StandardCBMCmode") || m_opts.get_bool_option("use-search-in-reduced-cfg"))
 	{
+		::std::cerr << "-----######################-------------------------- STANDARD" << ::std::endl;
 	unsigned cnt_vars_before(m_equation.get_cnf().no_variables());
 	unsigned cnt_cl_before(m_equation.get_cnf().no_clauses());
 
@@ -627,12 +628,14 @@ CNF_Conversion & Compute_Test_Goals_Boolean::do_query(::goto_functionst & gf, Qu
 	}
 	else
 	{
+		::std::cerr << "+++++++######################-------------------------- PIMP" << ::std::endl;
 		test_goal_id_map_t tmp;
 		tmp.push_back(bvt());
 		tmp.back().push_back(::const_literal(true));
 		test_goal_groups_t bla;
 		m_equation.set_test_goal_groups(bla,tmp);
 	}
+
 	return m_equation;
 }
 

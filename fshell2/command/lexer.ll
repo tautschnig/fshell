@@ -109,6 +109,8 @@ TOK_TESTCASE            TESTCASE
 TOK_AUTOGENERATE		AUTOGENERATE
 TOK_MAX_PATHS			MAX_PATHS
 TOK_PATH_DEPTH			PATH_DEPTH
+TOK_REDUCED_CFG_SEARCH	REDUCED_CFG_SEARCH
+TOK_SKIP_BACKTRACE_BRANCHING	SKIP_BACKTRACE_BRANCHING
 
 /* C identifier */
 TOK_C_IDENT             [_a-zA-Z][_a-zA-Z0-9]*
@@ -153,6 +155,8 @@ TOK_NAT_NUMBER          [0-9]+
 <options>{TOK_AUTOGENERATE}   { return TOK_AUTOGENERATE; } 
 <options>{TOK_MAX_PATHS}   { return TOK_MAX_PATHS; } 
 <options>{TOK_PATH_DEPTH}   { return TOK_PATH_DEPTH; } 
+<options>{TOK_REDUCED_CFG_SEARCH}   { return TOK_REDUCED_CFG_SEARCH; } 
+<options>{TOK_SKIP_BACKTRACE_BRANCHING}	{return TOK_SKIP_BACKTRACE_BRANCHING; }
 
 <command,options>{TOK_C_IDENT}  { 
                                         yylval.STRING = strdup( yytext );

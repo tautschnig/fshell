@@ -134,6 +134,9 @@ Command_Processing::Command_Processing(::optionst & opts, ::goto_functionst & gf
 	m_opts.set_option(AUTOGENERATE_TESTSUITE,false);
 	m_opts.set_option(MAX_PATHS,20);
 	m_opts.set_option(PATH_DEPTH,10);
+	m_opts.set_option(SEARCH_IN_REDUCED_CFG,false);
+	m_opts.set_option(USE_SEARCH_IN_REDUCED_CFG,false);
+	m_opts.set_option(SKIP_BACKTRACE_BRANCHING,false);
 
 
 }
@@ -316,6 +319,8 @@ int Command_Processing::update_testcase_list(void)
 
 
 	conditionsXML.open(myXMLstr.c_str());
+	open_tc_names.clear();
+
 	while (conditionsXML.good())
 	{
 		getline(conditionsXML,xmlLine);
@@ -355,8 +360,6 @@ int Command_Processing::update_testcase_list(void)
 					false_tc_v.push_back(false_tc);
 				}
 			}
-
-			open_tc_names.clear();
 
 			if (true_tc_v.empty())
 			{
@@ -817,20 +820,69 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 			}
 		case CMD_SET_AUTOGENERATE:
 		{
-			m_opts.set_option(AUTOGENERATE_TESTSUITE,true);
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, numeric_arg >= 0);
+			FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error, numeric_arg >= 0,
+					"Number must be greater than or equal to 0");
+			if (numeric_arg)
+			{
+				m_opts.set_option(AUTOGENERATE_TESTSUITE,true);
+				::std::cerr << "cerr: autogenerate: on" << ::std::endl;
+			}
+			else
+			{
+				m_opts.set_option(AUTOGENERATE_TESTSUITE,false);
+
+				::std::cerr << "cerr: autogenerate: off" << ::std::endl;
+			}
 			return DONE;
 		}
 		case CMD_SET_MAX_PATHS:
 		{
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, numeric_arg >= 0);
 			FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error, numeric_arg >= 0,
-					"MAX_PATHS must be greater than or equal to o");
+					"MAX_PATHS must be greater than or equal to 0");
 			m_opts.set_option(MAX_PATHS, numeric_arg);
+			return DONE;
+		}
+		case CMD_SET_REDUCED_CFG_SEARCH:
+		{
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, numeric_arg >= 0);
+			FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error, numeric_arg >= 0,
+					"Number must be greater than or equal to 0");
+			if (numeric_arg)
+			{
+				m_opts.set_option(USE_SEARCH_IN_REDUCED_CFG,true);
+				::std::cerr << "cerr: use search_in_reduced_cfg: on" << ::std::endl;
+			}
+			else
+			{
+				m_opts.set_option(USE_SEARCH_IN_REDUCED_CFG,false);
+
+				::std::cerr << "cerr: use search_in_reduced_cfg: off" << ::std::endl;
+			}
+			return DONE;
+		}
+		case CMD_SET_SKIP_BACKTRACE_BRANCHING:
+		{
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, numeric_arg >= 0);
+			FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error, numeric_arg >= 0,
+					"Number must be greater than or equal to 0");
+			if (numeric_arg)
+			{
+				m_opts.set_option(SKIP_BACKTRACE_BRANCHING,true);
+				::std::cerr << "cerr: skip backtrace branching: on" << ::std::endl;
+			}
+			else
+			{
+				m_opts.set_option(SKIP_BACKTRACE_BRANCHING,false);
+
+				::std::cerr << "cerr: skip backtrace branching: off" << ::std::endl;
+			}
 			return DONE;
 		}
 		case CMD_SET_PATH_DEPTH:
 		{
-			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, numeric_arg >= 0);
+			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, numeric_arg > 1);
 			FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error, numeric_arg > 1,
 					"Path depth must be greater than 1");
 			m_opts.set_option(PATH_DEPTH, numeric_arg);
