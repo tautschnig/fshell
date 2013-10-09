@@ -128,6 +128,8 @@ class Command_Processing
 
 	int check_if_tc_name_exists(::std::string tc_name);
 
+	int update_testcase_list(void);
+
 	private:
 	::optionst & m_opts;
 	::goto_functionst & m_gf;
@@ -137,7 +139,6 @@ class Command_Processing
 	
 	::std::vector< ::std::string> open_tc_names;
 
-	int update_testcase_list(void);
 
 	::std::ostream & print_file_contents(::std::ostream & os, char const * name) const;
 

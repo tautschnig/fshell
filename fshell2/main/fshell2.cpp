@@ -159,10 +159,39 @@ void FShell2::try_query(::language_uit & manager, char const * line,
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, query_ast != 0);
 		Query_Cleanup cleanup(query_ast);
 
+
+		if (!m_opts.get_bool_option("StandardCBMCmode"))
+		{
+			::std::stringstream qtemp;
+			::std::string qstr;
+			qtemp << (*query_ast);
+			qstr = qtemp.str();
+			::std::size_t found = qstr.find("@FUNC");
+			if (found!=::std::string::npos)
+			{
+				::std::string q2str;
+				qstr = qstr.substr(found+6,qstr.length()-found);
+				found = qstr.find(")");
+				if (found!=::std::string::npos)
+				  qstr = qstr.substr(0,found);
+				else
+				  qstr = "main";
+			}
+			else
+				qstr = "main";
+			m_opts.set_option("FuncToCover",qstr.c_str());
+
+			if (m_cmd.update_testcase_list() == -1)  // no testcase found which can be used
+				return;
+
+			 ::std::cerr << "********** We are going to cover Function: " << qstr << ::std::endl;
+		}
+
 		// query parse succeeded, make sure the CFA is prepared
 	
 		bool const mod(m_cmd.finalize(manager));
 	
+
 
 		// if code changed, check for failing assertions; in the future, this should
 		// be skipped and all extra checks be disabled using CBMC cmdline, but that
@@ -190,7 +219,9 @@ void FShell2::try_query(::language_uit & manager, char const * line,
 
 		// collect per-query statistics
 		NEW_STAT(stats, CPU_Timer, timer, "Query CPU time");
+
 		timer.start_timer();
+
 
 		// normalize the input query
 		::fshell2::fql::Normalization_Visitor norm;

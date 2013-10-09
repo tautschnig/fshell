@@ -602,7 +602,7 @@ CNF_Conversion & Compute_Test_Goals_Boolean::do_query(::goto_functionst & gf, Qu
 			::std::cerr << "CERR<< mapping.size() is 0" << ::std::endl;
 	}
 
-	if (m_opts.get_bool_option("StandardCBMCmode") || m_opts.get_bool_option("use-search-in-reduced-cfg"))
+//	if (m_opts.get_bool_option("StandardCBMCmode") || m_opts.get_bool_option("use-search-in-reduced-cfg"))
 	{
 		::std::cerr << "-----######################-------------------------- STANDARD" << ::std::endl;
 	unsigned cnt_vars_before(m_equation.get_cnf().no_variables());
@@ -626,7 +626,7 @@ CNF_Conversion & Compute_Test_Goals_Boolean::do_query(::goto_functionst & gf, Qu
 	NEW_STAT(m_stats, Counter< unsigned >, more_cl_cnt2, "Additional clauses from query");
 	more_cl_cnt2.inc(m_equation.get_cnf().no_clauses() - cnt_cl_before);
 	}
-	else
+/*	else
 	{
 		::std::cerr << "+++++++######################-------------------------- PIMP" << ::std::endl;
 		test_goal_id_map_t tmp;
@@ -634,7 +634,7 @@ CNF_Conversion & Compute_Test_Goals_Boolean::do_query(::goto_functionst & gf, Qu
 		tmp.back().push_back(::const_literal(true));
 		test_goal_groups_t bla;
 		m_equation.set_test_goal_groups(bla,tmp);
-	}
+	}*/
 
 	return m_equation;
 }
