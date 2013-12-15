@@ -49,6 +49,7 @@
 #include <goto-programs/goto_inline.h>
 #include <goto-programs/loop_ids.h>
 #include <analyses/goto_check.h>
+#include <linking/entry_point.h>
 
 #include <cerrno>
 #include <fstream>
@@ -116,7 +117,9 @@ Cleanup::~Cleanup() {
 }
 
 Command_Processing::Command_Processing(::optionst & opts, ::goto_functionst & gf) :
-	m_opts(opts), m_gf(gf), m_finalized(m_opts.get_int_option("max-argc") == 0),
+	m_opts(opts), m_gf(gf),
+	m_finalized(::config.main.empty() &&
+				m_opts.get_int_option("max-argc") == 0),
 	m_remove_zero_init(false) {
 	if (::config.main.empty()) ::config.main = "main";
 	m_opts.set_option(F2_O_LIMIT, 0);
@@ -199,7 +202,6 @@ void Command_Processing::add_sourcecode(::language_uit & manager, char const * f
 	// build the full list of loaded files
 	manager.language_files.filemap.insert(prev_files.begin(), prev_files.end());
 	// reset entry routine
-	if (m_finalized) manager.symbol_table.remove(ID_main);
 	m_finalized = false;
 }
 
@@ -256,7 +258,6 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, arg != 0);
 			{
 				::config.main = arg;
-				if (m_finalized) manager.symbol_table.remove(ID_main);
 				m_finalized = false;
 			}
 			return DONE;
@@ -600,10 +601,12 @@ bool Command_Processing::finalize(::language_uit & manager) {
 			::std::string("Could not find entry function " + ::config.main));
 	
 	if (m_finalized) return false;
+
+	manager.symbol_table.remove(ID_main);
 	
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-			!manager.language_files.filemap.empty());
-	m_finalized = ! manager.final();
+	m_finalized = ! ::entry_point(manager.symbol_table,
+								  "c::main",
+								  manager.ui_message_handler);
 	// this must never fail, given all the previous sanity checks
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_finalized);
 
