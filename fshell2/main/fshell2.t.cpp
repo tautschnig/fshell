@@ -180,7 +180,7 @@ void do_test_single2( Test_Data & data, bool const use_instrumentation )
 of 
   << "int main(int argc, char* argv[]) {" << ::std::endl
   << "  int x=0;" << ::std::endl
-  << "  if (argc>2) {" << ::std::endl
+  << "L0a:  if (argc>2) {" << ::std::endl
   << "    if (argc<27)" << ::std::endl
   << "L1:   --x;" << ::std::endl
   << "    else" << ::std::endl
@@ -231,6 +231,7 @@ of
 	QUERY("query12", "cover ^ID$");
 	QUERY("query13", "cover \"ID*.@5.ID*\" + \"ID*.@7.ID*\"");
 	QUERY("query14", "cover ({x==0}+{x!=0}).({argc<10}+{argc>=10}).ID.({x==0}+{x!=0}).({argc<10}+{argc>=10})");
+	QUERY("query15", "cover @label(L0a) -> @label(L1) + @label(L1) -> @label(L2)");
 	
 	TEST_ASSERT(fshell.process_line(l, "QUIT"));
 }	

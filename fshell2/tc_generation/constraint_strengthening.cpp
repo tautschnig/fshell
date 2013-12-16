@@ -169,7 +169,7 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 		/*
 		cnf.copy_assignment_from(minisat);
 		::goto_tracet trace;
-		::build_goto_trace(m_equation.get_equation(), m_equation.get_bv(), trace);
+		::build_goto_trace(m_equation.get_equation(), m_equation.get_bv(), m_equation.get_ns(), trace);
 		::show_goto_trace(::std::cerr, m_equation.get_ns(), trace);
 		*/
 

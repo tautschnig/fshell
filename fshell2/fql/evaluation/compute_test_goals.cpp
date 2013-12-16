@@ -259,20 +259,26 @@ void Compute_Test_Goals::print_all_test_goals()
 }
 
 void Compute_Test_Goals::visit(CP_Alternative const* n) {
+	FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(*n));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_test_goal_states->m_cp == n);
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 2 == m_test_goal_states->m_children.size());
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_test_goals->empty());
 	++m_alt_nesting;
 	Evaluate_Coverage_Pattern::Test_Goal_States const* m_tgs_bak(m_test_goal_states);
 	::std::list< Evaluate_Coverage_Pattern::Test_Goal_States >::const_iterator iter(m_test_goal_states->m_children.begin());
 	m_test_goal_states = &(*iter);
 	n->get_cp_a()->accept(this);
+	test_goals_t backup;
+	backup.swap(*m_test_goals);
 	m_test_goal_states = &(*(++iter));
 	n->get_cp_b()->accept(this);
 	m_test_goal_states = m_tgs_bak;
+	m_test_goals->insert(backup.begin(), backup.end());
 	--m_alt_nesting;
 }
 
 void Compute_Test_Goals::visit(CP_Concat const* n) {
+	FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(*n));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_test_goal_states->m_cp == n);
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 2 == m_test_goal_states->m_children.size());
 	Evaluate_Coverage_Pattern::Test_Goal_States const* m_tgs_bak(m_test_goal_states);
@@ -300,7 +306,8 @@ void Compute_Test_Goals::visit(CP_Concat const* n) {
 				::literalt const sg(m_equation.get_cnf().land(*agi, *bgi));
 				// if (agi->is_true()) ::std::cerr << agi->dimacs() << " is TRUE" << ::std::endl;
 				// if (agi->is_false()) ::std::cerr << agi->dimacs() << " is FALSE" << ::std::endl;
-				// ::std::cerr << sg.dimacs() << " == " << agi->dimacs() << " AND " << bgi->dimacs() << ::std::endl;
+				FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
+					sg.dimacs(), " == ", agi->dimacs(), " AND ", bgi->dimacs()));
 				if (!agi->is_true() && !agi->is_false() && !bgi->is_true() && !bgi->is_false()) {
 					m_and_map.insert(::std::make_pair(sg, ::std::make_pair(*agi, *bgi)));
 					//// ::std::cerr << "reverse-AND: " << sg.dimacs() << " == " << agi->dimacs() << " AND " << bgi->dimacs() << ::std::endl;
@@ -309,7 +316,11 @@ void Compute_Test_Goals::visit(CP_Concat const* n) {
 				////	::std::cerr << "Not adding " << sg.dimacs() << " == " << agi->dimacs() << " AND " << bgi->dimacs() << ::std::endl;
 				m_reverse_and_map[*agi].insert(::std::make_pair(sg, *bgi));
 				m_reverse_and_map[*bgi].insert(::std::make_pair(sg, *agi));
+				FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
+					"Adding to tg group #", m_test_goal_groups.size()));
 				m_test_goals->insert(sg);
+				FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
+					"Tg group size=", m_test_goals->size()));
 			}
 	}
 }
@@ -1033,6 +1044,7 @@ void Compute_Test_Goals_Boolean::do_step(::cnf_clause_list_assignmentt & cnf,
 void Compute_Test_Goals_Boolean::do_atom(Coverage_Pattern_Expr const* n,
 		bool epsilon_permitted, bool make_single)
 {
+	FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(*n));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_test_goal_states->m_cp == n);
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_test_goal_states->m_children.empty());
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !m_test_goal_states->m_tg_states.empty());
@@ -1071,21 +1083,25 @@ void Compute_Test_Goals_Boolean::do_atom(Coverage_Pattern_Expr const* n,
 				c_iter != (*iter)->second.end(); ++c_iter) {
 			::std::copy(c_iter->second.begin(), c_iter->second.end(), ::std::back_inserter(set));
 			if (!make_single && !set.empty()) {
-				FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
-					"Adding1 subgoal composed of ", set.size(), " guards"));
 				::literalt const tg(m_equation.get_cnf().lor(set));
+				FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
+					"Adding1 subgoal ", tg.dimacs(), " composed of ", set.size(), " guards"));
 				store_mapping(tg, set, c_iter->first.first.second,
 						c_iter->first.second.second);
+				FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
+					"Adding to tg group #", m_test_goal_groups.size()));
 				m_test_goals->insert(tg);
+				FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
+					"Tg group size=", m_test_goals->size()));
 				set.clear();
 			}
 		}
 	}
 	if (!set.empty()) {
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, make_single);
-		FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
-			"Adding2 subgoal composed of ", set.size(), " guards"));
 		::literalt const tg(m_equation.get_cnf().lor(set));
+		FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
+			"Adding2 subgoal ", tg.dimacs(), " composed of ", set.size(), " guards"));
 		ctx_coll_t contexts;
 		for (selected_t::const_iterator iter(selected.begin()); iter != selected.end(); ++iter)
 			for (edge_to_literal_map_t::const_iterator c_iter((*iter)->second.begin()); 
@@ -1093,7 +1109,11 @@ void Compute_Test_Goals_Boolean::do_atom(Coverage_Pattern_Expr const* n,
 				contexts.push_back(::std::make_pair(c_iter->first.first.second,
 							c_iter->first.second.second));
 		store_mapping(tg, set, contexts);
+		FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
+			"Adding to tg group #", m_test_goal_groups.size()));
 		m_test_goals->insert(tg);
+		FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
+			"Tg group size=", m_test_goals->size()));
 	}
 }
 
