@@ -412,8 +412,10 @@ Evaluate_Coverage_Pattern::Test_Goal_States const& Automaton_Inserter::do_query(
 	insert(gf, cfg, "obs", m_pp_eval.get(query.get_passing()), obs_final_cond, false);
 	
 	::goto_programt tmp;
+	::goto_programt::targett assume(tmp.add_instruction(ASSUME));
+	assume->make_assumption(obs_final_cond);
 	::goto_programt::targett as(tmp.add_instruction(ASSERT));
-	as->make_assertion(::and_exprt(t_g_final_cond, obs_final_cond));
+	as->make_assertion(t_g_final_cond);
 	as->guard.make_not();
 	
 	::fshell2::instrumentation::GOTO_Transformation inserter(m_manager, gf);

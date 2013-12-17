@@ -109,6 +109,7 @@ void GOTO_Transformation::make_function_call(::goto_programt::targett ins,
 	symbol.type = type;
 	symbol.is_lvalue = true;
 	symbol.is_static_lifetime = global;
+	symbol.is_thread_local = !global;
 	m_manager.symbol_table.move(symbol);
 	
 	symb_entry = m_manager.symbol_table.symbols.find(var_name);
