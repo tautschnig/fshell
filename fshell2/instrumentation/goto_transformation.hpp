@@ -95,7 +95,7 @@ class GOTO_Transformation
 };
 
 inline bool GOTO_Transformation::is_instrumented(::goto_programt::const_targett inst) {
-	return (inst->location.get_property() == "fshell2_instrumentation");
+	return (inst->location.get_property_id() == "fshell2_instrumentation");
 }
 	
 

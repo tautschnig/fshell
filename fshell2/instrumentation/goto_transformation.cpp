@@ -62,7 +62,7 @@ void GOTO_Transformation::set_annotations(::goto_programt::const_targett src, ::
 }
 
 void GOTO_Transformation::mark_instrumented(::goto_programt::targett inst) {
-	inst->location.set_property("fshell2_instrumentation");
+	inst->location.set_property_id("fshell2_instrumentation");
 }
 
 void GOTO_Transformation::mark_instrumented(::goto_programt & target) {
