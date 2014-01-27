@@ -449,10 +449,7 @@ void Command_Processing::model_argv(::language_uit & manager) const {
 		  argcp,
 		  ID_le,
 		  from_integer(max_argc, argcp_symbol.type));
-		side_effect_expr_function_callt fc;
-		fc.function()=symbol_exprt("__CPROVER_assume", code_typet());
-		fc.arguments().push_back(le);
-		code_expressiont assume(fc);
+		code_assumet assume(le);
 		assume.location()=main_loc;
 		code.move_to_operands(assume);
 	}
@@ -495,17 +492,11 @@ void Command_Processing::model_argv(::language_uit & manager) const {
 
 		exprt e4096=from_integer(4096, len_symbol.type);
 		binary_relation_exprt lt1(len, ID_lt, e4096);
-		side_effect_expr_function_callt fc1;
-		fc1.function()=symbol_exprt("__CPROVER_assume", code_typet());
-		fc1.arguments().push_back(lt1);
-		code_expressiont assume1(fc1);
+		code_assumet assume1(lt1);
 		assume1.location()=main_loc;
 		while_loop.body().move_to_operands(assume1);
 		binary_relation_exprt lt2(plus_exprt(next, len), ID_lt, e4096);
-		side_effect_expr_function_callt fc2;
-		fc2.function()=symbol_exprt("__CPROVER_assume", code_typet());
-		fc2.arguments().push_back(lt2);
-		code_expressiont assume2(fc2);
+		code_assumet assume2(lt2);
 		assume2.location()=main_loc;
 		while_loop.body().move_to_operands(assume2);
 
