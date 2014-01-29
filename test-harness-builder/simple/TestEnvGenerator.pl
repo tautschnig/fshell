@@ -128,7 +128,7 @@ foreach my $id (sort keys %test_suite) {
       push @{ $inserts{ $sym->{file} } }, "extern unsigned __fshell2__tc_selector;";
       my $decl = $sym->{symbol};
       $decl =~ s/,/ ###,/g if ($decl =~ /,/);
-      $decl =~ s/\)/ ###)/ if ($decl =~ /\(.+\)/);
+      $decl =~ s/\)/ ###)/ if ($decl =~ /\(.+\)/ && !($decl =~ /\(\s*void\s*\)/));
       my $i = 0;
       while ($decl =~ / ###/) {
         $decl =~ s/ ###/ _$i/;
@@ -167,10 +167,10 @@ foreach my $id (sort keys %test_suite) {
         push @{ $appends{ $sym->{file} }{lines} }, 
           $sym->{symbol} .  "=$new_name\[__fshell2__tc_selector][idx__$new_name++]";
       } elsif ($sym->{type} =~ /\[\d+\]/) {
-        $replaces{ $sym->{file} }{ $sym->{line} }{ "[[:space:]]" . $sym->{symbol} . "\\[.*\\]" } =
+        $replaces{ $sym->{file} }{ $sym->{line} }{ $sym->{symbol} . "\\[.*\\]" } =
           "*" . $sym->{symbol} . "=$new_name\[__fshell2__tc_selector][idx__$new_name++]";
       } else {
-        $replaces{ $sym->{file} }{ $sym->{line} }{ "[[:space:]]" . $sym->{symbol} } =
+        $replaces{ $sym->{file} }{ $sym->{line} }{ $sym->{symbol} } =
           $sym->{symbol} .  "=$new_name\[__fshell2__tc_selector][idx__$new_name++]";
       }
       
@@ -249,7 +249,7 @@ foreach my $f (keys %all_edits) {
     foreach my $l (keys %{ $replaces{$f} }) {
       foreach my $s (keys %{ $replaces{$f}{$l} }) {
         print MAKEFILE "\tmv \$\@ \$\@_\n";
-        print MAKEFILE "\tsed '$l s/$s/ $replaces{$f}{$l}{$s}/' \$\@_ > \$\@\n";
+        print MAKEFILE "\tsed '$l s/\\<$s\\>/ $replaces{$f}{$l}{$s}/' \$\@_ > \$\@\n";
         print MAKEFILE "\trm \$\@_\n";
       }
     }
@@ -283,6 +283,13 @@ print TESTER <<EOF;
 #include <stdio.h>
 
 unsigned __fshell2__tc_selector;
+EOF
+
+foreach my $id (sort keys %test_suite) {
+  print TESTER "int __orig__" . $test_suite{$id}{MAIN}{symbol} . "();\n";
+}
+
+print TESTER <<EOF;
 
 int main(int argc, char* argv[]) {
   long tc = -1;
