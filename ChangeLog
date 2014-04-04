@@ -1,3 +1,114 @@
+2014-04-04  Michael Tautschnig  <mt@debian.org>
+
+	* Release 1.6
+	* Updated optionst interface
+	* Make MiniSat compile using recent LLVM
+
+2014-01-29  Michael Tautschnig  <mt@debian.org>
+
+	* Fixes to simple test harness generator
+
+2014-01-27  Michael Tautschnig  <mt@debian.org>
+
+	* Cleaner encoding of argc/argv constraints (requires latest version of CBMC)
+
+2014-01-13  Michael Tautschnig  <mt@debian.org>
+
+	* Use latest CBMC API
+
+2014-01-06  Michael Tautschnig  <mt@debian.org>
+
+	* Update lists of required object files to follow recent changes in CBMC
+
+2013-12-17  Michael Tautschnig  <mt@debian.org>
+
+	* Fixed bugs when using --use-instrumentation
+
+2013-12-16  Michael Tautschnig  <mt@debian.org>
+
+	* Updated test data
+	* Fixed wrong test goal construction for nested concatenation/alternative
+	  coverage patterns
+
+2013-12-15  Michael Tautschnig  <mt@debian.org>
+
+	* Make --function/set entry work with goto binaries
+	* test.dat in a version working on build server
+
+2013-12-05  Michael Tautschnig  <mt@debian.org>
+
+	* Updated test data for latest CBMC trunk
+
+2013-09-27  Michael Tautschnig  <mt@debian.org>
+
+	* Reverting test data to results on dkr-debian
+	* friend declaration compatible with both GCC and Clang
+	* Fixed code no longer accepted by XCode 5.0 Clang
+	* Updated code to work with latest CBMC
+
+2013-09-26  Michael Tautschnig  <mt@debian.org>
+
+	* Bugfix in call stack construction
+
+2013-09-03  Michael Tautschnig  <mt@debian.org>
+
+	* Updated expected test results
+
+2013-08-07  Michael Tautschnig  <mt@debian.org>
+
+	* Modified CNF encoding in CBMC causes different result values
+
+2013-08-05  Michael Tautschnig  <mt@debian.org>
+
+	* Properly fix preprocessor choice
+
+2013-08-05  Michael Tautschnig  <mt@debian.org>
+
+	* Updates to work with latest CBMC trunk
+
+2013-07-26  Michael Tautschnig  <mt@debian.org>
+
+	* Added option --program-only
+
+2013-07-22  Michael Tautschnig  <mt@debian.org>
+
+	* Ignore shared_read/shared_write while extracting test goals
+
+2013-07-11  Michael Tautschnig  <mt@debian.org>
+
+	* Store an expression rather than the flattened string for test input value
+	* Do not re-convert the same code
+
+2013-07-09  Michael Tautschnig  <mt@debian.org>
+
+	* Make FShell compile with recent parsert API changes
+
+2013-07-06  Michael Tautschnig  <mt@debian.org>
+
+	* Added option --max-argc and argv environment construction
+	* When available, print detailed contents of argv
+	* Output def-use analysis: fixed bugs and improved level of detail in tracking
+		assignments
+	* Refactored remove_zero_init
+	* Properly handle --no-assumptions
+
+2013-07-03  Michael Tautschnig  <mt@debian.org>
+
+	* Updated test results (back to earlier version)
+
+2013-06-24  Michael Tautschnig  <mt@debian.org>
+
+	* Optimisations in CBMC r2679 result in different test cases
+
+2013-06-17  Michael Tautschnig  <mt@debian.org>
+
+	* Use big-int.a library file instead of object file
+
+2013-06-14  Michael Tautschnig  <mt@debian.org>
+
+	* config/configt required for WIN32
+	* zlib.h is only required by minisat, which may be patched
+
 2013-06-14  Michael Tautschnig  <mt@debian.org>
 
 	* Release 1.5
