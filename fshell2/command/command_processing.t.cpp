@@ -199,13 +199,13 @@ void test_use_case( Test_Data & data )
 	TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, "set entry main"));
 	TEST_ASSERT(::config.main == "main");
 
-	TEST_ASSERT(0 == options.get_int_option(F2_O_LIMIT));
+	TEST_ASSERT(0 == options.get_unsigned_int_option(F2_O_LIMIT));
 	TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, "set limit count 27"));
-	TEST_ASSERT(27 == options.get_int_option(F2_O_LIMIT));
+	TEST_ASSERT(27 == options.get_unsigned_int_option(F2_O_LIMIT));
 
-	TEST_ASSERT(1 == options.get_int_option(F2_O_MULTIPLE_COVERAGE));
+	TEST_ASSERT(1 == options.get_unsigned_int_option(F2_O_MULTIPLE_COVERAGE));
 	TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, "set multiple_coverage 42"));
-	TEST_ASSERT(42 == options.get_int_option(F2_O_MULTIPLE_COVERAGE));
+	TEST_ASSERT(42 == options.get_unsigned_int_option(F2_O_MULTIPLE_COVERAGE));
 
 	::unlink(tempname_str.c_str());
 }
@@ -251,9 +251,9 @@ void test_use_case_extended_invariants( Test_Data & data )
 	// do it once again
 	TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, "set entry main"));
 
-	TEST_ASSERT(0 == options.get_int_option(F2_O_LIMIT));
+	TEST_ASSERT(0 == options.get_unsigned_int_option(F2_O_LIMIT));
 	TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, "set limit count 27"));
-	TEST_ASSERT(27 == options.get_int_option(F2_O_LIMIT));
+	TEST_ASSERT(27 == options.get_unsigned_int_option(F2_O_LIMIT));
 
 	TEST_CHECK(cfg.function_map.end() == cfg.function_map.find("c::foo"));
 	TEST_ASSERT(cmd.finalize(l));

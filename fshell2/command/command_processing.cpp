@@ -119,7 +119,7 @@ Cleanup::~Cleanup() {
 Command_Processing::Command_Processing(::optionst & opts, ::goto_functionst & gf) :
 	m_opts(opts), m_gf(gf),
 	m_finalized(::config.main.empty() &&
-				m_opts.get_int_option("max-argc") == 0),
+				m_opts.get_unsigned_int_option("max-argc") == 0),
 	m_remove_zero_init(false) {
 	if (::config.main.empty()) ::config.main = "main";
 	m_opts.set_option(F2_O_LIMIT, 0);
@@ -342,7 +342,7 @@ void Command_Processing::model_argv(::language_uit & manager) const {
 		i=i+1;
    	}
 	*/
-	int max_argc=m_opts.get_int_option("max-argc");
+	int max_argc=m_opts.get_unsigned_int_option("max-argc");
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, max_argc > 0);
 
 	::symbol_tablet::symbolst::iterator main_iter(
@@ -605,7 +605,7 @@ bool Command_Processing::finalize(::language_uit & manager) {
 	if (m_remove_zero_init) remove_zero_init(manager);
 
 	// create init code for argv, if max-argc was set
-	if (m_opts.get_int_option("max-argc") > 0 &&
+	if (m_opts.get_unsigned_int_option("max-argc") > 0 &&
 		entry=="c::main" &&
 		manager.symbol_table.has_symbol("c::argc'"))
 		model_argv(manager);

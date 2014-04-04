@@ -197,10 +197,10 @@ void FShell2::try_query(::language_uit & manager, char const * line,
 	::fshell2::Constraint_Strengthening cs(equation, m_opts);
 	::fshell2::Constraint_Strengthening::test_cases_t all_test_cases;
 	::fshell2::statistics::Statistics * ts_stats(&stats);
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_opts.get_int_option(F2_O_MULTIPLE_COVERAGE) > 0);
-	unsigned const mult(m_opts.get_int_option(F2_O_MULTIPLE_COVERAGE));
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_opts.get_int_option(F2_O_LIMIT) >= 0);
-	unsigned const limit(m_opts.get_int_option(F2_O_LIMIT));
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_opts.get_unsigned_int_option(F2_O_MULTIPLE_COVERAGE) > 0);
+	unsigned const mult(m_opts.get_unsigned_int_option(F2_O_MULTIPLE_COVERAGE));
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_opts.get_unsigned_int_option(F2_O_LIMIT) >= 0);
+	unsigned const limit(m_opts.get_unsigned_int_option(F2_O_LIMIT));
 
 	::fshell2::statistics::Statistics aggregated_cpu_time;
 	::fshell2::statistics::CPU_Timer * aggr_cpu_time(0);
