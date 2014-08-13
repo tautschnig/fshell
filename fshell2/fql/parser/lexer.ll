@@ -86,7 +86,7 @@ FSHELL2_NAMESPACE_END;
 #include <list>
 #include <sstream>
 
-#include <fshell2/fql/parser/parser.hh>
+#include <fshell2/fql/parser/parser.h>
 
 #include <fshell2/config/annotations.hpp>
 #include <fshell2/exception/query_processing_error.hpp>

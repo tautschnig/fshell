@@ -4,15 +4,6 @@ top_srcdir=$1
 DIAGNOSTICSLEVEL=$2
 t=$3
 
-# new automake versions
-if [ x$t = x/bin/sh ] ; then
-  if [ ! -L test ] ; then
-    ln -s $top_srcdir/test
-  fi
-  shift 2
-  exec "$@"
-fi
-
 mkdir -p $top_srcdir/test
 check_path="`pwd`"
 cd $top_srcdir

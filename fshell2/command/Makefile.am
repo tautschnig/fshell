@@ -9,9 +9,9 @@ include $(top_srcdir)/model.am
 SUBDIRS =
 
 if DIAGNOSTICS
-BUILT_SOURCES += parser.hh
+BUILT_SOURCES += parser.h
 else
-BUILT_SOURCES = parser.hh
+BUILT_SOURCES = parser.h
 endif
 
 #debug bison-parser
