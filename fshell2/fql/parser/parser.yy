@@ -440,19 +440,17 @@ Predicate: TOK_ARBITRARY_PRED
 		   ansi_c_parser.set_file("<predicate>");
 		   ansi_c_parser.in = &is;
 		   ansi_c_parser.set_message_handler(cbmc_msg_handler);
-		   ansi_c_parser.grammar = ansi_c_parsert::LANGUAGE;
 		   ansi_c_scanner_init();
 		   bool result(ansi_c_parser.parse());
 		   FSHELL2_PROD_CHECK1(::fshell2::Query_Processing_Error, !result,
 		     ::std::string("Failed to parse predicate ") + $1);
 		   FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-		     2 == ansi_c_parser.parse_tree.items.size());
+		     1 == ansi_c_parser.parse_tree.items.size());
 		   FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-		     ansi_c_parser.parse_tree.items.front().value().is_nil());
-		   ansi_c_parser.parse_tree.items.pop_front();
+		     ansi_c_parser.parse_tree.items.front().declarator().value().is_not_nil());
 #if FSHELL2_DEBUG__LEVEL__ >= 2
 		   const ::exprt & tl_expr(static_cast<const ::exprt&>(
-		     ansi_c_parser.parse_tree.items.front().find(ID_value)));
+		     ansi_c_parser.parse_tree.items.front().declarator().find(ID_value)));
 #endif
 		   FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 		     1 == tl_expr.operands().size());
@@ -460,8 +458,8 @@ Predicate: TOK_ARBITRARY_PRED
 		     ID_code == tl_expr.operands().front().id());
 		   FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 		     ID_sideeffect == tl_expr.operands().front().op0().id());
-		   ::exprt & assign_expr((static_cast< ::exprt &>(
-		     ansi_c_parser.parse_tree.items.front().add(ID_value))).operands().front().op0());
+		   ::exprt & assign_expr(
+		     ansi_c_parser.parse_tree.items.front().declarator().value().op0().op0());
 		   FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 		     assign_expr.op0().get("identifier") == "PRED");
 		   assign_expr.op0().set("identifier", "!PRED!");

@@ -11,6 +11,7 @@ SUBDIRS =
 CBMC_OBJS = @CBMCDIR@/src/util/util.a \
 						@CBMCDIR@/src/big-int/big-int.a \
 						@CBMCDIR@/src/ansi-c/ansi-c.a \
+						@CBMCDIR@/src/langapi/langapi.a \
 						@CBMCDIR@/src/linking/linking.a
 
 include_fshell2_fql_astdir = $(includedir)/fshell2/fql/ast

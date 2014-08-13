@@ -156,7 +156,6 @@ void FShell2::try_query(::language_uit & manager, char const * line,
 	// must include unwinding assertions et al.
 	if (mod || m_first_run) {
 		::bmct bmc(m_opts, manager.symbol_table, manager.ui_message_handler);
-		bmc.set_verbosity(manager.get_verbosity());
 		bmc.set_ui(manager.ui_message_handler.get_ui());
 		FSHELL2_PROD_CHECK1(::fshell2::FShell2_Error, !bmc.run(m_gf),
 				"Program has failing assertions, cannot proceed.");

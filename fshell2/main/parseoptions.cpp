@@ -100,7 +100,7 @@ void Parseoptions::eval_verbosity()
 			v=9;
 	}
 
-	set_verbosity(v);
+	ui_message_handler.set_verbosity(v);
 }
 
 bool Parseoptions::get_command_line_options()
@@ -174,7 +174,7 @@ bool Parseoptions::get_command_line_options()
 
 	eval_verbosity();
 
-	if(cmdline.isset("statistics") || get_verbosity() >= 8)
+	if(cmdline.isset("statistics") || ui_message_handler.get_verbosity() >= 8)
 		m_options.set_option("statistics", true);
 
 	return false;

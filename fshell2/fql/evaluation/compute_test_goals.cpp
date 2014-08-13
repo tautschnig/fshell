@@ -68,13 +68,11 @@ FSHELL2_FQL_NAMESPACE_BEGIN;
 CNF_Conversion::CNF_Conversion(::language_uit & manager, ::optionst const& opts) :
 	::bmct(opts, manager.symbol_table, manager.ui_message_handler),
 	m_opts(opts), m_cnf(), m_bv(this->ns, m_cnf) {
-	this->set_verbosity(manager.get_verbosity());
+	this->set_message_handler(manager.ui_message_handler);
 	this->set_ui(manager.ui_message_handler.get_ui());
 
 	m_cnf.set_message_handler(*(this->message_handler));
-	m_cnf.set_verbosity(this->get_verbosity());
 	m_bv.set_message_handler(*(this->message_handler));
-	m_bv.set_verbosity(this->get_verbosity());
 }
 
 CNF_Conversion::~CNF_Conversion() {

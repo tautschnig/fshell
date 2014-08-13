@@ -150,7 +150,6 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 	
 	::satcheck_minisat_simplifiert minisat;
 	minisat.set_message_handler(cnf.get_message_handler());
-	minisat.set_verbosity(cnf.get_verbosity());
 	cnf.copy_to(minisat);
 	freeze_goal_vars(minisat, goals);
 		
@@ -230,7 +229,6 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 		
 		::satcheck_minisat_simplifiert tmp_minisat;
 		tmp_minisat.set_message_handler(cnf.get_message_handler());
-		tmp_minisat.set_verbosity(cnf.get_verbosity());
 		cnf.copy_to(tmp_minisat);
 		freeze_goal_vars(tmp_minisat, goals);
 		for (::std::list< ::bvt >::const_iterator iter(coverage_cl.begin());

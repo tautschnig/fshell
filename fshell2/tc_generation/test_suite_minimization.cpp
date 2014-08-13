@@ -54,7 +54,6 @@ void Test_Suite_Minimization::minimize(Constraint_Strengthening::test_cases_t &
 
 	::cnf_clause_list_assignmentt cnf;
 	cnf.set_message_handler(m_message.get_message_handler());
-	cnf.set_verbosity(m_message.get_verbosity());
 	::bv_utilst bv_utils(cnf);
 	
 	// one variable per test case
@@ -113,7 +112,6 @@ void Test_Suite_Minimization::minimize(Constraint_Strengthening::test_cases_t &
 			solver.has_set_assumptions());
 	
 	solver.set_message_handler(m_message.get_message_handler());
-	solver.set_verbosity(m_message.get_verbosity());
 	cnf.copy_to(solver);
 	boolbvt bv(::namespacet(::symbol_tablet()), solver);
 
