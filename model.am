@@ -34,6 +34,7 @@ TESTS_ENVIRONMENT = LD_LIBRARY_PATH=@DIAGNOSTICSDIR@/lib $(top_srcdir)/config/ru
 else
 TESTS_ENVIRONMENT = $(top_srcdir)/config/runtest.sh $(top_srcdir) $(DIAGNOSTICSLEVEL)
 endif
+AM_TESTS_FD_REDIRECT = run "/*" $(DIAGNOSTICSLEVEL)
 
 debug audit debug-check audit-check: CXXFLAGS := $(filter-out -O1 -O2 -O3 -Os,$(CXXFLAGS)) -O0 -g
 debug audit debug-check audit-check:

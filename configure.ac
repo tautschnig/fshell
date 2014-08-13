@@ -13,7 +13,7 @@ AC_CONFIG_HEADER(config.h)
 AC_CONFIG_MACRO_DIR([m4])
 AC_CANONICAL_TARGET
 # suppress -I. -I. -I../.., includes explicitly set
-AM_INIT_AUTOMAKE([1.9 nostdinc foreign])
+AM_INIT_AUTOMAKE([1.14 nostdinc foreign])
 
 AC_SUBST(ac_aux_dir)
 # something like AX_PREFIX_CONFIG_H(shared/config/features.h), whichever path
