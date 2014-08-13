@@ -1,3 +1,10 @@
+2014-08-13  Michael Tautschnig  <mt@debian.org>
+
+	* Release 1.7
+	* libedit on OS X makes test interactive - disabled
+	* Update to support CBMC 4.9
+	* Support (and require) automake 1.14
+
 2014-04-04  Michael Tautschnig  <mt@debian.org>
 
 	* Release 1.6
