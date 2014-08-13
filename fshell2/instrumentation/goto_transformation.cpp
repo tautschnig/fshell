@@ -237,9 +237,9 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 		FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, fct_entry != m_goto.function_map.end(),
 				::diagnostics::internal::to_string("Function ",
 					node.first->instructions.front().function, " not found in map!"));
-		::code_typet::argumentst const& argument_types(fct_entry->second.type.arguments());
-		for (::code_typet::argumentst::const_iterator a_iter(argument_types.begin());
-				a_iter != argument_types.end(); ++a_iter) {
+		::code_typet::parameterst const& parameter_types(fct_entry->second.type.parameters());
+		for (::code_typet::parameterst::const_iterator a_iter(parameter_types.begin());
+				a_iter != parameter_types.end(); ++a_iter) {
 			::symbolt const& symb(ns.lookup(a_iter->get_identifier()));
 			if ((*iter)->get(ID_identifier) == symb.base_name) alt_names.push_back(::symbol_expr(symb));
 		}

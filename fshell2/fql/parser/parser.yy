@@ -457,7 +457,7 @@ Predicate: TOK_ARBITRARY_PRED
 		   FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 		     ID_code == tl_expr.operands().front().id());
 		   FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-		     ID_sideeffect == tl_expr.operands().front().op0().id());
+		     ID_side_effect == tl_expr.operands().front().op0().id());
 		   ::exprt & assign_expr(
 		     ansi_c_parser.parse_tree.items.front().declarator().value().op0().op0());
 		   FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,

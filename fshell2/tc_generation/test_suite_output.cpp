@@ -877,12 +877,12 @@ Test_Suite_Output::Test_Suite_Output(::fshell2::fql::CNF_Conversion & equation,
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !config.main.empty());
 	main_symb_name += config.main;
 	::symbolt const& main_symb(m_equation.get_ns().lookup(main_symb_name));
-	::code_typet::argumentst const &arguments(::to_code_type(main_symb.type).arguments());
+	::code_typet::parameterst const &parameters(::to_code_type(main_symb.type).parameters());
 	::std::ostringstream main_symb_str;
 	main_symb_str << main_symb.base_name << "(";
-	for (::code_typet::argumentst::const_iterator iter(arguments.begin());
-			iter != arguments.end(); ++iter) {
-		if (iter != arguments.begin()) main_symb_str << ",";
+	for (::code_typet::parameterst::const_iterator iter(parameters.begin());
+			iter != parameters.end(); ++iter) {
+		if (iter != parameters.begin()) main_symb_str << ",";
 		main_symb_str << iter->get(ID_C_base_name);
 	}
 	main_symb_str << ")";
