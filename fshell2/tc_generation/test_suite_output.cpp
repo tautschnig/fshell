@@ -48,6 +48,9 @@
 #include <util/arith_tools.h>
 #include <ansi-c/string_constant.h>
 
+// goto-programs/goto_trace.cpp
+::std::string counterexample_value_binary(const ::exprt &expr, const ::namespacet &ns);
+
 FSHELL2_NAMESPACE_BEGIN;
 
 ::std::ostream & operator<<(::std::ostream & os, Symbol_Identifier::variable_type_t const& vt) {
@@ -757,7 +760,7 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 	
 	return os;
 }
-	
+
 ::std::ostream & Test_Suite_Output::print_test_case_xml(::std::ostream & os,
 		Test_Suite_Output::Test_Input const& ti, called_functions_t const& cf,
 		assignments_t const& as) const
@@ -792,6 +795,8 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 		
 		xml_obj.new_element("value").data =
 			::from_expr(m_equation.get_ns(), iter->m_name->get(ID_identifier), iter->m_value_expr);
+		xml_obj.new_element("binary-value").data =
+			::counterexample_value_binary(iter->m_value_expr, m_equation.get_ns());
 		if (print_loc)
 			xml_obj.new_element("type").data = iter->m_type_str;
 		
