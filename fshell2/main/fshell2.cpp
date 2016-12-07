@@ -69,7 +69,7 @@ extern "C" {
 
 namespace std {
 template<>
-auto_ptr<char>::~auto_ptr()
+auto_ptr<char>::~auto_ptr() throw()
 {
 	::free(this->release());
 }
