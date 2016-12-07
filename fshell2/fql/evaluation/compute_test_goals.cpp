@@ -229,12 +229,12 @@ void Compute_Test_Goals::make_id_map()
 	skips_t::reverse_iterator s_iter(m_skips.rbegin());
 	// should be a const_reverse_iterator, but some buggy STL versions (OS X!)
 	// lack a proper operator!=
-	for (test_goal_groups_t::reverse_iterator g_iter(m_test_goal_groups.rbegin());
-			g_iter != m_test_goal_groups.rend(); ++g_iter, ++s_iter) {
+	for (test_goal_groups_t::const_iterator g_iter(m_test_goal_groups.end());
+			g_iter != m_test_goal_groups.begin(); ++s_iter) {
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !g_iter->empty());
 		// users of skips will do +1 through for-loop increments
 		*s_iter = prec_skip - 1;
-		prec_skip *= g_iter->size();
+		prec_skip *= (--g_iter)->size();
 	}
 }
 
@@ -1125,8 +1125,8 @@ class KnownSAT {
 			// called from here
 			for(init_t::const_iterator iter(base.begin()); iter != base.end(); ++iter)
 				if (insert(*iter)) break;
-			for(init_t::const_reverse_iterator riter(base.rbegin()); riter != base.rend(); ++riter)
-				insert(*riter);
+			for(init_t::const_iterator riter(base.end()); riter != base.begin(); )
+				insert(*(--riter));
 		}
 
 		bool insert(::literalt const& lit) {
