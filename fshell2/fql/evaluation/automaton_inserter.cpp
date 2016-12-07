@@ -92,7 +92,7 @@ void Automaton_Inserter::insert(::goto_functionst & gf,
 	::goto_programt defs;
 	::goto_programt::targett state_init(defs.add_instruction(ASSIGN));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == aut.initial().size());
-	state_init->code = ::code_assignt(::symbol_expr(state_symb), ::from_integer(
+	state_init->code = ::code_assignt(state_symb.symbol_expr(), ::from_integer(
 				state_map.find(*(aut.initial().begin()))->second, state_symb.type));
 	inserter.insert("c::__CPROVER_initialize", ::fshell2::instrumentation::GOTO_Transformation::BEFORE,
 			::END_FUNCTION, defs);
@@ -306,7 +306,6 @@ void Automaton_Inserter::add_transition_function(::goto_functionst & gf,
 	::std::pair< ::goto_functionst::function_mapt::iterator, bool > entry(
 			gf.function_map.insert(::std::make_pair(func_name, ::goto_functionst::goto_functiont())));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, entry.second);
-	entry.first->second.body_available = true;
 	entry.first->second.type.return_type() = ::empty_typet();
 	::symbol_exprt func_expr(func_name, ::code_typet());
 	::to_code_type(func_expr.type()).return_type() = ::empty_typet();
@@ -356,7 +355,7 @@ void Automaton_Inserter::add_transition_function(::goto_functionst & gf,
 				t_iter->second->type = SKIP;
 			} else {
 				t_iter->second->type = ASSIGN;
-				t_iter->second->code = ::code_assignt(::symbol_expr(state_symb), ::from_integer(
+				t_iter->second->code = ::code_assignt(state_symb.symbol_expr(), ::from_integer(
 							*s_iter, state_symb.type));
 			}
 		}
@@ -367,7 +366,7 @@ void Automaton_Inserter::add_transition_function(::goto_functionst & gf,
 
 		::goto_programt::targett others_target(body.add_instruction(SKIP));
 		if_stmt->make_goto(others_target);
-		if_stmt->guard = ::binary_relation_exprt(::symbol_expr(state_symb), "=",
+		if_stmt->guard = ::binary_relation_exprt(state_symb.symbol_expr(), "=",
 				::from_integer(iter->first, state_symb.type));
 		if_stmt->guard.make_not();
 	}
@@ -390,11 +389,11 @@ void Automaton_Inserter::prepare_assertion(ta_state_set_t const& compact_final,
 	for (ta_state_set_t::const_iterator iter(compact_final.begin());
 			iter != compact_final.end(); ++iter) {
 		if (compact_final.begin() == iter) {
-			final_cond = ::binary_relation_exprt(::symbol_expr(state_symb), "=",
+			final_cond = ::binary_relation_exprt(state_symb.symbol_expr(), "=",
 					::from_integer(*iter, state_symb.type));
 		} else {
 			final_cond = ::or_exprt(final_cond, ::binary_relation_exprt(
-						::symbol_expr(state_symb), "=", ::from_integer(*iter, state_symb.type)));
+						state_symb.symbol_expr(), "=", ::from_integer(*iter, state_symb.type)));
 		}
 	}
 }

@@ -118,7 +118,7 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 		test_cases_t & tcs, unsigned const limit,
 		::fshell2::statistics::Statistics & stats, test_cases_t const& prev_tcs)
 {
-	m_equation.status("Starting groupwise constraint strengthening");
+	m_equation.status() << "Starting groupwise constraint strengthening" << messaget::eom;
 	
 	NEW_STAT(stats, CPU_Timer, sat_timer, "Time spent in main SAT solver");
 	NEW_STAT(stats, CPU_Timer, sub_timer, "Time spent in internal coverage analysis");
@@ -157,9 +157,8 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 	::std::list< ::bvt > coverage_cl;
 	bool const use_internal_check(m_opts.get_bool_option("internal-coverage-check"));
 	while (!unsat_goals.empty() && (limit == 0 || tcs.size() < limit)) {
-		::std::ostringstream status;
-		status << unsat_goals.size() << " test goals remain to be covered";
-		m_equation.status(status.str());
+		m_equation.status() << unsat_goals.size() 
+		                    << " test goals remain to be covered" << messaget::eom;
 		
 		sat_timer.start_timer();
 		if (::propt::P_UNSATISFIABLE == minisat.prop_solve()) break;
@@ -204,9 +203,8 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 					unsat_goals.erase(tg);
 				}
 			}
-			status.str("");
-			status << "Satisfies " << test_goal_set.size() << " additional test goals";
-			m_equation.status(status.str());
+			m_equation.status() << "Satisfies " << test_goal_set.size() 
+			                    << " additional test goals" << messaget::eom;
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !test_goal_set.empty());
 		}
 		timer1.stop_timer();
@@ -250,9 +248,7 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 
 		timer2.stop_timer();
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, num_sat > 0);
-		status.str("");
-		status << "Satisfies " << num_sat << " test goals";
-		m_equation.status(status.str());
+		m_equation.status() << "Satisfies " << num_sat << " test goals" << messaget::eom;
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, test_goal_set.empty());
 		if (use_sat && has_internal_check) i_stats.print(m_equation);
 	}
@@ -262,9 +258,8 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 	missing_cnt.inc(unsat_goals.size());
 	
 	if (limit > 0 && tcs.size() == limit) {
-		::std::ostringstream warn;
-		warn << "Stopped after computing " << limit << " test cases as requested";
-		m_equation.warning(warn.str());
+		m_equation.warning() << "Stopped after computing "
+		                     << limit << " test cases as requested" << messaget::eom;
 	}
 	
 	if (!unsat_goals.empty()) {
@@ -276,7 +271,7 @@ void Constraint_Strengthening::generate(::fshell2::fql::Compute_Test_Goals const
 		if (m_opts.get_bool_option("show-test-goals"))
 			m_equation.print(0, oss.str());
 		else
-			m_equation.warning(oss.str());
+			m_equation.warning() << oss.str() << messaget::eom;
 	}
 }
 		

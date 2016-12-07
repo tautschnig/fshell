@@ -46,8 +46,9 @@
 FSHELL2_NAMESPACE_BEGIN;
 
 Parseoptions::Parseoptions(int argc, const char **argv) :
-	::parseoptions_baset(FSHELL2_OPTIONS, argc, argv),
-	::language_uit("FShell 2 " FSHELL2_VERSION, cmdline),
+	::parse_options_baset(FSHELL2_OPTIONS, argc, argv),
+	::language_uit(cmdline, ui_message_handler),
+	ui_message_handler(cmdline, "FShell 2 " FSHELL2_VERSION),
 	m_stats(),
 	m_cpu_total(0),
 	m_session_total(0)
@@ -62,8 +63,9 @@ Parseoptions::Parseoptions(int argc, const char **argv) :
 
 Parseoptions::Parseoptions(int argc, const char **argv,
 		::std::string const& extra_options) :
-	::parseoptions_baset(FSHELL2_OPTIONS + extra_options, argc, argv),
-	::language_uit("FShell 2 " FSHELL2_VERSION, cmdline),
+	::parse_options_baset(FSHELL2_OPTIONS + extra_options, argc, argv),
+	::language_uit(cmdline, ui_message_handler),
+	ui_message_handler(cmdline, "FShell 2 " FSHELL2_VERSION),
 	m_stats(),
 	m_cpu_total(0),
 	m_session_total(0)
@@ -93,7 +95,7 @@ void Parseoptions::eval_verbosity()
 
 	if(cmdline.isset("verbosity"))
 	{
-		v=::atoi(cmdline.getval("verbosity"));
+		v=::atoi(cmdline.get_value("verbosity").c_str());
 		if(v<0)
 			v=0;
 		else if(v>9)
@@ -115,16 +117,16 @@ bool Parseoptions::get_command_line_options()
 	m_options.set_option("all-claims", false);
 
 	if(cmdline.isset("unwind"))
-		m_options.set_option("unwind", cmdline.getval("unwind"));
+		m_options.set_option("unwind", cmdline.get_value("unwind"));
 
 	if(cmdline.isset("program-only"))
 		m_options.set_option("program-only", true);
 
 	if(cmdline.isset("depth"))
-		m_options.set_option("depth", cmdline.getval("depth"));
+		m_options.set_option("depth", cmdline.get_value("depth"));
 
 	if(cmdline.isset("unwindset"))
-		m_options.set_option("unwindset", cmdline.getval("unwindset"));
+		m_options.set_option("unwindset", cmdline.get_value("unwindset"));
 
 	// constant propagation
 	m_options.set_option("propagation", true);
@@ -153,7 +155,7 @@ bool Parseoptions::get_command_line_options()
 	m_options.set_option("pretty-names", true);
 
 	if(cmdline.isset("outfile"))
-		m_options.set_option("outfile", cmdline.getval("outfile"));
+		m_options.set_option("outfile", cmdline.get_value("outfile"));
 
 	m_options.set_option("show-goto-functions", cmdline.isset("show-goto-functions"));
 	m_options.set_option("dump-c", cmdline.isset("dump-c"));
@@ -170,7 +172,7 @@ bool Parseoptions::get_command_line_options()
 	m_options.set_option("tco-assign-globals", cmdline.isset("tco-assign-globals"));
 
 	if(cmdline.isset("max-argc"))
-		m_options.set_option("max-argc", cmdline.getval("max-argc"));
+		m_options.set_option("max-argc", cmdline.get_value("max-argc"));
 
 	eval_verbosity();
 
@@ -199,13 +201,13 @@ int Parseoptions::doit()
 		if(cmdline.args.size()==1 &&
 				is_goto_binary(cmdline.args[0]))
 		{
-			status("Reading GOTO program from file");
+			status() << "Reading GOTO program from file" << eom;
 
 			if(read_goto_binary(cmdline.args[0],
 						symbol_table, goto_functions, get_message_handler()))
 				return 1;
 
-			config.ansi_c.set_from_symbol_table(symbol_table);
+			config.set_from_symbol_table(symbol_table);
 		}
 		else if(0!=cmdline.args.size())
 		{
@@ -213,7 +215,7 @@ int Parseoptions::doit()
 			if(typecheck()) return 1;
 			if(final()) return 1;
 
-			status("Generating GOTO Program");
+			status() << "Generating GOTO Program" << eom;
 
 			goto_convert(
 					symbol_table, goto_functions,
@@ -221,7 +223,7 @@ int Parseoptions::doit()
 		}
 
 		// finally add the library
-		status("Adding CPROVER library");
+		status() << "Adding CPROVER library" << eom;
 		link_to_library(symbol_table, goto_functions, ui_message_handler);
 
 		if(0!=cmdline.args.size()) {
@@ -234,11 +236,10 @@ int Parseoptions::doit()
 		if(cmdline.isset("query-file"))
 		{
 			// open the input file
-			::std::ifstream query(cmdline.getval("query-file"));
+			::std::ifstream query(cmdline.get_value("query-file"));
 			if(!query.is_open()) {
-				::std::ostringstream ostr;
-				ostr << "Failed to open query file " << cmdline.getval("query-file");
-				error(ostr.str());
+				error() << "Failed to open query file " 
+				        << cmdline.get_value("query-file") << eom;
 				return 1;
 			}
 			::std::string line;
@@ -251,13 +252,13 @@ int Parseoptions::doit()
 
 	catch(const char *e)
 	{
-		error(e);
+		error() << e << eom;
 		return 2;
 	}
 
 	catch(const std::string e)
 	{
-		error(e);
+		error() << e << eom;
 		return 2;
 	}
 
@@ -268,7 +269,7 @@ int Parseoptions::doit()
 
 	catch(std::bad_alloc)
 	{
-		error("Out of memory");
+		error() << "Out of memory" << eom;
 		return 2;
 	}
 

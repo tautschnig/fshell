@@ -66,7 +66,7 @@ FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_FQL_NAMESPACE_BEGIN;
 
 CNF_Conversion::CNF_Conversion(::language_uit & manager, ::optionst const& opts) :
-	::bmct(opts, manager.symbol_table, manager.ui_message_handler),
+	::bmct(opts, manager.symbol_table, manager.ui_message_handler, m_bv),
 	m_opts(opts), m_cnf(), m_bv(this->ns, m_cnf) {
 	this->set_message_handler(manager.ui_message_handler);
 	this->set_ui(manager.ui_message_handler.get_ui());
@@ -93,9 +93,9 @@ bool CNF_Conversion::decide_default() {
   else if(this->options.get_option("arrays-uf")=="always")
     m_bv.unbounded_array=bv_cbmct::U_ALL;
 
-  status("Passing problem to "+m_bv.decision_procedure_text());
+  status() << "Passing problem to " << m_bv.decision_procedure_text() << eom;
 
-  this->do_conversion(m_bv);
+  this->do_conversion();
 
   return false;
 }
@@ -177,13 +177,13 @@ void Compute_Test_Goals::print_test_goal(::literalt const& tg,
 		for (ctx_coll_t::const_iterator iter(entry->second.begin());
 				iter != entry->second.end(); ++iter) {
 			if (entry->second.begin() != iter) os << "|";
-			if (iter->first->location.is_nil()) os << "NO_LOCATION";
-			else os << iter->first->location.get_file() << ":"
-				<< iter->first->location.get_line();
+			if (iter->first->source_location.is_nil()) os << "NO_LOCATION";
+			else os << iter->first->source_location.get_file() << ":"
+				<< iter->first->source_location.get_line();
 			if (iter->second != iter->first && iter->first->is_goto() &&
-					!iter->second->location.is_nil())
-				os << "-" << iter->second->location.get_file() << ":"
-					<< iter->second->location.get_line();
+					!iter->second->source_location.is_nil())
+				os << "-" << iter->second->source_location.get_file() << ":"
+					<< iter->second->source_location.get_line();
 		}
 		if (entry->second.size() > 1) os << ")";
 	}
@@ -398,7 +398,7 @@ CNF_Conversion & Compute_Test_Goals_From_Instrumentation::do_query(::goto_functi
 		gf.output(m_equation.get_ns(), smp.get_ostream());
 	} else if (m_opts.get_bool_option("dump-c")) {
 		Smart_Printer smp(m_manager);
-		::dump_c(gf, m_equation.get_ns(), smp.get_ostream());
+		::dump_c(gf, true, m_equation.get_ns(), smp.get_ostream());
 	}
 
 	// convert CFA to CNF
@@ -448,10 +448,9 @@ bool Compute_Test_Goals_From_Instrumentation::find_all_contexts(context_to_pcs_t
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, n_iter->second->is_assign());
 			pc_to_context_and_guards_t::const_iterator guards_entry(m_pc_to_guard.find(n_iter->second));
 			if (m_pc_to_guard.end() == guards_entry) {
-				::std::ostringstream warn;
-				warn << "Transition to test goal state " << *iter << " in "
-					<< n_iter->second->function << " is unreachable";
-				m_equation.warning(warn.str());
+				m_equation.warning() << "Transition to test goal state "
+				        << *iter << " in "
+					<< n_iter->second->function << " is unreachable" << messaget::eom;
 				continue;
 			}
 
@@ -593,7 +592,7 @@ CNF_Conversion & Compute_Test_Goals_Boolean::do_query(::goto_functionst & gf, Qu
 		gf.output(m_equation.get_ns(), smp.get_ostream());
 	} else if (m_opts.get_bool_option("dump-c")) {
 		Smart_Printer smp(m_manager);
-		::dump_c(gf, m_equation.get_ns(), smp.get_ostream());
+		::dump_c(gf, true, m_equation.get_ns(), smp.get_ostream());
 	}
 
 	// convert CFA to CNF
@@ -678,8 +677,8 @@ void Compute_Test_Goals_Boolean::build(trace_automaton_t const& aut, bool map_tg
 				{
 					m_loc_to_edge_target_graphs_map[ tg_iter->first.second ][ *tg_iter ].insert(e_iter->first);
 					FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
-						"Edge ", tg_iter->first.second->location_number, "->",
-						tg_iter->second.second->location_number,
+						"Edge ", tg_iter->first.second->source_location_number, "->",
+						tg_iter->second.second->source_location_number,
 						" maps to ", e_iter->first));
 				}
 				// store the mapping from nodes to target graphs
@@ -909,7 +908,7 @@ void Compute_Test_Goals_Boolean::do_step(::cnf_clause_list_assignmentt & cnf,
 		// statement may have been added by earlier instrumentation and we
 		// don't care about it anyway; otherwise we must not take this edge
 		if (!is_instrumented)
-			cnf.lcnf(::bvt(1, cnf.lnot(step->guard_literal)));
+			cnf.lcnf(::bvt(1, !step->guard_literal));
 
 		return;
 	} else {
@@ -1277,9 +1276,8 @@ bool Compute_Test_Goals_Boolean::get_satisfied_test_goals(
 		}
 	}
 
-	::std::ostringstream status;
-	status << "Need to analyze " << current_states_size << " candidates for coverage";
-	m_manager.status(status.str());
+	m_manager.status() << "Need to analyze " << current_states_size
+	                   << " candidates for coverage" << messaget::eom;
 	test_goal_id_map_t const& id_map(m_equation.get_test_goal_id_map());
 	for (state_vec_t::const_iterator iter(current_states.begin());
 			iter != current_states.end(); ++iter) {

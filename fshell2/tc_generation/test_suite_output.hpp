@@ -73,18 +73,18 @@ class Test_Suite_Output
 			::irep_idt m_pretty_name;
 			::exprt const * m_value;
 			::symbolt const * m_symbol;
-			::locationt const * m_location;
+			::source_locationt const * m_location;
 			::exprt m_value_expr;
 			::std::string m_type_str;
 		} program_variable_t;
 		typedef ::std::list< program_variable_t > test_inputs_t;
 
 		Test_Input(::symbolt const& main_sym, 
-				::std::string const& main_str, ::locationt const& main_loc);
+				::std::string const& main_str, ::source_locationt const& main_loc);
 
 		::symbolt const& m_main_symbol;
 		::std::string const m_main_symbol_str;
-		::locationt const& m_main_location;
+		::source_locationt const& m_main_location;
 		test_inputs_t m_test_inputs;
 	};
 	typedef ::std::list< ::std::pair< ::std::pair< ::goto_programt::const_targett,

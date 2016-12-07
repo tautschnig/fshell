@@ -155,7 +155,10 @@ void FShell2::try_query(::language_uit & manager, char const * line,
 	// be skipped and all extra checks be disabled using CBMC cmdline, but that
 	// must include unwinding assertions et al.
 	if (mod || m_first_run) {
-		::bmct bmc(m_opts, manager.symbol_table, manager.ui_message_handler);
+	        satcheckt satcheck;
+	        const namespacet ns(manager.symbol_table);
+	        bv_cbmct bv_cbmc(ns, satcheck);
+		::bmct bmc(m_opts, manager.symbol_table, manager.ui_message_handler, bv_cbmc);
 		bmc.set_ui(manager.ui_message_handler.get_ui());
 		FSHELL2_PROD_CHECK1(::fshell2::FShell2_Error, !bmc.run(m_gf),
 				"Program has failing assertions, cannot proceed.");
@@ -295,17 +298,17 @@ void FShell2::interactive(::language_uit & manager) {
 		try {
 			// process the input; returning true signals "quit"
 			if (!input.get() || process_line(manager, input.get())) {
-				manager.status("Bye.");
+				manager.status() << "Bye." << messaget::eom;
 				return;
 			}
 		} catch (::fshell2::Command_Processing_Error & e) {
-			manager.error(e.what());
+			manager.error() << e.what() << messaget::eom;
 		} catch (::fshell2::Macro_Processing_Error & e) {
-			manager.error(e.what());
+			manager.error() << e.what() << messaget::eom;
 		} catch (::fshell2::Query_Processing_Error & e) {
-			manager.error(e.what());
+			manager.error() << e.what() << messaget::eom;
 		} catch (::fshell2::FShell2_Error & e) {
-			manager.error(e.what());
+			manager.error() << e.what() << messaget::eom;
 		}
 	}
 }

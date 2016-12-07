@@ -49,7 +49,7 @@
 #include <goto-programs/goto_inline.h>
 #include <goto-programs/loop_ids.h>
 #include <analyses/goto_check.h>
-#include <linking/entry_point.h>
+#include <ansi-c/ansi_c_entry_point.h>
 
 #include <cerrno>
 #include <fstream>
@@ -306,7 +306,7 @@ void Command_Processing::remove_zero_init(::language_uit & manager) const {
 		 iter != init_iter->second.value.operands().end();)
 	{
 		if (iter->get(ID_statement) == ID_assign &&
-			iter->location().get_file() != "<built-in>") {
+			iter->source_location().get_file() != "<built-in>") {
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 2 == iter->operands().size());
 			if (iter->op1().get_bool(ID_C_zero_initializer)) {
 				iter = init_iter->second.value.operands().erase(iter);
@@ -324,7 +324,7 @@ void Command_Processing::model_argv(::language_uit & manager) const {
 	::namespacet const ns(symbol_table);
 
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, symbol_table.has_symbol("c::main"));
-	locationt const& main_loc=symbol_table.symbols.find("c::main")->second.location;
+	source_locationt const& main_loc=symbol_table.symbols.find("c::main")->second.location;
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, main_loc.is_not_nil());
 
 	/*
@@ -417,7 +417,7 @@ void Command_Processing::model_argv(::language_uit & manager) const {
 	::symbolt const& argvpp_symbol(ns.lookup("c::main::1::argv''"));
 	symbol_exprt argvpp(argvpp_symbol.base_name, argvpp_symbol.type);
 	code_declt argvpp_decl(argvpp);
-	argvpp_decl.location()=main_loc;
+	argvpp_decl.add_source_location()=main_loc;
 
 	code_blockt code;
 
@@ -431,11 +431,11 @@ void Command_Processing::model_argv(::language_uit & manager) const {
 		::symbol_exprt symbol_expr(symbol.base_name, symbol.type);
 
 		code_declt decl(symbol_expr);
-		decl.location()=main_loc;
+		decl.add_source_location()=main_loc;
 		code.move_to_operands(decl);
 
 		code_assignt assign(symbol_expr, from_integer(0, unsigned_short_int_type()));
-		assign.location()=main_loc;
+		assign.add_source_location()=main_loc;
 		code.move_to_operands(assign);
 	}
 
@@ -450,7 +450,7 @@ void Command_Processing::model_argv(::language_uit & manager) const {
 		  ID_le,
 		  from_integer(max_argc, argcp_symbol.type));
 		code_assumet assume(le);
-		assume.location()=main_loc;
+		assume.add_source_location()=main_loc;
 		code.move_to_operands(assume);
 	}
 
@@ -478,7 +478,7 @@ void Command_Processing::model_argv(::language_uit & manager) const {
 		symbol_exprt argvp(argvp_symbol.base_name, argvp_symbol.type);
 
 		code_whilet while_loop;
-		while_loop.location()=main_loc;
+		while_loop.add_source_location()=main_loc;
 
 		while_loop.cond()=and_exprt(
 		  binary_relation_exprt(i, ID_lt, argcp),
@@ -487,37 +487,37 @@ void Command_Processing::model_argv(::language_uit & manager) const {
 		while_loop.body()=code_blockt();
 
 		code_declt decl(len);
-		decl.location()=main_loc;
+		decl.add_source_location()=main_loc;
 		while_loop.body().move_to_operands(decl);
 
 		exprt e4096=from_integer(4096, len_symbol.type);
 		binary_relation_exprt lt1(len, ID_lt, e4096);
 		code_assumet assume1(lt1);
-		assume1.location()=main_loc;
+		assume1.add_source_location()=main_loc;
 		while_loop.body().move_to_operands(assume1);
 		binary_relation_exprt lt2(plus_exprt(next, len), ID_lt, e4096);
 		code_assumet assume2(lt2);
-		assume2.location()=main_loc;
+		assume2.add_source_location()=main_loc;
 		while_loop.body().move_to_operands(assume2);
 
 		code_assignt assign1(
 		  index_exprt(argvp, i),
 		  plus_exprt(argvpp, next));
-		assign1.location()=main_loc;
+		assign1.add_source_location()=main_loc;
 		while_loop.body().move_to_operands(assign1);
 
 		code_assignt assign2(
 		  index_exprt(argvpp, plus_exprt(next, len)),
 		  from_integer(0, char_type()));
-		assign2.location()=main_loc;
+		assign2.add_source_location()=main_loc;
 		while_loop.body().move_to_operands(assign2);
 
 		code_assignt assign3(next, plus_exprt(plus_exprt(next, len), from_integer(1, unsigned_short_int_type())));
-		assign3.location()=main_loc;
+		assign3.add_source_location()=main_loc;
 		while_loop.body().move_to_operands(assign3);
 
 		code_assignt assign4(i, plus_exprt(i, from_integer(1, unsigned_short_int_type())));
-		assign4.location()=main_loc;
+		assign4.add_source_location()=main_loc;
 		while_loop.body().move_to_operands(assign4);
 
 		code.move_to_operands(while_loop);
@@ -548,12 +548,12 @@ void Command_Processing::model_argv(::language_uit & manager) const {
 
 	catch(const char *e)
 	{
-		ansi_c_typecheck.error(e);
+		ansi_c_typecheck.error() << e << messaget::eom;
 	}
 
 	catch(const std::string &e)
 	{
-		ansi_c_typecheck.error(e);
+		ansi_c_typecheck.error() << e << messaget::eom;
 	}
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 						 !ansi_c_typecheck.get_error_found());
@@ -595,7 +595,7 @@ bool Command_Processing::finalize(::language_uit & manager) {
 
 	manager.symbol_table.remove(ID_main);
 	
-	m_finalized = ! ::entry_point(manager.symbol_table,
+	m_finalized = ! ::ansi_c_entry_point(manager.symbol_table,
 								  "c::main",
 								  manager.ui_message_handler);
 	// this must never fail, given all the previous sanity checks
@@ -625,7 +625,7 @@ bool Command_Processing::finalize(::language_uit & manager) {
 		if (m_gf.function_map.end() != fct)
 		{
 			if(*iter!=ID_main && // main was possibly modified
-			   fct->second.body_available && // ADD SOURCECODE may have added sth
+			   fct->second.body_available() && // ADD SOURCECODE may have added sth
 			   manager.symbol_table.symbols.find(*iter)->second.value.is_not_nil()) //not ABSTRACT
 				continue;
 			m_gf.function_map.erase(fct);
@@ -640,16 +640,16 @@ bool Command_Processing::finalize(::language_uit & manager) {
 
 void Command_Processing::finalize_goto_program(::language_uit & manager) {
 
-	manager.status("Function Pointer Removal");
+	manager.status() << "Function Pointer Removal" << messaget::eom;
 	::remove_function_pointers(manager.symbol_table, m_gf, false);
 
-	manager.status("Partial Inlining");
+	manager.status() << "Partial Inlining" << messaget::eom;
 	// do partial inlining
 	::namespacet ns(manager.symbol_table);
 	::goto_partial_inline(m_gf, ns, manager.ui_message_handler);
 
 	// add generic checks
-	manager.status("Generic Property Instrumentation");
+	manager.status() << "Generic Property Instrumentation" << messaget::eom;
 	::goto_check(ns, m_opts, m_gf);
 
 	// add failed symbols

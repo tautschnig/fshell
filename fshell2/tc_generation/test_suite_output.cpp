@@ -182,7 +182,7 @@ Symbol_Identifier::Symbol_Identifier(::symbol_exprt const& sym) :
 }
 		
 Test_Suite_Output::Test_Input::Test_Input(::symbolt const& main_sym,
-		::std::string const& main_str, ::locationt const& main_loc) :
+		::std::string const& main_str, ::source_locationt const& main_loc) :
 	m_main_symbol(main_sym),
 	m_main_symbol_str(main_str), 
 	m_main_location(main_loc) {
@@ -398,7 +398,7 @@ void Test_Suite_Output::analyze_symbol(
 		iv.m_symbol = 0;
 		m_equation.get_ns().lookup(iv.m_pretty_name, iv.m_symbol);
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, iv.m_symbol);
-		iv.m_location = &(step.source.pc->location);
+		iv.m_location = &(step.source.pc->source_location);
 		// remove return values of defined (but inlined) functions
 		if (Symbol_Identifier::CBMC_TMP_RETURN_VALUE == var.m_vt && !iv.m_symbol->value.is_nil())
 			return;
@@ -722,7 +722,7 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, sym);
 		os << sym->base_name << "()";
 		if (print_loc)
-			os << "@[" << iter->first.first->location << "]";
+			os << "@[" << iter->first.first->source_location << "]";
 		if (iter->second) {
 			::exprt val(bv.get(*(iter->second)));
 			FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, !val.is_nil(),
@@ -750,7 +750,7 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, sym);
 		os << sym->base_name;
 		if (print_loc)
-			os << "@[" << (*iter)->source.pc->location << "]";
+			os << "@[" << (*iter)->source.pc->source_location << "]";
 		::exprt val(bv.get(lhs));
 		FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, !val.is_nil(),
 				::diagnostics::internal::to_string("Failed to lookup ", lhs.get(ID_identifier)));
@@ -795,8 +795,10 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 		
 		xml_obj.new_element("value").data =
 			::from_expr(m_equation.get_ns(), iter->m_name->get(ID_identifier), iter->m_value_expr);
+	        #if 0 // DK: this is gone
 		xml_obj.new_element("binary-value").data =
 			::counterexample_value_binary(iter->m_value_expr, m_equation.get_ns());
+	        #endif
 		if (print_loc)
 			xml_obj.new_element("type").data = iter->m_type_str;
 		
@@ -815,7 +817,7 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 
 			if (print_loc) {
 				::xmlt xml_loc("location");
-				::convert(iter->first.first->location, xml_loc);
+				::convert(iter->first.first->source_location, xml_loc);
 				xml_obj.new_element().swap(xml_loc);
 			}
 
@@ -846,7 +848,7 @@ void Test_Suite_Output::get_test_case(Test_Input & ti, called_functions_t & call
 
 			if (print_loc) {
 				::xmlt xml_loc("location");
-				::convert((*iter)->source.pc->location, xml_loc);
+				::convert((*iter)->source.pc->source_location, xml_loc);
 				xml_obj.new_element().swap(xml_loc);
 			}
 
