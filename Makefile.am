@@ -100,7 +100,7 @@ all-local:
 		$(MAKE) $(filter-out CXXFLAGS="$(CXXFLAGS)", $(AM_MAKEFLAGS)) \
 			CXXFLAGS="$(CXXFLAGS) -Wno-long-long -Wno-sign-compare -Wno-parentheses" \
 			MAKEOVERRIDES="MINISAT2=../../../minisat-2.2.0/" \
-			-C cbmc/src cbmc.dir ; \
+			-C cbmc/src cbmc.dir goto-instrument.dir ; \
 	fi
 if BUILD_LINENOISE
 	$(MAKE) $(AM_MAKEFLAGS) -C linenoise CC="$(CC)" CFLAGS="$(CXXFLAGS)"

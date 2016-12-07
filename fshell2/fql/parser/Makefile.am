@@ -15,9 +15,9 @@ CBMC_OBJS = @CBMCDIR@/src/util/util.a \
 						@CBMCDIR@/src/linking/linking.a
 
 if DIAGNOSTICS
-BUILT_SOURCES += parser.h
+BUILT_SOURCES += parser.hh
 else
-BUILT_SOURCES = parser.h
+BUILT_SOURCES = parser.hh
 endif
 
 #debug bison-parser
