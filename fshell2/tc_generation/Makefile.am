@@ -10,6 +10,7 @@ SUBDIRS =
 
 CBMC_OBJS = @CBMCDIR@/src/goto-programs/goto-programs.a \
 						@CBMCDIR@/src/goto-instrument/dump_c.o \
+						@CBMCDIR@/src/goto-instrument/goto_program2code.o \
 						@CBMCDIR@/src/cpp/cpp.a \
 						@CBMCDIR@/src/assembler/assembler.a \
 						@CBMCDIR@/src/util/util.a \
@@ -21,21 +22,23 @@ CBMC_OBJS = @CBMCDIR@/src/goto-programs/goto-programs.a \
 						@CBMCDIR@/src/pointer-analysis/add_failed_symbols.o \
 						@CBMCDIR@/src/pointer-analysis/rewrite_index.o \
 						@CBMCDIR@/src/pointer-analysis/goto_program_dereference.o \
-						@CBMCDIR@/src/cbmc/cover.o \
+						@CBMCDIR@/src/cbmc/bmc_cover.o \
 						@CBMCDIR@/src/cbmc/bmc.o \
+						@CBMCDIR@/src/cbmc/all_properties.o \
+						@CBMCDIR@/src/xmllang/xmllang.a \
 						@CBMCDIR@/src/cbmc/show_vcc.o \
 						@CBMCDIR@/src/cbmc/cbmc_solvers.o \
 						@CBMCDIR@/src/solvers/solvers.a \
-						@CBMCDIR@/src/cbmc/dimacs.o \
+						@CBMCDIR@/src/cbmc/cbmc_dimacs.o \
 						@CBMCDIR@/src/cbmc/bv_cbmc.o \
 						@CBMCDIR@/src/cbmc/counterexample_beautification.o \
 						@CBMCDIR@/src/cbmc/symex_bmc.o \
-						@CBMCDIR@/src/cbmc/all_claims.o \
+						@CBMCDIR@/src/cbmc/fault_localization.o \
 						@CBMCDIR@/src/langapi/langapi.a \
 						@CBMCDIR@/src/ansi-c/ansi-c.a \
 						@CBMCDIR@/src/linking/linking.a
 
-MINISAT_OBJS = @MINISATDIR@/utils/System.o
+MINISAT_OBJS = @MINISATDIR@/minisat/utils/System.o
 
 noinst_LTLIBRARIES = libtc_generation.la
 libtc_generation_la_SOURCES = constraint_strengthening.cpp test_suite_minimization.cpp test_suite_output.cpp

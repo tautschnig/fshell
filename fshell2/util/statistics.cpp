@@ -36,7 +36,7 @@
 #include <sstream>
 
 #include <util/message.h>
-#include <utils/System.h>
+#include <minisat/utils/System.h>
 
 FSHELL2_NAMESPACE_BEGIN;
 FSHELL2_STATISTICS_NAMESPACE_BEGIN;

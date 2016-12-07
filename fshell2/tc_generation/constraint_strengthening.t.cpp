@@ -104,8 +104,10 @@ void test( Test_Data & data )
 	::register_language(new_ansi_c_language);
 	::cmdlinet cmdline;
 	::config.set(cmdline);
-	::language_uit l("FShell2", cmdline);
+	::ui_message_handlert ui_message_handler(cmdline, "FShell2");
+	::language_uit l(cmdline, ui_message_handler);
 	::optionst options;
+	options.set_option("stop-on-fail", true);
 	::goto_functionst gf;
 
 	TEST_CHECK(!l.parse(tempname_str));
@@ -126,7 +128,7 @@ void test( Test_Data & data )
 	
 	fql::Compute_Test_Goals_From_Instrumentation goals(l, options);
 	fql::CNF_Conversion & eq(goals.do_query(gf, *q));
-	TEST_CHECK_RELATION(6, ==, eq.get_test_goal_id_map().size());
+	TEST_CHECK_RELATION(5, ==, eq.get_test_goal_id_map().size());
 
 	statistics::Statistics stats;
 	Constraint_Strengthening cs(eq, options);
@@ -134,7 +136,7 @@ void test( Test_Data & data )
 	options.set_option("sat-coverage-check", true);
 	cs.generate(goals, test_suite, 0, stats, atc);
 	TEST_ASSERT_RELATION(test_suite.size(), >=, 2);
-	TEST_ASSERT_RELATION(test_suite.size(), <=, 3);
+	TEST_ASSERT_RELATION(test_suite.size(), <=, 6);
 }
 
 /** @cond */

@@ -457,12 +457,12 @@ Predicate: TOK_ARBITRARY_PRED
 		   FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 		     ID_code == tl_expr.operands().front().id());
 		   FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-		     ID_sideeffect == tl_expr.operands().front().op0().id());
+		     ID_side_effect == tl_expr.operands().front().op0().id());
 		   ::exprt & assign_expr(
 		     ansi_c_parser.parse_tree.items.front().declarator().value().op0().op0());
 		   FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-		     assign_expr.op0().get("identifier") == "PRED");
-		   assign_expr.op0().set("identifier", "!PRED!");
+		     assign_expr.op0().get(ID_identifier) == "PRED");
+		   assign_expr.op0().set(ID_identifier, "!PRED!");
 		   $$ = ::fshell2::fql::Predicate::Factory::get_instance().create(
 		     new ::exprt(assign_expr));
 		   needs_cleanup.insert($$);

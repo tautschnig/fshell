@@ -65,14 +65,14 @@ does; this breaks compilation with -pedantic */
 
 int CMDFlexLexer::yywrap() { return 1; }
 
-#include <list>
-#include "command_processing.hpp"
-
-#include <fshell2/command/parser.hh>
-
 #include <fshell2/config/annotations.hpp>
 #include <fshell2/exception/command_processing_error.hpp>
 
+#include <fshell2/command/command_processing.hpp>
+
+#include <fshell2/command/parser.hh>
+
+#include <list>
 %}
 
 %option c++

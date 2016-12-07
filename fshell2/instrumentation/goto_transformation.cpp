@@ -56,13 +56,13 @@ void GOTO_Transformation::set_annotations(::goto_programt::const_targett src, ::
 	for (::goto_programt::targett iter(target.instructions.begin());
 			iter != target.instructions.end(); ++iter) {
 		iter->function = src->function;
-		iter->location = src->location;
+		iter->source_location = src->source_location;
 	}
 	mark_instrumented(target);
 }
 
 void GOTO_Transformation::mark_instrumented(::goto_programt::targett inst) {
-	inst->location.set_property_id("fshell2_instrumentation");
+	inst->source_location.set_property_id("fshell2_instrumentation");
 }
 
 void GOTO_Transformation::mark_instrumented(::goto_programt & target) {
@@ -225,13 +225,13 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 				fmap_entry != m_goto.function_map.end(); ++fmap_entry) {
 			if (fmap_entry->first == node.first->instructions.front().function) fct_entry = fmap_entry;
 			::symbolt const& symb(ns.lookup(fmap_entry->first));
-			if ((*iter)->get(ID_identifier) == symb.base_name) alt_names.push_back(::symbol_expr(symb));
+			if ((*iter)->get(ID_identifier) == symb.base_name) alt_names.push_back(symb.symbol_expr());
 		}
 		// check globals
 		::symbol_tablet::symbolst::const_iterator global_symb(
 				m_manager.symbol_table.symbols.find((*iter)->get_string(ID_identifier)));
 		if (global_symb != m_manager.symbol_table.symbols.end() && global_symb->second.is_static_lifetime)
-			alt_names.push_back(::symbol_expr(global_symb->second));
+			alt_names.push_back(global_symb->second.symbol_expr());
 		// function arguments
 		FSHELL2_AUDIT_ASSERT1(::diagnostics::Violated_Invariance, fct_entry != m_goto.function_map.end(),
 				::diagnostics::internal::to_string("Function ",
@@ -240,7 +240,7 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 		for (::code_typet::parameterst::const_iterator a_iter(parameter_types.begin());
 				a_iter != parameter_types.end(); ++a_iter) {
 			::symbolt const& symb(ns.lookup(a_iter->get_identifier()));
-			if ((*iter)->get(ID_identifier) == symb.base_name) alt_names.push_back(::symbol_expr(symb));
+			if ((*iter)->get(ID_identifier) == symb.base_name) alt_names.push_back(symb.symbol_expr());
 		}
 		// local variables
 		for (::goto_programt::instructionst::const_iterator f_iter(node.first->instructions.begin());
@@ -271,7 +271,7 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 		::symbolt const& cond_symbol(new_bool_var("pred"));
 		::goto_programt::targett decl(tmp.add_instruction());
 		decl->make_decl();
-		decl->code = ::code_declt(::symbol_expr(cond_symbol));
+		decl->code = ::code_declt(cond_symbol.symbol_expr());
 
 		if (special_pred_symb && !make_nondet) {
 			special_pred_symb->set(ID_identifier, cond_symbol.name);
@@ -288,7 +288,7 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 			tmp.destructive_append(dest);
 		}
 
-		pred_copy = ::symbol_expr(cond_symbol);
+		pred_copy = cond_symbol.symbol_expr();
 	} else {
 		FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Trying to typecheck: ", pred_copy.pretty()));
 		bool const tc_failed(::ansi_c_typecheck(pred_copy, m_manager.get_message_handler(), ns));
@@ -336,14 +336,14 @@ GOTO_Transformation::inserted_t & GOTO_Transformation::make_nondet_choice(::goto
 				::symbolt const& cond_symbol(new_bool_var("nd_choice"));
 				::goto_programt::targett decl(dest.add_instruction());
 				decl->make_decl();
-				decl->code = ::code_declt(::symbol_expr(cond_symbol));
+				decl->code = ::code_declt(cond_symbol.symbol_expr());
 				var_map[j] = &cond_symbol;
 			}
 			
 			bool pos(bv & 0x1);
 			bv >>= 1;
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, var_map.size() > static_cast<unsigned>(j) && var_map[j] != 0);
-			::exprt cond(::symbol_expr(*(var_map[j])));
+			::exprt cond(var_map[j]->symbol_expr());
 			if (!pos) cond.make_not();
 			if (0 == j) {
 				full_cond = new ::exprt(cond);

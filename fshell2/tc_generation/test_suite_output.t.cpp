@@ -122,8 +122,10 @@ void test_sym_classes( Test_Data & data )
 	::register_language(new_ansi_c_language);
 	::cmdlinet cmdline;
 	::config.set(cmdline);
-	::language_uit l("FShell2", cmdline);
+	::ui_message_handlert ui_message_handler(cmdline, "FShell2");
+	::language_uit l(cmdline, ui_message_handler);
 	::optionst options;
+	options.set_option("stop-on-fail", true);
 	::goto_functionst gf;
 
 	TEST_CHECK(!l.parse(tempname_str));
@@ -153,14 +155,14 @@ void test_sym_classes( Test_Data & data )
 	cs.generate(goals, test_suite, 0, stats, atc);
 	Constraint_Strengthening::test_cases_t::size_type const size(test_suite.size());
 	TEST_CHECK_RELATION(size, >=, 3);
-	TEST_CHECK_RELATION(size, <=, 4);
+	TEST_CHECK_RELATION(size, <=, 5);
 	
 	Test_Suite_Minimization ts_min(l);
 	ts_min.minimize(test_suite);
 	TEST_CHECK_RELATION(test_suite.size(), >=, 3);
 	TEST_CHECK_RELATION(test_suite.size(), <=, size);
 	
-	::config.main = "main";
+	::config.main = id2string(ID_main);
 	::cnf_clause_list_assignmentt & cnf(eq.get_cnf());
 	::boolbvt const& bv(eq.get_bv());
 	for (::fshell2::Constraint_Strengthening::test_cases_t::const_iterator iter(
@@ -224,8 +226,10 @@ void test( Test_Data & data )
 	::register_language(new_ansi_c_language);
 	::cmdlinet cmdline;
 	::config.set(cmdline);
-	::language_uit l("FShell2", cmdline);
+	::ui_message_handlert ui_message_handler(cmdline, "FShell2");
+	::language_uit l(cmdline, ui_message_handler);
 	::optionst options;
+	options.set_option("stop-on-fail", true);
 	::goto_functionst gf;
 
 	TEST_CHECK(!l.parse(tempname_str));
@@ -246,7 +250,7 @@ void test( Test_Data & data )
 	
 	fql::Compute_Test_Goals_From_Instrumentation goals(l, options);
 	fql::CNF_Conversion & eq(goals.do_query(gf, *q));
-	TEST_CHECK_RELATION(5, ==, eq.get_test_goal_id_map().size());
+	TEST_CHECK_RELATION(4, ==, eq.get_test_goal_id_map().size());
 
 	statistics::Statistics stats;
 	Constraint_Strengthening cs(eq, options);

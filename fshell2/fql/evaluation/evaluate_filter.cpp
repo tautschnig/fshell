@@ -111,19 +111,19 @@ target_graph_t const& Evaluate_Filter::get(Predicate const& p) const {
 }
 
 bool Evaluate_Filter::ignore_function(::goto_programt::instructiont const& e) {
-	if (e.function == ID_main) return true;
-	if (e.function == "c::__CPROVER_initialize") return true;
+	if (e.function == ID__start) return true;
+	if (e.function == "__CPROVER_initialize") return true;
 	static const ::std::string::size_type len(::std::string::traits_type::length("<builtin-library>-"));
-	if (!e.location.is_nil() &&
-			((e.location.get_file() == "<built-in>") ||
-			(0 == id2string(e.location.get_file()).compare(
+	if (!e.source_location.is_nil() &&
+			((e.source_location.get_file() == "<built-in>") ||
+			(0 == id2string(e.source_location.get_file()).compare(
 				0, len, "<builtin-library>-")))) return true;
 
 	return false;
 }
 	
 bool Evaluate_Filter::ignore_function(::goto_functionst::goto_functiont const& fct) {
-	if (!fct.body_available) return true;
+	if (!fct.body_available()) return true;
 	if (fct.body.instructions.empty()) return true;
 	if (fct.is_inlined()) return true;
 
@@ -263,8 +263,8 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 						iter != m_gf->function_map.end(); ++iter) {
 					if (ignore_function(iter->second)) continue;
 					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-						!iter->second.body.instructions.front().location.is_nil());
-					if (iter->second.body.instructions.front().location.get_file() != arg) continue;
+						!iter->second.body.instructions.front().source_location.is_nil());
+					if (iter->second.body.instructions.front().source_location.get_file() != arg) continue;
 					bool first(true);
 					for (::goto_programt::instructionst::iterator f_iter(iter->second.body.instructions.begin());
 							f_iter != iter->second.body.instructions.end(); ++f_iter) {
@@ -295,9 +295,9 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 							f_iter != iter->second.body.instructions.end(); ++f_iter) {
 						if (ignore_instruction(*f_iter)) continue;
 						if (GOTO_Transformation::is_instrumented(f_iter)) continue;
-						if (f_iter->location.is_nil() ||
-								f_iter->location.get_line().empty() ||
-								f_iter->location.get_line() != arg_str.str()) continue;
+						if (f_iter->source_location.is_nil() ||
+								f_iter->source_location.get_line().empty() ||
+								f_iter->source_location.get_line() != arg_str.str()) continue;
 						CFG::entries_t::iterator cfg_node(m_cfg->find(f_iter));
 						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg->end());
 						for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
@@ -320,9 +320,9 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 							f_iter != iter->second.body.instructions.end(); ++f_iter) {
 						if (ignore_instruction(*f_iter)) continue;
 						if (GOTO_Transformation::is_instrumented(f_iter)) continue;
-						if (f_iter->location.is_nil() ||
-								f_iter->location.get_column().empty() ||
-								f_iter->location.get_column() != arg_str.str()) continue;
+						if (f_iter->source_location.is_nil() ||
+								f_iter->source_location.get_column().empty() ||
+								f_iter->source_location.get_column() != arg_str.str()) continue;
 						CFG::entries_t::iterator cfg_node(m_cfg->find(f_iter));
 						FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg->end());
 						for (CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
@@ -619,9 +619,9 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 	
 	if (edges.empty()) {
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, initial.empty());
-		::std::ostringstream warn;
-		warn << "Filter expression " << *n << " evaluates to empty target graph";
-		m_manager.warning(warn.str());
+		m_manager.warning() << "Filter expression "
+			                << *n << " evaluates to empty target graph"
+							<< messaget::eom;
 	}
 
 	entry.first->second.set_E(edges);

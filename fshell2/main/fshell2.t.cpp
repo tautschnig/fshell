@@ -92,7 +92,8 @@ void test_single( Test_Data & data )
 	::register_language(new_ansi_c_language);
 	::cmdlinet cmdline;
 	::config.set(cmdline);
-	::language_uit l("FShell2", cmdline);
+	::ui_message_handlert ui_message_handler(cmdline, "FShell2");
+	::language_uit l(cmdline, ui_message_handler);
 	::optionst options;
 	::goto_functionst cfg;
 
@@ -111,8 +112,10 @@ void test_interactive( Test_Data & data )
 	::register_language(new_ansi_c_language);
 	::cmdlinet cmdline;
 	::config.set(cmdline);
-	::language_uit l("FShell2", cmdline);
+	::ui_message_handlert ui_message_handler(cmdline, "FShell2");
+	::language_uit l(cmdline, ui_message_handler);
 	::optionst options;
+	options.set_option("stop-on-fail", true);
 	::goto_functionst cfg;
 	::std::ostringstream os;
 
@@ -198,8 +201,10 @@ of
 	::register_language(new_ansi_c_language);
 	::cmdlinet cmdline;
 	::config.set(cmdline);
-	::language_uit l("FShell2", cmdline);
+	::ui_message_handlert ui_message_handler(cmdline, "FShell2");
+	::language_uit l(cmdline, ui_message_handler);
 	::optionst options;
+	options.set_option("stop-on-fail", true);
 	options.set_option("show-test-goals", true);
 	options.set_option("statistics", true);
 	options.set_option("use-instrumentation", use_instrumentation);

@@ -103,7 +103,8 @@ void test( Test_Data & data )
 	::register_language(new_ansi_c_language);
 	::cmdlinet cmdline;
 	::config.set(cmdline);
-	::language_uit l("FShell2", cmdline);
+	::ui_message_handlert ui_message_handler(cmdline, "FShell2");
+	::language_uit l(cmdline, ui_message_handler);
 	::goto_functionst gf;
 
 	TEST_CHECK(!l.parse(tempname_str));

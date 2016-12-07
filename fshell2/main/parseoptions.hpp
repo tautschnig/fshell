@@ -34,7 +34,7 @@
 #include <fshell2/util/statistics.hpp>
 
 #include <langapi/language_ui.h>
-#include <util/parseoptions.h>
+#include <util/parse_options.h>
 #include <util/options.h>
 
 #define FSHELL2_OPTIONS \
@@ -66,7 +66,7 @@ FSHELL2_NAMESPACE_BEGIN;
 /*! \brief TODO
 */
 class Parseoptions :
-	public ::parseoptions_baset,
+	public ::parse_options_baset,
 	public ::language_uit
 {
 	/*! \copydoc doc_self
@@ -83,6 +83,8 @@ class Parseoptions :
 		virtual void help();
 
 	private:
+	        ::ui_message_handlert ui_message_handler;
+	
 		::fshell2::statistics::Statistics m_stats;
 		::fshell2::statistics::CPU_Timer * m_cpu_total;
 		::fshell2::statistics::Wallclock_Timer * m_session_total;

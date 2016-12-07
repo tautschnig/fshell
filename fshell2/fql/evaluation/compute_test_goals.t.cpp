@@ -97,7 +97,7 @@ void test_instr( Test_Data & data )
 		<< "int x=0;" << ::std::endl
 		<< "if (argc > 5) x=2; else x=1;" << ::std::endl
 		<< "if (argc > 27) ++x; else --x;" << ::std::endl
-		<< "assert(0);" << ::std::endl
+		<< "__CPROVER_assert(0, \"\");" << ::std::endl
 		<< "return x;" << ::std::endl
 		<< "}" << ::std::endl;
 	of.close();
@@ -105,9 +105,11 @@ void test_instr( Test_Data & data )
 	::register_language(new_ansi_c_language);
 	::cmdlinet cmdline;
 	::config.set(cmdline);
-	::language_uit l("FShell2", cmdline);
+	::ui_message_handlert ui_message_handler(cmdline, "FShell2");
+	::language_uit l(cmdline, ui_message_handler);
 	::optionst options;
 	options.set_option("assertions", true);
+	options.set_option("stop-on-fail", true);
 	::goto_functionst gf;
 
 	TEST_CHECK(!l.parse(tempname_str));
@@ -129,11 +131,11 @@ void test_instr( Test_Data & data )
 	Compute_Test_Goals_From_Instrumentation goals(l, options);
 	CNF_Conversion & eq(goals.do_query(gf, *q));
 	
-	TEST_ASSERT_RELATION(6, ==, eq.get_test_goal_id_map().size());
+	TEST_ASSERT_RELATION(5, ==, eq.get_test_goal_id_map().size());
 	test_goal_groups_t const& bb_goals(eq.get_test_goal_groups());
 	TEST_ASSERT_RELATION(3, ==, bb_goals.size());
 	TEST_ASSERT_RELATION(1, ==, bb_goals.front().size());
-	TEST_ASSERT_RELATION(6, ==, (++(bb_goals.begin()))->size());
+	TEST_ASSERT_RELATION(5, ==, (++(bb_goals.begin()))->size());
 	TEST_ASSERT_RELATION(1, ==, bb_goals.back().size());
 }
 
@@ -152,7 +154,7 @@ void test_boolean( Test_Data & data )
 		<< "int x=0;" << ::std::endl
 		<< "if (argc > 5) x=2; else x=1;" << ::std::endl
 		<< "if (argc > 27) ++x; else --x;" << ::std::endl
-		<< "assert(0);" << ::std::endl
+		<< "__CPROVER_assert(0, \"\");" << ::std::endl
 		<< "return x;" << ::std::endl
 		<< "}" << ::std::endl;
 	of.close();
@@ -160,9 +162,11 @@ void test_boolean( Test_Data & data )
 	::register_language(new_ansi_c_language);
 	::cmdlinet cmdline;
 	::config.set(cmdline);
-	::language_uit l("FShell2", cmdline);
+	::ui_message_handlert ui_message_handler(cmdline, "FShell2");
+	::language_uit l(cmdline, ui_message_handler);
 	::optionst options;
 	options.set_option("assertions", true);
+	options.set_option("stop-on-fail", true);
 	::goto_functionst gf;
 
 	TEST_CHECK(!l.parse(tempname_str));
@@ -185,11 +189,11 @@ void test_boolean( Test_Data & data )
 	Compute_Test_Goals_Boolean goals(l, options, stats);
 	CNF_Conversion & eq(goals.do_query(gf, *q));
 	
-	TEST_ASSERT_RELATION(6, ==, eq.get_test_goal_id_map().size());
+	TEST_ASSERT_RELATION(4, ==, eq.get_test_goal_id_map().size());
 	test_goal_groups_t const& bb_goals(eq.get_test_goal_groups());
 	TEST_ASSERT_RELATION(3, ==, bb_goals.size());
 	TEST_ASSERT_RELATION(1, ==, bb_goals.front().size());
-	TEST_ASSERT_RELATION(6, ==, (++(bb_goals.begin()))->size());
+	TEST_ASSERT_RELATION(4, ==, (++(bb_goals.begin()))->size());
 	TEST_ASSERT_RELATION(1, ==, bb_goals.back().size());
 }
 

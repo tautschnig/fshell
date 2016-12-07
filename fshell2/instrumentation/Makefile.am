@@ -19,16 +19,18 @@ CBMC_OBJS = @CBMCDIR@/src/goto-programs/goto-programs.a \
 						@CBMCDIR@/src/util/util.a \
 						@CBMCDIR@/src/big-int/big-int.a \
 						@CBMCDIR@/src/goto-symex/goto-symex.a \
-						@CBMCDIR@/src/cbmc/cover.o \
+						@CBMCDIR@/src/cbmc/bmc_cover.o \
 						@CBMCDIR@/src/cbmc/bmc.o \
+						@CBMCDIR@/src/cbmc/all_properties.o \
+						@CBMCDIR@/src/xmllang/xmllang.a \
 						@CBMCDIR@/src/cbmc/show_vcc.o \
 						@CBMCDIR@/src/cbmc/cbmc_solvers.o \
 						@CBMCDIR@/src/solvers/solvers.a \
-						@CBMCDIR@/src/cbmc/dimacs.o \
+						@CBMCDIR@/src/cbmc/cbmc_dimacs.o \
 						@CBMCDIR@/src/cbmc/bv_cbmc.o \
 						@CBMCDIR@/src/cbmc/counterexample_beautification.o \
 						@CBMCDIR@/src/cbmc/symex_bmc.o \
-						@CBMCDIR@/src/cbmc/all_claims.o \
+						@CBMCDIR@/src/cbmc/fault_localization.o \
 						@CBMCDIR@/src/langapi/langapi.a \
 						@CBMCDIR@/src/ansi-c/ansi-c.a \
 						@CBMCDIR@/src/linking/linking.a

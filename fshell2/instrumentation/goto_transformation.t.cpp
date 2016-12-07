@@ -64,6 +64,7 @@
 #include <langapi/mode.h>
 #include <ansi-c/ansi_c_language.h>
 #include <cbmc/bmc.h>
+#include <cbmc/bv_cbmc.h>
 
 #define TEST_COMPONENT_NAME GOTO_Transformation
 #define TEST_COMPONENT_NAMESPACE fshell2::instrumentation
@@ -86,7 +87,8 @@ void test_invalid( Test_Data & data )
 {
 	::cmdlinet cmdline;
 	::config.set(cmdline);
-	::language_uit l("FShell2", cmdline);
+	::ui_message_handlert ui_message_handler(cmdline, "FShell2");
+	::language_uit l(cmdline, ui_message_handler);
 	::goto_functionst gf;
 	GOTO_Transformation t(l, gf);
 	::goto_programt prg;
@@ -116,7 +118,8 @@ void test_use_case( Test_Data & data )
 	::register_language(new_ansi_c_language);
 	::cmdlinet cmdline;
 	::config.set(cmdline);
-	::language_uit l("FShell2", cmdline);
+	::ui_message_handlert ui_message_handler(cmdline, "FShell2");
+	::language_uit l(cmdline, ui_message_handler);
 	::goto_functionst cfg;
 
 	TEST_CHECK(!l.parse(tempname_str));
@@ -145,7 +148,8 @@ void test_use_case2( Test_Data & data )
 	::register_language(new_ansi_c_language);
 	::cmdlinet cmdline;
 	::config.set(cmdline);
-	::language_uit l("FShell2", cmdline);
+	::ui_message_handlert ui_message_handler(cmdline, "FShell2");
+	::language_uit l(cmdline, ui_message_handler);
 	::optionst options;
   
 	::languaget *languagep=get_language_from_filename("bla.c");
@@ -153,7 +157,7 @@ void test_use_case2( Test_Data & data )
 	language_filet language_file;
 
   	std::pair<language_filest::filemapt::iterator, bool> res=l.language_files.filemap.insert(
-           ::std::make_pair<std::string, language_filet>("bla.c", language_file));
+           ::std::make_pair("bla.c", language_file));
 
   	language_filet &lf=res.first->second;
   	lf.filename="bla.c";
@@ -161,12 +165,12 @@ void test_use_case2( Test_Data & data )
 
 	::goto_functionst cfg;
 	::fshell2::instrumentation::GOTO_Transformation inserter(l, cfg);
+    ::goto_convert_functionst converter(l.symbol_table, cfg, l.ui_message_handler);
 	
 	{
 		// add dummy symbol to make CBMC happy
-		cfg.function_map["c::__CPROVER_initialize"].body_available = false;
-		cfg.function_map["c::__CPROVER_initialize"].type.return_type() = ::empty_typet(); 
-		::symbol_exprt func_expr("c::__CPROVER_initialize", ::code_typet());
+		cfg.function_map["__CPROVER_initialize"].type.return_type() = ::empty_typet(); 
+		::symbol_exprt func_expr("__CPROVER_initialize", ::code_typet());
 		::symbolt func_symb;
 		func_symb.from_irep(func_expr);
 		func_symb.value = ::code_blockt();
@@ -174,10 +178,23 @@ void test_use_case2( Test_Data & data )
 		func_symb.name = "__CPROVER_initialize";
 		func_symb.base_name = "__CPROVER_initialize";
 		l.symbol_table.move(func_symb);
+		::symbol_tablet::symbolst::iterator init_iter(l.symbol_table.symbols.find("__CPROVER_initialize"));
+		TEST_CHECK(init_iter != l.symbol_table.symbols.end());
+		converter.convert_function(init_iter->first);
 	}
 	
-	cfg.function_map["c::tmp_func"].body_available = true;
-	cfg.function_map["c::tmp_func"].type.return_type() = ::empty_typet(); 
+	{
+		// add dummy symbol to make CBMC happy
+		::symbol_exprt rm_expr("__CPROVER_rounding_mode", ::signedbv_typet(sizeof(int)*8));
+		::symbolt rm_symb;
+		rm_symb.from_irep(rm_expr);
+		rm_symb.mode = ID_C;
+		rm_symb.name = "__CPROVER_rounding_mode";
+		rm_symb.base_name = "__CPROVER_rounding_mode";
+		l.symbol_table.move(rm_symb);
+	}
+	
+	cfg.function_map["tmp_func"].type.return_type() = ::empty_typet(); 
 	::config.main = "tmp_func";
 	::symbol_exprt func_expr("tmp_func", ::code_typet());
 	::symbolt func_symb;
@@ -190,7 +207,6 @@ void test_use_case2( Test_Data & data )
 	TEST_CHECK(!l.final());
 	::symbol_tablet::symbolst::iterator main_iter(l.symbol_table.symbols.find(ID__start));
 	TEST_CHECK(main_iter != l.symbol_table.symbols.end());
-    ::goto_convert_functionst converter(l.symbol_table, cfg, l.ui_message_handler);
     converter.convert_function(main_iter->first);
 		
 	::fshell2::instrumentation::GOTO_Transformation::inserted_t & targets(
@@ -205,7 +221,10 @@ void test_use_case2( Test_Data & data )
 		(++(targets.begin()))->second->make_skip();
 		(++(++(targets.begin())))->second->make_skip();
 	
-		::bmct bmc(options, l.symbol_table, l.ui_message_handler);
+		const namespacet ns(l.symbol_table);
+		satcheckt satcheck;
+		bv_cbmct bv_cbmc(ns, satcheck);
+		::bmct bmc(options, l.symbol_table, l.ui_message_handler, bv_cbmc);
 		TEST_ASSERT(bmc.run(cfg));
 	}
 
@@ -215,7 +234,10 @@ void test_use_case2( Test_Data & data )
 		(++(targets.begin()))->second->make_assertion(f);
 		(++(++(targets.begin())))->second->make_skip();
 
-		::bmct bmc(options, l.symbol_table, l.ui_message_handler);
+		const namespacet ns(l.symbol_table);
+		satcheckt satcheck;
+		bv_cbmct bv_cbmc(ns, satcheck);
+		::bmct bmc(options, l.symbol_table, l.ui_message_handler, bv_cbmc);
 		TEST_ASSERT(bmc.run(cfg));
 	}
 
@@ -225,7 +247,10 @@ void test_use_case2( Test_Data & data )
 		(++(targets.begin()))->second->make_skip();
 		(++(++(targets.begin())))->second->make_assertion(f);
 
-		::bmct bmc(options, l.symbol_table, l.ui_message_handler);
+		const namespacet ns(l.symbol_table);
+		satcheckt satcheck;
+		bv_cbmct bv_cbmc(ns, satcheck);
+		::bmct bmc(options, l.symbol_table, l.ui_message_handler, bv_cbmc);
 		TEST_ASSERT(bmc.run(cfg));
 	}
 		
@@ -243,7 +268,10 @@ void test_use_case2( Test_Data & data )
 		ndchoice3.second->make_skip();
 		loc->make_assertion(f);
 
-		::bmct bmc(options, l.symbol_table, l.ui_message_handler);
+		const namespacet ns(l.symbol_table);
+		satcheckt satcheck;
+		bv_cbmct bv_cbmc(ns, satcheck);
+		::bmct bmc(options, l.symbol_table, l.ui_message_handler, bv_cbmc);
 		TEST_ASSERT(!bmc.run(cfg));
 	}
 
@@ -262,7 +290,10 @@ void test_use_case2( Test_Data & data )
 		::false_exprt f;
 		loc->make_assertion(f);
 
-		::bmct bmc(options, l.symbol_table, l.ui_message_handler);
+		const namespacet ns(l.symbol_table);
+		satcheckt satcheck;
+		bv_cbmct bv_cbmc(ns, satcheck);
+		::bmct bmc(options, l.symbol_table, l.ui_message_handler, bv_cbmc);
 		TEST_ASSERT(bmc.run(cfg));
 	}
 }
