@@ -211,9 +211,8 @@ template <filter_function_t F>
 static ::goto_functionst::function_mapt::iterator get_funct_entry(::goto_functionst & gf,
 		Filter_Function const* n)
 {
-	::std::string prefix("c::");
-	::goto_functionst::function_mapt::iterator fct(gf.function_map.find(prefix
-				+ n->get_string_arg<F>()));
+	::goto_functionst::function_mapt::iterator fct(gf.function_map.find(
+				n->get_string_arg<F>()));
 	if (fct == gf.function_map.end() || Evaluate_Filter::ignore_function(fct->second)) {
 		::std::ostringstream err;
 		err << "Cannot evaluate " << *n << " (function not available)";
@@ -248,7 +247,7 @@ void Evaluate_Filter::visit(Filter_Function const* n) {
 					FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, cfg_node != m_cfg->end());
 					for (::fshell2::instrumentation::CFG::successors_t::iterator s_iter(cfg_node->second.successors.begin());
 							s_iter != cfg_node->second.successors.end(); ++s_iter) {
-						if (first && iter->first == ("c::" + ::config.main)) {
+						if (first && iter->first == ::config.main) {
 							initial.insert(::std::make_pair(&(iter->second.body), f_iter));
 							first = false;
 						}

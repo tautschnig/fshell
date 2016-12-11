@@ -197,7 +197,7 @@ void test_use_case( Test_Data & data )
 	TEST_ASSERT(data.compare("tmp_source_show", os.str()));
 	
 	TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, "set entry main"));
-	TEST_ASSERT(::config.main == "main");
+	TEST_ASSERT(::config.main == id2string(ID_main));
 
 	TEST_ASSERT(0 == options.get_unsigned_int_option(F2_O_LIMIT));
 	TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, "set limit count 27"));
@@ -247,7 +247,7 @@ void test_use_case_extended_invariants( Test_Data & data )
 	}
 	
 	TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, "set entry main"));
-	TEST_ASSERT(::config.main == "main");
+	TEST_ASSERT(::config.main == id2string(ID_main));
 	// do it once again
 	TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, "set entry main"));
 
@@ -255,10 +255,10 @@ void test_use_case_extended_invariants( Test_Data & data )
 	TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, "set limit count 27"));
 	TEST_ASSERT(27 == options.get_unsigned_int_option(F2_O_LIMIT));
 
-	TEST_CHECK(cfg.function_map.end() == cfg.function_map.find("c::foo"));
+	TEST_CHECK(cfg.function_map.end() == cfg.function_map.find("foo"));
 	TEST_ASSERT(cmd.finalize(l));
-	TEST_CHECK(cfg.function_map.end() != cfg.function_map.find("c::foo"));
-	TEST_CHECK(!cfg.function_map.find("c::foo")->second.body_available);
+	TEST_CHECK(cfg.function_map.end() != cfg.function_map.find("foo"));
+	TEST_CHECK(!cfg.function_map.find("foo")->second.body_available());
 	
 	{
 		// just to make sure we never ever get the same filename
@@ -278,15 +278,15 @@ void test_use_case_extended_invariants( Test_Data & data )
 	}
 
 	TEST_ASSERT(cmd.finalize(l));
-	TEST_CHECK(cfg.function_map.end() != cfg.function_map.find("c::foo"));
-	TEST_CHECK(cfg.function_map.find("c::foo")->second.body_available);
+	TEST_CHECK(cfg.function_map.end() != cfg.function_map.find("foo"));
+	TEST_CHECK(cfg.function_map.find("foo")->second.body_available());
 	// should be a no-op
 	TEST_ASSERT(!cmd.finalize(l));
 	
 	TEST_ASSERT(Command_Processing::DONE == cmd.process(l, os, "set abstract foo"));
 	TEST_ASSERT(cmd.finalize(l));
-	TEST_CHECK(cfg.function_map.end() != cfg.function_map.find("c::foo"));
-	TEST_ASSERT(!cfg.function_map.find("c::foo")->second.body_available);
+	TEST_CHECK(cfg.function_map.end() != cfg.function_map.find("foo"));
+	TEST_ASSERT(!cfg.function_map.find("foo")->second.body_available());
 }
 
 /** @cond */

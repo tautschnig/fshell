@@ -92,7 +92,7 @@ void test_invalid( Test_Data & data )
 	::goto_programt prg;
 
 	TEST_THROWING_BLOCK_ENTER;
-	t.insert(ID_main, GOTO_Transformation::BEFORE, ::END_FUNCTION, prg);
+	t.insert(ID__start, GOTO_Transformation::BEFORE, ::END_FUNCTION, prg);
 	TEST_THROWING_BLOCK_EXIT(::fshell2::Instrumentation_Error);
 }
 
@@ -132,7 +132,7 @@ void test_use_case( Test_Data & data )
 	as->guard = ::gen_zero(::bool_typet());
 
 	::fshell2::instrumentation::GOTO_Transformation inserter(l, cfg);
-	TEST_ASSERT_RELATION(1, ==, inserter.insert(ID_main, ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::END_FUNCTION, tmp).size());
+	TEST_ASSERT_RELATION(1, ==, inserter.insert(ID__start, ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::END_FUNCTION, tmp).size());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -171,7 +171,7 @@ void test_use_case2( Test_Data & data )
 		func_symb.from_irep(func_expr);
 		func_symb.value = ::code_blockt();
 		func_symb.mode = ID_C;
-		func_symb.name = "c::__CPROVER_initialize";
+		func_symb.name = "__CPROVER_initialize";
 		func_symb.base_name = "__CPROVER_initialize";
 		l.symbol_table.move(func_symb);
 	}
@@ -179,25 +179,25 @@ void test_use_case2( Test_Data & data )
 	cfg.function_map["c::tmp_func"].body_available = true;
 	cfg.function_map["c::tmp_func"].type.return_type() = ::empty_typet(); 
 	::config.main = "tmp_func";
-	::symbol_exprt func_expr("c::tmp_func", ::code_typet());
+	::symbol_exprt func_expr("tmp_func", ::code_typet());
 	::symbolt func_symb;
 	func_symb.from_irep(func_expr);
 	func_symb.value = ::code_blockt();
 	func_symb.mode = ID_C;
-	func_symb.name = "c::tmp_func";
+	func_symb.name = "tmp_func";
 	func_symb.base_name = "tmp_func";
 	l.symbol_table.move(func_symb);
 	TEST_CHECK(!l.final());
-	::symbol_tablet::symbolst::iterator main_iter(l.symbol_table.symbols.find(ID_main));
+	::symbol_tablet::symbolst::iterator main_iter(l.symbol_table.symbols.find(ID__start));
 	TEST_CHECK(main_iter != l.symbol_table.symbols.end());
     ::goto_convert_functionst converter(l.symbol_table, cfg, l.ui_message_handler);
     converter.convert_function(main_iter->first);
 		
 	::fshell2::instrumentation::GOTO_Transformation::inserted_t & targets(
-			inserter.make_nondet_choice(cfg.function_map["c::tmp_func"].body, 3));
+			inserter.make_nondet_choice(cfg.function_map["tmp_func"].body, 3));
 	TEST_ASSERT_RELATION(3, ==, targets.size());
-	TEST_ASSERT_RELATION(12, ==, cfg.function_map["c::tmp_func"].body.instructions.size());
-	cfg.function_map["c::tmp_func"].body.add_instruction(END_FUNCTION);
+	TEST_ASSERT_RELATION(12, ==, cfg.function_map["tmp_func"].body.instructions.size());
+	cfg.function_map["tmp_func"].body.add_instruction(END_FUNCTION);
 
 	{
 		::false_exprt f;
@@ -229,7 +229,7 @@ void test_use_case2( Test_Data & data )
 		TEST_ASSERT(bmc.run(cfg));
 	}
 		
-	cfg.function_map["c::tmp_func"].body.instructions.front().function = "c::tmp_func";
+	cfg.function_map["tmp_func"].body.instructions.front().function = "tmp_func";
 	::false_exprt f;
 	::fshell2::instrumentation::GOTO_Transformation::goto_node_t ndchoice3(*(++(++(targets.begin()))));
 
@@ -239,7 +239,7 @@ void test_use_case2( Test_Data & data )
 		::goto_programt::targett loc(ndchoice3.second);
 		--(--loc);
 		TEST_ASSERT(loc->type == LOCATION);
-		TEST_ASSERT_RELATION(16, ==, cfg.function_map["c::tmp_func"].body.instructions.size());
+		TEST_ASSERT_RELATION(16, ==, cfg.function_map["tmp_func"].body.instructions.size());
 		ndchoice3.second->make_skip();
 		loc->make_assertion(f);
 
@@ -258,7 +258,7 @@ void test_use_case2( Test_Data & data )
 		TEST_ASSERT(loc->type == LOCATION);
 		/*::namespacet const ns(l.symbol_table);
 		cfg.output(ns, ::std::cerr);*/
-		TEST_ASSERT_RELATION(20, ==, cfg.function_map["c::tmp_func"].body.instructions.size());
+		TEST_ASSERT_RELATION(20, ==, cfg.function_map["tmp_func"].body.instructions.size());
 		::false_exprt f;
 		loc->make_assertion(f);
 

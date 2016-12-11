@@ -121,7 +121,7 @@ Command_Processing::Command_Processing(::optionst & opts, ::goto_functionst & gf
 	m_finalized(::config.main.empty() &&
 				m_opts.get_unsigned_int_option("max-argc") == 0),
 	m_remove_zero_init(false) {
-	if (::config.main.empty()) ::config.main = "main";
+	if (::config.main.empty()) ::config.main = id2string(ID_main);
 	m_opts.set_option(F2_O_LIMIT, 0);
 	m_opts.set_option(F2_O_MULTIPLE_COVERAGE, 1);
 }
@@ -275,7 +275,7 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 			FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, arg != 0);
 			{
 				::symbol_tablet::symbolst::iterator sym_entry(
-						manager.symbol_table.symbols.find(::std::string("c::") + arg));
+						manager.symbol_table.symbols.find(arg));
 				FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,
 						sym_entry != manager.symbol_table.symbols.end(),
 						::std::string("Function ") + arg + " not found");
@@ -297,7 +297,7 @@ Command_Processing::status_t Command_Processing::process(::language_uit & manage
 
 void Command_Processing::remove_zero_init(::language_uit & manager) const {
 	::symbol_tablet::symbolst::iterator init_iter(
-	  manager.symbol_table.symbols.find("c::__CPROVER_initialize"));
+	  manager.symbol_table.symbols.find("__CPROVER_initialize"));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 						 init_iter != manager.symbol_table.symbols.end());
 
@@ -323,8 +323,8 @@ void Command_Processing::model_argv(::language_uit & manager) const {
 	::symbol_tablet &symbol_table=manager.symbol_table;
 	::namespacet const ns(symbol_table);
 
-	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, symbol_table.has_symbol("c::main"));
-	locationt const& main_loc=symbol_table.symbols.find("c::main")->second.location;
+	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, symbol_table.has_symbol(ID_main));
+	source_locationt const& main_loc=symbol_table.symbols.find(ID_main)->second.location;
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, main_loc.is_not_nil());
 
 	/*
@@ -346,18 +346,18 @@ void Command_Processing::model_argv(::language_uit & manager) const {
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, max_argc > 0);
 
 	::symbol_tablet::symbolst::iterator main_iter(
-	  symbol_table.symbols.find("main"));
+	  symbol_table.symbols.find(ID_main));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 						 main_iter != symbol_table.symbols.end());
 
 	// turn argv' into a bounded array
 	{
-		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, symbol_table.has_symbol("c::argv'"));
-		symbol_table.symbols.find("c::argv'")->second.type.set(ID_size, from_integer(max_argc+1, index_type()));
+		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, symbol_table.has_symbol("argv'"));
+		symbol_table.symbols.find("argv'")->second.type.set(ID_size, from_integer(max_argc+1, index_type()));
 
 		replace_symbolt replace_argvp;
 
-		::symbolt const& argvp_symbol(ns.lookup("c::argv'"));
+		::symbolt const& argvp_symbol(ns.lookup("argv'"));
 		symbol_exprt argvp(argvp_symbol.name, argvp_symbol.type);
 		replace_argvp.insert(argvp_symbol.name, argvp);
 
@@ -366,7 +366,7 @@ void Command_Processing::model_argv(::language_uit & manager) const {
 	}
 
 	// add argv'' to the symbol table
-	if(!symbol_table.has_symbol("c::main::1::argv''"))
+	if(!symbol_table.has_symbol("main::1::argv''"))
 	{
 		// POSIX guarantees that at least 4096 characters can be passed as
 		// arguments
@@ -375,7 +375,7 @@ void Command_Processing::model_argv(::language_uit & manager) const {
 		::symbolt argv_symbol;
 		argv_symbol.pretty_name="argv''";
 		argv_symbol.base_name="main::1::argv''";
-		argv_symbol.name="c::main::1::argv''";
+		argv_symbol.name="main::1::argv''";
 		argv_symbol.type=argv_type;
 		argv_symbol.is_file_local=true;
 		argv_symbol.is_type=false;
@@ -391,7 +391,7 @@ void Command_Processing::model_argv(::language_uit & manager) const {
 	::irep_idt locals[] = { "next", "i", "len'" };
 	for(size_t i=0; i<sizeof(locals)/sizeof(::irep_idt); ++i)
 	{
-		::irep_idt name="c::main::1::"+id2string(locals[i]);
+		::irep_idt name="main::1::"+id2string(locals[i]);
 		if(symbol_table.has_symbol(name))
 			continue;
 
@@ -414,7 +414,7 @@ void Command_Processing::model_argv(::language_uit & manager) const {
 	/*
 	char argv''[4096];
 	*/
-	::symbolt const& argvpp_symbol(ns.lookup("c::main::1::argv''"));
+	::symbolt const& argvpp_symbol(ns.lookup("main::1::argv''"));
 	symbol_exprt argvpp(argvpp_symbol.base_name, argvpp_symbol.type);
 	code_declt argvpp_decl(argvpp);
 	argvpp_decl.location()=main_loc;
@@ -427,7 +427,7 @@ void Command_Processing::model_argv(::language_uit & manager) const {
 	*/
 	for(int i=0; i<2; ++i)
 	{
-		::symbolt const& symbol(ns.lookup("c::main::1::"+id2string(locals[i])));
+		::symbolt const& symbol(ns.lookup("main::1::"+id2string(locals[i])));
 		::symbol_exprt symbol_expr(symbol.base_name, symbol.type);
 
 		code_declt decl(symbol_expr);
@@ -442,8 +442,8 @@ void Command_Processing::model_argv(::language_uit & manager) const {
 	/*
    	__CPROVER_assume(argc'<=max_argc);
 	*/
-	::symbolt const& argcp_symbol(ns.lookup("c::argc'"));
-	symbol_exprt argcp("argc'", argcp_symbol.type); /* for some reason the base_name of c::argc' was set to argc */
+	::symbolt const& argcp_symbol(ns.lookup("argc'"));
+	symbol_exprt argcp("argc'", argcp_symbol.type); /* for some reason the base_name of argc' was set to argc */
 	{
 		binary_relation_exprt le(
 		  argcp,
@@ -467,14 +467,14 @@ void Command_Processing::model_argv(::language_uit & manager) const {
    	}
 	*/
 	{
-		::symbolt const& next_symbol(ns.lookup("c::main::1::next"));
+		::symbolt const& next_symbol(ns.lookup("main::1::next"));
 		::symbol_exprt next(next_symbol.base_name, next_symbol.type);
-		::symbolt const& len_symbol(ns.lookup("c::main::1::len'"));
+		::symbolt const& len_symbol(ns.lookup("main::1::len'"));
 		::symbol_exprt len(len_symbol.base_name, len_symbol.type);
-		::symbolt const& i_symbol(ns.lookup("c::main::1::i"));
+		::symbolt const& i_symbol(ns.lookup("main::1::i"));
 		symbol_exprt i(i_symbol.base_name, i_symbol.type);
 
-		::symbolt const& argvp_symbol(ns.lookup("c::argv'"));
+		::symbolt const& argvp_symbol(ns.lookup("argv'"));
 		symbol_exprt argvp(argvp_symbol.base_name, argvp_symbol.type);
 
 		code_whilet while_loop;
@@ -564,7 +564,7 @@ void Command_Processing::model_argv(::language_uit & manager) const {
 		 ++iter)
 	{
 		if (iter->get(ID_statement) == ID_function_call &&
-			to_symbol_expr(to_code_function_call(to_code(*iter)).function()).get_identifier() == "c::main")
+			to_symbol_expr(to_code_function_call(to_code(*iter)).function()).get_identifier() == ID_main)
 		{
 			::exprt::operandst items;
 
@@ -585,18 +585,16 @@ bool Command_Processing::finalize(::language_uit & manager) {
 			!manager.symbol_table.symbols.empty(),
 			"No source files loaded!");
 				
-	::std::string entry("c::");
-	entry += ::config.main;
 	FSHELL2_PROD_CHECK1(::fshell2::Command_Processing_Error,
-			manager.symbol_table.has_symbol(entry),
+			manager.symbol_table.has_symbol(::config.main),
 			::std::string("Could not find entry function " + ::config.main));
 	
 	if (m_finalized) return false;
 
-	manager.symbol_table.remove(ID_main);
+	manager.symbol_table.remove(ID__start);
 	
-	m_finalized = ! ::entry_point(manager.symbol_table,
-								  "c::main",
+	m_finalized = ! ::ansi_c_entry_point(manager.symbol_table,
+								  id2string(ID_main),
 								  manager.ui_message_handler);
 	// this must never fail, given all the previous sanity checks
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, m_finalized);
@@ -606,8 +604,8 @@ bool Command_Processing::finalize(::language_uit & manager) {
 
 	// create init code for argv, if max-argc was set
 	if (m_opts.get_unsigned_int_option("max-argc") > 0 &&
-		entry=="c::main" &&
-		manager.symbol_table.has_symbol("c::argc'"))
+		config.main==id2string(ID_main) &&
+		manager.symbol_table.has_symbol("argc'"))
 		model_argv(manager);
 
 	// convert all symbols; iterators are unstable, copy symbol names first
@@ -624,8 +622,8 @@ bool Command_Processing::finalize(::language_uit & manager) {
 		::goto_functionst::function_mapt::iterator fct(m_gf.function_map.find(*iter));
 		if (m_gf.function_map.end() != fct)
 		{
-			if(*iter!=ID_main && // main was possibly modified
-			   fct->second.body_available && // ADD SOURCECODE may have added sth
+			if(*iter!=ID__start && // main was possibly modified
+			   fct->second.body_available() && // ADD SOURCECODE may have added sth
 			   manager.symbol_table.symbols.find(*iter)->second.value.is_not_nil()) //not ABSTRACT
 				continue;
 			m_gf.function_map.erase(fct);

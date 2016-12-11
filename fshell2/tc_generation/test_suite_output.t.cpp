@@ -185,10 +185,13 @@ void test_sym_classes( Test_Data & data )
 				TEST_ASSERT_RELATION(v.m_vt, ==, ::fshell2::Symbol_Identifier::LOCAL);
 			else if(std::string::npos != name.find("::stat"))
 				TEST_ASSERT_RELATION(v.m_vt, ==, ::fshell2::Symbol_Identifier::LOCAL_STATIC);
-			else if(std::string::npos != name.find("::shared"))
+			else if(std::string::npos != name.find("shared"))
 				TEST_ASSERT_RELATION(v.m_vt, ==, ::fshell2::Symbol_Identifier::GLOBAL);
 			else if(std::string::npos != name.find("argc'") ||
-					std::string::npos != name.find("::__CPROVER_"))
+					std::string::npos != name.find("argv'") ||
+					std::string::npos != name.find("return'") ||
+					std::string::npos != name.find("symex::io::") ||
+					std::string::npos != name.find("__CPROVER_"))
 				TEST_ASSERT_RELATION(v.m_vt, ==, ::fshell2::Symbol_Identifier::CBMC_INTERNAL);
 			else
 				TEST_CHECK(false);
@@ -259,7 +262,7 @@ void test( Test_Data & data )
 	TEST_CHECK_RELATION(test_suite.size(), >, 0);
 	TEST_CHECK_RELATION(test_suite.size(), <=, size);
 	
-	::config.main = "main";
+	::config.main = id2string(ID_main);
 	Test_Suite_Output out(eq, options);
 	
 	::std::ostringstream os_brief;

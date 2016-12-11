@@ -134,7 +134,7 @@ void test( Test_Data & data )
 	trace_automaton_t const& ta(aut.get_tg_aut());
 	TEST_CHECK_RELATION(ta.state_count(), ==, 4);
 	::namespacet const ns(l.symbol_table);
-	::symbolt const& sym(ns.lookup("c::$fshell2$state$t_g"));
+	::symbolt const& sym(ns.lookup("$fshell2$state$t_g"));
 	TEST_ASSERT(::type_eq(sym.type, ::unsignedbv_typet(3), ns));
 	
 	for (trace_automaton_t::const_iterator iter(ta.begin()); iter != ta.end(); ++iter) {

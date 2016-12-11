@@ -94,7 +94,7 @@ void Automaton_Inserter::insert(::goto_functionst & gf,
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 1 == aut.initial().size());
 	state_init->code = ::code_assignt(::symbol_expr(state_symb), ::from_integer(
 				state_map.find(*(aut.initial().begin()))->second, state_symb.type));
-	inserter.insert("c::__CPROVER_initialize", ::fshell2::instrumentation::GOTO_Transformation::BEFORE,
+	inserter.insert("__CPROVER_initialize", ::fshell2::instrumentation::GOTO_Transformation::BEFORE,
 			::END_FUNCTION, defs);
 
 	// traverse the automaton and collect relevant target graphs; we only need a
@@ -157,7 +157,7 @@ void Automaton_Inserter::insert(::goto_functionst & gf,
 	for (transition_map_t::const_iterator iter(transitions.begin());
 			iter != transitions.end(); ++iter) {
 		::std::ostringstream fct_name;
-		fct_name << "c::filter_trans$" << suffix << "$" << iter->first;
+		fct_name << "filter_trans$" << suffix << "$" << iter->first;
 		add_transition_function(gf, fct_name.str(), iter->second, state_symb,
 				reverse_state_map, map_tg);
 	}
@@ -197,7 +197,7 @@ void Automaton_Inserter::insert_function_calls(::goto_functionst & gf,
 				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 2 == targets.size());
 			
 				::std::ostringstream fct_name;
-				fct_name << "c::filter_trans$" << suffix << "$" << *f_iter;
+				fct_name << "filter_trans$" << suffix << "$" << *f_iter;
 				GOTO_Transformation::make_function_call(t_iter->second, fct_name.str());
 				++t_iter;
 				// may be ignored, non-deterministically
@@ -234,7 +234,7 @@ void Automaton_Inserter::insert_function_calls(::goto_functionst & gf,
 			for (::std::set< int >::const_iterator f_iter(target_graphs.begin()); f_iter != target_graphs.end(); 
 					++f_iter, ++t_iter) {
 				::std::ostringstream fct_name;
-				fct_name << "c::filter_trans$" << suffix << "$" << *f_iter;
+				fct_name << "filter_trans$" << suffix << "$" << *f_iter;
 				GOTO_Transformation::make_function_call(t_iter->second, fct_name.str());
 			}
 			// may be ignored, non-deterministically
@@ -266,7 +266,7 @@ void Automaton_Inserter::insert_function_calls(::goto_functionst & gf,
 				for (::std::set< int >::const_iterator f_iter(target_graphs.begin()); f_iter != target_graphs.end(); 
 						++f_iter, ++t_iter) {
 					::std::ostringstream fct_name;
-					fct_name << "c::filter_trans$" << suffix << "$" << *f_iter;
+					fct_name << "filter_trans$" << suffix << "$" << *f_iter;
 					GOTO_Transformation::make_function_call(t_iter->second, fct_name.str());
 				}
 
@@ -419,7 +419,7 @@ Evaluate_Coverage_Pattern::Test_Goal_States const& Automaton_Inserter::do_query(
 	as->guard.make_not();
 	
 	::fshell2::instrumentation::GOTO_Transformation inserter(m_manager, gf);
-	inserter.insert(ID_main, ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::END_FUNCTION, tmp);
+	inserter.insert(ID__start, ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::END_FUNCTION, tmp);
 
 	return tgs;
 }

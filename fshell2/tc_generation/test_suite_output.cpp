@@ -134,13 +134,15 @@ Symbol_Identifier::Symbol_Identifier(::symbol_exprt const& sym) :
 	if (string::npos != m_var_name.find('\''))
 		m_vt = CBMC_INTERNAL;
 	// other __CPROVER variables
-	else if (::has_prefix(m_var_name, "c::__CPROVER_"))
+	else if (::has_prefix(m_var_name, "__CPROVER_"))
+		m_vt = CBMC_INTERNAL;
+	else if (::has_prefix(m_var_name, "symex::io::"))
 		m_vt = CBMC_INTERNAL;
 	// guards
 	else if (::has_prefix(m_var_name, "goto_symex::\\guard#"))
 		m_vt = CBMC_GUARD;
 	// generated symbol
-	else if (::has_prefix(m_var_name, "c::$fshell2$"))
+	else if (::has_prefix(m_var_name, "$fshell2$"))
 		m_vt = FSHELL2_INTERNAL;
 
 	// level2, level1, level0
@@ -165,9 +167,9 @@ Symbol_Identifier::Symbol_Identifier(::symbol_exprt const& sym) :
 	else if (string::npos != m_var_name.find("::$tmp::return_value_"))
 		m_vt = CBMC_TMP_RETURN_VALUE;
 	// parameters or other local variables
-	else if (string::npos != m_var_name.find("::", 3)) {
+	else if (string::npos != m_var_name.find("::")) {
 		// parameters have one more ::
-		if (string::npos == m_var_name.find("::", m_var_name.find("::", 3) + 2))
+		if (string::npos == m_var_name.find("::", m_var_name.find("::") + 2))
 			m_vt = PARAMETER;
 		// local vars have two more ::, static ones have no @ marking the frame
 		else
@@ -202,7 +204,7 @@ void Test_Suite_Output::update_call_stack(
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !step.source.pc->function.empty());
 
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
-						 step.source.pc->function == ID_main || !call_stack.empty());
+						 step.source.pc->function == ID__start || !call_stack.empty());
 	if (!call_stack.empty() && step.source.pc != call_stack.back()->first.first) {
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance,
 							 call_stack.back()->first.first->is_function_call() ||
@@ -213,7 +215,7 @@ void Test_Suite_Output::update_call_stack(
 			FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string(
 				"POP ", call_stack.back()->first.second));
 			call_stack.pop_back();
-			if (step.source.pc->function != ID_main) {
+			if (step.source.pc->function != ID__start) {
 				FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !call_stack.empty());
 				// handle sequences of functions without explicit return
 				while (step.source.pc->function != call_stack.back()->first.second) {
@@ -385,7 +387,7 @@ void Test_Suite_Output::analyze_symbol(
 	}
 
 	// select the init procedure chosen by the user
-	::std::string const start_proc_prefix(::std::string("c::") + config.main + "::");
+	::std::string const start_proc_prefix(config.main + "::");
 
 	if (Symbol_Identifier::PARAMETER != var.m_vt &&
 		nondet_expr &&
@@ -426,7 +428,7 @@ void Test_Suite_Output::analyze_symbol(
 		//   char * buffer;
 		//   unsigned s;
 		//   buffer=(char*)malloc(s);
-		if (!is_lhs && step.original_full_lhs.get(ID_identifier) == "c::__CPROVER_alloc_size" &&
+		if (!is_lhs && step.original_full_lhs.get(ID_identifier) == "__CPROVER_alloc_size" &&
 			bv.get(sym).is_nil())
 			return;
 		iv.m_name = &sym;
@@ -878,10 +880,8 @@ Test_Suite_Output::Test_Suite_Output(::fshell2::fql::CNF_Conversion & equation,
 	::cnf_clause_list_assignmentt & cnf(m_equation.get_cnf());
 	
 	// select the init procedure chosen by the user
-	::std::string main_symb_name("c::");
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !config.main.empty());
-	main_symb_name += config.main;
-	::symbolt const& main_symb(m_equation.get_ns().lookup(main_symb_name));
+	::symbolt const& main_symb(m_equation.get_ns().lookup(config.main));
 	::code_typet::parameterst const &parameters(::to_code_type(main_symb.type).parameters());
 	::std::ostringstream main_symb_str;
 	main_symb_str << main_symb.base_name << "(";
@@ -906,7 +906,7 @@ Test_Suite_Output::Test_Suite_Output(::fshell2::fql::CNF_Conversion & equation,
 		get_test_case(ti, cf, as);
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, !cf.empty());
 		FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, 
-				cf.front().first.second == "c::__CPROVER_initialize");
+				cf.front().first.second == "__CPROVER_initialize");
 		cf.pop_front();
 		switch (ui) {
 			case ::ui_message_handlert::XML_UI:

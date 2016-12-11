@@ -585,7 +585,7 @@ CNF_Conversion & Compute_Test_Goals_Boolean::do_query(::goto_functionst & gf, Qu
 	tmp.add_instruction(ASSERT)->make_assertion(::false_exprt());
 	
 	::fshell2::instrumentation::GOTO_Transformation inserter(m_manager, gf);
-	inserter.insert(ID_main, ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::END_FUNCTION, tmp);
+	inserter.insert(ID__start, ::fshell2::instrumentation::GOTO_Transformation::BEFORE, ::END_FUNCTION, tmp);
 
 	// print instrumented program, if requested
 	if (m_opts.get_bool_option("show-goto-functions")) {

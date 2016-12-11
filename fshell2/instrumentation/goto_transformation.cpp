@@ -98,13 +98,12 @@ void GOTO_Transformation::make_function_call(::goto_programt::targett ins,
 	
 ::symbolt const& GOTO_Transformation::new_var(::std::string const& name,
 		::typet const& type, bool global) {
-	::std::string const var_name("c::" + name);
-	::symbol_tablet::symbolst::const_iterator symb_entry(m_manager.symbol_table.symbols.find(var_name));
+	::symbol_tablet::symbolst::const_iterator symb_entry(m_manager.symbol_table.symbols.find(name));
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, symb_entry == m_manager.symbol_table.symbols.end());
 	
 	::symbolt symbol;
 	symbol.mode = ID_C;
-	symbol.name = var_name;
+	symbol.name = name;
 	symbol.base_name = name;
 	symbol.type = type;
 	symbol.is_lvalue = true;
@@ -112,7 +111,7 @@ void GOTO_Transformation::make_function_call(::goto_programt::targett ins,
 	symbol.is_thread_local = !global;
 	m_manager.symbol_table.move(symbol);
 	
-	symb_entry = m_manager.symbol_table.symbols.find(var_name);
+	symb_entry = m_manager.symbol_table.symbols.find(name);
 	FSHELL2_AUDIT_ASSERT(::diagnostics::Violated_Invariance, symb_entry != m_manager.symbol_table.symbols.end());
 	return symb_entry->second;
 }
@@ -230,7 +229,7 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 		}
 		// check globals
 		::symbol_tablet::symbolst::const_iterator global_symb(
-				m_manager.symbol_table.symbols.find(::std::string("c::") + (*iter)->get_string(ID_identifier)));
+				m_manager.symbol_table.symbols.find((*iter)->get_string(ID_identifier)));
 		if (global_symb != m_manager.symbol_table.symbols.end() && global_symb->second.is_static_lifetime)
 			alt_names.push_back(::symbol_expr(global_symb->second));
 		// function arguments
@@ -258,12 +257,11 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 
 		// rename, if possible
 		if (alt_names.empty()) {
-			FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Failed to resolve ", (*iter)->get(ID_identifier), " at ", node.second->location));
+			FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Failed to resolve ", (*iter)->get(ID_identifier), " at ", node.second->source_location));
 			make_nondet = true;
 			break;
 		}
 		std::string a_n(alt_names.back().get_string(ID_identifier));
-		if(a_n.size()>3 && a_n.substr(0,3)=="c::") a_n=a_n.substr(3);
 		FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Renaming ", (*iter)->get(ID_identifier), " to ", a_n));
 		(*iter)->set(ID_identifier, a_n);
 	}
@@ -276,7 +274,7 @@ GOTO_Transformation::inserted_t const& GOTO_Transformation::insert_predicate_at(
 		decl->code = ::code_declt(::symbol_expr(cond_symbol));
 
 		if (special_pred_symb && !make_nondet) {
-			special_pred_symb->set(ID_identifier, id2string(cond_symbol.name).substr(3));
+			special_pred_symb->set(ID_identifier, cond_symbol.name);
 			
 			FSHELL2_AUDIT_TRACE(::diagnostics::internal::to_string("Trying to typecheck: ", pred_copy.pretty()));
 			bool const tc_failed(::ansi_c_typecheck(pred_copy, m_manager.get_message_handler(), ns));
