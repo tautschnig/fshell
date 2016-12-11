@@ -1,3 +1,12 @@
+2016-12-11  Michael Tautschnig  <mt@debian.org>
+
+	* Release 1.8
+	* Support and require automake >= 1.12
+	* Port to CBMC 5.6
+	* Use C++11
+	* Fix ASTL to work with current STL
+	* Include binary representation of input values in XML output
+
 2014-08-13  Michael Tautschnig  <mt@debian.org>
 
 	* Release 1.7
